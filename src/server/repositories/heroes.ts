@@ -1,7 +1,26 @@
 import "server-only";
-import type { HeroFilters } from "@/server/services/hero-filters";
+import {
+  CATALOG_SLICE_LIMIT,
+  type CatalogSlice,
+} from "@/domain/catalog-stream";
+import { PRIMARY_ATTRIBUTES, type PrimaryAttribute } from "@/domain/heroes";
 import { getWebDatabase, getWebPool } from "@/server/db/client";
 import { assertSchemaCurrent } from "@/server/db/migrations";
+import {
+  assertListCursorMatches,
+  createListFilterIdentity,
+  decodeListCursor,
+  encodeListCursor,
+  isListDatasetVersionId,
+  ListDatasetUnavailableError,
+  ListRequestError,
+  type HeroListCursor,
+  type ListSliceRequest,
+} from "@/server/services/catalog-cursor";
+import {
+  canonicalHeroQuery,
+  type HeroFilters,
+} from "@/server/services/hero-filters";
 
 export interface ActiveDatasetMeta {
   datasetVersionId: string;
@@ -49,9 +68,14 @@ export interface HeroCardRow {
 
 export interface HeroOverview {
   meta: ActiveDatasetMeta | null;
+  slice: CatalogSlice<HeroCardRow> | null;
   heroes: HeroCardRow[];
+  total: number;
+  groupCounts: HeroGroupCounts;
   latestFailure: LatestImportFailure | null;
 }
+
+export type HeroGroupCounts = Record<PrimaryAttribute, number>;
 
 export interface HeroDetail {
   meta: ActiveDatasetMeta;
@@ -136,12 +160,210 @@ export async function getHeroOverview(
   filters: HeroFilters | null,
 ): Promise<HeroOverview> {
   await ensureReady();
-  const pool = getWebPool();
   const meta = await getActiveCatalogMeta();
   const latestFailure = await getLatestFailure(meta?.promotedAt ?? null);
-  if (!meta || !filters) return { meta, heroes: [], latestFailure };
+  if (!meta) {
+    return {
+      meta,
+      slice: null,
+      heroes: [],
+      total: 0,
+      groupCounts: emptyHeroGroupCounts(),
+      latestFailure,
+    };
+  }
+  if (!filters) {
+    const slice = emptyHeroSlice(meta);
+    return {
+      meta,
+      slice,
+      heroes: [],
+      total: 0,
+      groupCounts: emptyHeroGroupCounts(),
+      latestFailure,
+    };
+  }
+  const slice = await getHeroCatalogSlice(filters, {
+    catalogDatasetVersionId: meta.datasetVersionId,
+    assetDatasetVersionId: meta.assetDatasetVersionId,
+  });
+  return {
+    meta,
+    slice,
+    heroes: slice.items,
+    total: slice.total ?? 0,
+    groupCounts: {
+      ...emptyHeroGroupCounts(),
+      ...(slice.groupCounts ?? {}),
+    },
+    latestFailure,
+  };
+}
 
-  const values: unknown[] = [meta.datasetVersionId];
+export async function getHeroCatalogSlice(
+  filters: HeroFilters,
+  request: ListSliceRequest = {},
+): Promise<CatalogSlice<HeroCardRow>> {
+  await ensureReady();
+  const resolved = await resolveHeroSliceRequest(filters, request);
+  const query = buildHeroFilterQuery(filters, resolved.catalogDatasetVersionId);
+  const countValues = [...query.values];
+  const countConditions = [...query.conditions];
+  if (resolved.cursor) {
+    query.values.push(resolved.cursor.sort[0], resolved.cursor.sort[1]);
+    const rankIndex = query.values.length - 1;
+    const heroIdIndex = query.values.length;
+    query.conditions.push(
+      `(${HERO_ATTRIBUTE_RANK_SQL}, h.hero_id) ${resolved.direction === "after" ? ">" : "<"} ($${rankIndex}::integer, $${heroIdIndex}::integer)`,
+    );
+  }
+  query.values.push(CATALOG_SLICE_LIMIT + 1);
+  const limitIndex = query.values.length;
+  const order = resolved.direction === "before" ? "DESC" : "ASC";
+
+  const rowsPromise = getWebPool().query<HeroCardQueryRow>(
+    `WITH selected AS (
+       SELECT h.hero_id, ${HERO_ATTRIBUTE_RANK_SQL} AS attribute_rank
+       FROM heroes h ${query.localizationJoins}
+       WHERE ${query.conditions.join(" AND ")}
+       ORDER BY ${HERO_ATTRIBUTE_RANK_SQL} ${order}, h.hero_id ${order}
+       LIMIT $${limitIndex}
+     )
+     SELECT h.hero_id, selected.attribute_rank, h.internal_name, h.slug,
+       h.primary_attribute, h.attack_type, h.faction, h.complexity, h.cm_enabled,
+       h.base_strength, h.base_agility, h.base_intelligence, h.movement_speed,
+       zh.display_name AS zh_name, en.display_name AS en_name,
+       COALESCE(jsonb_agg(jsonb_build_object('role', r.role, 'level', r.role_level)
+         ORDER BY r.role_level DESC, r.role) FILTER (WHERE r.role IS NOT NULL), '[]'::jsonb) AS roles
+     FROM selected
+     JOIN heroes h ON h.dataset_version_id = $1 AND h.hero_id = selected.hero_id
+     JOIN hero_localizations zh ON zh.dataset_version_id = h.dataset_version_id
+       AND zh.hero_id = h.hero_id AND zh.locale = 'zh-CN'
+     JOIN hero_localizations en ON en.dataset_version_id = h.dataset_version_id
+       AND en.hero_id = h.hero_id AND en.locale = 'en'
+     LEFT JOIN hero_roles r ON r.dataset_version_id = h.dataset_version_id AND r.hero_id = h.hero_id
+     GROUP BY h.dataset_version_id, h.hero_id, selected.attribute_rank,
+       zh.display_name, en.display_name
+     ORDER BY selected.attribute_rank ${order}, h.hero_id ${order}`,
+    query.values,
+  );
+  const countsPromise = resolved.direction
+    ? null
+    : getWebPool().query<{ primary_attribute: string; count: number }>(
+        `SELECT h.primary_attribute, count(*)::int AS count
+         FROM heroes h ${query.localizationJoins}
+         WHERE ${countConditions.join(" AND ")}
+         GROUP BY h.primary_attribute`,
+        countValues,
+      );
+  const [result, countsResult] = await Promise.all([
+    rowsPromise,
+    countsPromise,
+  ]);
+  const hasMore = result.rows.length > CATALOG_SLICE_LIMIT;
+  let selectedRows = result.rows.slice(0, CATALOG_SLICE_LIMIT);
+  if (resolved.direction === "before") selectedRows = selectedRows.reverse();
+
+  const first = selectedRows[0];
+  const last = selectedRows.at(-1);
+  const identity = {
+    version: 1 as const,
+    entityKind: "heroes" as const,
+    catalogDatasetVersionId: resolved.catalogDatasetVersionId,
+    assetDatasetVersionId: resolved.assetDatasetVersionId,
+    locale: filters.lang,
+    filterIdentity: resolved.filterIdentity,
+  };
+  const previousCursor =
+    first &&
+    (resolved.direction === "after" ||
+      (resolved.direction === "before" && hasMore))
+      ? encodeListCursor({
+          ...identity,
+          sort: [first.attribute_rank, first.hero_id],
+        })
+      : null;
+  const nextCursor =
+    last && (resolved.direction === "before" || hasMore)
+      ? encodeListCursor({
+          ...identity,
+          sort: [last.attribute_rank, last.hero_id],
+        })
+      : null;
+  const groupCounts = countsResult
+    ? countsResult.rows.reduce<HeroGroupCounts>((counts, row) => {
+        if (
+          PRIMARY_ATTRIBUTES.includes(row.primary_attribute as PrimaryAttribute)
+        ) {
+          counts[row.primary_attribute as PrimaryAttribute] = row.count;
+        }
+        return counts;
+      }, emptyHeroGroupCounts())
+    : undefined;
+
+  return {
+    items: selectedRows.map(mapHeroCardRow),
+    datasetVersionId: resolved.catalogDatasetVersionId,
+    assetDatasetVersionId: resolved.assetDatasetVersionId,
+    previousCursor,
+    nextCursor,
+    ...(groupCounts
+      ? {
+          total: Object.values(groupCounts).reduce(
+            (sum, count) => sum + count,
+            0,
+          ),
+          groupCounts,
+        }
+      : {}),
+  };
+}
+
+const HERO_ATTRIBUTE_RANK_SQL = `CASE h.primary_attribute
+  WHEN 'strength' THEN 0
+  WHEN 'agility' THEN 1
+  WHEN 'intelligence' THEN 2
+  WHEN 'universal' THEN 3
+  ELSE 4 END`;
+
+interface HeroFilterQuery {
+  values: unknown[];
+  conditions: string[];
+  localizationJoins: string;
+}
+
+interface HeroCardQueryRow {
+  hero_id: number;
+  attribute_rank: number;
+  internal_name: string;
+  slug: string;
+  primary_attribute: string;
+  attack_type: string;
+  faction: string;
+  complexity: number;
+  cm_enabled: boolean;
+  base_strength: string;
+  base_agility: string;
+  base_intelligence: string;
+  movement_speed: string;
+  zh_name: string;
+  en_name: string;
+  roles: HeroCardRow["roles"];
+}
+
+interface ResolvedHeroSliceRequest {
+  catalogDatasetVersionId: string;
+  assetDatasetVersionId: string;
+  filterIdentity: string;
+  direction: "after" | "before" | null;
+  cursor: HeroListCursor | null;
+}
+
+function buildHeroFilterQuery(
+  filters: HeroFilters,
+  catalogDatasetVersionId: string,
+): HeroFilterQuery {
+  const values: unknown[] = [catalogDatasetVersionId];
   const conditions = ["h.dataset_version_id = $1"];
   if (filters.q) {
     values.push(escapeLike(filters.q));
@@ -168,60 +390,116 @@ export async function getHeroOverview(
     values.push(filters.cm === "true");
     conditions.push(`h.cm_enabled = $${values.length}`);
   }
+  const localizationJoins = `JOIN hero_localizations zh ON zh.dataset_version_id = h.dataset_version_id AND zh.hero_id = h.hero_id AND zh.locale = 'zh-CN'
+    JOIN hero_localizations en ON en.dataset_version_id = h.dataset_version_id AND en.hero_id = h.hero_id AND en.locale = 'en'`;
+  return { values, conditions, localizationJoins };
+}
 
-  const result = await pool.query<{
-    hero_id: number;
-    internal_name: string;
-    slug: string;
-    primary_attribute: string;
-    attack_type: string;
-    faction: string;
-    complexity: number;
-    cm_enabled: boolean;
-    base_strength: string;
-    base_agility: string;
-    base_intelligence: string;
-    movement_speed: string;
-    zh_name: string;
-    en_name: string;
-    roles: Array<{ role: string; level: number }>;
-  }>(
-    `SELECT h.hero_id, h.internal_name, h.slug, h.primary_attribute, h.attack_type,
-       h.faction, h.complexity, h.cm_enabled, h.base_strength, h.base_agility,
-       h.base_intelligence, h.movement_speed, zh.display_name AS zh_name,
-       en.display_name AS en_name,
-       COALESCE(jsonb_agg(jsonb_build_object('role', r.role, 'level', r.role_level) ORDER BY r.role_level DESC, r.role)
-         FILTER (WHERE r.role IS NOT NULL), '[]'::jsonb) AS roles
-     FROM heroes h
-     JOIN hero_localizations zh ON zh.dataset_version_id = h.dataset_version_id AND zh.hero_id = h.hero_id AND zh.locale = 'zh-CN'
-     JOIN hero_localizations en ON en.dataset_version_id = h.dataset_version_id AND en.hero_id = h.hero_id AND en.locale = 'en'
-     LEFT JOIN hero_roles r ON r.dataset_version_id = h.dataset_version_id AND r.hero_id = h.hero_id
-     WHERE ${conditions.join(" AND ")}
-     GROUP BY h.dataset_version_id, h.hero_id, zh.display_name, en.display_name
-     ORDER BY h.hero_id`,
-    values,
+async function resolveHeroSliceRequest(
+  filters: HeroFilters,
+  request: ListSliceRequest,
+): Promise<ResolvedHeroSliceRequest> {
+  if (request.after !== undefined && request.before !== undefined) {
+    throw new ListRequestError("after 与 before 不能同时提供。");
+  }
+  if (
+    (request.catalogDatasetVersionId === undefined) !==
+    (request.assetDatasetVersionId === undefined)
+  ) {
+    throw new ListRequestError("Catalog 与 asset dataset 必须成对提供。");
+  }
+  if (
+    (request.catalogDatasetVersionId !== undefined &&
+      !isListDatasetVersionId(request.catalogDatasetVersionId)) ||
+    (request.assetDatasetVersionId !== undefined &&
+      !isListDatasetVersionId(request.assetDatasetVersionId))
+  ) {
+    throw new ListRequestError("dataset version 格式无效。");
+  }
+  const filterIdentity = createListFilterIdentity(canonicalHeroQuery(filters));
+  const encoded = request.after ?? request.before;
+  if (encoded !== undefined) {
+    const decoded = decodeListCursor(encoded);
+    assertListCursorMatches(decoded, {
+      entityKind: "heroes",
+      locale: filters.lang,
+      filterIdentity,
+      catalogDatasetVersionId: request.catalogDatasetVersionId,
+      assetDatasetVersionId: request.assetDatasetVersionId,
+    });
+    const cursor = decoded as HeroListCursor;
+    await assertCatalogDatasetPairAvailable(
+      cursor.catalogDatasetVersionId,
+      cursor.assetDatasetVersionId,
+    );
+    return {
+      catalogDatasetVersionId: cursor.catalogDatasetVersionId,
+      assetDatasetVersionId: cursor.assetDatasetVersionId,
+      filterIdentity,
+      direction: request.after !== undefined ? "after" : "before",
+      cursor,
+    };
+  }
+
+  let catalogDatasetVersionId = request.catalogDatasetVersionId;
+  let assetDatasetVersionId = request.assetDatasetVersionId;
+  if (!catalogDatasetVersionId || !assetDatasetVersionId) {
+    const meta = await getActiveCatalogMeta();
+    if (!meta) throw new ListDatasetUnavailableError("当前 Catalog 尚未发布。");
+    catalogDatasetVersionId = meta.datasetVersionId;
+    assetDatasetVersionId = meta.assetDatasetVersionId;
+  }
+  await assertCatalogDatasetPairAvailable(
+    catalogDatasetVersionId,
+    assetDatasetVersionId,
   );
-
   return {
-    meta,
-    latestFailure,
-    heroes: result.rows.map((row) => ({
-      heroId: row.hero_id,
-      internalName: row.internal_name,
-      slug: row.slug,
-      primaryAttribute: row.primary_attribute,
-      attackType: row.attack_type,
-      faction: row.faction,
-      complexity: row.complexity,
-      cmEnabled: row.cm_enabled,
-      baseStrength: row.base_strength,
-      baseAgility: row.base_agility,
-      baseIntelligence: row.base_intelligence,
-      movementSpeed: row.movement_speed,
-      zhName: row.zh_name,
-      enName: row.en_name,
-      roles: row.roles,
-    })),
+    catalogDatasetVersionId,
+    assetDatasetVersionId,
+    filterIdentity,
+    direction: null,
+    cursor: null,
+  };
+}
+
+function emptyHeroSlice(meta: ActiveDatasetMeta): CatalogSlice<HeroCardRow> {
+  return {
+    items: [],
+    datasetVersionId: meta.datasetVersionId,
+    assetDatasetVersionId: meta.assetDatasetVersionId,
+    previousCursor: null,
+    nextCursor: null,
+    total: 0,
+    groupCounts: emptyHeroGroupCounts(),
+  };
+}
+
+function emptyHeroGroupCounts(): HeroGroupCounts {
+  return {
+    strength: 0,
+    agility: 0,
+    intelligence: 0,
+    universal: 0,
+  };
+}
+
+function mapHeroCardRow(row: HeroCardQueryRow): HeroCardRow {
+  return {
+    heroId: row.hero_id,
+    internalName: row.internal_name,
+    slug: row.slug,
+    primaryAttribute: row.primary_attribute,
+    attackType: row.attack_type,
+    faction: row.faction,
+    complexity: row.complexity,
+    cmEnabled: row.cm_enabled,
+    baseStrength: row.base_strength,
+    baseAgility: row.base_agility,
+    baseIntelligence: row.base_intelligence,
+    movementSpeed: row.movement_speed,
+    zhName: row.zh_name,
+    enName: row.en_name,
+    roles: row.roles,
   };
 }
 
@@ -379,6 +657,24 @@ export async function getActiveCatalogMeta(): Promise<ActiveDatasetMeta | null> 
     gateStatus: row.gate_status,
     reviewStatus: row.review_status,
   };
+}
+
+export async function assertCatalogDatasetPairAvailable(
+  catalogDatasetVersionId: string,
+  assetDatasetVersionId: string,
+): Promise<void> {
+  await ensureReady();
+  const result = await getWebPool().query<{ available: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1
+       FROM hero_catalog_dataset_versions catalog
+       JOIN asset_dataset_versions assets
+         ON assets.catalog_dataset_version_id = catalog.id
+       WHERE catalog.id = $1 AND assets.id = $2
+     ) AS available`,
+    [catalogDatasetVersionId, assetDatasetVersionId],
+  );
+  if (!result.rows[0]?.available) throw new ListDatasetUnavailableError();
 }
 
 async function getLatestFailure(

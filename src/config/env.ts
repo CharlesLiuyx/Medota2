@@ -16,12 +16,15 @@ export function loadLocalEnv(): void {
 
 const databaseUrl = z.string().url().startsWith("postgresql://");
 
+export type DatabaseTarget = "main" | "test" | "local";
+
 export function getDatabaseUrl(
   role: "migration" | "worker" | "web",
-  target: "main" | "test" = "main",
+  target: DatabaseTarget = "main",
 ): string {
   loadLocalEnv();
-  const key = `DATABASE_URL_${role.toUpperCase()}${target === "test" ? "_TEST" : ""}`;
+  const suffix = target === "main" ? "" : `_${target.toUpperCase()}`;
+  const key = `DATABASE_URL_${role.toUpperCase()}${suffix}`;
   const parsed = databaseUrl.safeParse(process.env[key]);
   if (!parsed.success) {
     throw new Error(

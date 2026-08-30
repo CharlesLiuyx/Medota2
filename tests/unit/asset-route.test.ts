@@ -22,6 +22,7 @@ const asset = {
   sourceType: "exact",
   logicalPath: "panorama/images/spellicons/antimage_blink_png.vtex_c",
 };
+const assetDatasetVersionId = "11111111-1111-4111-8111-111111111111";
 
 beforeEach(() => {
   mocks.getActiveEntityIcon.mockReset();
@@ -53,6 +54,58 @@ describe("database asset route", () => {
     );
   });
 
+  it("selects the immutable asset dataset requested by v", async () => {
+    const response = await GET(
+      new Request(
+        `http://localhost/valve-assets/ability/antimage_blink?v=${assetDatasetVersionId}&width=96`,
+      ),
+      routeParams("ability", "antimage_blink"),
+    );
+
+    expect(mocks.getActiveEntityIcon).toHaveBeenCalledWith(
+      "ability",
+      "antimage_blink",
+      96,
+      assetDatasetVersionId,
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe(
+      "private, max-age=31536000, immutable",
+    );
+  });
+
+  it("accepts the same UUIDv7 dataset identity as catalog cursors", async () => {
+    const versionId = "01890f47-6e7a-7cc0-98f1-7c3a2bc91e13";
+    const response = await GET(
+      new Request(
+        `http://localhost/valve-assets/ability/antimage_blink?v=${versionId}`,
+      ),
+      routeParams("ability", "antimage_blink"),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.getActiveEntityIcon).toHaveBeenCalledWith(
+      "ability",
+      "antimage_blink",
+      null,
+      versionId,
+    );
+  });
+
+  it("keeps unversioned requests on the current asset head", async () => {
+    const response = await GET(
+      new Request("http://localhost/valve-assets/hero/npc_dota_hero_antimage"),
+      routeParams("hero", "npc_dota_hero_antimage"),
+    );
+
+    expect(mocks.getActiveEntityIcon).toHaveBeenCalledWith(
+      "hero",
+      "npc_dota_hero_antimage",
+      null,
+    );
+    expect(response.status).toBe(200);
+  });
+
   it("honors strong and weak conditional ETags", async () => {
     for (const value of [
       `"${asset.contentSha256}"`,
@@ -81,6 +134,26 @@ describe("database asset route", () => {
     );
 
     expect(response.status).toBe(400);
+    expect(mocks.getActiveEntityIcon).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    "",
+    "asset-dataset-2",
+    "11111111111141118111111111111111",
+    "11111111-1111-0111-8111-111111111111",
+    "11111111-1111-4111-7111-111111111111",
+    `${assetDatasetVersionId}extra`,
+  ])("rejects invalid asset dataset version %j before querying", async (v) => {
+    const response = await GET(
+      new Request(
+        `http://localhost/valve-assets/ability/antimage_blink?v=${encodeURIComponent(v)}`,
+      ),
+      routeParams("ability", "antimage_blink"),
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe("Invalid asset dataset version.");
     expect(mocks.getActiveEntityIcon).not.toHaveBeenCalled();
   });
 });

@@ -2,7 +2,7 @@
 
 > 状态：已由英雄元数据 MVP 落地；后续能力仍按本文演进
 >
-> 最后更新：2026-08-30
+> 最后更新：2026-08-31
 >
 > 适用范围：Medota2 的 Web、应用服务、PostgreSQL、数据 Worker、开发工具链与高性能计算演进
 
@@ -10,7 +10,7 @@
 
 本文独立记录 Medota2 的技术选型上下文、权衡和演进边界。它回答“为什么这样选”和“各运行时负责什么”，不定义某个产品版本的具体页面与字段。
 
-第一个产品切片见[英雄元数据显示 MVP 功能 Spec](../specs/hero-metadata-mvp.md)。本文中的 Web、PostgreSQL、TypeScript Worker、权限边界和工具链已经由 MVP 实现；Rust 和后续重计算能力仍是演进规则。
+第一个产品切片见[英雄元数据显示 MVP 功能 Spec](../specs/hero-metadata-mvp.md)，全产品内容 List 的共享加载与渲染边界见[全局 List 无限滚动与 3× 预加载 Spec](../specs/infinite-lists.md)。后者取代早期分页或一次性 DOM 全量渲染条款。本文中的 Web、PostgreSQL、TypeScript Worker、权限边界和工具链已经由 MVP 实现；Rust 和后续重计算能力仍是演进规则。
 
 ## 2. 项目上下文
 
@@ -119,7 +119,7 @@ MVP 通过 `packageManager` 字段、精确 dependency 版本和 `pnpm-lock.yaml
 - 搜索框、筛选器、Drawer 等需要事件或浏览器 API 的区域才使用 Client Components。
 - 筛选状态优先进入 URL query，以支持刷新、分享和服务端查询。
 - 首期不引入 Redux、Zustand 或 TanStack Query。
-- 浏览器不加载完整来源快照后自行处理；筛选、排序和分页由服务端与 PostgreSQL 完成。
+- 浏览器不加载完整来源快照后自行处理；远程 List 的筛选、排序和双向 cursor continuation 由服务端与 PostgreSQL 完成，本地已有集合通过共享适配器惰性分块渲染。具体合同以[全局 List Spec](../specs/infinite-lists.md)为准。
 - 只有浏览器确实需要调用的能力才建立 Route Handler。
 
 ## 9. 应用服务与 PostgreSQL

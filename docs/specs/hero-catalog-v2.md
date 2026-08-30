@@ -7,6 +7,8 @@
 > 目标版本：Medota2 Hero Catalog v2
 >
 > 前置版本：[英雄元数据显示 MVP 功能 Spec](hero-metadata-mvp.md)
+>
+> 全局列表合同：[全局 List 无限滚动与 3× 预加载 Spec](infinite-lists.md)
 
 ## 1. 文档目的
 
@@ -19,6 +21,8 @@
 - 建立发现、锁定、导入、差异审查、发布和回滚管线，使游戏更新后可以快速、安全地刷新数据。
 
 本文同时作为实现合同与验收记录。Hero Catalog v2 已落地；本文中与旧 MVP 冲突的 Catalog 合同取代[英雄元数据显示 MVP 功能 Spec](hero-metadata-mvp.md)中的对应范围。
+
+全产品 List 的加载与渲染以[全局 List 无限滚动与 3× 预加载 Spec](infinite-lists.md)为更高优先级合同；它取代本文涉及分页、页码 URL 或一次性 DOM 全量渲染的旧条款，Hero Catalog 其余领域、来源和版本边界保持不变。
 
 ## 2. 已确认决策
 
@@ -549,7 +553,7 @@ pnpm data:refresh:catalog
 - 默认只显示 `current`，允许切换到 `indirect`、`defined_unbound`、`template` 和 `deprecated`；
 - 支持名称/internal name、Hero、relation、behavior、damage type、upgrade condition 和状态筛选；
 - 列表显示图标、双语名称、internal name、所属 Hero 摘要、核心标签和逐级 cost/cooldown 摘要；
-- 所有筛选、排序和分页状态写入 URL。
+- 搜索、筛选、排序和 locale 写入 URL；分页、页码 URL 和一次性 DOM 全量渲染条款已由[全局 List Spec](infinite-lists.md)取代，cursor 与滚动位置不作为公开查询状态。
 
 ### 13.4 Ability detail `/abilities/[internal-name]`
 

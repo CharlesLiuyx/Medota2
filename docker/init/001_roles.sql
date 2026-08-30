@@ -6,3 +6,8 @@ GRANT CONNECT ON DATABASE medota2 TO medota2_worker, medota2_web;
 CREATE DATABASE medota2_test OWNER medota2_owner;
 \connect medota2_test
 GRANT CONNECT ON DATABASE medota2_test TO medota2_worker, medota2_web;
+
+\connect medota2
+CREATE DATABASE medota2_local OWNER medota2_owner;
+\connect medota2_local
+GRANT CONNECT ON DATABASE medota2_local TO medota2_worker, medota2_web;

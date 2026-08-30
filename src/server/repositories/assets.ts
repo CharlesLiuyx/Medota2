@@ -42,23 +42,30 @@ export async function getActiveEntityIcon(
   entityType: AssetEntityType,
   entityKey: string,
   requestedWidth: number | null,
+  assetDatasetVersionId?: string,
 ): Promise<ActiveAssetVariant | null> {
   await ensureReady();
   const result = await getWebPool().query<ActiveAssetVariantRow>(
     `SELECT b.content, b.content_sha256, b.mime_type, b.width, b.height,
        b.byte_size::text, v.lod_key, v.target_width, o.source_type, o.logical_path
-     FROM dataset_heads catalog_head
-     JOIN asset_dataset_heads asset_head
-       ON asset_head.catalog_dataset_version_id = catalog_head.catalog_dataset_version_id
-     JOIN entity_asset_bindings binding
-       ON binding.asset_dataset_version_id = asset_head.asset_dataset_version_id
+     FROM entity_asset_bindings binding
      JOIN asset_objects o ON o.id = binding.asset_object_id
      JOIN asset_variants v ON v.asset_object_id = o.id
      JOIN asset_blobs b ON b.content_sha256 = v.blob_sha256
-     WHERE catalog_head.dataset_key = 'hero_catalog'
-       AND binding.entity_type = $1
+     WHERE binding.entity_type = $1
        AND binding.entity_key = $2
        AND binding.asset_kind = 'icon'
+       AND ${
+         assetDatasetVersionId
+           ? "binding.asset_dataset_version_id = $4::uuid"
+           : `binding.asset_dataset_version_id = (
+               SELECT asset_head.asset_dataset_version_id
+               FROM dataset_heads catalog_head
+               JOIN asset_dataset_heads asset_head
+                 ON asset_head.catalog_dataset_version_id = catalog_head.catalog_dataset_version_id
+               WHERE catalog_head.dataset_key = 'hero_catalog'
+             )`
+       }
      ORDER BY
        CASE
          WHEN $3::integer IS NULL THEN CASE WHEN v.lod_key = 'original' THEN 0 ELSE 1 END
@@ -79,7 +86,9 @@ export async function getActiveEntityIcon(
        CASE WHEN v.lod_key <> 'original' THEN v.target_width END ASC NULLS LAST,
        v.lod_key
      LIMIT 1`,
-    [entityType, entityKey, requestedWidth],
+    assetDatasetVersionId
+      ? [entityType, entityKey, requestedWidth, assetDatasetVersionId]
+      : [entityType, entityKey, requestedWidth],
   );
   const row = result.rows[0];
   if (!row) return null;

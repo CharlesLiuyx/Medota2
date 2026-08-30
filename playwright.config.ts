@@ -18,15 +18,14 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   webServer: {
-    command: "pnpm test:e2e:prepare && pnpm exec next dev --webpack -p 3100",
+    command: "pnpm dev:e2e",
     url: "http://127.0.0.1:3100/heroes",
     reuseExistingServer: false,
     timeout: 120_000,
     env: {
-      DATABASE_URL_WEB:
+      DATABASE_URL_WEB_TEST:
         process.env.DATABASE_URL_WEB_TEST ??
         "postgresql://medota2_web:medota2_web@127.0.0.1:54321/medota2_test",
-      NEXT_DIST_DIR: ".next-e2e",
     },
   },
   projects: [

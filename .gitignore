@@ -16,6 +16,8 @@ coverage/
 node_modules/
 .next/
 .next-e2e/
+.next-local/
+.next-preview/
 .next-validation/
 .playwright-cli/
 dist/

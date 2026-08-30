@@ -1,3 +1,4 @@
+import { isDatasetVersionId } from "@/domain/dataset-version";
 import { getActiveEntityIcon } from "@/server/repositories/assets";
 
 export const dynamic = "force-dynamic";
@@ -17,14 +18,21 @@ export async function GET(
   if (width === undefined) {
     return new Response("Invalid asset width.", { status: 400 });
   }
-  const asset = await getActiveEntityIcon(entity, key, width);
+  const assetDatasetVersionId = requestedAssetDatasetVersion(request);
+  if (assetDatasetVersionId === undefined) {
+    return new Response("Invalid asset dataset version.", { status: 400 });
+  }
+  const asset = assetDatasetVersionId
+    ? await getActiveEntityIcon(entity, key, width, assetDatasetVersionId)
+    : await getActiveEntityIcon(entity, key, width);
   if (!asset)
     return new Response("Database asset not available.", { status: 404 });
   const etag = `"${asset.contentSha256}"`;
-  // Asset URLs remain stable while the database head is versioned. Keep bytes
-  // in the browser cache, but always revalidate so a promoted dataset is
-  // visible immediately instead of serving the previous icon for an hour.
-  const cacheControl = "private, no-cache";
+  // Explicit dataset URLs are immutable. Unversioned compatibility URLs still
+  // revalidate so a newly promoted asset head becomes visible immediately.
+  const cacheControl = assetDatasetVersionId
+    ? "private, max-age=31536000, immutable"
+    : "private, no-cache";
   if (matchesEtag(request.headers.get("if-none-match"), etag)) {
     return new Response(null, {
       status: 304,
@@ -41,6 +49,14 @@ export async function GET(
       "X-Medota2-Asset-LoD": asset.lodKey,
     },
   });
+}
+
+function requestedAssetDatasetVersion(
+  request: Request,
+): string | null | undefined {
+  const value = new URL(request.url).searchParams.get("v");
+  if (value === null) return null;
+  return isDatasetVersionId(value) ? value : undefined;
 }
 
 function requestedWidth(request: Request): number | null | undefined {

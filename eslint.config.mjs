@@ -8,6 +8,8 @@ export default defineConfig([
   globalIgnores([
     ".next/**",
     ".next-e2e/**",
+    ".next-local/**",
+    ".next-preview/**",
     ".next-validation/**",
     ".medota2/**",
     "coverage/**",

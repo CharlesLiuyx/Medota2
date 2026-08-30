@@ -1,15 +1,26 @@
 import type { PoolClient } from "pg";
 import pg from "pg";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { loadLocalEnv } from "@/config/env";
 import { ASSET_IMPORT_LOCK_KEYS } from "@/domain/assets";
+import {
+  CATALOG_SLICE_LIMIT,
+  type CatalogSlice,
+} from "@/domain/catalog-stream";
 import { CATALOG_IMPORT_LOCK_KEYS } from "@/importers/dota-vpk/constants";
 import { sha256 } from "@/lib/hash";
+import type { getAbilityCatalogSlice as GetAbilityCatalogSlice } from "@/server/repositories/abilities";
+import type { getHeroCatalogSlice as GetHeroCatalogSlice } from "@/server/repositories/heroes";
+import type { AbilityFilters } from "@/server/services/ability-filters";
+import type { ListSliceRequest } from "@/server/services/catalog-cursor";
+import type { HeroFilters } from "@/server/services/hero-filters";
 import {
   assertSchemaCurrent,
   currentTargetSchemaVersion,
 } from "@/server/db/migrations";
 import { runMigrations } from "@/server/db/run-migrations";
+
+vi.mock("server-only", () => ({}));
 
 const { Pool } = pg;
 loadLocalEnv();
@@ -21,6 +32,10 @@ const owner = new Pool({ connectionString: migrationUrl, max: 1 });
 const worker = new Pool({ connectionString: workerUrl, max: 1 });
 const competingWorker = new Pool({ connectionString: workerUrl, max: 1 });
 const web = new Pool({ connectionString: webUrl, max: 1 });
+const originalWebUrl = process.env.DATABASE_URL_WEB;
+let repositoryWebPool: pg.Pool | undefined;
+let getAbilityCatalogSlice: typeof GetAbilityCatalogSlice;
+let getHeroCatalogSlice: typeof GetHeroCatalogSlice;
 let identity = 0;
 
 describe("PostgreSQL Hero Catalog v2 contract", () => {
@@ -33,6 +48,11 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
     await owner.query(
       "TRUNCATE source_snapshots, import_runs, reference_snapshots, asset_blobs CASCADE",
     );
+    process.env.DATABASE_URL_WEB = webUrl;
+    ({ getAbilityCatalogSlice } =
+      await import("@/server/repositories/abilities"));
+    ({ getHeroCatalogSlice } = await import("@/server/repositories/heroes"));
+    repositoryWebPool = (await import("@/server/db/client")).getWebPool();
   });
 
   afterAll(async () => {
@@ -41,7 +61,10 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
       worker.end(),
       competingWorker.end(),
       web.end(),
+      repositoryWebPool?.end(),
     ]);
+    if (originalWebUrl === undefined) delete process.env.DATABASE_URL_WEB;
+    else process.env.DATABASE_URL_WEB = originalWebUrl;
   });
 
   it("applies the checked migration ledger and creates the shared catalog schema", async () => {
@@ -461,6 +484,221 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
     }
   });
 
+  it("keeps bidirectional catalog keysets complete, filtered and pinned across promotion", async () => {
+    const previousHead = (
+      await owner.query<PreviousCatalogHead>(
+        `SELECT catalog_dataset_version_id AS id, updated_at
+           FROM dataset_heads WHERE dataset_key = 'hero_catalog'`,
+      )
+    ).rows[0];
+    const fixtures: StreamFixture[] = [];
+
+    try {
+      const fixtureClient = await worker.connect();
+      try {
+        await fixtureClient.query("BEGIN");
+        await lockCatalogPromotion(fixtureClient);
+        const oldFixture = await insertStreamFixture(
+          fixtureClient,
+          `stream_old_${identity + 1}`,
+          120,
+        );
+        const newFixture = await insertStreamFixture(
+          fixtureClient,
+          `stream_new_${identity + 1}`,
+          120,
+        );
+        fixtures.push(oldFixture, newFixture);
+        await fixtureClient.query(
+          "SELECT promote_hero_catalog_version($1, true)",
+          [oldFixture.catalogDatasetVersionId],
+        );
+        await fixtureClient.query("COMMIT");
+      } catch (error) {
+        await fixtureClient.query("ROLLBACK");
+        throw error;
+      } finally {
+        fixtureClient.release();
+      }
+
+      const [oldFixture, newFixture] = fixtures;
+      const abilityFilters = defaultAbilityFilters();
+      const heroFilters = defaultHeroFilters();
+      const abilityTraversal = await traverseCatalog(
+        (request) =>
+          getAbilityCatalogSlice(abilityFilters, {
+            catalogDatasetVersionId: oldFixture.catalogDatasetVersionId,
+            assetDatasetVersionId: oldFixture.assetDatasetVersionId,
+            ...request,
+          }),
+        (ability) => ability.internalName,
+      );
+      const heroTraversal = await traverseCatalog(
+        (request) =>
+          getHeroCatalogSlice(heroFilters, {
+            catalogDatasetVersionId: oldFixture.catalogDatasetVersionId,
+            assetDatasetVersionId: oldFixture.assetDatasetVersionId,
+            ...request,
+          }),
+        (hero) => hero.heroId,
+      );
+      const abilityBaseline = await abilityBaselineKeys(
+        oldFixture.catalogDatasetVersionId,
+      );
+      const heroBaseline = await heroBaselineKeys(
+        oldFixture.catalogDatasetVersionId,
+      );
+
+      expect(abilityTraversal.forwardKeys).toEqual(abilityBaseline);
+      expect(abilityTraversal.backwardKeys).toEqual(abilityBaseline);
+      expect(abilityTraversal.chunkCount).toBeGreaterThanOrEqual(3);
+      expect(heroTraversal.forwardKeys).toEqual(heroBaseline);
+      expect(heroTraversal.backwardKeys).toEqual(heroBaseline);
+      expect(heroTraversal.chunkCount).toBeGreaterThanOrEqual(3);
+      expect(heroTraversal.first.groupCounts).toEqual({
+        strength: 30,
+        agility: 30,
+        intelligence: 30,
+        universal: 30,
+      });
+
+      const tieKeys = [
+        `${oldFixture.label}_ability_049`,
+        `${oldFixture.label}_ability_050`,
+      ];
+      const firstTieIndex = abilityTraversal.forwardKeys.indexOf(tieKeys[0]);
+      expect(firstTieIndex).toBeGreaterThanOrEqual(0);
+      expect(
+        abilityTraversal.forwardKeys.slice(firstTieIndex, firstTieIndex + 2),
+      ).toEqual(tieKeys);
+
+      const filteredAbilities: AbilityFilters = {
+        ...abilityFilters,
+        q: `${oldFixture.label}_ability_0`,
+        relation: "talent",
+        behavior: "DOTA_ABILITY_BEHAVIOR_PASSIVE",
+        damage: "DAMAGE_TYPE_MAGICAL",
+        upgrade: "scepter",
+      };
+      const filteredAbilityTraversal = await traverseCatalog(
+        (request) =>
+          getAbilityCatalogSlice(filteredAbilities, {
+            catalogDatasetVersionId: oldFixture.catalogDatasetVersionId,
+            assetDatasetVersionId: oldFixture.assetDatasetVersionId,
+            ...request,
+          }),
+        (ability) => ability.internalName,
+      );
+      expect(filteredAbilityTraversal.forwardKeys).toEqual(
+        abilityBaseline.filter((key) => {
+          const ordinal = streamOrdinal(key);
+          return ordinal < 100 && ordinal % 10 === 0;
+        }),
+      );
+
+      const heroBoundAbility = await getAbilityCatalogSlice(
+        {
+          ...abilityFilters,
+          hero: `${oldFixture.label}_010`,
+        },
+        {
+          catalogDatasetVersionId: oldFixture.catalogDatasetVersionId,
+          assetDatasetVersionId: oldFixture.assetDatasetVersionId,
+        },
+      );
+      expect(heroBoundAbility.items.map((item) => item.internalName)).toEqual([
+        `${oldFixture.label}_ability_010`,
+      ]);
+
+      const filteredHeroes: HeroFilters = {
+        q: oldFixture.label,
+        attributes: ["agility"],
+        roles: ["support"],
+        attacks: ["ranged"],
+        cm: "true",
+        lang: "zh-CN",
+      };
+      const filteredHeroTraversal = await traverseCatalog(
+        (request) =>
+          getHeroCatalogSlice(filteredHeroes, {
+            catalogDatasetVersionId: oldFixture.catalogDatasetVersionId,
+            assetDatasetVersionId: oldFixture.assetDatasetVersionId,
+            ...request,
+          }),
+        (hero) => hero.heroId,
+      );
+      expect(filteredHeroTraversal.forwardKeys).toEqual(
+        heroBaseline.filter(
+          (heroId) => heroId % 4 === 2 && heroId % 2 === 0 && heroId % 3 !== 0,
+        ),
+      );
+
+      expect(
+        (await getAbilityCatalogSlice(abilityFilters)).datasetVersionId,
+      ).toBe(oldFixture.catalogDatasetVersionId);
+      expect((await getHeroCatalogSlice(heroFilters)).datasetVersionId).toBe(
+        oldFixture.catalogDatasetVersionId,
+      );
+
+      const promotionClient = await worker.connect();
+      try {
+        await promotionClient.query("BEGIN");
+        await lockCatalogPromotion(promotionClient);
+        await promotionClient.query(
+          "SELECT promote_hero_catalog_version($1, true)",
+          [newFixture.catalogDatasetVersionId],
+        );
+        await promotionClient.query("COMMIT");
+      } catch (error) {
+        await promotionClient.query("ROLLBACK");
+        throw error;
+      } finally {
+        promotionClient.release();
+      }
+
+      const currentAbilities = await getAbilityCatalogSlice(abilityFilters);
+      const currentHeroes = await getHeroCatalogSlice(heroFilters);
+      expect(currentAbilities.datasetVersionId).toBe(
+        newFixture.catalogDatasetVersionId,
+      );
+      expect(currentHeroes.datasetVersionId).toBe(
+        newFixture.catalogDatasetVersionId,
+      );
+
+      const oldAbilityContinuation = await getAbilityCatalogSlice(
+        abilityFilters,
+        { after: abilityTraversal.first.nextCursor! },
+      );
+      const oldHeroContinuation = await getHeroCatalogSlice(heroFilters, {
+        after: heroTraversal.first.nextCursor!,
+      });
+      expect(oldAbilityContinuation.datasetVersionId).toBe(
+        oldFixture.catalogDatasetVersionId,
+      );
+      expect(oldAbilityContinuation.assetDatasetVersionId).toBe(
+        oldFixture.assetDatasetVersionId,
+      );
+      expect(
+        oldAbilityContinuation.items.every((item) =>
+          item.internalName.startsWith(oldFixture.label),
+        ),
+      ).toBe(true);
+      expect(oldHeroContinuation.datasetVersionId).toBe(
+        oldFixture.catalogDatasetVersionId,
+      );
+      expect(oldHeroContinuation.assetDatasetVersionId).toBe(
+        oldFixture.assetDatasetVersionId,
+      );
+      expect(
+        oldHeroContinuation.items.every((item) =>
+          item.internalName.includes(oldFixture.label),
+        ),
+      ).toBe(true);
+    } finally {
+      await cleanupStreamFixtures(fixtures, previousHead);
+    }
+  }, 60_000);
+
   it("enforces canonical Hero and Ability constraints", async () => {
     const result = await owner.query<{ constraints: number }>(
       `SELECT count(*)::int AS constraints
@@ -471,11 +709,492 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
   });
 });
 
+interface PreviousCatalogHead {
+  id: string;
+  updated_at: Date;
+}
+
+interface StreamFixture {
+  label: string;
+  catalogDatasetVersionId: string;
+  assetDatasetVersionId: string;
+  sourceSnapshotId: string;
+  importRunId: string;
+}
+
+interface CatalogTraversal<T, Key extends string | number> {
+  first: CatalogSlice<T>;
+  forwardKeys: Key[];
+  backwardKeys: Key[];
+  chunkCount: number;
+}
+
+async function insertStreamFixture(
+  client: PoolClient,
+  label: string,
+  count: number,
+): Promise<StreamFixture> {
+  const catalogDatasetVersionId = await insertVersion(client, "green", {
+    publishAssets: false,
+    seedEntities: false,
+  });
+  const identityRow = (
+    await client.query<{
+      source_snapshot_id: string;
+      import_run_id: string;
+    }>(
+      `SELECT source_snapshot_id, import_run_id
+       FROM hero_catalog_dataset_versions WHERE id = $1`,
+      [catalogDatasetVersionId],
+    )
+  ).rows[0];
+  await client.query(
+    `INSERT INTO heroes (
+       dataset_version_id, hero_id, internal_name, slug, enabled, cm_enabled,
+       random_enabled, primary_attribute, attack_type, faction, complexity,
+       base_strength, strength_gain, base_agility, agility_gain,
+       base_intelligence, intelligence_gain, base_health, base_mana,
+       base_health_regen, base_mana_regen, base_armor, magic_resistance,
+       base_attack_damage_min, base_attack_damage_max, base_attack_speed,
+       attack_rate, attack_animation_point, attack_range, projectile_speed,
+       movement_speed, turn_rate, day_vision, night_vision
+     )
+     SELECT $1, ordinal,
+       'npc_dota_hero_' || $2 || '_' || lpad(ordinal::text, 3, '0'),
+       $2 || '_' || lpad(ordinal::text, 3, '0'), true,
+       ordinal % 3 <> 0, true,
+       CASE (ordinal - 1) % 4
+         WHEN 0 THEN 'strength'
+         WHEN 1 THEN 'agility'
+         WHEN 2 THEN 'intelligence'
+         ELSE 'universal'
+       END,
+       CASE WHEN ordinal % 2 = 0 THEN 'ranged' ELSE 'melee' END,
+       CASE WHEN ordinal % 2 = 0 THEN 'radiant' ELSE 'dire' END, 1,
+       20, 2, 20, 2, 20, 2, 200, 75, 1, 1, 2, 25,
+       30, 35, 100, 1.7, 0.3, 150, 900, 300, 0.6, 1800, 800
+     FROM generate_series(1, $3::integer) AS ordinal`,
+    [catalogDatasetVersionId, label, count],
+  );
+  await client.query(
+    `INSERT INTO hero_localizations (
+       dataset_version_id, hero_id, locale, display_name, name_source_path,
+       name_token
+     )
+     SELECT $1, ordinal, locale,
+       CASE WHEN locale = 'zh-CN'
+         THEN '测试英雄 ' || lpad(ordinal::text, 3, '0')
+         ELSE 'Stream Hero ' || lpad(ordinal::text, 3, '0')
+       END,
+       'resource/localization/' || locale || '.txt',
+       'DOTA_Tooltip_hero_' || $2 || '_' || lpad(ordinal::text, 3, '0')
+     FROM generate_series(1, $3::integer) AS ordinal
+     CROSS JOIN (VALUES ('en'), ('zh-CN')) AS locales(locale)`,
+    [catalogDatasetVersionId, label, count],
+  );
+  await client.query(
+    `INSERT INTO hero_roles (dataset_version_id, hero_id, role, role_level)
+     SELECT $1, ordinal,
+       CASE WHEN ordinal % 2 = 0 THEN 'support' ELSE 'carry' END, 2
+     FROM generate_series(1, $2::integer) AS ordinal`,
+    [catalogDatasetVersionId, count],
+  );
+
+  const abilityHash = sha256(`stream-ability-${label}`);
+  await client.query(
+    `INSERT INTO abilities (
+       dataset_version_id, internal_name, declaration_kind, definition_kind,
+       catalog_status, behavior, damage_type, is_innate, is_passive, is_hidden,
+       is_ultimate, has_scepter_upgrade, has_shard_upgrade,
+       is_granted_by_scepter, is_granted_by_shard, texture_name,
+       raw_sha256, resolved_sha256
+     )
+     SELECT $1, $2 || '_ability_' || lpad(ordinal::text, 3, '0'),
+       'top_level', 'ability', 'current',
+       CASE WHEN ordinal % 2 = 0
+         THEN ARRAY['DOTA_ABILITY_BEHAVIOR_PASSIVE']::text[]
+         ELSE ARRAY[]::text[]
+       END,
+       CASE WHEN ordinal % 2 = 0 THEN 'DAMAGE_TYPE_MAGICAL' ELSE NULL END,
+       false, ordinal % 2 = 0, false, false,
+       ordinal % 5 = 0, ordinal % 7 = 0,
+       ordinal % 5 = 0, ordinal % 7 = 0,
+       $2 || '_ability_' || lpad(ordinal::text, 3, '0'), $4, $4
+     FROM generate_series(1, $3::integer) AS ordinal`,
+    [catalogDatasetVersionId, label, count, abilityHash],
+  );
+  await client.query(
+    `INSERT INTO ability_localizations (
+       dataset_version_id, ability_internal_name, locale, display_name,
+       source_path, name_token, description_token, lore_token,
+       scepter_token, shard_token
+     )
+     SELECT $1, $2 || '_ability_' || lpad(ordinal::text, 3, '0'), locale,
+       CASE
+         WHEN locale = 'zh-CN' AND ordinal IN (49, 50) THEN '重复技能名'
+         WHEN locale = 'zh-CN' THEN '测试技能 ' || lpad(ordinal::text, 3, '0')
+         ELSE 'Stream Ability ' || lpad(ordinal::text, 3, '0')
+       END,
+       'resource/localization/abilities_' || locale || '.txt',
+       'DOTA_Tooltip_ability_' || $2 || '_' || lpad(ordinal::text, 3, '0'),
+       '', '', '', ''
+     FROM generate_series(1, $3::integer) AS ordinal
+     CROSS JOIN (VALUES ('en'), ('zh-CN')) AS locales(locale)`,
+    [catalogDatasetVersionId, label, count],
+  );
+  await client.query(
+    `INSERT INTO hero_ability_bindings (
+       dataset_version_id, hero_id, ability_internal_name, source_slot,
+       relation_kind, ordinal, is_current, source_path, source_line,
+       derivation_version
+     )
+     SELECT $1, ordinal,
+       $2 || '_ability_' || lpad(ordinal::text, 3, '0'),
+       'slot_' || ordinal,
+       CASE WHEN ordinal % 2 = 0 THEN 'talent' ELSE 'loadout' END,
+       ordinal, true, 'scripts/npc/' || $2 || '.txt', ordinal,
+       'integration-stream-v1'
+     FROM generate_series(1, $3::integer) AS ordinal`,
+    [catalogDatasetVersionId, label, count],
+  );
+
+  const firstHeroKey = `npc_dota_hero_${label}_001`;
+  const firstAbilityKey = `${label}_ability_001`;
+  const assetDataset = await insertAssetDataset(
+    client,
+    catalogDatasetVersionId,
+    {
+      heroKey: firstHeroKey,
+      abilityKey: firstAbilityKey,
+      objectSourceType: "exact",
+    },
+  );
+  await client.query(
+    `INSERT INTO entity_asset_bindings (
+       asset_dataset_version_id, entity_type, entity_key, asset_kind,
+       asset_object_id, resolution_kind, source_status, requested_logical_path
+     )
+     SELECT $1, 'hero', internal_name, 'icon', $2, 'exact', 'available',
+       'panorama/images/heroes/selection/' || slug || '_png.vtex_c'
+     FROM heroes
+     WHERE dataset_version_id = $3 AND internal_name <> $4`,
+    [
+      assetDataset.id,
+      assetDataset.objectId,
+      catalogDatasetVersionId,
+      firstHeroKey,
+    ],
+  );
+  await client.query(
+    `INSERT INTO entity_asset_bindings (
+       asset_dataset_version_id, entity_type, entity_key, asset_kind,
+       asset_object_id, resolution_kind, source_status, requested_logical_path
+     )
+     SELECT $1, 'ability', internal_name, 'icon', $2, 'exact', 'available',
+       'panorama/images/spellicons/' || internal_name || '_png.vtex_c'
+     FROM abilities
+     WHERE dataset_version_id = $3 AND internal_name <> $4`,
+    [
+      assetDataset.id,
+      assetDataset.objectId,
+      catalogDatasetVersionId,
+      firstAbilityKey,
+    ],
+  );
+  await client.query("SELECT promote_asset_dataset_version($1)", [
+    assetDataset.id,
+  ]);
+
+  return {
+    label,
+    catalogDatasetVersionId,
+    assetDatasetVersionId: assetDataset.id,
+    sourceSnapshotId: identityRow.source_snapshot_id,
+    importRunId: identityRow.import_run_id,
+  };
+}
+
+async function lockCatalogPromotion(client: PoolClient): Promise<void> {
+  await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
+    ...CATALOG_IMPORT_LOCK_KEYS,
+  ]);
+  await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
+    ...ASSET_IMPORT_LOCK_KEYS,
+  ]);
+}
+
+function defaultAbilityFilters(): AbilityFilters {
+  return {
+    q: "",
+    status: "current",
+    hero: "",
+    relation: "all",
+    behavior: "",
+    damage: "",
+    upgrade: "all",
+    lang: "zh-CN",
+  };
+}
+
+function defaultHeroFilters(): HeroFilters {
+  return {
+    q: "",
+    attributes: [],
+    roles: [],
+    attacks: [],
+    cm: "all",
+    lang: "zh-CN",
+  };
+}
+
+async function traverseCatalog<T, Key extends string | number>(
+  load: (request: ListSliceRequest) => Promise<CatalogSlice<T>>,
+  getKey: (item: T) => Key,
+): Promise<CatalogTraversal<T, Key>> {
+  const first = await load({});
+  const forwardKeys = first.items.map(getKey);
+  let current = first;
+  let chunkCount = 1;
+  const consumedAfter = new Set<string>();
+  while (current.nextCursor) {
+    expect(consumedAfter.has(current.nextCursor)).toBe(false);
+    consumedAfter.add(current.nextCursor);
+    current = await load({ after: current.nextCursor });
+    expect(current.total).toBeUndefined();
+    expect(current.groupCounts).toBeUndefined();
+    expect(current.datasetVersionId).toBe(first.datasetVersionId);
+    expect(current.assetDatasetVersionId).toBe(first.assetDatasetVersionId);
+    forwardKeys.push(...current.items.map(getKey));
+    chunkCount += 1;
+    if (chunkCount > 100) throw new Error("forward cursor did not terminate");
+  }
+
+  const backwardKeys = current.items.map(getKey);
+  let backwardChunks = 1;
+  const consumedBefore = new Set<string>();
+  while (current.previousCursor) {
+    expect(consumedBefore.has(current.previousCursor)).toBe(false);
+    consumedBefore.add(current.previousCursor);
+    current = await load({ before: current.previousCursor });
+    expect(current.total).toBeUndefined();
+    expect(current.groupCounts).toBeUndefined();
+    backwardKeys.unshift(...current.items.map(getKey));
+    backwardChunks += 1;
+    if (backwardChunks > 100)
+      throw new Error("backward cursor did not terminate");
+  }
+
+  expect(backwardChunks).toBe(chunkCount);
+  expect(first.total).toBe(forwardKeys.length);
+  expect(new Set(forwardKeys).size).toBe(forwardKeys.length);
+  expect(backwardKeys).toEqual(forwardKeys);
+  expect(first.items.length).toBeLessThanOrEqual(CATALOG_SLICE_LIMIT);
+  return { first, forwardKeys, backwardKeys, chunkCount };
+}
+
+async function abilityBaselineKeys(
+  datasetVersionId: string,
+): Promise<string[]> {
+  const result = await web.query<{ internal_name: string }>(
+    `SELECT a.internal_name
+     FROM abilities a
+     LEFT JOIN ability_localizations requested
+       ON requested.dataset_version_id = a.dataset_version_id
+       AND requested.ability_internal_name = a.internal_name
+       AND requested.locale = 'zh-CN'
+     LEFT JOIN ability_localizations english
+       ON english.dataset_version_id = a.dataset_version_id
+       AND english.ability_internal_name = a.internal_name
+       AND english.locale = 'en'
+     WHERE a.dataset_version_id = $1 AND a.catalog_status = 'current'
+     ORDER BY COALESCE(requested.display_name, english.display_name,
+       a.internal_name) COLLATE "C", a.internal_name COLLATE "C"`,
+    [datasetVersionId],
+  );
+  return result.rows.map((row) => row.internal_name);
+}
+
+async function heroBaselineKeys(datasetVersionId: string): Promise<number[]> {
+  const result = await web.query<{ hero_id: number }>(
+    `SELECT hero_id FROM heroes
+     WHERE dataset_version_id = $1
+     ORDER BY CASE primary_attribute
+       WHEN 'strength' THEN 0
+       WHEN 'agility' THEN 1
+       WHEN 'intelligence' THEN 2
+       WHEN 'universal' THEN 3
+       ELSE 4 END, hero_id`,
+    [datasetVersionId],
+  );
+  return result.rows.map((row) => row.hero_id);
+}
+
+function streamOrdinal(key: string): number {
+  const match = /_(\d{3})$/u.exec(key);
+  if (!match) throw new Error(`stream key has no ordinal: ${key}`);
+  return Number(match[1]);
+}
+
+async function cleanupStreamFixtures(
+  fixtures: StreamFixture[],
+  previousHead: PreviousCatalogHead | undefined,
+): Promise<void> {
+  if (fixtures.length === 0) return;
+  const catalogIds = fixtures.map((fixture) => fixture.catalogDatasetVersionId);
+  const assetDatasetIds = fixtures.map(
+    (fixture) => fixture.assetDatasetVersionId,
+  );
+  const sourceSnapshotIds = fixtures.map((fixture) => fixture.sourceSnapshotId);
+  const importRunIds = fixtures.map((fixture) => fixture.importRunId);
+
+  await owner.query("BEGIN");
+  try {
+    if (previousHead) {
+      await owner.query(
+        `INSERT INTO dataset_heads
+          (dataset_key, catalog_dataset_version_id, updated_at)
+         VALUES ('hero_catalog', $1, $2)
+         ON CONFLICT (dataset_key) DO UPDATE
+         SET catalog_dataset_version_id = EXCLUDED.catalog_dataset_version_id,
+             updated_at = EXCLUDED.updated_at`,
+        [previousHead.id, previousHead.updated_at],
+      );
+    } else {
+      await owner.query(
+        "DELETE FROM dataset_heads WHERE dataset_key = 'hero_catalog'",
+      );
+    }
+
+    const objectIds = (
+      await owner.query<{ id: string }>(
+        `SELECT DISTINCT asset_object_id AS id
+         FROM entity_asset_bindings
+         WHERE asset_dataset_version_id = ANY($1::uuid[])`,
+        [assetDatasetIds],
+      )
+    ).rows.map((row) => row.id);
+    const blobHashes = objectIds.length
+      ? (
+          await owner.query<{ hash: string }>(
+            `SELECT DISTINCT blob_sha256 AS hash FROM asset_variants
+             WHERE asset_object_id = ANY($1::uuid[])`,
+            [objectIds],
+          )
+        ).rows.map((row) => row.hash)
+      : [];
+
+    await owner.query(
+      "DELETE FROM asset_dataset_heads WHERE catalog_dataset_version_id = ANY($1::uuid[])",
+      [catalogIds],
+    );
+    await owner.query(
+      "DELETE FROM entity_asset_bindings WHERE asset_dataset_version_id = ANY($1::uuid[])",
+      [assetDatasetIds],
+    );
+    await owner.query(
+      "DELETE FROM asset_dataset_versions WHERE id = ANY($1::uuid[])",
+      [assetDatasetIds],
+    );
+    if (objectIds.length) {
+      await owner.query(
+        "DELETE FROM asset_variants WHERE asset_object_id = ANY($1::uuid[])",
+        [objectIds],
+      );
+      await owner.query(
+        "DELETE FROM asset_objects WHERE id = ANY($1::uuid[])",
+        [objectIds],
+      );
+    }
+    if (blobHashes.length) {
+      await owner.query(
+        "DELETE FROM asset_blobs WHERE content_sha256 = ANY($1::text[])",
+        [blobHashes],
+      );
+    }
+
+    for (const table of [
+      "facet_ability_bindings",
+      "facets",
+      "hero_ability_bindings",
+      "ability_values",
+      "ability_localizations",
+      "ability_id_mappings",
+      "abilities",
+      "hero_roles",
+      "hero_localizations",
+      "hero_source_records",
+      "heroes",
+      "entity_source_records",
+      "asset_refs",
+    ]) {
+      await owner.query(
+        `DELETE FROM ${table} WHERE dataset_version_id = ANY($1::uuid[])`,
+        [catalogIds],
+      );
+    }
+    await owner.query(
+      "DELETE FROM catalog_semantic_diffs WHERE candidate_version_id = ANY($1::uuid[])",
+      [catalogIds],
+    );
+    await owner.query(
+      "DELETE FROM catalog_reviews WHERE candidate_version_id = ANY($1::uuid[])",
+      [catalogIds],
+    );
+    await owner.query(
+      `DELETE FROM catalog_rollbacks
+       WHERE from_version_id = ANY($1::uuid[]) OR to_version_id = ANY($1::uuid[])`,
+      [catalogIds],
+    );
+    await owner.query(
+      "DELETE FROM hero_catalog_dataset_versions WHERE id = ANY($1::uuid[])",
+      [catalogIds],
+    );
+    await owner.query("DELETE FROM import_runs WHERE id = ANY($1::uuid[])", [
+      importRunIds,
+    ]);
+    await owner.query(
+      "DELETE FROM source_snapshots WHERE id = ANY($1::uuid[])",
+      [sourceSnapshotIds],
+    );
+    const residual = (
+      await owner.query<{ count: number }>(
+        `SELECT (
+           (SELECT count(*) FROM hero_catalog_dataset_versions
+             WHERE id = ANY($1::uuid[]))
+           + (SELECT count(*) FROM asset_dataset_versions
+             WHERE id = ANY($2::uuid[]))
+           + (SELECT count(*) FROM import_runs WHERE id = ANY($3::uuid[]))
+           + (SELECT count(*) FROM source_snapshots WHERE id = ANY($4::uuid[]))
+         )::int AS count`,
+        [catalogIds, assetDatasetIds, importRunIds, sourceSnapshotIds],
+      )
+    ).rows[0].count;
+    if (residual !== 0)
+      throw new Error("stream fixture cleanup left rows behind");
+    const restoredHead = (
+      await owner.query<{ id: string }>(
+        `SELECT catalog_dataset_version_id AS id
+         FROM dataset_heads WHERE dataset_key = 'hero_catalog'`,
+      )
+    ).rows[0];
+    if (restoredHead?.id !== previousHead?.id) {
+      throw new Error(
+        "stream fixture cleanup did not restore the catalog head",
+      );
+    }
+    await owner.query("COMMIT");
+  } catch (error) {
+    await owner.query("ROLLBACK");
+    throw error;
+  }
+}
+
 async function insertVersion(
   client: PoolClient,
   gate: "green" | "yellow" | "red",
   options: {
     publishAssets?: boolean;
+    seedEntities?: boolean;
     status?: "candidate" | "validated";
   } = {},
 ): Promise<string> {
@@ -516,8 +1235,9 @@ async function insertVersion(
     ],
   );
   const versionId = version.rows[0].id;
-  await client.query(
-    `INSERT INTO heroes (
+  if (options.seedEntities ?? true) {
+    await client.query(
+      `INSERT INTO heroes (
       dataset_version_id, hero_id, internal_name, slug, enabled, cm_enabled, random_enabled,
       primary_attribute, attack_type, faction, complexity,
       base_strength, strength_gain, base_agility, agility_gain,
@@ -532,18 +1252,19 @@ async function insertVersion(
       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
     )`,
-    [versionId, FIXTURE_HERO_KEY],
-  );
-  await client.query(
-    `INSERT INTO abilities
+      [versionId, FIXTURE_HERO_KEY],
+    );
+    await client.query(
+      `INSERT INTO abilities
       (dataset_version_id, internal_name, declaration_kind, definition_kind, catalog_status,
        is_innate, is_passive, is_hidden, is_ultimate, has_scepter_upgrade,
        has_shard_upgrade, is_granted_by_scepter, is_granted_by_shard, texture_name,
        raw_sha256, resolved_sha256)
      VALUES ($1, $2, 'top_level', 'ability', 'current',
        false, false, false, false, false, false, false, false, $2, $3, $3)`,
-    [versionId, FIXTURE_ABILITY_KEY, sha256(`ability-${identity}`)],
-  );
+      [versionId, FIXTURE_ABILITY_KEY, sha256(`ability-${identity}`)],
+    );
+  }
 
   if (options.publishAssets ?? true) {
     await client.query("SELECT pg_advisory_xact_lock($1, $2)", [

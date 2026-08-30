@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { AlertCircle, ArrowLeft, ArrowRight } from "lucide-react";
-import { AbilityCard } from "@/components/ability-card";
 import { AbilityFilterForm } from "@/components/ability-filter-form";
-import { EmptyResults, SetupState } from "@/components/system-state";
+import { InfiniteAbilityCatalog } from "@/components/infinite-ability-catalog";
+import { SetupState } from "@/components/system-state";
+import { ValidationErrorList } from "@/components/validation-error-list";
 import { DatasetBadge } from "@/components/ui/dataset-badge";
 import { PageHeader } from "@/components/ui/page-header";
 import { getAbilityOverview } from "@/server/repositories/abilities";
@@ -46,7 +45,7 @@ export default async function AbilitiesPage({
       </main>
     );
   }
-  if (!overview.meta) {
+  if (!overview.meta || !overview.slice) {
     return (
       <main className="mx-auto min-h-[70vh] max-w-[var(--content-max)] px-4 py-20 sm:px-7 lg:px-10">
         <SetupState />
@@ -54,6 +53,11 @@ export default async function AbilitiesPage({
     );
   }
   const meta = overview.meta;
+  const endpointParams = new URLSearchParams(
+    canonicalAbilityQuery(parsed.filters),
+  );
+  endpointParams.set("datasetVersionId", meta.datasetVersionId);
+  endpointParams.set("assetDatasetVersionId", meta.assetDatasetVersionId);
   return (
     <main className="mx-auto max-w-[var(--content-max)] px-4 py-9 sm:px-7 lg:px-10 lg:py-12">
       <PageHeader
@@ -64,20 +68,13 @@ export default async function AbilitiesPage({
           <DatasetBadge
             clientVersion={meta.clientVersion}
             sourceCommit={meta.sourceCommit}
-            warningCount={meta.warningCount}
+            gateStatus={meta.gateStatus}
           />
         }
       />
       <div className="mt-8 space-y-3">
         {parsed.errors.length > 0 && (
-          <div className="flex gap-3 border border-[color-mix(in_srgb,var(--status-danger)_35%,transparent)] p-4 text-xs text-[var(--status-danger)]">
-            <AlertCircle className="size-4 shrink-0" />
-            <div>
-              {parsed.errors.map((error) => (
-                <p key={error}>{error}</p>
-              ))}
-            </div>
-          </div>
+          <ValidationErrorList errors={parsed.errors} />
         )}
         <AbilityFilterForm filters={parsed.filters} />
       </div>
@@ -89,83 +86,14 @@ export default async function AbilitiesPage({
           / {meta.totalAbilities} Abilities
         </p>
         <p className="font-data">
-          {meta.gateStatus.toUpperCase()} · page {overview.page} /{" "}
-          {Math.max(1, overview.pageCount)}
+          {meta.gateStatus.toUpperCase()} · continuous stream
         </p>
       </div>
-      {overview.abilities.length ? (
-        <div className="catalog-grid mt-6">
-          {overview.abilities.map((ability) => (
-            <AbilityCard
-              key={ability.internalName}
-              ability={ability}
-              assetVersion={meta.assetDatasetVersionId}
-              lang={parsed.filters.lang}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="mt-6">
-          <EmptyResults />
-        </div>
-      )}
-      {overview.pageCount > 1 && (
-        <nav
-          aria-label="Ability pages"
-          className="mt-8 flex justify-between border-t border-[var(--border-default)] pt-5"
-        >
-          <PageLink
-            direction="previous"
-            disabled={overview.page <= 1}
-            filters={parsed.filters}
-            page={overview.page - 1}
-          />
-          <PageLink
-            direction="next"
-            disabled={overview.page >= overview.pageCount}
-            filters={parsed.filters}
-            page={overview.page + 1}
-          />
-        </nav>
-      )}
+      <InfiniteAbilityCatalog
+        initialSlice={overview.slice}
+        endpoint={`/api/catalog/abilities?${endpointParams}`}
+        lang={parsed.filters.lang}
+      />
     </main>
-  );
-}
-
-function PageLink({
-  direction,
-  disabled,
-  filters,
-  page,
-}: {
-  direction: "previous" | "next";
-  disabled: boolean;
-  filters: ReturnType<typeof parseAbilityFilters>["filters"];
-  page: number;
-}) {
-  const content =
-    direction === "previous" ? (
-      <>
-        <ArrowLeft className="size-3.5" /> 上一页
-      </>
-    ) : (
-      <>
-        下一页 <ArrowRight className="size-3.5" />
-      </>
-    );
-  if (disabled)
-    return (
-      <span className="inline-flex items-center gap-2 text-xs text-[var(--text-muted)] opacity-40">
-        {content}
-      </span>
-    );
-  const href = `/abilities?${canonicalAbilityQuery({ ...filters, page })}`;
-  return (
-    <Link
-      href={href}
-      className="inline-flex items-center gap-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-    >
-      {content}
-    </Link>
   );
 }

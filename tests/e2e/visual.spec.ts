@@ -1,5 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
 
+test.beforeEach(async ({ page }, testInfo) => {
+  await page.setViewportSize(
+    testInfo.project.name === "mobile-chromium"
+      ? { width: 412, height: 839 }
+      : { width: 1280, height: 720 },
+  );
+});
+
 test("heroes catalog visual baseline", async ({ page }) => {
   await page.goto("/heroes");
   await expect(page.getByRole("main")).toBeVisible();
@@ -8,8 +16,9 @@ test("heroes catalog visual baseline", async ({ page }) => {
   ).toBeVisible();
   await waitForImages(page);
   await expect(page).toHaveScreenshot("heroes-catalog.png", {
-    fullPage: true,
+    fullPage: false,
     animations: "disabled",
+    caret: "initial",
   });
 });
 
@@ -23,8 +32,9 @@ test("ability detail visual baseline", async ({ page }) => {
   ).toBeVisible();
   await waitForImages(page);
   await expect(page).toHaveScreenshot("ability-detail.png", {
-    fullPage: true,
+    fullPage: false,
     animations: "disabled",
+    caret: "initial",
   });
 });
 
@@ -43,7 +53,14 @@ async function waitForImages(page: Page): Promise<void> {
   await page.locator("img").evaluateAll(async (images) => {
     await Promise.all(
       images.map(async (image) => {
-        if (image instanceof HTMLImageElement) await image.decode();
+        if (!(image instanceof HTMLImageElement)) return;
+        const rect = image.getBoundingClientRect();
+        const visible =
+          rect.bottom > 0 &&
+          rect.right > 0 &&
+          rect.top < window.innerHeight &&
+          rect.left < window.innerWidth;
+        if (visible) await image.decode();
       }),
     );
   });

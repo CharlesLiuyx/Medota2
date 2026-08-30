@@ -87,7 +87,7 @@ async function main(): Promise<void> {
 
   if (localPreview) await resetLocalPreviewDatabase();
   const { pool, targetSchemaVersion } = await prepareWorker(
-    localPreview ? "test" : "main",
+    localPreview ? "local" : "main",
   );
   const runId = await createImportRun(pool, {
     sourceKind: "vpk",
@@ -223,15 +223,24 @@ async function main(): Promise<void> {
 }
 
 async function resetLocalPreviewDatabase(): Promise<void> {
-  const databaseUrl = getDatabaseUrl("migration", "test");
+  const databaseUrl = getDatabaseUrl("migration", "local");
   await runMigrations(databaseUrl);
   const pool = new PgPool({ connectionString: databaseUrl, max: 1 });
   try {
     const database = await pool.query<{ name: string }>(
       "SELECT current_database() AS name",
     );
-    if (!database.rows[0].name.endsWith("_test")) {
-      throw new Error("Local preview refuses to reset a non-test database.");
+    const configuredDatabase = new URL(databaseUrl).pathname.replace(
+      /^\//u,
+      "",
+    );
+    if (
+      database.rows[0].name !== configuredDatabase ||
+      !database.rows[0].name.endsWith("_local")
+    ) {
+      throw new Error(
+        "Local preview refuses to reset anything except its configured _local database.",
+      );
     }
     await pool.query(
       "TRUNCATE source_snapshots, import_runs, reference_snapshots CASCADE",

@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { AlertCircle } from "lucide-react";
-import { HeroCard } from "@/components/hero-card";
 import { HeroFilterForm } from "@/components/hero-filter-form";
-import {
-  EmptyResults,
-  ImportFailureBanner,
-  SetupState,
-} from "@/components/system-state";
+import { InfiniteHeroCatalog } from "@/components/infinite-hero-catalog";
+import { ImportFailureBanner, SetupState } from "@/components/system-state";
 import { DatasetBadge } from "@/components/ui/dataset-badge";
-import { PageHeader, SectionHeading } from "@/components/ui/page-header";
-import { PRIMARY_ATTRIBUTES, type PrimaryAttribute } from "@/domain/heroes";
+import { PageHeader } from "@/components/ui/page-header";
+import { ValidationErrorList } from "@/components/validation-error-list";
 import { getHeroOverview } from "@/server/repositories/heroes";
 import {
   canonicalHeroQuery,
@@ -21,13 +16,6 @@ import {
 
 export const metadata: Metadata = { title: "Heroes" };
 export const dynamic = "force-dynamic";
-
-const attributeNames: Record<PrimaryAttribute, { zh: string; en: string }> = {
-  strength: { zh: "力量", en: "Strength" },
-  agility: { zh: "敏捷", en: "Agility" },
-  intelligence: { zh: "智力", en: "Intelligence" },
-  universal: { zh: "全才", en: "Universal" },
-};
 
 export default async function HeroesPage({
   searchParams,
@@ -59,7 +47,7 @@ export default async function HeroesPage({
     );
   }
 
-  if (!overview.meta) {
+  if (!overview.meta || !overview.slice) {
     return (
       <main className="mx-auto min-h-[70vh] max-w-[var(--content-max)] px-4 py-20 sm:px-7 lg:px-10">
         <SetupState />
@@ -68,12 +56,11 @@ export default async function HeroesPage({
   }
 
   const meta = overview.meta;
-  const groups = PRIMARY_ATTRIBUTES.map((attribute) => ({
-    attribute,
-    heroes: overview.heroes.filter(
-      (hero) => hero.primaryAttribute === attribute,
-    ),
-  })).filter((group) => group.heroes.length > 0);
+  const endpointParams = new URLSearchParams(
+    canonicalHeroQuery(parsed.filters),
+  );
+  endpointParams.set("datasetVersionId", meta.datasetVersionId);
+  endpointParams.set("assetDatasetVersionId", meta.assetDatasetVersionId);
 
   return (
     <main className="mx-auto max-w-[var(--content-max)] px-4 py-9 sm:px-7 lg:px-10 lg:py-12">
@@ -85,7 +72,7 @@ export default async function HeroesPage({
           <DatasetBadge
             clientVersion={meta.clientVersion}
             sourceCommit={meta.sourceCommit}
-            warningCount={meta.warningCount}
+            gateStatus={meta.gateStatus}
           />
         }
       />
@@ -98,14 +85,7 @@ export default async function HeroesPage({
           />
         )}
         {parsed.errors.length > 0 && (
-          <div className="flex items-start gap-3 border border-[color-mix(in_srgb,var(--status-danger)_35%,transparent)] bg-[color-mix(in_srgb,var(--status-danger)_7%,transparent)] px-4 py-3 text-xs text-[var(--status-danger)]">
-            <AlertCircle className="size-4 shrink-0" />
-            <div>
-              {parsed.errors.map((error) => (
-                <p key={error}>{error}</p>
-              ))}
-            </div>
-          </div>
+          <ValidationErrorList errors={parsed.errors} surface />
         )}
         <HeroFilterForm filters={parsed.filters} />
       </div>
@@ -113,7 +93,7 @@ export default async function HeroesPage({
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--text-muted)]">
         <p>
           <span className="font-data font-medium text-[var(--text-primary)]">
-            {overview.heroes.length}
+            {overview.total}
           </span>{" "}
           / {meta.totalHeroes} Heroes
         </p>
@@ -123,36 +103,11 @@ export default async function HeroesPage({
         </p>
       </div>
 
-      {groups.length > 0 ? (
-        <div className="mt-9 space-y-11">
-          {groups.map(({ attribute, heroes }) => (
-            <section key={attribute} aria-labelledby={`${attribute}-heroes`}>
-              <div id={`${attribute}-heroes`}>
-                <SectionHeading
-                  eyebrow={attributeNames[attribute].en}
-                  title={attributeNames[attribute].zh}
-                  count={heroes.length}
-                  tone={attribute}
-                />
-              </div>
-              <div className="catalog-grid mt-4">
-                {heroes.map((hero) => (
-                  <HeroCard
-                    key={hero.heroId}
-                    hero={hero}
-                    assetVersion={meta.assetDatasetVersionId}
-                    lang={parsed.filters.lang}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      ) : (
-        <div className="mt-5">
-          <EmptyResults />
-        </div>
-      )}
+      <InfiniteHeroCatalog
+        initialSlice={overview.slice}
+        endpoint={`/api/catalog/heroes?${endpointParams}`}
+        lang={parsed.filters.lang}
+      />
     </main>
   );
 }

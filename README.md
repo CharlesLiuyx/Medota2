@@ -4,6 +4,8 @@
 
 Hero Catalog v2 已实现从固定 `dota_vpk_updates` commit 到 PostgreSQL、查询界面和更新门禁的完整链路。Heroes、Abilities、Facets、关系与本地化共享同一个不可变 catalog version；`dotaconstants` 仅作为隔离参考，不覆盖 VPK 规范值。
 
+全产品所有内容 List 的加载与渲染统一遵循[全局 List 无限滚动与 3× 预加载 Spec](docs/specs/infinite-lists.md)；该合同取代旧有分页或一次性 DOM 全量渲染约定。
+
 ## 已实现能力
 
 - 从 `dota_vpk_updates` 动态发现全部分 Hero 文件，导入正式 Heroes 与完整 Ability 定义集。
@@ -50,11 +52,15 @@ pnpm data:import:catalog --lock <lock-file>
 pnpm dev
 ```
 
-也可把 `DOTA_VPK_UPDATES_PATH` 指向现有本地 checkout 后直接运行 `pnpm data:import:catalog`。正式导入要求 Medota2 checkout 干净，使 `importer_version` 能准确标识转换代码；只需快速预览当前开发改动时使用：
+也可把 `DOTA_VPK_UPDATES_PATH` 指向现有本地 checkout 后直接运行 `pnpm data:import:catalog`。正式导入要求 Medota2 checkout 干净，使 `importer_version` 能准确标识转换代码；当前工作区尚未提交、但需要运行最终本地界面时使用独立的 `medota2_local`：
 
 ```bash
-pnpm dev:demo
+docker compose up -d postgres
+pnpm data:import:vpk:local
+pnpm dev:local
 ```
+
+`data:import:vpk:local` 会把本机 `DOTA_VPK_UPDATES_PATH` 指向的真实快照导入独立的 `medota2_local`，优先使用配置的本机 Valve 资产；缺少本机 VPK 资产源时，从 importer 已限定的 Valve Steam static origin 补齐真实图片，并生成 `original / w64 / w128 / w256`。随后 `dev:local` 在 [http://localhost:3000](http://localhost:3000) 启动最终本地界面；重启 Web 不会重置或改写数据。`pnpm dev:demo` 保留为 `dev:local` 的兼容别名。
 
 页面入口：
 
@@ -147,7 +153,7 @@ pnpm build                 # Webpack 生产构建
 pnpm data:audit:catalog    # 真实 checkout 全量 parser 审计
 ```
 
-Playwright 使用隔离的 `medota2_test` 数据库、3100 端口和 `.next-e2e` 构建目录，不会复用日常 3000 dev server。视觉基线位于 `tests/e2e/visual.spec.ts-snapshots/`。
+Playwright 使用内部的 `pnpm dev:e2e`、隔离的 `medota2_test` 数据库、3100 端口和 `.next-e2e` 构建目录，不会读写最终本地运行使用的 `medota2_local`。该命令才会生成滚动 fixture，且默认 seed 是干净成功态；需要失败记录的测试自行建立并清理夹具。最终本地运行统一使用 `pnpm dev:local`。视觉基线位于 `tests/e2e/visual.spec.ts-snapshots/`。
 
 ## 仓库结构
 
@@ -168,6 +174,7 @@ Medota2/
 ## 设计与架构文档
 
 - [Hero Catalog v2 Spec](docs/specs/hero-catalog-v2.md)
+- [全局 List 无限滚动与 3× 预加载 Spec](docs/specs/infinite-lists.md)
 - [Medota2 Design System](docs/design-system.md)
 - [Hero Catalog 更新操作手册](docs/operations/catalog-refresh.md)
 - [ADR：共享 Hero Catalog 版本边界](docs/adr/0001-hero-catalog-version-boundary.md)

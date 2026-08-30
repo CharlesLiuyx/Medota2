@@ -16,7 +16,6 @@ export interface AbilityFilters {
   damage: string;
   upgrade: "all" | "scepter" | "shard" | "granted";
   lang: "zh-CN" | "en";
-  page: number;
 }
 
 export function parseAbilityFilters(params: SearchParams): {
@@ -73,12 +72,14 @@ export function parseAbilityFilters(params: SearchParams): {
   const rawLang = read("lang", "zh-CN");
   const lang = rawLang === "en" || rawLang === "zh-CN" ? rawLang : "zh-CN";
   if (lang !== rawLang) errors.push(`未知语言：${rawLang}`);
-  const rawPage = read("page", "1");
-  const page = /^\d+$/u.test(rawPage) ? Math.max(1, Number(rawPage)) : 1;
+  const rawPage = readLegacyPage(params.page, errors);
   if (
-    !Number.isSafeInteger(page) ||
-    page > 10_000 ||
-    String(page) !== rawPage
+    rawPage !== undefined &&
+    (!/^\d+$/u.test(rawPage) ||
+      !Number.isSafeInteger(Number(rawPage)) ||
+      Number(rawPage) < 1 ||
+      Number(rawPage) > 10_000 ||
+      String(Number(rawPage)) !== rawPage)
   ) {
     errors.push(`无效页码：${rawPage}`);
   }
@@ -92,7 +93,6 @@ export function parseAbilityFilters(params: SearchParams): {
       damage,
       upgrade,
       lang,
-      page,
     },
     errors,
   };
@@ -108,7 +108,6 @@ export function canonicalAbilityQuery(filters: AbilityFilters): string {
   if (filters.damage) query.set("damage", filters.damage);
   if (filters.upgrade !== "all") query.set("upgrade", filters.upgrade);
   if (filters.lang !== "zh-CN") query.set("lang", filters.lang);
-  if (filters.page > 1) query.set("page", String(filters.page));
   return query.toString();
 }
 
@@ -146,6 +145,17 @@ function safeEnum(value: string, label: string, errors: string[]): string {
   if (value && !/^[A-Z0-9_]+$/u.test(value)) {
     errors.push(`${label} 无效：${value}`);
     return "";
+  }
+  return value;
+}
+
+function readLegacyPage(
+  value: SearchParams[string],
+  errors: string[],
+): string | undefined {
+  if (Array.isArray(value)) {
+    errors.push("page 只允许一个值。");
+    return value[0];
   }
   return value;
 }

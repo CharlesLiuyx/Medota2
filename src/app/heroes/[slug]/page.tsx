@@ -14,8 +14,17 @@ import {
   Swords,
   TriangleAlert,
 } from "lucide-react";
-import { AbilityIcon } from "@/components/ability-icon";
 import { HeroCrest } from "@/components/hero-crest";
+import {
+  HeroAbilityList,
+  HeroFacetList,
+  HeroLocalizationList,
+  HeroReferenceDiffList,
+  HeroRoleList,
+  HeroSourceFileList,
+  HeroStatGroup,
+  HeroTraceList,
+} from "@/components/hero-detail-lists";
 import { getHeroBySlug } from "@/server/repositories/heroes";
 
 export const dynamic = "force-dynamic";
@@ -208,6 +217,7 @@ export default async function HeroDetailPage({
               )}
               assetVersion={detail.meta.assetDatasetVersionId}
               lang={lang}
+              listIdentity={`${detail.meta.datasetVersionId}:${hero.hero_id}:${lang}:abilities`}
             />
           </section>
 
@@ -227,28 +237,12 @@ export default async function HeroDetailPage({
               )}
               assetVersion={detail.meta.assetDatasetVersionId}
               lang={lang}
+              listIdentity={`${detail.meta.datasetVersionId}:${hero.hero_id}:${lang}:talents-upgrades`}
             />
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              {detail.facets.map((facet) => (
-                <div
-                  key={facet.facet_key}
-                  className="border border-[var(--border-default)] bg-[var(--surface-panel)] p-4"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <code className="text-xs text-[var(--text-primary)]">
-                      {facet.facet_key}
-                    </code>
-                    <Badge muted={facet.deprecated}>
-                      {facet.deprecated ? "Deprecated" : "Current"}
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-[10px] text-[var(--text-muted)]">
-                    {facet.icon ?? "no icon"} · {facet.color ?? "no color"} ·
-                    gradient {facet.gradient_id ?? "—"}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <HeroFacetList
+              facets={detail.facets}
+              listIdentity={`${detail.meta.datasetVersionId}:${hero.hero_id}:${lang}:facets`}
+            />
           </section>
 
           <section id="raw">
@@ -261,8 +255,9 @@ export default async function HeroDetailPage({
               以下数值不叠加主属性、敏捷护甲等一级英雄面板计算。
             </p>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
-              <StatGroup
+              <HeroStatGroup
                 title="属性"
+                listIdentity={`${detail.meta.datasetVersionId}:${hero.hero_id}:${lang}:stats:attributes`}
                 rows={[
                   [
                     "基础力量",
@@ -281,8 +276,9 @@ export default async function HeroDetailPage({
                   ],
                 ]}
               />
-              <StatGroup
+              <HeroStatGroup
                 title="生存"
+                listIdentity={`${detail.meta.datasetVersionId}:${hero.hero_id}:${lang}:stats:survival`}
                 rows={[
                   ["基础生命", hero.base_health],
                   ["生命恢复", hero.base_health_regen],
@@ -292,8 +288,9 @@ export default async function HeroDetailPage({
                   ["魔法抗性", hero.magic_resistance, "%"],
                 ]}
               />
-              <StatGroup
+              <HeroStatGroup
                 title="攻击"
+                listIdentity={`${detail.meta.datasetVersionId}:${hero.hero_id}:${lang}:stats:attack`}
                 rows={[
                   [
                     "基础伤害",
@@ -306,8 +303,9 @@ export default async function HeroDetailPage({
                   ["弹道速度", hero.projectile_speed],
                 ]}
               />
-              <StatGroup
+              <HeroStatGroup
                 title="移动与视野"
+                listIdentity={`${detail.meta.datasetVersionId}:${hero.hero_id}:${lang}:stats:movement-vision`}
                 rows={[
                   ["移动速度", hero.movement_speed],
                   ["转身速率", hero.turn_rate],
@@ -330,7 +328,10 @@ export default async function HeroDetailPage({
             </div>
           </section>
 
-          <ReferenceComparison comparison={detail.comparison} />
+          <ReferenceComparison
+            comparison={detail.comparison}
+            listIdentity={`${detail.meta.datasetVersionId}:${hero.hero_id}:${lang}:reference`}
+          />
         </div>
 
         <aside id="provenance" className="space-y-5">
@@ -338,28 +339,13 @@ export default async function HeroDetailPage({
             <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-600">
               角色强度
             </p>
-            <div className="mt-4 space-y-3">
-              {detail.roles.map((role) => (
-                <div
-                  key={role.role}
-                  className="grid grid-cols-[1fr_auto] items-center gap-3 text-xs"
-                >
-                  <span className="text-zinc-300">
-                    {labels[role.role] ?? role.role}
-                  </span>
-                  <span className="flex gap-1">
-                    {[1, 2, 3].map((level) => (
-                      <span
-                        key={level}
-                        className={`h-1.5 w-7 ${level <= role.role_level ? "bg-[#d86144]" : "bg-white/8"}`}
-                      />
-                    ))}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <HeroRoleList
+              roles={detail.roles}
+              labels={labels}
+              listIdentity={`${detail.meta.datasetVersionId}:${hero.hero_id}:${lang}:roles`}
+            />
           </section>
-          <Provenance detail={detail} />
+          <Provenance detail={detail} lang={lang} />
         </aside>
       </div>
     </main>
@@ -440,107 +426,15 @@ function LocalizedText({
   );
 }
 
-function StatGroup({
-  title,
-  rows,
-}: {
-  title: string;
-  rows: Array<[string, unknown, string?]>;
-}) {
-  return (
-    <div className="border border-white/8 bg-[#121418] p-5">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-        {title}
-      </p>
-      <dl className="mt-4 grid grid-cols-2 gap-x-5">
-        {rows.map(([label, value, suffix]) => (
-          <div
-            key={label}
-            className="flex items-baseline justify-between gap-2 border-b border-white/6 py-2.5"
-          >
-            <dt className="text-[11px] text-zinc-600">{label}</dt>
-            <dd className="font-mono text-xs tabular-nums text-zinc-200">
-              {formatValue(value)}
-              {suffix && !suffix.startsWith("+") ? (
-                suffix
-              ) : (
-                <span className="ml-1 text-[9px] text-zinc-600">{suffix}</span>
-              )}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  );
-}
-
-function HeroAbilityList({
-  abilities,
-  assetVersion,
-  lang,
-}: {
-  abilities: NonNullable<
-    Awaited<ReturnType<typeof getHeroBySlug>>
-  >["abilities"];
-  assetVersion: string;
-  lang: "en" | "zh-CN";
-}) {
-  if (!abilities.length) {
-    return (
-      <div className="mt-5 border border-dashed border-[var(--border-default)] p-6 text-sm text-[var(--text-muted)]">
-        当前关系图没有此类 Ability。
-      </div>
-    );
-  }
-  return (
-    <div className="mt-5 grid gap-2 md:grid-cols-2">
-      {abilities.map((ability) => (
-        <Link
-          key={`${ability.internal_name}-${ability.relation_kind}-${ability.source_slot}`}
-          href={`/abilities/${ability.internal_name}${lang === "en" ? "?lang=en" : ""}`}
-          className="flex gap-3 border border-[var(--border-default)] bg-[var(--surface-panel)] p-3 hover:bg-[var(--surface-hover)]"
-        >
-          <AbilityIcon
-            internalName={ability.internal_name}
-            assetVersion={assetVersion}
-            name={
-              (lang === "en" ? ability.en_name : ability.zh_name) ??
-              ability.en_name ??
-              ability.internal_name
-            }
-          />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-sm font-semibold text-[var(--text-primary)]">
-              {(lang === "en" ? ability.en_name : ability.zh_name) ??
-                ability.en_name ??
-                ability.internal_name}
-            </span>
-            <code className="mt-1 block truncate text-[9px] text-[var(--text-muted)]">
-              {ability.internal_name}
-            </code>
-            <span className="mt-2 flex flex-wrap gap-1">
-              <Badge>{ability.relation_kind}</Badge>
-              <Badge muted={!ability.is_current}>
-                {ability.is_current ? "current" : ability.catalog_status}
-              </Badge>
-              {ability.is_innate && <Badge>innate</Badge>}
-              {ability.is_ultimate && <Badge>ultimate</Badge>}
-              {ability.has_scepter_upgrade && <Badge>scepter</Badge>}
-              {ability.has_shard_upgrade && <Badge>shard</Badge>}
-            </span>
-          </span>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
 function Provenance({
   detail,
+  lang,
 }: {
   detail: NonNullable<Awaited<ReturnType<typeof getHeroBySlug>>>;
+  lang: "en" | "zh-CN";
 }) {
   const hero = detail.hero;
+  const identity = `${detail.meta.datasetVersionId}:${hero.hero_id}:${lang}:provenance`;
   return (
     <section className="border border-white/9 bg-[#121418] p-5">
       <div className="flex items-center gap-2">
@@ -550,96 +444,63 @@ function Provenance({
       <p className="mt-2 text-[10px] leading-4 text-zinc-600">
         共享 Catalog 快照 + 记录级溯源；Ability 可继续下钻到 ordered source。
       </p>
-      <dl className="mt-5 space-y-3 text-[11px]">
-        <Trace label="Repository" value={detail.meta.sourceRepository} />
-        <Trace label="Commit" value={detail.meta.sourceCommit} mono />
-        <Trace label="VDF key" value={hero.source_key} mono />
-        <Trace label="DTO SHA-256" value={hero.source_dto_sha256} mono />
-        <Trace label="Importer" value={detail.meta.importerVersion} mono />
-        <Trace label="Schema" value={detail.meta.schemaVersion} mono />
-        <Trace
-          label="Imported"
-          value={new Intl.DateTimeFormat("zh-CN", {
-            dateStyle: "medium",
-            timeStyle: "medium",
-          }).format(detail.meta.importedAt)}
-        />
-      </dl>
+      <HeroTraceList
+        listIdentity={`${identity}:fields`}
+        rows={[
+          { label: "Repository", value: detail.meta.sourceRepository },
+          { label: "Commit", value: detail.meta.sourceCommit, mono: true },
+          { label: "VDF key", value: hero.source_key, mono: true },
+          {
+            label: "DTO SHA-256",
+            value: hero.source_dto_sha256,
+            mono: true,
+          },
+          {
+            label: "Importer",
+            value: detail.meta.importerVersion,
+            mono: true,
+          },
+          { label: "Schema", value: detail.meta.schemaVersion, mono: true },
+          {
+            label: "Imported",
+            value: new Intl.DateTimeFormat("zh-CN", {
+              dateStyle: "medium",
+              timeStyle: "medium",
+            }).format(detail.meta.importedAt),
+          },
+        ]}
+      />
       <details className="mt-5 border-t border-white/8 pt-4">
         <summary className="cursor-pointer list-none text-[11px] text-zinc-400 hover:text-white">
           查看 {detail.sourceFiles.length} 个输入文件 checksum
         </summary>
-        <div className="mt-4 space-y-4">
-          {detail.sourceFiles.map((file) => (
-            <div key={file.source_path}>
-              <p className="break-all text-[10px] text-zinc-400">
-                {file.source_path}
-              </p>
-              <code className="mt-1 block break-all text-[9px] text-zinc-700">
-                {file.raw_sha256} · {file.encoding} · {file.size_bytes} B
-              </code>
-            </div>
-          ))}
-        </div>
+        <HeroSourceFileList
+          files={detail.sourceFiles}
+          listIdentity={`${identity}:source-files`}
+        />
       </details>
       <details className="mt-3 border-t border-white/8 pt-4">
         <summary className="cursor-pointer list-none text-[11px] text-zinc-400 hover:text-white">
           查看本地化 token 与继承字段
         </summary>
-        <div className="mt-4 space-y-4 text-[9px] text-zinc-600">
-          {detail.localizations.map((locale) => (
-            <div key={locale.locale}>
-              <p className="font-semibold text-zinc-500">{locale.locale}</p>
-              <code className="mt-1 block break-all">
-                {locale.name_source_path} · {locale.name_token}
-              </code>
-              <code className="mt-1 block break-all">
-                {locale.hype_token ?? "hype: NULL"}
-              </code>
-              <code className="mt-1 block break-all">
-                {locale.lore_token ?? "lore: NULL"}
-              </code>
-            </div>
-          ))}
-          <div>
-            <p className="font-semibold text-zinc-500">Inherited</p>
-            <code className="mt-1 block break-all">
-              {hero.inherited_fields.join(", ") || "none"}
-            </code>
-          </div>
-        </div>
+        <HeroLocalizationList
+          localizations={detail.localizations}
+          inheritedFields={hero.inherited_fields}
+          listIdentity={`${identity}:localization`}
+        />
       </details>
     </section>
   );
 }
 
-function Trace({
-  label,
-  value,
-  mono = false,
-}: {
-  label: string;
-  value: unknown;
-  mono?: boolean;
-}) {
-  return (
-    <div>
-      <dt className="text-zinc-600">{label}</dt>
-      <dd
-        className={`mt-0.5 break-all text-zinc-300 ${mono ? "font-mono text-[9px]" : ""}`}
-      >
-        {String(value)}
-      </dd>
-    </div>
-  );
-}
-
 function ReferenceComparison({
   comparison,
+  listIdentity,
 }: {
   comparison: NonNullable<
     Awaited<ReturnType<typeof getHeroBySlug>>
   >["comparison"];
+  listIdentity: string;
 }) {
   return (
     <section>
@@ -666,45 +527,13 @@ function ReferenceComparison({
               {comparison.sourceCommit.slice(0, 8)}
             </code>
           </div>
-          {comparison.diffs.length === 0 ? (
-            <p className="p-6 text-sm text-emerald-300/70">
-              该英雄在首期比较字段中没有差异。
-            </p>
-          ) : (
-            <div className="divide-y divide-white/7">
-              {comparison.diffs.map((diff) => (
-                <div
-                  key={`${diff.field_name}-${diff.diff_type}`}
-                  className="grid gap-3 p-4 text-xs sm:grid-cols-[170px_1fr_1fr]"
-                >
-                  <div>
-                    <p className="font-mono text-zinc-300">{diff.field_name}</p>
-                    <p className="mt-1 text-[9px] uppercase tracking-wider text-amber-500/70">
-                      {diff.diff_type}
-                    </p>
-                  </div>
-                  <DiffValue label="VPK 规范" value={diff.canonical_value} />
-                  <DiffValue label="reference" value={diff.reference_value} />
-                </div>
-              ))}
-            </div>
-          )}
+          <HeroReferenceDiffList
+            diffs={comparison.diffs}
+            listIdentity={`${listIdentity}:${comparison.sourceCommit}:${comparison.packageVersion}:${comparison.comparatorVersion}:${comparison.createdAt.toISOString()}`}
+          />
         </div>
       )}
     </section>
-  );
-}
-
-function DiffValue({ label, value }: { label: string; value: unknown }) {
-  return (
-    <div>
-      <p className="text-[9px] uppercase tracking-wider text-zinc-700">
-        {label}
-      </p>
-      <code className="mt-1 block break-all text-[10px] text-zinc-400">
-        {JSON.stringify(value)}
-      </code>
-    </div>
   );
 }
 

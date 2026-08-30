@@ -1,12 +1,12 @@
 import { performance } from "node:perf_hooks";
 import pg from "pg";
-import { getDatabaseUrl } from "@/config/env";
+import { getDatabaseUrl, type DatabaseTarget } from "@/config/env";
 import type { ImportIssue, ParsedHeroDataset } from "@/domain/heroes";
 import { assertSchemaCurrent } from "@/server/db/migrations";
 
 const { Pool } = pg;
 
-export function createWorkerPool(target: "main" | "test" = "main"): pg.Pool {
+export function createWorkerPool(target: DatabaseTarget = "main"): pg.Pool {
   return new Pool({
     connectionString: getDatabaseUrl("worker", target),
     application_name: "medota2-data-worker",
@@ -87,7 +87,7 @@ export async function failImportRun(
   );
 }
 
-export async function prepareWorker(target: "main" | "test" = "main"): Promise<{
+export async function prepareWorker(target: DatabaseTarget = "main"): Promise<{
   pool: pg.Pool;
   targetSchemaVersion: string;
 }> {

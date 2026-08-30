@@ -1,11 +1,32 @@
 import "server-only";
 
+import {
+  CATALOG_SLICE_LIMIT,
+  type CatalogSlice,
+} from "@/domain/catalog-stream";
 import { getWebPool } from "@/server/db/client";
 import { assertSchemaCurrent } from "@/server/db/migrations";
-import type { AbilityFilters } from "@/server/services/ability-filters";
-import { getActiveCatalogMeta, type ActiveDatasetMeta } from "./heroes";
+import {
+  canonicalAbilityQuery,
+  type AbilityFilters,
+} from "@/server/services/ability-filters";
+import {
+  assertListCursorMatches,
+  createListFilterIdentity,
+  decodeListCursor,
+  encodeListCursor,
+  isListDatasetVersionId,
+  ListDatasetUnavailableError,
+  ListRequestError,
+  type AbilityListCursor,
+  type ListSliceRequest,
+} from "@/server/services/catalog-cursor";
+import {
+  assertCatalogDatasetPairAvailable,
+  getActiveCatalogMeta,
+  type ActiveDatasetMeta,
+} from "./heroes";
 
-const PAGE_SIZE = 48;
 let schemaPromise: Promise<string> | undefined;
 
 export interface AbilityCardRow {
@@ -35,10 +56,9 @@ export interface AbilityCardRow {
 
 export interface AbilityOverview {
   meta: ActiveDatasetMeta | null;
+  slice: CatalogSlice<AbilityCardRow> | null;
   abilities: AbilityCardRow[];
   total: number;
-  page: number;
-  pageCount: number;
 }
 
 export interface AbilityDetail {
@@ -108,10 +128,175 @@ export async function getAbilityOverview(
 ): Promise<AbilityOverview> {
   await ensureReady();
   const meta = await getActiveCatalogMeta();
-  if (!meta || !filters) {
-    return { meta, abilities: [], total: 0, page: 1, pageCount: 0 };
+  if (!meta) return { meta, slice: null, abilities: [], total: 0 };
+  if (!filters) {
+    const slice = emptyAbilitySlice(meta);
+    return { meta, slice, abilities: [], total: 0 };
   }
-  const values: unknown[] = [meta.datasetVersionId, filters.lang];
+  const slice = await getAbilityCatalogSlice(filters, {
+    catalogDatasetVersionId: meta.datasetVersionId,
+    assetDatasetVersionId: meta.assetDatasetVersionId,
+  });
+  return {
+    meta,
+    slice,
+    abilities: slice.items,
+    total: slice.total ?? 0,
+  };
+}
+
+export async function getAbilityCatalogSlice(
+  filters: AbilityFilters,
+  request: ListSliceRequest = {},
+): Promise<CatalogSlice<AbilityCardRow>> {
+  await ensureReady();
+  const resolved = await resolveAbilitySliceRequest(filters, request);
+  const query = buildAbilityFilterQuery(
+    filters,
+    resolved.catalogDatasetVersionId,
+  );
+  const countValues = [...query.values];
+  const countConditions = [...query.conditions];
+  if (resolved.cursor) {
+    query.values.push(resolved.cursor.sort[0], resolved.cursor.sort[1]);
+    const sortNameIndex = query.values.length - 1;
+    const internalNameIndex = query.values.length;
+    query.conditions.push(
+      `(${ABILITY_SORT_NAME_SQL} COLLATE "C", a.internal_name COLLATE "C") ${resolved.direction === "after" ? ">" : "<"} ($${sortNameIndex}::text COLLATE "C", $${internalNameIndex}::text COLLATE "C")`,
+    );
+  }
+  query.values.push(CATALOG_SLICE_LIMIT + 1);
+  const limitIndex = query.values.length;
+  const order = resolved.direction === "before" ? "DESC" : "ASC";
+
+  const rowsPromise = getWebPool().query<AbilityCardQueryRow>(
+    `WITH selected AS (
+       SELECT a.internal_name, ${ABILITY_SORT_NAME_SQL} AS localized_sort_name
+       FROM abilities a ${query.localizationJoins}
+       WHERE ${query.conditions.join(" AND ")}
+       ORDER BY ${ABILITY_SORT_NAME_SQL} COLLATE "C" ${order}, a.internal_name COLLATE "C" ${order}
+       LIMIT $${limitIndex}
+     )
+     SELECT a.internal_name, selected.localized_sort_name,
+       COALESCE(req.display_name, en.display_name, a.internal_name) AS display_name,
+       CASE WHEN req.display_name IS NULL THEN en.display_name ELSE NULL END AS fallback_name,
+       a.catalog_status, a.definition_kind, a.behavior, a.damage_type, a.is_innate,
+       a.is_ultimate, a.is_passive, a.has_scepter_upgrade, a.has_shard_upgrade,
+       a.cooldown, a.mana_cost, a.texture_name,
+       COALESCE(jsonb_agg(DISTINCT jsonb_build_object(
+         'heroId', h.hero_id, 'slug', h.slug, 'internalName', h.internal_name,
+         'displayName', COALESCE(hl_req.display_name, hl_en.display_name, h.internal_name),
+         'relationKind', b.relation_kind)) FILTER (WHERE h.hero_id IS NOT NULL), '[]'::jsonb) AS owners
+     FROM selected
+     JOIN abilities a ON a.dataset_version_id = $1 AND a.internal_name = selected.internal_name
+     LEFT JOIN ability_localizations req ON req.dataset_version_id = a.dataset_version_id
+       AND req.ability_internal_name = a.internal_name AND req.locale = $2
+     LEFT JOIN ability_localizations en ON en.dataset_version_id = a.dataset_version_id
+       AND en.ability_internal_name = a.internal_name AND en.locale = 'en'
+     LEFT JOIN hero_ability_bindings b ON b.dataset_version_id = a.dataset_version_id
+       AND b.ability_internal_name = a.internal_name AND b.is_current
+     LEFT JOIN heroes h ON h.dataset_version_id = b.dataset_version_id AND h.hero_id = b.hero_id
+     LEFT JOIN hero_localizations hl_req ON hl_req.dataset_version_id = h.dataset_version_id
+       AND hl_req.hero_id = h.hero_id AND hl_req.locale = $2
+     LEFT JOIN hero_localizations hl_en ON hl_en.dataset_version_id = h.dataset_version_id
+       AND hl_en.hero_id = h.hero_id AND hl_en.locale = 'en'
+     GROUP BY a.dataset_version_id, a.internal_name, selected.localized_sort_name,
+       req.display_name, en.display_name
+     ORDER BY selected.localized_sort_name COLLATE "C" ${order}, a.internal_name COLLATE "C" ${order}`,
+    query.values,
+  );
+  const totalPromise = resolved.direction
+    ? null
+    : getWebPool().query<{ count: number }>(
+        `SELECT count(*)::int AS count
+         FROM abilities a ${query.localizationJoins}
+         WHERE ${countConditions.join(" AND ")}`,
+        countValues,
+      );
+  const [result, totalResult] = await Promise.all([rowsPromise, totalPromise]);
+  const hasMore = result.rows.length > CATALOG_SLICE_LIMIT;
+  let selectedRows = result.rows.slice(0, CATALOG_SLICE_LIMIT);
+  if (resolved.direction === "before") selectedRows = selectedRows.reverse();
+
+  const first = selectedRows[0];
+  const last = selectedRows.at(-1);
+  const identity = {
+    version: 1 as const,
+    entityKind: "abilities" as const,
+    catalogDatasetVersionId: resolved.catalogDatasetVersionId,
+    assetDatasetVersionId: resolved.assetDatasetVersionId,
+    locale: filters.lang,
+    filterIdentity: resolved.filterIdentity,
+  };
+  const previousCursor =
+    first &&
+    (resolved.direction === "after" ||
+      (resolved.direction === "before" && hasMore))
+      ? encodeListCursor({
+          ...identity,
+          sort: [first.localized_sort_name, first.internal_name],
+        })
+      : null;
+  const nextCursor =
+    last && (resolved.direction === "before" || hasMore)
+      ? encodeListCursor({
+          ...identity,
+          sort: [last.localized_sort_name, last.internal_name],
+        })
+      : null;
+
+  return {
+    items: selectedRows.map(mapAbilityCardRow),
+    datasetVersionId: resolved.catalogDatasetVersionId,
+    assetDatasetVersionId: resolved.assetDatasetVersionId,
+    previousCursor,
+    nextCursor,
+    ...(totalResult ? { total: totalResult.rows[0]?.count ?? 0 } : {}),
+  };
+}
+
+const ABILITY_SORT_NAME_SQL =
+  "COALESCE(req.display_name, en.display_name, a.internal_name)";
+
+interface AbilityFilterQuery {
+  values: unknown[];
+  conditions: string[];
+  localizationJoins: string;
+}
+
+interface AbilityCardQueryRow {
+  internal_name: string;
+  localized_sort_name: string;
+  display_name: string;
+  fallback_name: string | null;
+  catalog_status: string;
+  definition_kind: string;
+  behavior: string[];
+  damage_type: string | null;
+  is_innate: boolean;
+  is_ultimate: boolean;
+  is_passive: boolean;
+  has_scepter_upgrade: boolean;
+  has_shard_upgrade: boolean;
+  cooldown: string | null;
+  mana_cost: string | null;
+  texture_name: string;
+  owners: AbilityCardRow["owners"];
+}
+
+interface ResolvedAbilitySliceRequest {
+  catalogDatasetVersionId: string;
+  assetDatasetVersionId: string;
+  filterIdentity: string;
+  direction: "after" | "before" | null;
+  cursor: AbilityListCursor | null;
+}
+
+function buildAbilityFilterQuery(
+  filters: AbilityFilters,
+  catalogDatasetVersionId: string,
+): AbilityFilterQuery {
+  const values: unknown[] = [catalogDatasetVersionId, filters.lang];
   const conditions = ["a.dataset_version_id = $1"];
   if (filters.status !== "all") {
     values.push(filters.status);
@@ -148,77 +333,111 @@ export async function getAbilityOverview(
   if (filters.upgrade === "granted") {
     conditions.push("(a.is_granted_by_scepter OR a.is_granted_by_shard)");
   }
-  const joins = `LEFT JOIN ability_localizations req ON req.dataset_version_id = a.dataset_version_id AND req.ability_internal_name = a.internal_name AND req.locale = $2
+  const localizationJoins = `LEFT JOIN ability_localizations req ON req.dataset_version_id = a.dataset_version_id AND req.ability_internal_name = a.internal_name AND req.locale = $2
     LEFT JOIN ability_localizations en ON en.dataset_version_id = a.dataset_version_id AND en.ability_internal_name = a.internal_name AND en.locale = 'en'`;
-  const total = await getWebPool().query<{ count: number }>(
-    `SELECT count(*)::int AS count FROM abilities a ${joins} WHERE ${conditions.join(" AND ")}`,
-    values,
+  return { values, conditions, localizationJoins };
+}
+
+async function resolveAbilitySliceRequest(
+  filters: AbilityFilters,
+  request: ListSliceRequest,
+): Promise<ResolvedAbilitySliceRequest> {
+  if (request.after !== undefined && request.before !== undefined) {
+    throw new ListRequestError("after 与 before 不能同时提供。");
+  }
+  if (
+    (request.catalogDatasetVersionId === undefined) !==
+    (request.assetDatasetVersionId === undefined)
+  ) {
+    throw new ListRequestError("Catalog 与 asset dataset 必须成对提供。");
+  }
+  if (
+    (request.catalogDatasetVersionId !== undefined &&
+      !isListDatasetVersionId(request.catalogDatasetVersionId)) ||
+    (request.assetDatasetVersionId !== undefined &&
+      !isListDatasetVersionId(request.assetDatasetVersionId))
+  ) {
+    throw new ListRequestError("dataset version 格式无效。");
+  }
+  const filterIdentity = createListFilterIdentity(
+    canonicalAbilityQuery(filters),
   );
-  const pageCount = Math.ceil(total.rows[0].count / PAGE_SIZE);
-  const page = Math.min(filters.page, Math.max(1, pageCount));
-  values.push(PAGE_SIZE, (page - 1) * PAGE_SIZE);
-  const result = await getWebPool().query<{
-    internal_name: string;
-    display_name: string;
-    fallback_name: string | null;
-    catalog_status: string;
-    definition_kind: string;
-    behavior: string[];
-    damage_type: string | null;
-    is_innate: boolean;
-    is_ultimate: boolean;
-    is_passive: boolean;
-    has_scepter_upgrade: boolean;
-    has_shard_upgrade: boolean;
-    cooldown: string | null;
-    mana_cost: string | null;
-    texture_name: string;
-    owners: AbilityCardRow["owners"];
-  }>(
-    `SELECT a.internal_name, COALESCE(req.display_name, en.display_name, a.internal_name) AS display_name,
-       CASE WHEN req.display_name IS NULL THEN en.display_name ELSE NULL END AS fallback_name,
-       a.catalog_status, a.definition_kind, a.behavior, a.damage_type, a.is_innate,
-       a.is_ultimate, a.is_passive, a.has_scepter_upgrade, a.has_shard_upgrade,
-       a.cooldown, a.mana_cost, a.texture_name,
-       COALESCE(jsonb_agg(DISTINCT jsonb_build_object(
-         'heroId', h.hero_id, 'slug', h.slug, 'internalName', h.internal_name,
-         'displayName', COALESCE(hl_req.display_name, hl_en.display_name, h.internal_name),
-         'relationKind', b.relation_kind)) FILTER (WHERE h.hero_id IS NOT NULL), '[]'::jsonb) AS owners
-     FROM abilities a ${joins}
-     LEFT JOIN hero_ability_bindings b ON b.dataset_version_id = a.dataset_version_id
-       AND b.ability_internal_name = a.internal_name AND b.is_current
-     LEFT JOIN heroes h ON h.dataset_version_id = b.dataset_version_id AND h.hero_id = b.hero_id
-     LEFT JOIN hero_localizations hl_req ON hl_req.dataset_version_id = h.dataset_version_id AND hl_req.hero_id = h.hero_id AND hl_req.locale = $2
-     LEFT JOIN hero_localizations hl_en ON hl_en.dataset_version_id = h.dataset_version_id AND hl_en.hero_id = h.hero_id AND hl_en.locale = 'en'
-     WHERE ${conditions.join(" AND ")}
-     GROUP BY a.dataset_version_id, a.internal_name, req.display_name, en.display_name
-     ORDER BY COALESCE(req.display_name, en.display_name, a.internal_name), a.internal_name
-     LIMIT $${values.length - 1} OFFSET $${values.length}`,
-    values,
+  const encoded = request.after ?? request.before;
+  if (encoded !== undefined) {
+    const decoded = decodeListCursor(encoded);
+    assertListCursorMatches(decoded, {
+      entityKind: "abilities",
+      locale: filters.lang,
+      filterIdentity,
+      catalogDatasetVersionId: request.catalogDatasetVersionId,
+      assetDatasetVersionId: request.assetDatasetVersionId,
+    });
+    const cursor = decoded as AbilityListCursor;
+    await assertCatalogDatasetPairAvailable(
+      cursor.catalogDatasetVersionId,
+      cursor.assetDatasetVersionId,
+    );
+    return {
+      catalogDatasetVersionId: cursor.catalogDatasetVersionId,
+      assetDatasetVersionId: cursor.assetDatasetVersionId,
+      filterIdentity,
+      direction: request.after !== undefined ? "after" : "before",
+      cursor,
+    };
+  }
+
+  let catalogDatasetVersionId = request.catalogDatasetVersionId;
+  let assetDatasetVersionId = request.assetDatasetVersionId;
+  if (!catalogDatasetVersionId || !assetDatasetVersionId) {
+    const meta = await getActiveCatalogMeta();
+    if (!meta) throw new ListDatasetUnavailableError("当前 Catalog 尚未发布。");
+    catalogDatasetVersionId = meta.datasetVersionId;
+    assetDatasetVersionId = meta.assetDatasetVersionId;
+  }
+  await assertCatalogDatasetPairAvailable(
+    catalogDatasetVersionId,
+    assetDatasetVersionId,
   );
   return {
-    meta,
-    total: total.rows[0].count,
-    page,
-    pageCount,
-    abilities: result.rows.map((row) => ({
-      internalName: row.internal_name,
-      displayName: row.display_name,
-      fallbackName: row.fallback_name,
-      catalogStatus: row.catalog_status,
-      definitionKind: row.definition_kind,
-      behavior: row.behavior,
-      damageType: row.damage_type,
-      isInnate: row.is_innate,
-      isUltimate: row.is_ultimate,
-      isPassive: row.is_passive,
-      hasScepterUpgrade: row.has_scepter_upgrade,
-      hasShardUpgrade: row.has_shard_upgrade,
-      cooldown: row.cooldown,
-      manaCost: row.mana_cost,
-      textureName: row.texture_name,
-      owners: row.owners,
-    })),
+    catalogDatasetVersionId,
+    assetDatasetVersionId,
+    filterIdentity,
+    direction: null,
+    cursor: null,
+  };
+}
+
+function emptyAbilitySlice(
+  meta: ActiveDatasetMeta,
+): CatalogSlice<AbilityCardRow> {
+  return {
+    items: [],
+    datasetVersionId: meta.datasetVersionId,
+    assetDatasetVersionId: meta.assetDatasetVersionId,
+    previousCursor: null,
+    nextCursor: null,
+    total: 0,
+  };
+}
+
+function mapAbilityCardRow(row: AbilityCardQueryRow): AbilityCardRow {
+  return {
+    internalName: row.internal_name,
+    displayName: row.display_name,
+    fallbackName: row.fallback_name,
+    catalogStatus: row.catalog_status,
+    definitionKind: row.definition_kind,
+    behavior: row.behavior,
+    damageType: row.damage_type,
+    isInnate: row.is_innate,
+    isUltimate: row.is_ultimate,
+    isPassive: row.is_passive,
+    hasScepterUpgrade: row.has_scepter_upgrade,
+    hasShardUpgrade: row.has_shard_upgrade,
+    cooldown: row.cooldown,
+    manaCost: row.mana_cost,
+    textureName: row.texture_name,
+    owners: row.owners,
   };
 }
 

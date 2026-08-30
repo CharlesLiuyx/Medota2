@@ -2,9 +2,11 @@
 
 > 状态：MVP 已实现；Catalog 范围已由 [Hero Catalog v2](hero-catalog-v2.md) 取代，本文保留为历史兼容合同
 >
-> 最后更新：2026-08-30
+> 最后更新：2026-08-31
 >
 > 版本范围：Medota2 第一个可运行版本
+>
+> 后续全局列表合同：[全局 List 无限滚动与 3× 预加载 Spec](infinite-lists.md)
 
 ## 1. 文档目的
 
@@ -410,7 +412,7 @@ reference 值为 `null` 而规范值非空时属于 `value_mismatch`，不能解
 - 数据问题数量和明确的未导入空状态；
 - 点击英雄进入详情页。
 
-首版只交付一种卡片表达，不实现视图切换、拖拽、自定义列或无限滚动。
+首版只交付一种卡片表达，不实现视图切换、拖拽或自定义列。原“不实现无限滚动”条款已由[全局 List Spec](infinite-lists.md)取代。
 
 搜索与筛选合同：
 
@@ -418,7 +420,7 @@ reference 值为 `null` 而规范值非空时属于 `value_mismatch`，不能解
 - `q` 做 Unicode NFKC、trim 和大小写折叠，最长 100 个 Unicode code points；在中文名、英文名和内部名称上做 contains 匹配，SQL wildcard 必须转义。
 - 同一维度多个值按 OR，不同维度之间按 AND；多个 role 表示“拥有任一选中 role”。
 - 空 `q` 等同未提供；未知枚举值产生可见的参数校验错误，不能静默进入 SQL。
-- 查询、排序和过滤均针对 `dataset_heads('heroes')` 指向的版本在 PostgreSQL 中完成；首版不分页，返回该版本的全部匹配英雄。
+- 初始查询从 current head 取得不可变 dataset version，后续查询固定该版本并在 PostgreSQL 中完成排序和过滤；原“首版不分页、一次返回全部匹配英雄”条款已由[全局 List Spec](infinite-lists.md)的双向 cursor、无限滚动和惰性渲染合同取代。
 - 总览“数据问题数量”只统计 active dataset 对应成功 import run 的 warning；“最近导入失败”指 `finished_at` 晚于 active version `promoted_at` 的最新失败 VPK run。
 
 ### 11.2 英雄详情 `/heroes/[slug]`

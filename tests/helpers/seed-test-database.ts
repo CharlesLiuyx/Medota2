@@ -17,10 +17,11 @@ import { runMigrations } from "@/server/db/run-migrations";
 import { loadCatalogFixture } from "./vpk-fixture";
 
 const { Pool } = pg;
+const SCROLL_FIXTURE_SIZE = 192;
 
 async function main(): Promise<void> {
   loadLocalEnv();
-  const includeFailure = process.argv.includes("--include-failure");
+  const includeLargeList = process.argv.includes("--include-large-list");
   const databaseUrl = process.env.DATABASE_URL_MIGRATION_TEST;
   if (!databaseUrl || !databaseUrl.includes("_test"))
     throw new Error("E2E seed requires DATABASE_URL_MIGRATION_TEST.");
@@ -101,7 +102,7 @@ async function main(): Promise<void> {
           heroes: dataset.counts,
           abilities: abilityDataset.counts,
         }),
-        JSON.stringify(includeFailure ? dataset.issues : []),
+        JSON.stringify([]),
       ],
     );
     const version = await client.query<{ id: string }>(
@@ -124,13 +125,45 @@ async function main(): Promise<void> {
     for (const hero of dataset.heroes)
       await insertHero(client, version.rows[0].id, hero);
     await insertAbilities(client, version.rows[0].id, abilityDataset);
+    if (includeLargeList) {
+      await insertScrollableHeroFixture(
+        client,
+        version.rows[0].id,
+        SCROLL_FIXTURE_SIZE,
+      );
+      await insertScrollableAbilityFixture(
+        client,
+        version.rows[0].id,
+        SCROLL_FIXTURE_SIZE,
+      );
+    }
     await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
       ...CATALOG_IMPORT_LOCK_KEYS,
     ]);
     await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
       ...ASSET_IMPORT_LOCK_KEYS,
     ]);
-    await publishAssetDataset(client, version.rows[0].id, assetDataset);
+    const publishedAssets = await publishAssetDataset(
+      client,
+      version.rows[0].id,
+      assetDataset,
+      { promote: false },
+    );
+    if (includeLargeList) {
+      await insertScrollableHeroAssetBindings(
+        client,
+        publishedAssets.assetDatasetVersionId,
+        SCROLL_FIXTURE_SIZE,
+      );
+      await insertScrollableAbilityAssetBindings(
+        client,
+        publishedAssets.assetDatasetVersionId,
+        SCROLL_FIXTURE_SIZE,
+      );
+    }
+    await client.query("SELECT promote_asset_dataset_version($1)", [
+      publishedAssets.assetDatasetVersionId,
+    ]);
     await client.query("SELECT promote_hero_catalog_version($1)", [
       version.rows[0].id,
     ]);
@@ -181,20 +214,10 @@ async function main(): Promise<void> {
       "UPDATE import_runs SET result_comparison_id = $2 WHERE id = $1",
       [comparisonRun.rows[0].id, comparison.rows[0].id],
     );
-    if (includeFailure) {
-      await client.query(
-        `INSERT INTO import_runs
-          (source_kind, status, stage, medota2_commit, transformer_version, target_schema_version,
-           issues, error_summary, started_at, finished_at)
-         VALUES ('vpk', 'failed', 'parse_and_validate', $1, 'hero-vpk-v1/e2e-failure', $2,
-           '[{"severity":"blocking","code":"fixture_failure","message":"Fixture failure"}]'::jsonb,
-           'Fixture failure kept the previous active dataset.', now(), now())`,
-        ["8".repeat(40), schemaVersion],
-      );
-    }
     await client.query("COMMIT");
+    const syntheticCount = includeLargeList ? SCROLL_FIXTURE_SIZE : 0;
     console.log(
-      `seeded ${dataset.heroes.length} heroes and ${abilityDataset.abilities.length} abilities into ${database.rows[0].name}`,
+      `seeded ${dataset.heroes.length + syntheticCount} heroes and ${abilityDataset.abilities.length + syntheticCount} abilities into ${database.rows[0].name}`,
     );
   } catch (error) {
     await client.query("ROLLBACK").catch(() => undefined);
@@ -468,6 +491,208 @@ async function insertAbilities(
      FROM hero_ability_bindings
      WHERE dataset_version_id = $1 AND relation_kind = 'facet'`,
     [versionId],
+  );
+}
+
+async function insertScrollableHeroFixture(
+  client: pg.PoolClient,
+  versionId: string,
+  count: number,
+): Promise<void> {
+  const intelligenceCount = Math.floor(count / 2);
+  await client.query(
+    `INSERT INTO heroes (
+       dataset_version_id, hero_id, internal_name, slug, enabled, cm_enabled,
+       random_enabled, primary_attribute, attack_type, faction, complexity,
+       base_strength, strength_gain, base_agility, agility_gain,
+       base_intelligence, intelligence_gain, base_health, base_mana,
+       base_health_regen, base_mana_regen, base_armor, magic_resistance,
+       base_attack_damage_min, base_attack_damage_max, base_attack_speed,
+       attack_rate, attack_animation_point, attack_range, projectile_speed,
+       movement_speed, turn_rate, day_vision, night_vision)
+     SELECT $1, 900000 + series.ordinal,
+       'npc_dota_hero_fixture_scroll_' || lpad(series.ordinal::text, 3, '0'),
+       'fixture_scroll_' || lpad(series.ordinal::text, 3, '0'),
+       true, true, true,
+       CASE WHEN series.ordinal <= $3::integer
+         THEN 'intelligence'
+         ELSE 'universal'
+       END,
+       template.attack_type, template.faction, template.complexity,
+       template.base_strength, template.strength_gain,
+       template.base_agility, template.agility_gain,
+       template.base_intelligence, template.intelligence_gain,
+       template.base_health, template.base_mana,
+       template.base_health_regen, template.base_mana_regen,
+       template.base_armor, template.magic_resistance,
+       template.base_attack_damage_min, template.base_attack_damage_max,
+       template.base_attack_speed, template.attack_rate,
+       template.attack_animation_point, template.attack_range,
+       template.projectile_speed, template.movement_speed,
+       template.turn_rate, template.day_vision, template.night_vision
+     FROM heroes template
+     CROSS JOIN generate_series(1, $2::integer) AS series(ordinal)
+     WHERE template.dataset_version_id = $1
+       AND template.internal_name = 'npc_dota_hero_test_cm_disabled'`,
+    [versionId, count, intelligenceCount],
+  );
+  await client.query(
+    `INSERT INTO hero_source_records (
+       dataset_version_id, hero_id, source_key, source_dto_sha256, inherited_fields)
+     SELECT $1, 900000 + series.ordinal,
+       'npc_dota_hero_fixture_scroll_' || lpad(series.ordinal::text, 3, '0'),
+       source.source_dto_sha256, source.inherited_fields
+     FROM hero_source_records source
+     CROSS JOIN generate_series(1, $2::integer) AS series(ordinal)
+     WHERE source.dataset_version_id = $1
+       AND source.hero_id = 999`,
+    [versionId, count],
+  );
+  await client.query(
+    `INSERT INTO hero_localizations (
+       dataset_version_id, hero_id, locale, display_name, english_name_variant,
+       hype, lore, name_source_path, name_token, english_name_variant_token,
+       hype_source_path, hype_token, lore_source_path, lore_token)
+     SELECT $1, 900000 + series.ordinal, localization.locale,
+       CASE localization.locale
+         WHEN 'zh-CN' THEN '🧪 滚动测试英雄 ' || lpad(series.ordinal::text, 3, '0')
+         ELSE 'Scroll Fixture Hero ' || lpad(series.ordinal::text, 3, '0')
+       END,
+       CASE WHEN localization.english_name_variant IS NULL THEN NULL
+         ELSE 'Scroll Fixture Hero ' || lpad(series.ordinal::text, 3, '0')
+       END,
+       localization.hype, localization.lore, localization.name_source_path,
+       localization.name_token || '_scroll_' || series.ordinal::text,
+       localization.english_name_variant_token,
+       localization.hype_source_path, localization.hype_token,
+       localization.lore_source_path, localization.lore_token
+     FROM hero_localizations localization
+     CROSS JOIN generate_series(1, $2::integer) AS series(ordinal)
+     WHERE localization.dataset_version_id = $1
+       AND localization.hero_id = 999`,
+    [versionId, count],
+  );
+  await client.query(
+    `INSERT INTO hero_roles (dataset_version_id, hero_id, role, role_level)
+     SELECT $1, 900000 + series.ordinal, role.role, role.role_level
+     FROM hero_roles role
+     CROSS JOIN generate_series(1, $2::integer) AS series(ordinal)
+     WHERE role.dataset_version_id = $1
+       AND role.hero_id = 999`,
+    [versionId, count],
+  );
+}
+
+async function insertScrollableAbilityFixture(
+  client: pg.PoolClient,
+  versionId: string,
+  count: number,
+): Promise<void> {
+  await client.query(
+    `INSERT INTO abilities (
+       dataset_version_id, internal_name, declaration_kind, definition_kind, catalog_status,
+       ability_type, behavior, unit_target_team, unit_target_type, unit_target_flags,
+       damage_type, spell_immunity_type, spell_dispellable_type, max_level,
+       is_innate, is_passive, is_hidden, is_ultimate, has_scepter_upgrade, has_shard_upgrade,
+       is_granted_by_scepter, is_granted_by_shard, cast_range, cast_point, channel_time,
+       cooldown, mana_cost, damage, texture_name, base_class, raw_sha256, resolved_sha256,
+       unknown_fields)
+     SELECT $1,
+       'fixture_scroll_' || lpad(series.ordinal::text, 3, '0'),
+       ability.declaration_kind, ability.definition_kind, ability.catalog_status,
+       ability.ability_type, ability.behavior, ability.unit_target_team,
+       ability.unit_target_type, ability.unit_target_flags, ability.damage_type,
+       ability.spell_immunity_type, ability.spell_dispellable_type, ability.max_level,
+       ability.is_innate, ability.is_passive, ability.is_hidden, ability.is_ultimate,
+       ability.has_scepter_upgrade, ability.has_shard_upgrade,
+       ability.is_granted_by_scepter, ability.is_granted_by_shard,
+       ability.cast_range, ability.cast_point, ability.channel_time, ability.cooldown,
+       ability.mana_cost, ability.damage, ability.texture_name, ability.base_class,
+       ability.raw_sha256, ability.resolved_sha256, ability.unknown_fields
+     FROM abilities ability
+     CROSS JOIN generate_series(1, $2::integer) AS series(ordinal)
+     WHERE ability.dataset_version_id = $1
+       AND ability.internal_name = 'antimage_blink'`,
+    [versionId, count],
+  );
+  await client.query(
+    `INSERT INTO ability_localizations (
+       dataset_version_id, ability_internal_name, locale, display_name, description, lore,
+       scepter_description, shard_description, source_path, name_token, description_token,
+       lore_token, scepter_token, shard_token)
+     SELECT $1,
+       'fixture_scroll_' || lpad(series.ordinal::text, 3, '0'),
+       localization.locale,
+       CASE localization.locale
+         WHEN 'zh-CN' THEN '🧪 滚动测试技能 ' || lpad(series.ordinal::text, 3, '0')
+         ELSE 'Scroll Fixture Ability ' || lpad(series.ordinal::text, 3, '0')
+       END,
+       localization.description, localization.lore, localization.scepter_description,
+       localization.shard_description, localization.source_path,
+       localization.name_token || '_scroll_' || series.ordinal::text,
+       localization.description_token, localization.lore_token,
+       localization.scepter_token, localization.shard_token
+     FROM ability_localizations localization
+     CROSS JOIN generate_series(1, $2::integer) AS series(ordinal)
+     WHERE localization.dataset_version_id = $1
+       AND localization.ability_internal_name = 'antimage_blink'`,
+    [versionId, count],
+  );
+  await client.query(
+    `INSERT INTO ability_values (
+       dataset_version_id, ability_internal_name, value_key, ordinal,
+       scalar_value, level_values, modifiers, raw_value)
+     SELECT $1, 'fixture_scroll_001',
+       'fixture_value_' || lpad(series.ordinal::text, 3, '0'),
+       series.ordinal - 1, series.ordinal::text,
+       ARRAY[series.ordinal::text, (series.ordinal * 2)::text],
+       '[]'::jsonb, to_jsonb(series.ordinal)
+     FROM generate_series(1, 144) AS series(ordinal)`,
+    [versionId],
+  );
+}
+
+async function insertScrollableHeroAssetBindings(
+  client: pg.PoolClient,
+  assetDatasetVersionId: string,
+  count: number,
+): Promise<void> {
+  await client.query(
+    `INSERT INTO entity_asset_bindings (
+       asset_dataset_version_id, entity_type, entity_key, asset_kind, asset_object_id,
+       resolution_kind, source_status, requested_logical_path)
+     SELECT $1, 'hero',
+       'npc_dota_hero_fixture_scroll_' || lpad(series.ordinal::text, 3, '0'),
+       binding.asset_kind, binding.asset_object_id, binding.resolution_kind,
+       binding.source_status, binding.requested_logical_path
+     FROM entity_asset_bindings binding
+     CROSS JOIN generate_series(1, $2::integer) AS series(ordinal)
+     WHERE binding.asset_dataset_version_id = $1
+       AND binding.entity_type = 'hero'
+       AND binding.entity_key = 'npc_dota_hero_antimage'`,
+    [assetDatasetVersionId, count],
+  );
+}
+
+async function insertScrollableAbilityAssetBindings(
+  client: pg.PoolClient,
+  assetDatasetVersionId: string,
+  count: number,
+): Promise<void> {
+  await client.query(
+    `INSERT INTO entity_asset_bindings (
+       asset_dataset_version_id, entity_type, entity_key, asset_kind, asset_object_id,
+       resolution_kind, source_status, requested_logical_path)
+     SELECT $1, 'ability',
+       'fixture_scroll_' || lpad(series.ordinal::text, 3, '0'),
+       binding.asset_kind, binding.asset_object_id, binding.resolution_kind,
+       binding.source_status, binding.requested_logical_path
+     FROM entity_asset_bindings binding
+     CROSS JOIN generate_series(1, $2::integer) AS series(ordinal)
+     WHERE binding.asset_dataset_version_id = $1
+      AND binding.entity_type = 'ability'
+      AND binding.entity_key = 'antimage_blink'`,
+    [assetDatasetVersionId, count],
   );
 }
 
