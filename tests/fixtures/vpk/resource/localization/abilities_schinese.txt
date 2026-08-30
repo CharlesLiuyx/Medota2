@@ -1,0 +1,11 @@
+﻿"lang"
+{
+  "Language" "schinese"
+  "Tokens"
+  {
+    "npc_dota_hero_antimage:n" "敌法师"
+    "npc_dota_hero_antimage__en:n" "Anti-Mage"
+    "npc_dota_hero_test_cm_disabled:n" "测试守卫"
+    "npc_dota_hero_test_cm_disabled__en:n" "Fixture Guardian"
+  }
+}

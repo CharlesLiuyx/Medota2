@@ -1,0 +1,77 @@
+// Artificially cropped from the reviewed VPK structure for deterministic tests.
+"DOTAHeroes"
+{
+  "Version" "1"
+  "npc_dota_hero_base"
+  {
+    "Enabled" "0"
+    "CMEnabled" "0"
+    "RandomEnabled" "1"
+    "AttributePrimary" "DOTA_ATTRIBUTE_STRENGTH"
+    "AttackCapabilities" "DOTA_UNIT_CAP_RANGED_ATTACK"
+    "Team" "Good"
+    "Complexity" "1"
+    "AttributeBaseStrength" "20"
+    "AttributeStrengthGain" "2.000000"
+    "AttributeBaseAgility" "20"
+    "AttributeAgilityGain" "2.000000"
+    "AttributeBaseIntelligence" "20"
+    "AttributeIntelligenceGain" "2.000000"
+    "StatusHealth" "120"
+    "StatusMana" "75"
+    "StatusHealthRegen" "0.500000"
+    "StatusManaRegen" "0"
+    "ArmorPhysical" "0"
+    "MagicalResistance" "25"
+    "AttackDamageMin" "20"
+    "AttackDamageMax" "24"
+    "BaseAttackSpeed" "100"
+    "AttackRate" "1.700000"
+    "AttackAnimationPoint" "0.300000"
+    "AttackRange" "600"
+    "ProjectileSpeed" "900"
+    "MovementSpeed" "300"
+    "MovementTurnRate" "0.600000"
+    "VisionDaytimeRange" "1800"
+    "VisionNighttimeRange" "800"
+  }
+
+  "npc_dota_hero_antimage"
+  {
+    "HeroID" "1"
+    "Enabled" "1"
+    "CMEnabled" "1"
+    "AttributePrimary" "DOTA_ATTRIBUTE_AGILITY"
+    "AttackCapabilities" "DOTA_UNIT_CAP_MELEE_ATTACK"
+    "Team" "Good"
+    "Complexity" "1"
+    "Role" "Carry,Escape,Nuker"
+    "Rolelevels" "3,3,1"
+    "AttributeBaseStrength" "21"
+    "AttributeBaseAgility" "24"
+    "AttributeBaseIntelligence" "12"
+    "AttackRange" "150"
+    "ProjectileSpeed" "0"
+    "MovementSpeed" "310"
+  }
+
+  "npc_dota_hero_test_cm_disabled"
+  {
+    "HeroID" "999"
+    "Enabled" "1"
+    "CMEnabled" "0"
+    "AttributePrimary" "DOTA_ATTRIBUTE_ALL"
+    "AttackCapabilities" "DOTA_UNIT_CAP_RANGED_ATTACK"
+    "Team" "Bad"
+    "Complexity" "2"
+    "Role" "Support,Disabler"
+    "Rolelevels" "3,2"
+  }
+
+  "npc_dota_hero_target_dummy"
+  {
+    "HeroID" "200"
+    "Enabled" "1"
+    "CMEnabled" "0"
+  }
+}

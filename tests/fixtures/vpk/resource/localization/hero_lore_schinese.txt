@@ -1,0 +1,8 @@
+"lang"
+{
+  "Language" "schinese"
+  "Tokens"
+  {
+    "npc_dota_hero_antimage_bio" "最后一名侍僧带着仅存的卷轴逃出生天。"
+  }
+}

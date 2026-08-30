@@ -1,0 +1,8 @@
+"lang"
+{
+  "Language" "schinese"
+  "Tokens"
+  {
+    "npc_dota_hero_antimage_hype" "每次攻击都会<b>削减魔法</b>。"
+  }
+}

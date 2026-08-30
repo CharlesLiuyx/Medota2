@@ -1,112 +1,119 @@
 # Medota2
 
-> 一个计划在本地运行、强调版本可追溯与可复现数据接入的 Dota 2 分析项目。
+> 本地运行、强调版本可追溯与可复现数据接入的 Dota 2 元数据产品。
 
-> [!IMPORTANT]
-> 项目目前处于初始化阶段。仓库仅包含项目边界和潜在数据来源的调研文档，尚无可安装或可运行的应用、数据导入器、数据库与分析功能。
+Medota2 的首个 MVP 已经可运行：从一个固定且输入与 HEAD 一致的 `dota_vpk_updates` checkout 导入英雄元数据，版本化保存到 PostgreSQL，并通过 Next.js 界面搜索、筛选和查看详情。`dotaconstants` 只进入隔离的参考比较表，不会覆盖或回填 VPK 规范值。
 
-## 项目简介
+## MVP 能力
 
-Dota 2 的客户端协议、原始游戏定义、应用常量和比赛数据分散在不同来源，而且会随客户端版本和补丁持续变化。Medota2 计划在这些来源之上建立清晰的数据适配与领域模型，并最终提供一个可以在本地运行的分析产品。
+- `dota_vpk_updates` 是英雄规范字段唯一 SSOT；导入只读取 8 个 allowlist 文件。
+- 校验 Git HEAD、输入原始 SHA-256、UTF-8/BOM、manifest、ClientVersion 与 SourceRevision。
+- 解析 Valve KeyValues，处理标量基类继承、重复 key、正式英雄过滤、Role/RoleLevel 和双语 token。
+- 使用 PostgreSQL 的不可变 dataset version、active head、advisory lock 与 `SECURITY DEFINER` promotion。
+- 提供 `/heroes` 总览，以及中文名、英文名、内部名称、主属性、角色、攻击类型和 CM 状态筛选。
+- 提供 `/heroes/[slug]` 详情、基础/原始定义、双语文本、快照级与记录级 provenance。
+- 可选导入 `dotaconstants` 并对当前 VPK dataset 生成覆盖率和字段漂移。
+- 提供真实 PostgreSQL 集成测试和 Playwright E2E。
 
-项目强调：
+英雄图片、技能、比赛、玩家、replay、自动上游更新、登录和 Rust Worker 不在当前 MVP 中。
 
-- **本地优先**：核心数据处理和分析能力计划在用户自己的环境中运行。
-- **来源隔离**：每个外部来源通过独立适配层接入，不让业务逻辑直接依赖 VDF、KV3 或第三方 JSON 布局。
-- **版本可追溯**：派生数据记录来源仓库、commit、原始路径、客户端版本和转换器版本。
-- **产品边界明确**：外部仓库提供参考数据；Medota2 计划负责比赛数据接入、标准化、分析、存储和展示。
+## 技术栈
 
-## 当前有什么
+- Node.js 24 LTS（最低支持 `22.12`）与 pnpm 11；
+- Next.js 16、React 19、TypeScript strict、Tailwind CSS 4；
+- PostgreSQL 18、Drizzle schema、node-postgres 和 `pg-copy-streams`；
+- Zod、Vitest、Playwright、ESLint、Prettier；
+- Docker Compose 本地数据库。
 
-| 已有内容 | 尚未实现 |
-| --- | --- |
-| 三类 Dota 2 外部数据源的结构调研 | 技术栈与应用架构 |
-| 数据源职责、选源和冲突处理原则 | API、回放或本地比赛数据接入 |
-| provenance 与再分发注意事项 | 数据库、分析指标和领域模型 |
-| 初始项目说明和开发约束 | CLI、本地服务、Web UI 和发布包 |
+Web、Worker 与 migration 使用独立 PostgreSQL 账号。浏览器从不直接连接数据库；Web 账号只读，Worker 不能执行 DDL 或直接修改 active head。
 
-当前没有启动、构建或安装命令。请不要把路线图中的规划视为已经交付的能力。
+## 本地启动
 
-## 外部数据源调研
+前置条件：Node.js 24 LTS、pnpm 11、Docker，以及一个本地 `dota_vpk_updates` Git checkout。`dotaconstants` checkout 仅在运行参考比较时需要。
 
-这些仓库是可选的独立上游来源，不会随 Medota2 一起发布，也尚未成为已集成依赖：
-
-| 上游仓库 | 主要职责 | 本仓库说明 |
-| --- | --- | --- |
-| [SteamDatabase/GameTracking-Dota2](https://github.com/SteamDatabase/GameTracking-Dota2) | 客户端、引擎、协议和非 VPK 文件的可追踪快照 | [详细说明](docs/repositories/game-tracking-dota2.md) |
-| [spirit-bear-productions/dota_vpk_updates](https://github.com/spirit-bear-productions/dota_vpk_updates) | `pak01_dir.vpk` 内玩法、文本、UI 等资源的提取/反编译快照 | [详细说明](docs/repositories/dota-vpk-updates.md) |
-| [odota/dotaconstants](https://github.com/odota/dotaconstants) | 面向应用消费的标准化 Dota 2 常量 JSON/ESM 包 | [详细说明](docs/repositories/dotaconstants.md) |
-
-三者的关系和选源建议见[外部仓库总览](docs/repositories/README.md)。它们都不提供可直接分析的比赛历史数据；比赛数据仍需要由 Medota2 通过 API、回放文件或本地采集器接入。
-
-## 规划中的职责边界
-
-```text
-客户端/协议快照 ─┐
-VPK 原始资源 ────┼──> 来源适配与标准化 ──> Medota2 领域模型 ──> 分析 / 存储 / 展示
-应用层常量 ──────┘                 ↑
-比赛 API / 回放 / 本地采集 ─────────┘
+```bash
+pnpm install
+cp .env.example .env
+docker compose up -d
+pnpm db:migrate
+pnpm data:import:vpk
+pnpm dev
 ```
 
-外部文件的存在不代表它们属于产品 schema。未来的实现应先转换到来源专属 DTO，再映射到 Medota2 自己的领域模型，并对缺失字段、ID 映射、补丁切换和来源冲突建立测试。
+打开 [http://localhost:3000/heroes](http://localhost:3000/heroes)。
+
+只想最快预览界面时，可使用独立的本地预览库。该命令会启动 PostgreSQL、从真实 `dota_vpk_updates` 快照重建测试库并启动前端；它不会注入 E2E fixture，也不会放宽正式数据库的 clean-check：
+
+```bash
+pnpm dev:demo
+```
+
+`.env` 中的上游路径可指向任意位置，应用没有写死相邻仓库。正式 `tsx` 导入要求 Medota2 自身 checkout 干净；这是为了保证 `importer_version = hero-vpk-v1/medota2@<version>+git.<commit>` 能准确表示实际转换代码。上游 checkout 可以有 allowlist 外的改动，但 8 个实际输入必须由 Git 跟踪且和 HEAD 字节一致。
+
+## 可选参考比较
+
+```bash
+pnpm data:import:dotaconstants
+pnpm data:compare:heroes
+```
+
+比较结果明确配对当前 VPK dataset version 和一个 dotaconstants snapshot。参考导入失败或未配置不会影响英雄总览和详情。
+
+## 开发命令
+
+```bash
+pnpm dev                   # Next.js 本地开发服务
+pnpm dev:demo              # 从真实 VPK 重建完整本地预览并启动前端
+pnpm build                 # Webpack 生产构建
+pnpm typecheck             # TypeScript strict
+pnpm lint                  # ESLint
+pnpm test                  # 解析、领域和查询合同单元测试
+pnpm test:integration      # 真实 PostgreSQL 权限与原子性测试
+pnpm test:e2e              # seed 隔离测试库并运行 Chromium E2E
+pnpm db:generate           # 根据 Drizzle schema 生成待审阅 migration
+pnpm db:migrate            # migration owner 执行正式库 migration
+pnpm db:migrate:test       # 执行 medota2_test migration
+pnpm db:studio             # 启动本地 Drizzle Studio
+```
+
+Docker 首次初始化会创建 `medota2` 与 `medota2_test` 两个数据库，以及 owner、Worker writer、Web reader 三个本地账号。测试 helper 会拒绝清理不以 `_test` 结尾的数据库。
+
+## 数据源
+
+| 上游仓库                                                                                                | 当前职责                       | 本仓库说明                                           |
+| ------------------------------------------------------------------------------------------------------- | ------------------------------ | ---------------------------------------------------- |
+| [spirit-bear-productions/dota_vpk_updates](https://github.com/spirit-bear-productions/dota_vpk_updates) | 英雄规范数据唯一 SSOT          | [详细说明](docs/repositories/dota-vpk-updates.md)    |
+| [odota/dotaconstants](https://github.com/odota/dotaconstants)                                           | 隔离参考与漂移比较             | [详细说明](docs/repositories/dotaconstants.md)       |
+| [SteamDatabase/GameTracking-Dota2](https://github.com/SteamDatabase/GameTracking-Dota2)                 | 后续协议、schema 与非 VPK 调研 | [详细说明](docs/repositories/game-tracking-dota2.md) |
+
+三个上游仓库始终只读，不随 Medota2 发布，也不提供比赛历史数据。
 
 ## 仓库结构
 
 ```text
 Medota2/
-├── AGENTS.md              # 面向自动化开发代理的项目约束
-├── README.md              # 项目入口与当前状态
-└── docs/
-    └── repositories/      # 外部数据源职责、结构和选源调研
+├── src/app/                 # Next.js 总览与详情页面
+├── src/components/          # MVP UI 组件
+├── src/domain/              # 英雄领域合同
+├── src/importers/           # VPK、KeyValues 与 reference 适配器
+├── src/server/              # PostgreSQL schema、repository 与查询服务
+├── src/workers/             # migration、导入与比较 CLI
+├── drizzle/                 # 已审阅 SQL migration
+├── docker/init/             # 本地数据库账号和测试库 bootstrap
+├── tests/                   # fixture、单元、集成与 E2E
+└── docs/                    # 架构、Spec 与上游调研
 ```
 
-## 开始了解项目
+## 设计文档
 
-```bash
-git clone https://github.com/CharlesLiuyx/Medota2.git
-cd Medota2
-```
+- [项目技术选型与数据处理架构](docs/architecture/technology-selection.md)
+- [英雄元数据显示 MVP 功能 Spec](docs/specs/hero-metadata-mvp.md)
+- [外部仓库总览与选源指南](docs/repositories/README.md)
 
-然后从以下文档开始：
+Rust 不在 MVP 中。只有 profiling 和可复现 benchmark 证明 TypeScript Worker、批处理、COPY 和 SQL 优化仍无法达到明确目标时，才通过 ADR 引入独立 Rust 计算内核。
 
-1. [外部仓库总览与选源指南](docs/repositories/README.md)
-2. [GameTracking-Dota2](docs/repositories/game-tracking-dota2.md)
-3. [dota_vpk_updates](docs/repositories/dota-vpk-updates.md)
-4. [dotaconstants](docs/repositories/dotaconstants.md)
+## 许可与声明
 
-## 路线图
-
-- [x] 梳理外部数据源的职责与风险。
-- [x] 建立独立 Git 仓库和公开项目说明。
-- [ ] 明确首个可运行版本的用户场景、输入与输出。
-- [ ] 通过 ADR 选择技术栈和本地应用形态。
-- [ ] 实现第一个带 provenance 的数据适配器与领域模型。
-- [ ] 接入一条可分析的比赛数据链路。
-- [ ] 交付最小本地分析闭环及自动化测试。
-
-路线图只表达顺序，不承诺发布日期。
-
-## 数据溯源要求
-
-未来生成的派生数据至少应记录：
-
-- 来源仓库与上游 URL；
-- 实际读取的 Git commit 和仓库相对路径；
-- 能识别时的客户端版本或 Source revision；
-- 导入时间、导入器版本和目标 schema 版本。
-
-详细字段约定见[外部仓库总览中的 provenance 清单](docs/repositories/README.md#provenance-最小清单)。
-
-## 参与项目
-
-目前最有价值的贡献是完善产品范围、数据来源证据、首个分析场景和架构决策。提交实现前，建议先通过 GitHub Issue 说明目标、输入输出和会引入的数据来源。
-
-## 许可
-
-本项目尚未选择开源许可证。公开可见不等于授予复制、修改或再分发许可；在仓库加入明确许可证之前，保留所有权利。
-
-外部数据源还可能包含 Valve 或其他第三方内容，其许可不由 Medota2 仓库决定。不要未经审查把客户端文本、图片、声音或反编译资产打包进产品。
-
-## 声明
+本项目尚未选择开源许可证。公开可见不等于授予复制、修改或再分发许可。上游仓库还可能包含 Valve 或其他第三方内容；Medota2 不打包完整 VPK、英雄图片、声音或模型。
 
 Medota2 是非官方社区项目，与 Valve Corporation、Dota 2、SteamDatabase、OpenDota 及其他上游项目没有隶属或背书关系。Dota 2 和相关商标、游戏内容归其各自权利人所有。

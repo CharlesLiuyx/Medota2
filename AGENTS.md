@@ -2,9 +2,9 @@
 
 ## 当前状态
 
-Medota2 处于初始化阶段。仓库目前只有项目说明和外部数据源调研，没有已经选定的技术栈、可运行应用、导入器、数据库或分析功能。
+Medota2 已实现首个英雄元数据 MVP。仓库包含 Next.js Web、PostgreSQL migration、VPK 导入器、dotaconstants 参考比较、测试 fixture，以及单元、集成和 E2E 测试。
 
-任何文档、Issue 或代码都必须区分“当前已有”和“计划实现”，不要提供不存在的安装、构建或启动命令。
+文档、Issue 和代码仍必须区分“当前已有”和“后续计划”。README 中列出的命令是当前真实接口；修改脚本、目录或运行要求时同步更新 README 和 Spec。
 
 ## 项目职责
 
@@ -28,8 +28,8 @@ Medota2 计划负责：
 
 ## 开发规则
 
-- 在技术栈通过明确决策落地前，不要随意引入大型框架或生成脚手架。
-- 新增首个运行时组件时，同步补充真实可执行的安装、运行和测试说明。
+- 当前 MVP 技术栈已由 `docs/architecture/technology-selection.md` 落地；新增大型框架、服务或 Rust 前先提交 ADR。
+- 修改运行时组件时，同步补充真实可执行的安装、运行和测试说明。
 - 大型原始快照、凭据、`.env`、数据库文件和缓存不提交到 Git。
 - 变更外部来源假设时，同步更新 `docs/repositories/` 的说明与审阅基线。
 - 保持 README 的状态、仓库结构和路线图与实际内容一致。
@@ -39,3 +39,13 @@ Medota2 计划负责：
 - `README.md`：项目定位、当前状态与路线图。
 - `docs/repositories/README.md`：外部来源关系、选源和 provenance 要求。
 - `docs/repositories/*.md`：三个来源的结构与职责审阅。
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

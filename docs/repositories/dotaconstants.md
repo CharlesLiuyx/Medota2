@@ -53,14 +53,17 @@ npm test        # 运行 node --test
 
 ## Medota2 应如何使用
 
+> 首期专项决策：`dotaconstants` 不参与规范英雄数据生成，只用于可选的覆盖率和字段漂移参考；它不能覆盖 VPK 字段，也不能作为缺失字段 fallback。详见[英雄元数据显示 MVP 功能 Spec](../specs/hero-metadata-mvp.md)。
+
 适合：
 
-- 直接消费 `build/*.json`，或把该 npm 包作为一个有固定版本的依赖。
-- 作为 `Medota2` 领域模型导入器的基础输入。
+- 为尚未专项选源的应用常量评估 `build/*.json` 或固定版本 npm 包。
+- 对首期英雄规范数据生成 ID/名称覆盖率与字段漂移参考。
 - 参考 `updateconstants.ts` 如何把 VDF、localization token 和 Dota datafeed 联结成应用字段。
 
 不适合：
 
+- 作为首期规范英雄表的输入或 fallback。
 - 假定所有字段都来自同一游戏 build；它组合了手工数据和多个远程来源。
 - 替代 VPK 原始数据进行补丁级取证。
 - 提供比赛、玩家或实时状态数据。

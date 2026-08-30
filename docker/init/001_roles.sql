@@ -1,0 +1,8 @@
+CREATE ROLE medota2_worker LOGIN PASSWORD 'medota2_worker' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+CREATE ROLE medota2_web LOGIN PASSWORD 'medota2_web' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+
+GRANT CONNECT ON DATABASE medota2 TO medota2_worker, medota2_web;
+
+CREATE DATABASE medota2_test OWNER medota2_owner;
+\connect medota2_test
+GRANT CONNECT ON DATABASE medota2_test TO medota2_worker, medota2_web;

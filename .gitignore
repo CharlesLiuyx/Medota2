@@ -13,7 +13,13 @@ coverage/
 
 # JavaScript / TypeScript
 node_modules/
+.next/
+.playwright-cli/
 dist/
+playwright-report/
+test-results/
+output/
+*.tsbuildinfo
 
 # Python
 .venv/

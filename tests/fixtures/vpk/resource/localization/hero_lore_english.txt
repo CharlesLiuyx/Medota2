@@ -1,0 +1,8 @@
+"lang"
+{
+  "Language" "English"
+  "Tokens"
+  {
+    "npc_dota_hero_antimage_bio" "The last acolyte escaped with the surviving scrolls."
+  }
+}

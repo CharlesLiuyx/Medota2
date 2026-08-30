@@ -1,0 +1,8 @@
+"lang"
+{
+  "Language" "English"
+  "Tokens"
+  {
+    "npc_dota_hero_antimage_hype" "Drains <b>mana</b> with every strike."
+  }
+}

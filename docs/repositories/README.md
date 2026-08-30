@@ -14,25 +14,26 @@ d2vpkr + Dota 数据接口 + 手工 JSON ─> dotaconstants ─┘
 
 ## 三个仓库的职责
 
-| 仓库 | 抽象层次 | 最适合回答的问题 | 代表内容 |
-| --- | --- | --- | --- |
+| 仓库                 | 抽象层次        | 最适合回答的问题                                                                 | 代表内容                                              |
+| -------------------- | --------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------- |
 | `GameTracking-Dota2` | 客户端/引擎快照 | 某条网络消息、GC 消息或 Source 2 类型如何定义？客户端非 VPK 文件发生了什么变化？ | `.proto`、schema 头文件、模块元数据、客户端脚本和配置 |
-| `dota_vpk_updates` | 游戏资源原始层 | Valve 在 VPK 中怎样定义某英雄、技能、物品、单位、文本或 UI？ | VDF/KV、KV3、XML、CSS、JS、本地化和资源清单 |
-| `dotaconstants` | 应用常量层 | 应用怎样获得可直接查询的英雄、物品、技能、模式、地区或补丁常量？ | 已构建 JSON、ESM exports、生成任务和少量手工 JSON |
+| `dota_vpk_updates`   | 游戏资源原始层  | Valve 在 VPK 中怎样定义某英雄、技能、物品、单位、文本或 UI？                     | VDF/KV、KV3、XML、CSS、JS、本地化和资源清单           |
+| `dotaconstants`      | 应用常量层      | 应用怎样获得可直接查询的英雄、物品、技能、模式、地区或补丁常量？                 | 已构建 JSON、ESM exports、生成任务和少量手工 JSON     |
 
-`Medota2` 计划成为第四层：未来由它拥有产品 schema、分析语义、导入策略、缓存/数据库和用户界面。不要把上游文件布局直接变成产品领域模型。
+`Medota2` 是第四层：由它拥有产品 schema、导入策略、PostgreSQL 和用户界面；比赛分析等后续能力仍在规划。不要把上游文件布局直接变成产品领域模型。
 
 ## 按需求选择来源
 
-| 需求 | 首选 | 何时交叉核对 |
-| --- | --- | --- |
-| 英雄/物品/技能的常用名称、ID、展示字段 | `dotaconstants/build/` | 字段缺失或怀疑生成滞后时，用 `dota_vpk_updates/scripts/npc/` 与本地化文件核对 |
-| 固定快照/client version 对应的原始英雄、技能、物品、单位定义 | `dota_vpk_updates/scripts/npc/` | 需要应用友好格式时，参考 `dotaconstants` 的转换逻辑，但不要假定 schema 相同 |
-| 多语言游戏文本、补丁文本 | `dota_vpk_updates/resource/localization/` | 只需要英文应用字段时，可先看 `dotaconstants/build/` |
-| Dota UI 布局、样式、脚本 | `dota_vpk_updates/panorama/` | 查询客户端其他 Panorama/工具文件时再看 `GameTracking-Dota2` |
-| 回放、网络、GC 协议 | `GameTracking-Dota2/Protobufs/` | 结合具体客户端版本和解析器实现核对 |
-| Source 2 类、模块和引擎结构 | `GameTracking-Dota2/DumpSource2/` | 原始玩法值仍应回到 VPK 数据 |
-| 比赛历史、玩家表现、胜率、实时比赛 | 三者都不是 | 另接 Steam/OpenDota 等 API、回放或本地采集方案 |
+| 需求                                                         | 首选                                                        | 何时交叉核对                                                                |
+| ------------------------------------------------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 首期英雄 ID、属性、角色、状态和中英展示文本                  | `dota_vpk_updates/scripts/npc/` 与 `resource/localization/` | `dotaconstants` 只生成覆盖率与字段漂移参考，不参与规范值或 fallback         |
+| 尚未专项决策的应用常量，例如物品、技能、模式和地区           | 优先评估 `dotaconstants/build/`                             | 需要固定客户端快照或原始语义时，回到对应 VPK 文件核对                       |
+| 固定快照/client version 对应的原始英雄、技能、物品、单位定义 | `dota_vpk_updates/scripts/npc/`                             | 需要应用友好格式时，参考 `dotaconstants` 的转换逻辑，但不要假定 schema 相同 |
+| 多语言游戏文本、补丁文本                                     | `dota_vpk_updates/resource/localization/`                   | 只需要英文应用字段时，可先看 `dotaconstants/build/`                         |
+| Dota UI 布局、样式、脚本                                     | `dota_vpk_updates/panorama/`                                | 查询客户端其他 Panorama/工具文件时再看 `GameTracking-Dota2`                 |
+| 回放、网络、GC 协议                                          | `GameTracking-Dota2/Protobufs/`                             | 结合具体客户端版本和解析器实现核对                                          |
+| Source 2 类、模块和引擎结构                                  | `GameTracking-Dota2/DumpSource2/`                           | 原始玩法值仍应回到 VPK 数据                                                 |
+| 比赛历史、玩家表现、胜率、实时比赛                           | 三者都不是                                                  | 另接 Steam/OpenDota 等 API、回放或本地采集方案                              |
 
 ## 数据新鲜度与冲突
 
@@ -40,6 +41,10 @@ d2vpkr + Dota 数据接口 + 手工 JSON ─> dotaconstants ─┘
 - “更原始”不等于“更适合应用”。`dota_vpk_updates` 可能更新快但需要复杂解析，`dotaconstants` 更易使用但包含转换、补充和远程源延迟。
 - 同名字段不保证同一语义。先在 `Medota2` 定义领域字段，再为每个来源写显式映射。
 - 如果两个来源冲突，保留冲突样本和决策依据，不要按加载顺序覆盖。
+
+### 英雄元数据专项决策
+
+首期英雄元数据采用比本通用指南更严格的规则：`dota_vpk_updates` 是唯一 SSOT，`dotaconstants` 只作可选参考，不能覆盖或回填规范英雄字段。完整字段范围、继承规则、存储和展示方案见[英雄元数据显示 MVP 功能 Spec](../specs/hero-metadata-mvp.md)。其他数据域仍需逐项选源，不能自动沿用这项决定。
 
 ## Provenance 最小清单
 

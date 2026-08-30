@@ -65,11 +65,14 @@ dota_vpk_updates/
 
 ## Medota2 应如何使用
 
+> 首期专项决策：英雄元数据以本来源为唯一 SSOT。规范字段不能由 `dotaconstants` 覆盖或回填。详见[英雄元数据显示 MVP 功能 Spec](../specs/hero-metadata-mvp.md)。
+
 适合：
 
+- 生成首期规范英雄 ID、属性、角色、可用状态及中英本地化数据。
 - 核对固定 snapshot/client version 对应的英雄、技能、物品、单位和游戏规则字段。
 - 解析多语言展示文本、补丁文本和客户端 UI 行为。
-- 在 `dotaconstants` 缺字段或语义不明时回到更原始的依据。
+- 为需要固定客户端快照的玩法事实提供原始依据。
 
 不适合：
 

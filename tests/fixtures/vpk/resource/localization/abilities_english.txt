@@ -1,0 +1,11 @@
+"lang"
+{
+  "Language" "English"
+  "Tokens"
+  {
+    "npc_dota_hero_antimage:n" "Anti-Mage"
+    "npc_dota_hero_antimage__en:n" "Anti-Mage"
+    "npc_dota_hero_test_cm_disabled:n" "Fixture Guardian"
+    "npc_dota_hero_test_cm_disabled__en:n" "Fixture Guardian"
+  }
+}
