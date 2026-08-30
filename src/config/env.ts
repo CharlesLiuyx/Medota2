@@ -43,3 +43,16 @@ export function getRequiredPath(
   }
   return resolve(process.cwd(), value);
 }
+
+export function getOptionalPath(key: "DOTA_VALVE_ASSET_PATH"): string | null {
+  loadLocalEnv();
+  const value = process.env[key]?.trim();
+  return value ? resolve(process.cwd(), value) : null;
+}
+
+export function getOptionalValue(
+  key: "DOTA_VALVE_ASSET_CLIENT_VERSION" | "CATALOG_NOTIFICATION_WEBHOOK_URL",
+): string | null {
+  loadLocalEnv();
+  return process.env[key]?.trim() || null;
+}

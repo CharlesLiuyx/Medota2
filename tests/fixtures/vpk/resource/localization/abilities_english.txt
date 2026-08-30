@@ -7,5 +7,12 @@
     "npc_dota_hero_antimage__en:n" "Anti-Mage"
     "npc_dota_hero_test_cm_disabled:n" "Fixture Guardian"
     "npc_dota_hero_test_cm_disabled__en:n" "Fixture Guardian"
+    "DOTA_Tooltip_ability_antimage_blink" "Blink"
+    "DOTA_Tooltip_ability_antimage_blink_Description" "Teleport a short distance."
+    "DOTA_Tooltip_ability_antimage_innate" "Persecutor"
+    "DOTA_Tooltip_ability_antimage_high_slot_helper" "High Slot Helper"
+    "DOTA_Tooltip_ability_antimage_facet_spell" "Facet Spell"
+    "DOTA_Tooltip_ability_special_bonus_unique_antimage_fixture" "+100 fixture range"
+    "DOTA_Tooltip_ability_fixture_guard" "Fixture Guard"
   }
 }

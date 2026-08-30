@@ -45,8 +45,8 @@ async function main(): Promise<void> {
       const dataset = await client.query<{ id: string }>(
         `SELECT v.id
          FROM dataset_heads h
-         JOIN hero_dataset_versions v ON v.id = h.hero_dataset_version_id
-         WHERE h.dataset_key = 'heroes'`,
+         JOIN hero_catalog_dataset_versions v ON v.id = h.catalog_dataset_version_id
+         WHERE h.dataset_key = 'hero_catalog'`,
       );
       if (!dataset.rowCount)
         throw new Error(

@@ -1,0 +1,21 @@
+"DOTAAbilityIDs"
+{
+  "Version" "1"
+  "UnitAbilities"
+  {
+    "Locked"
+    {
+      "ability_base" "0"
+      "antimage_blink" "5004"
+      "antimage_blink_legacy" "5004"
+      "antimage_innate" "9100"
+      "antimage_high_slot_helper" "9101"
+      "special_bonus_unique_antimage_fixture" "9102"
+      "fixture_guard" "9103"
+    }
+    "Unlocked"
+    {
+      "antimage_blink" "5104"
+    }
+  }
+}

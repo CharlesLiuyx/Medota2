@@ -24,17 +24,24 @@ test("overview, canonical search URL and CM filter", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "敌法师" })).toHaveCount(0);
 });
 
-test("detail renders raw values, two-level provenance and paired reference drift", async ({
+test("detail renders ability graph, raw values, provenance and paired reference drift", async ({
   page,
 }) => {
   await page.goto("/heroes/antimage");
   await expect(
     page.getByRole("heading", { name: "敌法师", level: 1 }),
   ).toBeVisible();
-  await expect(page.getByText("基础 / 原始定义")).toBeVisible();
-  await expect(page.getByText("MVP Provenance")).toBeVisible();
   await expect(
-    page.getByText("不声称字段级血缘", { exact: false }),
+    page.getByRole("heading", { name: "Abilities", level: 2 }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Talents & Upgrades", level: 2 }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: /闪烁/u }).first()).toBeVisible();
+  await expect(page.getByText("基础 / 原始定义")).toBeVisible();
+  await expect(page.getByText("Catalog Provenance")).toBeVisible();
+  await expect(
+    page.getByText("共享 Catalog 快照", { exact: false }),
   ).toBeVisible();
   await expect(
     page.getByText("dotaconstants 参考，不参与规范值"),
@@ -46,6 +53,23 @@ test("detail renders raw values, two-level provenance and paired reference drift
   await expect(
     page.getByRole("code").filter({ hasText: /^999$/u }),
   ).toBeVisible();
+});
+
+test("locale switch preserves the selected hero and exposes keyboard focus", async ({
+  page,
+}) => {
+  await page.goto("/heroes/antimage");
+  await page.getByRole("link", { name: "EN", exact: true }).click();
+  await expect(page).toHaveURL("/heroes/antimage?lang=en");
+  await expect(
+    page.getByRole("heading", { name: "Anti-Mage", level: 1 }),
+  ).toBeVisible();
+
+  await page.goto("/heroes");
+  await page.keyboard.press("Tab");
+  const identity = page.getByRole("link", { name: "Medota2 Heroes" });
+  await expect(identity).toBeFocused();
+  await expect(identity).toHaveCSS("outline-style", "solid");
 });
 
 test("unknown query values are visible and unknown slugs return 404", async ({

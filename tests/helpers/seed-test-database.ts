@@ -1,12 +1,17 @@
 import pg from "pg";
 import { loadLocalEnv } from "@/config/env";
-import { HERO_IMPORT_LOCK_KEYS } from "@/importers/dota-vpk/constants";
+import { parseAbilityDataset } from "@/importers/dota-vpk/ability-adapter";
+import {
+  ABILITY_DERIVATION_VERSION,
+  CATALOG_IMPORT_LOCK_KEYS,
+  CATALOG_SELECTOR_VERSION,
+} from "@/importers/dota-vpk/constants";
 import { parseHeroDataset } from "@/importers/dota-vpk/hero-adapter";
 import { parseSteamInf } from "@/importers/dota-vpk/steam";
 import { sha256 } from "@/lib/hash";
 import { currentTargetSchemaVersion } from "@/server/db/migrations";
 import { runMigrations } from "@/server/db/run-migrations";
-import { loadVpkFixture } from "./vpk-fixture";
+import { loadCatalogFixture } from "./vpk-fixture";
 
 const { Pool } = pg;
 
@@ -25,8 +30,9 @@ async function main(): Promise<void> {
     );
     if (!database.rows[0].name.endsWith("_test"))
       throw new Error("Refusing to seed a non-test database.");
-    const files = await loadVpkFixture();
+    const files = await loadCatalogFixture();
     const dataset = parseHeroDataset(files);
+    const abilityDataset = parseAbilityDataset(files, dataset.heroes);
     const steam = parseSteamInf(
       files.find((file) => file.path === "steam.inf")!.text,
     );
@@ -45,7 +51,7 @@ async function main(): Promise<void> {
         (source_repository, source_remote_url, source_commit, manifest_sha256, source_dirty,
          source_inputs_match_head, client_version, source_revision, version_date, version_time, imported_at)
        VALUES ('spirit-bear-productions/dota_vpk_updates', 'https://github.com/spirit-bear-productions/dota_vpk_updates.git',
-         $1, $2, false, true, $3, $4, $5, $6, now() - interval '2 minutes') RETURNING id`,
+         $1, $2, false, true, $3, $4, $5, $6, '2026-08-31T00:00:00Z') RETURNING id`,
       [
         "991daaf6fc24b08445209d9ce8767e145bab107e",
         sha256(manifestText),
@@ -78,26 +84,41 @@ async function main(): Promise<void> {
         snapshot.rows[0].id,
         "4".repeat(40),
         schemaVersion,
-        JSON.stringify(dataset.counts),
+        JSON.stringify({
+          heroes: dataset.counts,
+          abilities: abilityDataset.counts,
+        }),
         JSON.stringify(includeFailure ? dataset.issues : []),
       ],
     );
     const version = await client.query<{ id: string }>(
-      `INSERT INTO hero_dataset_versions
-        (source_snapshot_id, import_run_id, importer_version, target_schema_version, status)
-       VALUES ($1, $2, 'hero-vpk-v1/e2e-fixture', $3, 'validated') RETURNING id`,
-      [snapshot.rows[0].id, run.rows[0].id, schemaVersion],
+      `INSERT INTO hero_catalog_dataset_versions
+        (id, source_snapshot_id, import_run_id, importer_version, target_schema_version, status,
+         selector_version, selector_manifest_sha256, semantic_sha256,
+         gate_status, review_status, gate_summary, source_counts)
+       VALUES ($1, $2, $3, 'hero-catalog-v2/e2e-fixture', $4, 'candidate',
+         $5, $6, $7, 'green', 'not_required', '{}', '{}') RETURNING id`,
+      [
+        "00000000-0000-4000-8000-000000000003",
+        snapshot.rows[0].id,
+        run.rows[0].id,
+        schemaVersion,
+        CATALOG_SELECTOR_VERSION,
+        "9".repeat(64),
+        "a".repeat(64),
+      ],
     );
     for (const hero of dataset.heroes)
       await insertHero(client, version.rows[0].id, hero);
+    await insertAbilities(client, version.rows[0].id, abilityDataset);
     await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
-      ...HERO_IMPORT_LOCK_KEYS,
+      ...CATALOG_IMPORT_LOCK_KEYS,
     ]);
-    await client.query("SELECT promote_hero_dataset_version($1)", [
+    await client.query("SELECT promote_hero_catalog_version($1)", [
       version.rows[0].id,
     ]);
     await client.query(
-      "UPDATE import_runs SET result_dataset_version_id = $2 WHERE id = $1",
+      "UPDATE import_runs SET result_catalog_version_id = $2 WHERE id = $1",
       [run.rows[0].id, version.rows[0].id],
     );
 
@@ -156,7 +177,7 @@ async function main(): Promise<void> {
     }
     await client.query("COMMIT");
     console.log(
-      `seeded ${dataset.heroes.length} ${includeFailure ? "E2E" : "demo"} heroes into ${database.rows[0].name}`,
+      `seeded ${dataset.heroes.length} heroes and ${abilityDataset.abilities.length} abilities into ${database.rows[0].name}`,
     );
   } catch (error) {
     await client.query("ROLLBACK").catch(() => undefined);
@@ -253,6 +274,184 @@ async function insertHero(
       ],
     );
   }
+}
+
+async function insertAbilities(
+  client: pg.PoolClient,
+  versionId: string,
+  dataset: ReturnType<typeof parseAbilityDataset>,
+): Promise<void> {
+  for (const ability of dataset.abilities) {
+    await client.query(
+      `INSERT INTO abilities (
+        dataset_version_id, internal_name, declaration_kind, definition_kind, catalog_status,
+        ability_type, behavior, unit_target_team, unit_target_type, unit_target_flags,
+        damage_type, spell_immunity_type, spell_dispellable_type, max_level,
+        is_innate, is_passive, is_hidden, is_ultimate, has_scepter_upgrade, has_shard_upgrade,
+        is_granted_by_scepter, is_granted_by_shard, cast_range, cast_point, channel_time,
+        cooldown, mana_cost, damage, texture_name, base_class, raw_sha256, resolved_sha256,
+        unknown_fields)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,
+         $19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33)`,
+      [
+        versionId,
+        ability.internalName,
+        ability.source.declarationKind,
+        ability.definitionKind,
+        ability.catalogStatus,
+        ability.abilityType,
+        ability.behavior,
+        ability.unitTargetTeam,
+        ability.unitTargetType,
+        ability.unitTargetFlags,
+        ability.damageType,
+        ability.spellImmunityType,
+        ability.spellDispellableType,
+        ability.maxLevel,
+        ability.isInnate,
+        ability.isPassive,
+        ability.isHidden,
+        ability.isUltimate,
+        ability.hasScepterUpgrade,
+        ability.hasShardUpgrade,
+        ability.isGrantedByScepter,
+        ability.isGrantedByShard,
+        ability.castRange,
+        ability.castPoint,
+        ability.channelTime,
+        ability.cooldown,
+        ability.manaCost,
+        ability.damage,
+        ability.textureName,
+        ability.baseClass,
+        ability.source.rawSha256,
+        ability.source.resolvedSha256,
+        ability.source.unknownFields,
+      ],
+    );
+    for (const value of ability.values) {
+      await client.query(
+        `INSERT INTO ability_values
+          (dataset_version_id, ability_internal_name, value_key, ordinal, scalar_value,
+           level_values, modifiers, raw_value)
+         VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8::jsonb)`,
+        [
+          versionId,
+          ability.internalName,
+          value.valueKey,
+          value.ordinal,
+          value.scalarValue,
+          value.levelValues,
+          JSON.stringify(value.modifiers),
+          JSON.stringify(value.rawValue),
+        ],
+      );
+    }
+    for (const loc of ability.localizations) {
+      await client.query(
+        `INSERT INTO ability_localizations VALUES
+          ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+        [
+          versionId,
+          ability.internalName,
+          loc.locale,
+          loc.displayName,
+          loc.description,
+          loc.lore,
+          loc.scepterDescription,
+          loc.shardDescription,
+          loc.sourcePath,
+          loc.nameToken,
+          loc.descriptionToken,
+          loc.loreToken,
+          loc.scepterToken,
+          loc.shardToken,
+        ],
+      );
+    }
+    for (const [
+      ordinal,
+      occurrence,
+    ] of ability.source.definitionOccurrences.entries()) {
+      await client.query(
+        `INSERT INTO entity_source_records
+          (dataset_version_id, entity_type, entity_key, occurrence_ordinal, source_path,
+           source_line, source_key, declaration_kind, raw_definition, resolved_definition,
+           raw_sha256, resolved_sha256, inherited_fields, unknown_fields)
+         VALUES ($1,'ability',$2,$3,$4,$5,$2,$6,$7::jsonb,$8::jsonb,$9,$10,'{}',$11)`,
+        [
+          versionId,
+          ability.internalName,
+          ordinal,
+          occurrence.path,
+          occurrence.line,
+          ability.source.declarationKind,
+          JSON.stringify(occurrence.rawDefinition),
+          JSON.stringify(ability.source.resolvedDefinition),
+          occurrence.rawSha256,
+          ability.source.resolvedSha256,
+          ability.source.unknownFields,
+        ],
+      );
+    }
+  }
+  for (const mapping of dataset.idMappings) {
+    await client.query(
+      `INSERT INTO ability_id_mappings
+        (dataset_version_id, internal_name, ability_id, source_path, source_line)
+       VALUES ($1,$2,$3,$4,$5)`,
+      [
+        versionId,
+        mapping.internalName,
+        mapping.abilityId,
+        mapping.sourcePath,
+        mapping.sourceLine,
+      ],
+    );
+  }
+  for (const facet of dataset.facets) {
+    await client.query(
+      `INSERT INTO facets VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb)`,
+      [
+        versionId,
+        facet.heroId,
+        facet.facetKey,
+        facet.icon,
+        facet.color,
+        facet.gradientId,
+        facet.deprecated,
+        facet.sourcePath,
+        facet.sourceLine,
+        JSON.stringify(facet.rawDefinition),
+      ],
+    );
+  }
+  for (const binding of dataset.bindings) {
+    await client.query(
+      `INSERT INTO hero_ability_bindings VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+      [
+        versionId,
+        binding.heroId,
+        binding.abilityInternalName,
+        binding.sourceSlot,
+        binding.relationKind,
+        binding.ordinal,
+        binding.isCurrent,
+        binding.sourcePath,
+        binding.sourceLine,
+        ABILITY_DERIVATION_VERSION,
+      ],
+    );
+  }
+  await client.query(
+    `INSERT INTO facet_ability_bindings
+      (dataset_version_id, hero_id, facet_key, ability_internal_name, source_path, source_line)
+     SELECT dataset_version_id, hero_id, substring(source_slot from 7), ability_internal_name,
+       source_path, source_line
+     FROM hero_ability_bindings
+     WHERE dataset_version_id = $1 AND relation_kind = 'facet'`,
+    [versionId],
+  );
 }
 
 main().catch((error: unknown) => {

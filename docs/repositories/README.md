@@ -27,7 +27,7 @@ d2vpkr + Dota 数据接口 + 手工 JSON ─> dotaconstants ─┘
 | 需求                                                         | 首选                                                        | 何时交叉核对                                                                |
 | ------------------------------------------------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------------- |
 | 首期英雄 ID、属性、角色、状态和中英展示文本                  | `dota_vpk_updates/scripts/npc/` 与 `resource/localization/` | `dotaconstants` 只生成覆盖率与字段漂移参考，不参与规范值或 fallback         |
-| 尚未专项决策的应用常量，例如物品、技能、模式和地区           | 优先评估 `dotaconstants/build/`                             | 需要固定客户端快照或原始语义时，回到对应 VPK 文件核对                       |
+| 尚未专项决策的应用常量，例如物品、模式和地区                 | 优先评估 `dotaconstants/build/`                             | 需要固定客户端快照或原始语义时，回到对应 VPK 文件核对                       |
 | 固定快照/client version 对应的原始英雄、技能、物品、单位定义 | `dota_vpk_updates/scripts/npc/`                             | 需要应用友好格式时，参考 `dotaconstants` 的转换逻辑，但不要假定 schema 相同 |
 | 多语言游戏文本、补丁文本                                     | `dota_vpk_updates/resource/localization/`                   | 只需要英文应用字段时，可先看 `dotaconstants/build/`                         |
 | Dota UI 布局、样式、脚本                                     | `dota_vpk_updates/panorama/`                                | 查询客户端其他 Panorama/工具文件时再看 `GameTracking-Dota2`                 |
@@ -45,6 +45,10 @@ d2vpkr + Dota 数据接口 + 手工 JSON ─> dotaconstants ─┘
 ### 英雄元数据专项决策
 
 首期英雄元数据采用比本通用指南更严格的规则：`dota_vpk_updates` 是唯一 SSOT，`dotaconstants` 只作可选参考，不能覆盖或回填规范英雄字段。完整字段范围、继承规则、存储和展示方案见[英雄元数据显示 MVP 功能 Spec](../specs/hero-metadata-mvp.md)。其他数据域仍需逐项选源，不能自动沿用这项决定。
+
+### Hero Catalog v2 专项决策
+
+已实现的 Hero Catalog v2 将上述严格规则扩展到 Abilities：Hero 与 Ability 的规范玩法定义统一来自固定 commit 的 `dota_vpk_updates`，`dotaconstants` 仍只作非规范 QA/reference。完整边界、全量定义语义、关系模型和更新门禁见[Hero Catalog v2 Spec](../specs/hero-catalog-v2.md)。本文其他通用选源规则不能覆盖该专项决策。
 
 ## Provenance 最小清单
 

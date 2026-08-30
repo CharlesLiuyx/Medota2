@@ -9,11 +9,14 @@
 # Logs and caches
 *.log
 .cache/
+.medota2/
 coverage/
 
 # JavaScript / TypeScript
 node_modules/
 .next/
+.next-e2e/
+.next-validation/
 .playwright-cli/
 dist/
 playwright-report/

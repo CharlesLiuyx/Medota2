@@ -7,6 +7,9 @@ export default defineConfig([
   ...nextTypeScript,
   globalIgnores([
     ".next/**",
+    ".next-e2e/**",
+    ".next-validation/**",
+    ".medota2/**",
     "coverage/**",
     "dist/**",
     "playwright-report/**",

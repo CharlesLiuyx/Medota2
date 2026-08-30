@@ -1,13 +1,56 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #f4f1e8;
-  --muted: #9b9ca2;
-  --line: rgba(255, 255, 255, 0.1);
-  --panel: rgba(23, 25, 29, 0.82);
-  --ember: #d85a3a;
-  --gold: #d8b36a;
-  --void: #0a0b0d;
+  --surface-canvas: #090a0d;
+  --surface-panel: #111318;
+  --surface-elevated: #171a20;
+  --surface-hover: #1d2027;
+  --surface-sunken: #07080a;
+  --surface-overlay: rgba(9, 10, 13, 0.86);
+  --text-primary: #f1eee7;
+  --text-secondary: #b5b4b2;
+  --text-muted: #74767d;
+  --text-inverse: #111318;
+  --border-subtle: rgba(255, 255, 255, 0.065);
+  --border-default: rgba(255, 255, 255, 0.11);
+  --border-strong: rgba(255, 255, 255, 0.2);
+  --accent-primary: #d85d3f;
+  --accent-hover: #ed7454;
+  --accent-soft: rgba(216, 93, 63, 0.12);
+  --focus-ring: #f19a72;
+  --attribute-strength: #d55345;
+  --attribute-agility: #56a973;
+  --attribute-intelligence: #4b93ca;
+  --attribute-universal: #c5a248;
+  --status-success: #4fbd82;
+  --status-warning: #d9a441;
+  --status-danger: #df625b;
+  --status-info: #5aa5d8;
+  --font-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --content-max: 1480px;
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --shadow-elevated: 0 24px 70px rgba(0, 0, 0, 0.38);
+  --control-height: 44px;
+}
+
+[data-theme="light"] {
+  --surface-canvas: #edece8;
+  --surface-panel: #f7f6f2;
+  --surface-elevated: #ffffff;
+  --surface-hover: #e7e5df;
+  --surface-sunken: #dedcd5;
+  --surface-overlay: rgba(247, 246, 242, 0.9);
+  --text-primary: #17181b;
+  --text-secondary: #3d3f45;
+  --text-muted: #6d6e73;
+  --text-inverse: #f7f6f2;
+  --border-subtle: rgba(0, 0, 0, 0.07);
+  --border-default: rgba(0, 0, 0, 0.13);
+  --border-strong: rgba(0, 0, 0, 0.24);
 }
 
 * {
@@ -15,9 +58,10 @@
 }
 
 html {
-  background: var(--void);
-  color: var(--ink);
+  background: var(--surface-canvas);
+  color: var(--text-primary);
   color-scheme: dark;
+  scroll-padding-top: 88px;
 }
 
 body {
@@ -25,24 +69,18 @@ body {
   margin: 0;
   background:
     radial-gradient(
-      circle at 82% -10%,
-      rgba(149, 49, 38, 0.2),
+      circle at 82% -12%,
+      color-mix(in srgb, var(--accent-primary) 17%, transparent),
       transparent 34rem
     ),
     radial-gradient(
-      circle at 5% 18%,
-      rgba(67, 87, 92, 0.14),
+      circle at 7% 24%,
+      rgba(57, 83, 91, 0.12),
       transparent 32rem
     ),
-    linear-gradient(145deg, #101216 0%, #090a0c 54%, #111013 100%);
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+    var(--surface-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
 }
 
 body::before {
@@ -50,15 +88,16 @@ body::before {
   inset: 0;
   z-index: -1;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.014) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px);
-  background-size: 42px 42px;
+    linear-gradient(var(--border-subtle) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+  background-size: 48px 48px;
   content: "";
-  mask-image: linear-gradient(to bottom, black, transparent 80%);
+  mask-image: linear-gradient(to bottom, black, transparent 74%);
+  opacity: 0.28;
 }
 
 ::selection {
-  background: rgba(216, 90, 58, 0.45);
+  background: color-mix(in srgb, var(--accent-primary) 48%, transparent);
 }
 
 a,
@@ -78,10 +117,35 @@ summary {
   font: inherit;
 }
 
-code {
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+code,
+.font-data {
+  font-family: var(--font-mono);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 3px;
 }
 
 .text-balance {
   text-wrap: balance;
+}
+
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
+  gap: 1px;
+  background: var(--border-subtle);
+  border: 1px solid var(--border-subtle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

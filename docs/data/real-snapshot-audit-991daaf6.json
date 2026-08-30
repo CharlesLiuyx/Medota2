@@ -1,0 +1,48 @@
+{
+  "selectorVersion": "hero-catalog-selector-v1",
+  "selectorManifestSha256": "50867169e50798092c55aa0ba97fa40690cf19c2bb6780f56ebbb8f2f6a23d28",
+  "sourceCommit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+  "sourceManifestSha256": "4e3215f0e9fb9b582a8f743c5620e178bdbce093f2a0b46f941111d893e11b4e",
+  "clientVersion": "6918",
+  "sourceRevision": "10949923",
+  "staticFiles": 10,
+  "dynamicHeroAbilityFiles": 128,
+  "heroes": {
+    "candidateRecords": 129,
+    "accepted": 127,
+    "expectedExclusions": 2,
+    "warnings": 0,
+    "blockingErrors": 0
+  },
+  "abilities": {
+    "definitions": 1953,
+    "sourceDefinitions": 1953,
+    "implicitDefinitions": 750,
+    "accepted": 2703,
+    "excluded": 3,
+    "idMappings": 3160,
+    "bindings": 4752,
+    "facets": 339,
+    "current": 1785,
+    "indirect": 71,
+    "definedUnbound": 828,
+    "templates": 19,
+    "deprecated": 0,
+    "warnings": 68,
+    "blockingErrors": 0
+  },
+  "issueCodes": {
+    "ability_id_collision": 2,
+    "ability_name_multiple_ids": 1,
+    "denylisted_hero": 2,
+    "duplicate_ability_definition": 2,
+    "external_ability_relation_target": 3,
+    "missing_current_ability_name": 60,
+    "top_level_ability_default": 3
+  },
+  "notes": [
+    "Counts are an audit fixture for this exact commit, never product constants.",
+    "Implicit definitions are hero-bound special_bonus talents without a top-level DOTAAbilities node.",
+    "Duplicate top-level definitions are retained as ordered occurrences; the final occurrence is effective."
+  ]
+}

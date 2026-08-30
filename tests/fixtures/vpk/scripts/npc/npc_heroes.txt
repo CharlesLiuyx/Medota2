@@ -53,6 +53,24 @@
     "AttackRange" "150"
     "ProjectileSpeed" "0"
     "MovementSpeed" "310"
+    "Ability1" "antimage_blink"
+    "Ability2" "antimage_innate"
+    "Ability10" "special_bonus_unique_antimage_fixture"
+    "Ability20" "antimage_high_slot_helper"
+    "AbilityDraftAbilities"
+    {
+      "Ability1" "antimage_blink,antimage_high_slot_helper"
+    }
+    "Facets"
+    {
+      "antimage_fixture_facet"
+      {
+        "Icon" "ricochet"
+        "Color" "Purple"
+        "GradientID" "1"
+        "AbilityName" "antimage_facet_spell"
+      }
+    }
   }
 
   "npc_dota_hero_test_cm_disabled"
@@ -66,6 +84,7 @@
     "Complexity" "2"
     "Role" "Support,Disabler"
     "Rolelevels" "3,2"
+    "Ability1" "fixture_guard"
   }
 
   "npc_dota_hero_target_dummy"

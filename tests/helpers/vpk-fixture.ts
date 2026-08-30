@@ -1,13 +1,30 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { VPK_SOURCE_PATHS } from "@/importers/dota-vpk/constants";
+import {
+  CATALOG_STATIC_SOURCE_PATHS,
+  VPK_SOURCE_PATHS,
+} from "@/importers/dota-vpk/constants";
 import type { CheckedSourceFile } from "@/importers/git-checkout";
 import { sha256 } from "@/lib/hash";
 
 export async function loadVpkFixture(): Promise<CheckedSourceFile[]> {
+  return loadFixturePaths(VPK_SOURCE_PATHS);
+}
+
+export async function loadCatalogFixture(): Promise<CheckedSourceFile[]> {
+  return loadFixturePaths([
+    ...CATALOG_STATIC_SOURCE_PATHS,
+    "scripts/npc/heroes/npc_dota_hero_antimage.txt",
+    "scripts/npc/heroes/npc_dota_hero_test_cm_disabled.txt",
+  ]);
+}
+
+async function loadFixturePaths(
+  paths: readonly string[],
+): Promise<CheckedSourceFile[]> {
   const root = resolve(process.cwd(), "tests/fixtures/vpk");
   return Promise.all(
-    VPK_SOURCE_PATHS.map(async (path) => {
+    paths.map(async (path) => {
       const bytes = await readFile(resolve(root, path));
       const hasBom = bytes
         .subarray(0, 3)
@@ -34,6 +51,16 @@ export async function mutateVpkFixture(
   mutate: (text: string) => string,
 ): Promise<CheckedSourceFile[]> {
   const files = await loadVpkFixture();
+  return files.map((file) =>
+    file.path === path ? { ...file, text: mutate(file.text) } : file,
+  );
+}
+
+export async function mutateCatalogFixture(
+  path: string,
+  mutate: (text: string) => string,
+): Promise<CheckedSourceFile[]> {
+  const files = await loadCatalogFixture();
   return files.map((file) =>
     file.path === path ? { ...file, text: mutate(file.text) } : file,
   );

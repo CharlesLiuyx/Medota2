@@ -106,6 +106,38 @@ export async function inspectGitCheckout(
   };
 }
 
+export async function discoverTrackedPaths(
+  rootInput: string,
+  prefix: string,
+  pattern: RegExp,
+): Promise<string[]> {
+  const root = await realpath(rootInput).catch(() => {
+    throw new Error(`Source checkout does not exist: ${rootInput}`);
+  });
+  const gitRoot = await gitText(root, ["rev-parse", "--show-toplevel"]);
+  if ((await realpath(gitRoot)) !== root) {
+    throw new Error(
+      `Configured source path must be the Git checkout root: ${root}`,
+    );
+  }
+  const output = await gitText(
+    root,
+    ["ls-tree", "-r", "--name-only", "HEAD", "--", prefix],
+    true,
+  );
+  const paths = output
+    .split("\n")
+    .map((path) => path.trim())
+    .filter((path) => path.length > 0 && pattern.test(path))
+    .sort((left, right) => Buffer.from(left).compare(Buffer.from(right)));
+  if (paths.length === 0) {
+    throw new Error(
+      `No tracked source paths matched ${pattern.source} below ${prefix}.`,
+    );
+  }
+  return paths;
+}
+
 function decodeSource(
   bytes: Buffer,
   sourcePath: string,

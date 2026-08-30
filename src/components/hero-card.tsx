@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Swords } from "lucide-react";
 import type { HeroCardRow } from "@/server/repositories/heroes";
+import { Badge, type BadgeTone } from "./ui/badge";
 import { HeroCrest } from "./hero-crest";
 
 const attributeLabel: Record<string, string> = {
@@ -9,6 +10,7 @@ const attributeLabel: Record<string, string> = {
   intelligence: "智力",
   universal: "全才",
 };
+
 const roleLabel: Record<string, string> = {
   carry: "核心",
   support: "辅助",
@@ -20,67 +22,62 @@ const roleLabel: Record<string, string> = {
   initiator: "先手",
 };
 
-export function HeroCard({ hero }: { hero: HeroCardRow }) {
+export function HeroCard({
+  hero,
+  lang = "zh-CN",
+}: {
+  hero: HeroCardRow;
+  lang?: "zh-CN" | "en";
+}) {
   return (
     <Link
-      href={`/heroes/${hero.slug}`}
-      className="group relative flex min-h-48 flex-col border border-white/9 bg-[linear-gradient(150deg,rgba(28,31,36,.94),rgba(15,16,19,.96))] p-5 hover:-translate-y-0.5 hover:border-[#d85a3a]/45 hover:shadow-xl hover:shadow-black/35"
+      href={`/heroes/${hero.slug}${lang === "en" ? "?lang=en" : ""}`}
+      className="group relative flex min-h-40 flex-col bg-[var(--surface-panel)] p-4 hover:z-10 hover:-translate-y-0.5 hover:bg-[var(--surface-hover)] hover:shadow-[var(--shadow-elevated)]"
     >
-      <div className="flex items-start gap-4">
-        <HeroCrest name={hero.enName} attribute={hero.primaryAttribute} />
+      <div className="flex items-start gap-3">
+        <HeroCrest
+          name={hero.enName}
+          attribute={hero.primaryAttribute}
+          src={`/valve-assets/hero/${hero.internalName}`}
+        />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
-            <div>
-              <h2 className="truncate text-lg font-semibold tracking-tight text-white">
-                {hero.zhName}
-              </h2>
-              <p className="mt-0.5 truncate text-xs text-zinc-500">
-                {hero.enName}
+            <div className="min-w-0">
+              <h3 className="truncate text-base font-semibold tracking-tight text-[var(--text-primary)]">
+                {lang === "en" ? hero.enName : hero.zhName}
+              </h3>
+              <p className="mt-0.5 truncate text-[11px] text-[var(--text-muted)]">
+                {lang === "en" ? hero.zhName : hero.enName}
               </p>
             </div>
-            <ArrowUpRight className="size-4 text-zinc-700 group-hover:text-[#e26a4c]" />
+            <ArrowUpRight className="size-3.5 shrink-0 text-[var(--text-muted)] group-hover:text-[var(--accent-hover)]" />
           </div>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            <Tag>{attributeLabel[hero.primaryAttribute]}</Tag>
-            <Tag>
-              <Swords className="size-3" />{" "}
+          <div className="mt-2 flex flex-wrap gap-1">
+            <Badge tone={hero.primaryAttribute as BadgeTone}>
+              {attributeLabel[hero.primaryAttribute]}
+            </Badge>
+            <Badge>
+              <Swords className="size-2.5" aria-hidden="true" />
               {hero.attackType === "melee" ? "近战" : "远程"}
-            </Tag>
-            {!hero.cmEnabled && <Tag muted>非 CM</Tag>}
+            </Badge>
           </div>
         </div>
       </div>
-      <div className="mt-5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500">
-        {hero.roles.slice(0, 4).map((role) => (
-          <span key={role.role}>
-            {roleLabel[role.role] ?? role.role} · {role.level}
-          </span>
-        ))}
-      </div>
-      <div className="mt-auto flex items-end justify-between border-t border-white/7 pt-4">
-        <code className="truncate pr-4 text-[10px] text-zinc-600">
+      <p className="mt-3 line-clamp-1 text-[10px] text-[var(--text-muted)]">
+        {hero.roles
+          .slice(0, 4)
+          .map((role) => `${roleLabel[role.role] ?? role.role} ${role.level}`)
+          .join(" · ")}
+      </p>
+      <div className="mt-auto flex items-end justify-between border-t border-[var(--border-subtle)] pt-3">
+        <code className="truncate pr-4 text-[9px] text-[var(--text-muted)]">
           {hero.internalName}
         </code>
-        <span className="shrink-0 text-[10px] tabular-nums text-zinc-600">
+        <span className="shrink-0 font-data text-[9px] tabular-nums text-[var(--text-muted)]">
           #{hero.heroId}
+          {!hero.cmEnabled && " · 非 CM"}
         </span>
       </div>
     </Link>
-  );
-}
-
-function Tag({
-  children,
-  muted = false,
-}: {
-  children: React.ReactNode;
-  muted?: boolean;
-}) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1 border px-2 py-1 text-[10px] uppercase tracking-wider ${muted ? "border-zinc-700 text-zinc-500" : "border-white/10 text-zinc-400"}`}
-    >
-      {children}
-    </span>
   );
 }

@@ -1,6 +1,6 @@
 # 英雄元数据显示 MVP 功能 Spec
 
-> 状态：MVP 已实现；本文同时作为验收合同
+> 状态：MVP 已实现；Catalog 范围已由 [Hero Catalog v2](hero-catalog-v2.md) 取代，本文保留为历史兼容合同
 >
 > 最后更新：2026-08-30
 >

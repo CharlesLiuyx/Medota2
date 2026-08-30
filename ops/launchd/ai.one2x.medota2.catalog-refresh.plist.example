@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>ai.one2x.medota2.catalog-refresh</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/env</string>
+    <string>pnpm</string>
+    <string>data:refresh:catalog</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>__MEDOTA2_ROOT__</string>
+  <key>StartInterval</key>
+  <integer>900</integer>
+  <key>StandardOutPath</key>
+  <string>__MEDOTA2_ROOT__/.medota2/logs/catalog-refresh.log</string>
+  <key>StandardErrorPath</key>
+  <string>__MEDOTA2_ROOT__/.medota2/logs/catalog-refresh.error.log</string>
+</dict>
+</plist>

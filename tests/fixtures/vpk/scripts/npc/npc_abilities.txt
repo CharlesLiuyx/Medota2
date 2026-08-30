@@ -1,0 +1,21 @@
+"DOTAAbilities"
+{
+  "Version" "1"
+  "ability_base"
+  {
+    "AbilityType" "ABILITY_TYPE_BASIC"
+    "AbilityCastPoint" "0.3"
+  }
+  "fixture_duplicate"
+  {
+    "AbilityCooldown" "20"
+  }
+  "fixture_duplicate"
+  {
+    "AbilityCooldown" "10"
+  }
+  "fixture_unbound"
+  {
+    "AbilityBehavior" "DOTA_ABILITY_BEHAVIOR_PASSIVE"
+  }
+}

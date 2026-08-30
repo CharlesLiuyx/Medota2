@@ -1,12 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import {
-  AlertCircle,
-  Braces,
-  Clock3,
-  Database,
-  ShieldCheck,
-} from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { HeroCard } from "@/components/hero-card";
 import { HeroFilterForm } from "@/components/hero-filter-form";
 import {
@@ -14,6 +8,9 @@ import {
   ImportFailureBanner,
   SetupState,
 } from "@/components/system-state";
+import { DatasetBadge } from "@/components/ui/dataset-badge";
+import { PageHeader, SectionHeading } from "@/components/ui/page-header";
+import { PRIMARY_ATTRIBUTES, type PrimaryAttribute } from "@/domain/heroes";
 import { getHeroOverview } from "@/server/repositories/heroes";
 import {
   canonicalHeroQuery,
@@ -22,8 +19,15 @@ import {
   type SearchParams,
 } from "@/server/services/hero-filters";
 
-export const metadata: Metadata = { title: "英雄元数据" };
+export const metadata: Metadata = { title: "Heroes" };
 export const dynamic = "force-dynamic";
+
+const attributeNames: Record<PrimaryAttribute, { zh: string; en: string }> = {
+  strength: { zh: "力量", en: "Strength" },
+  agility: { zh: "敏捷", en: "Agility" },
+  intelligence: { zh: "智力", en: "Intelligence" },
+  universal: { zh: "全才", en: "Universal" },
+};
 
 export default async function HeroesPage({
   searchParams,
@@ -39,6 +43,7 @@ export default async function HeroesPage({
     const query = canonicalHeroQuery(parsed.filters);
     redirect(query ? `/heroes?${query}` : "/heroes");
   }
+
   let overview: Awaited<ReturnType<typeof getHeroOverview>>;
   try {
     overview = await getHeroOverview(
@@ -46,62 +51,46 @@ export default async function HeroesPage({
     );
   } catch (error) {
     return (
-      <main className="mx-auto min-h-[70vh] max-w-[1480px] px-5 py-20 sm:px-8 lg:px-10">
+      <main className="mx-auto min-h-[70vh] max-w-[var(--content-max)] px-4 py-20 sm:px-7 lg:px-10">
         <SetupState
           error={error instanceof Error ? error.message : String(error)}
         />
       </main>
     );
   }
+
   if (!overview.meta) {
     return (
-      <main className="mx-auto min-h-[70vh] max-w-[1480px] px-5 py-20 sm:px-8 lg:px-10">
+      <main className="mx-auto min-h-[70vh] max-w-[var(--content-max)] px-4 py-20 sm:px-7 lg:px-10">
         <SetupState />
       </main>
     );
   }
 
   const meta = overview.meta;
-  return (
-    <main className="mx-auto max-w-[1480px] px-5 py-10 sm:px-8 lg:px-10 lg:py-14">
-      <section className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#db694d]">
-            Hero metadata · MVP 01
-          </p>
-          <h1 className="mt-3 max-w-3xl text-balance text-4xl font-semibold tracking-[-0.04em] text-white sm:text-5xl">
-            游戏内定义，<span className="text-zinc-500">原样可追溯。</span>
-          </h1>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-500">
-            所有规范字段来自固定 VPK
-            快照。展示的是继承后的基础定义，不是一级英雄最终面板数值。
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-px border border-white/9 bg-white/9 sm:grid-cols-4 lg:w-[590px]">
-          <MetaCell
-            icon={<Database />}
-            label="英雄"
-            value={String(meta.totalHeroes)}
-          />
-          <MetaCell
-            icon={<Braces />}
-            label="Client"
-            value={meta.clientVersion}
-          />
-          <MetaCell
-            icon={<ShieldCheck />}
-            label="Source Rev"
-            value={meta.sourceRevision}
-          />
-          <MetaCell
-            icon={<Clock3 />}
-            label="导入"
-            value={formatDate(meta.importedAt)}
-          />
-        </div>
-      </section>
+  const groups = PRIMARY_ATTRIBUTES.map((attribute) => ({
+    attribute,
+    heroes: overview.heroes.filter(
+      (hero) => hero.primaryAttribute === attribute,
+    ),
+  })).filter((group) => group.heroes.length > 0);
 
-      <div className="mt-9 space-y-3">
+  return (
+    <main className="mx-auto max-w-[var(--content-max)] px-4 py-9 sm:px-7 lg:px-10 lg:py-12">
+      <PageHeader
+        eyebrow="Hero Catalog · VPK SSOT"
+        title="游戏内定义，原样可追溯。"
+        description="按 Dota 2 四种主属性浏览当前 Hero。所有规范字段来自固定 VPK 快照；基础数值不等同于一级英雄最终面板。"
+        aside={
+          <DatasetBadge
+            clientVersion={meta.clientVersion}
+            sourceCommit={meta.sourceCommit}
+            warningCount={meta.warningCount}
+          />
+        }
+      />
+
+      <div className="mt-8 space-y-3">
         {overview.latestFailure && (
           <ImportFailureBanner
             stage={overview.latestFailure.stage}
@@ -109,7 +98,7 @@ export default async function HeroesPage({
           />
         )}
         {parsed.errors.length > 0 && (
-          <div className="flex items-start gap-3 border border-red-400/20 bg-red-400/5 px-4 py-3 text-xs text-red-200">
+          <div className="flex items-start gap-3 border border-[color-mix(in_srgb,var(--status-danger)_35%,transparent)] bg-[color-mix(in_srgb,var(--status-danger)_7%,transparent)] px-4 py-3 text-xs text-[var(--status-danger)]">
             <AlertCircle className="size-4 shrink-0" />
             <div>
               {parsed.errors.map((error) => (
@@ -121,56 +110,49 @@ export default async function HeroesPage({
         <HeroFilterForm filters={parsed.filters} />
       </div>
 
-      <div className="mt-7 flex items-center justify-between text-xs text-zinc-500">
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--text-muted)]">
         <p>
-          <span className="font-medium text-zinc-200">
+          <span className="font-data font-medium text-[var(--text-primary)]">
             {overview.heroes.length}
           </span>{" "}
-          / {meta.totalHeroes} 位英雄
+          / {meta.totalHeroes} Heroes
         </p>
-        <p className="flex items-center gap-2">
-          <span
-            className={`size-1.5 rounded-full ${meta.warningCount ? "bg-amber-400" : "bg-emerald-400"}`}
-          />
-          {meta.warningCount} 个 active dataset warning ·{" "}
-          {meta.sourceCommit.slice(0, 8)}
+        <p className="font-data">
+          SourceRevision {meta.sourceRevision} · imported{" "}
+          {formatDate(meta.importedAt)}
         </p>
       </div>
 
-      <section className="mt-4">
-        {overview.heroes.length > 0 ? (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {overview.heroes.map((hero) => (
-              <HeroCard key={hero.heroId} hero={hero} />
-            ))}
-          </div>
-        ) : (
+      {groups.length > 0 ? (
+        <div className="mt-9 space-y-11">
+          {groups.map(({ attribute, heroes }) => (
+            <section key={attribute} aria-labelledby={`${attribute}-heroes`}>
+              <div id={`${attribute}-heroes`}>
+                <SectionHeading
+                  eyebrow={attributeNames[attribute].en}
+                  title={attributeNames[attribute].zh}
+                  count={heroes.length}
+                  tone={attribute}
+                />
+              </div>
+              <div className="catalog-grid mt-4">
+                {heroes.map((hero) => (
+                  <HeroCard
+                    key={hero.heroId}
+                    hero={hero}
+                    lang={parsed.filters.lang}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-5">
           <EmptyResults />
-        )}
-      </section>
+        </div>
+      )}
     </main>
-  );
-}
-
-function MetaCell({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="bg-[#111317] px-4 py-4">
-      <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-zinc-600 [&>svg]:size-3">
-        {icon}
-        {label}
-      </div>
-      <p className="mt-2 truncate text-sm font-medium tabular-nums text-zinc-200">
-        {value}
-      </p>
-    </div>
   );
 }
 

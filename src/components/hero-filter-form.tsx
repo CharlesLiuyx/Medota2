@@ -33,7 +33,7 @@ export function HeroFilterForm({ filters }: { filters: HeroFilters }) {
     <form
       method="get"
       action="/heroes"
-      className="border border-white/10 bg-[#111317]/85 p-4 shadow-2xl shadow-black/20 backdrop-blur sm:p-5"
+      className="border border-[var(--border-default)] bg-[var(--surface-overlay)] p-4 shadow-[var(--shadow-elevated)] backdrop-blur sm:p-5"
     >
       <div className="flex flex-col gap-3 lg:flex-row">
         <label className="relative min-w-0 flex-1">
@@ -44,7 +44,7 @@ export function HeroFilterForm({ filters }: { filters: HeroFilters }) {
             defaultValue={filters.q}
             maxLength={100}
             placeholder="搜索中文名、英文名或内部名称…"
-            className="h-12 w-full border border-white/10 bg-black/30 pl-11 pr-4 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-[#d85a3a]/70"
+            className="h-[var(--control-height)] w-full border border-[var(--border-default)] bg-[var(--surface-sunken)] pl-11 pr-4 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-muted)] focus:border-[var(--accent-primary)]"
           />
         </label>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:flex">
@@ -81,12 +81,12 @@ export function HeroFilterForm({ filters }: { filters: HeroFilters }) {
               />
             ))}
           </FilterGroup>
-          <label className="flex h-12 items-center border border-white/10 bg-black/20 px-3 text-xs text-zinc-400 focus-within:border-white/25">
+          <label className="flex h-[var(--control-height)] items-center border border-[var(--border-default)] bg-[var(--surface-sunken)] px-3 text-xs text-[var(--text-secondary)] focus-within:border-[var(--border-strong)]">
             <span className="mr-2 shrink-0">CM</span>
             <select
               name="cm"
               defaultValue={filters.cm}
-              className="min-w-0 flex-1 bg-transparent text-white outline-none"
+              className="min-w-0 flex-1 bg-transparent text-[var(--text-primary)] outline-none"
             >
               <option value="all">全部</option>
               <option value="true">启用</option>
@@ -94,16 +94,30 @@ export function HeroFilterForm({ filters }: { filters: HeroFilters }) {
             </select>
           </label>
         </div>
-        <button className="flex h-12 items-center justify-center gap-2 bg-[#c94f32] px-6 text-sm font-semibold text-white hover:bg-[#df6041]">
+        <button className="flex h-[var(--control-height)] items-center justify-center gap-2 bg-[var(--accent-primary)] px-6 text-sm font-semibold text-white hover:bg-[var(--accent-hover)]">
           <Filter className="size-4" /> 应用筛选
         </button>
       </div>
+      <div className="mt-3 flex items-center justify-end gap-2 text-xs">
+        <label className="text-[var(--text-muted)]" htmlFor="hero-language">
+          Language
+        </label>
+        <select
+          id="hero-language"
+          name="lang"
+          defaultValue={filters.lang}
+          className="border border-[var(--border-default)] bg-[var(--surface-sunken)] px-3 py-2 text-[var(--text-primary)]"
+        >
+          <option value="zh-CN">简体中文</option>
+          <option value="en">English</option>
+        </select>
+      </div>
       {(filters.q || activeCount > 0) && (
-        <div className="mt-3 flex items-center justify-between border-t border-white/8 pt-3 text-xs text-zinc-500">
+        <div className="mt-3 flex items-center justify-between border-t border-[var(--border-subtle)] pt-3 text-xs text-[var(--text-muted)]">
           <span>{activeCount + (filters.q ? 1 : 0)} 项查询条件</span>
           <Link
             href="/heroes"
-            className="flex items-center gap-1.5 text-zinc-400 hover:text-white"
+            className="flex items-center gap-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           >
             <X className="size-3.5" /> 清除全部
           </Link>
@@ -124,13 +138,13 @@ function FilterGroup({
 }) {
   return (
     <details className="group relative">
-      <summary className="flex h-12 cursor-pointer list-none items-center justify-between gap-3 border border-white/10 bg-black/20 px-4 text-xs text-zinc-300 hover:border-white/20 [&::-webkit-details-marker]:hidden">
+      <summary className="flex h-[var(--control-height)] cursor-pointer list-none items-center justify-between gap-3 border border-[var(--border-default)] bg-[var(--surface-sunken)] px-4 text-xs text-[var(--text-secondary)] hover:border-[var(--border-strong)] [&::-webkit-details-marker]:hidden">
         <span>{title}</span>
-        <span className="min-w-4 text-right text-[#e26a4c]">
+        <span className="min-w-4 text-right text-[var(--accent-hover)]">
           {count || "·"}
         </span>
       </summary>
-      <div className="absolute right-0 z-20 mt-2 grid min-w-44 gap-1 border border-white/12 bg-[#15171b] p-2 shadow-2xl shadow-black/60">
+      <div className="absolute right-0 z-20 mt-2 grid min-w-44 gap-1 border border-[var(--border-default)] bg-[var(--surface-elevated)] p-2 shadow-[var(--shadow-elevated)]">
         {children}
       </div>
     </details>
@@ -149,13 +163,13 @@ function FilterOption({
   selected: boolean;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-3 px-3 py-2 text-xs text-zinc-300 hover:bg-white/5">
+    <label className="flex cursor-pointer items-center gap-3 px-3 py-2 text-xs text-[var(--text-secondary)] hover:bg-[var(--surface-hover)]">
       <input
         type="checkbox"
         name={name}
         value={value}
         defaultChecked={selected}
-        className="accent-[#d85a3a]"
+        className="accent-[var(--accent-primary)]"
       />
       {label}
     </label>

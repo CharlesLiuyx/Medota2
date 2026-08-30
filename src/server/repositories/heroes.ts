@@ -16,6 +16,9 @@ export interface ActiveDatasetMeta {
   sourceRemoteUrl: string;
   warningCount: number;
   totalHeroes: number;
+  totalAbilities: number;
+  gateStatus: "green" | "yellow" | "red";
+  reviewStatus: "not_required" | "pending" | "approved" | "rejected";
 }
 
 export interface LatestImportFailure {
@@ -80,6 +83,30 @@ export interface HeroDetail {
     size_bytes: string;
     encoding: string;
   }>;
+  abilities: Array<{
+    internal_name: string;
+    zh_name: string | null;
+    en_name: string | null;
+    catalog_status: string;
+    definition_kind: string;
+    is_innate: boolean;
+    is_ultimate: boolean;
+    has_scepter_upgrade: boolean;
+    has_shard_upgrade: boolean;
+    relation_kind: string;
+    source_slot: string;
+    ordinal: number;
+    is_current: boolean;
+  }>;
+  facets: Array<{
+    facet_key: string;
+    icon: string | null;
+    color: string | null;
+    gradient_id: number | null;
+    deprecated: boolean;
+    source_path: string;
+    source_line: number;
+  }>;
   comparison: null | {
     sourceCommit: string;
     packageVersion: string;
@@ -109,7 +136,7 @@ export async function getHeroOverview(
 ): Promise<HeroOverview> {
   await ensureReady();
   const pool = getWebPool();
-  const meta = await getActiveMeta();
+  const meta = await getActiveCatalogMeta();
   const latestFailure = await getLatestFailure(meta?.promotedAt ?? null);
   if (!meta || !filters) return { meta, heroes: [], latestFailure };
 
@@ -119,7 +146,7 @@ export async function getHeroOverview(
     values.push(escapeLike(filters.q));
     const index = values.length;
     conditions.push(
-      `(zh.display_name ILIKE '%' || $${index} || '%' ESCAPE '\\' OR en.display_name ILIKE '%' || $${index} || '%' ESCAPE '\\' OR h.internal_name ILIKE '%' || $${index} || '%' ESCAPE '\\')`,
+      `(zh.display_name ILIKE '%' || $${index} || '%' ESCAPE '\\' OR en.display_name ILIKE '%' || $${index} || '%' ESCAPE '\\' OR h.internal_name ILIKE '%' || $${index} || '%' ESCAPE '\\' OR h.hero_id::text = $${index})`,
     );
   }
   if (filters.attributes.length) {
@@ -200,7 +227,7 @@ export async function getHeroOverview(
 export async function getHeroBySlug(slug: string): Promise<HeroDetail | null> {
   await ensureReady();
   const pool = getWebPool();
-  const meta = await getActiveMeta();
+  const meta = await getActiveCatalogMeta();
   if (!meta) return null;
   const heroResult = await pool.query<HeroDetail["hero"]>(
     `SELECT h.*, sr.source_key, sr.source_dto_sha256, sr.inherited_fields
@@ -211,37 +238,60 @@ export async function getHeroBySlug(slug: string): Promise<HeroDetail | null> {
   );
   if (!heroResult.rowCount) return null;
   const hero = heroResult.rows[0];
-  const [roles, localizations, files, comparisonMeta] = await Promise.all([
-    pool.query<HeroDetail["roles"][number]>(
-      "SELECT role, role_level FROM hero_roles WHERE dataset_version_id = $1 AND hero_id = $2 ORDER BY role_level DESC, role",
-      [meta.datasetVersionId, hero.hero_id],
-    ),
-    pool.query<HeroDetail["localizations"][number]>(
-      "SELECT * FROM hero_localizations WHERE dataset_version_id = $1 AND hero_id = $2 ORDER BY locale",
-      [meta.datasetVersionId, hero.hero_id],
-    ),
-    pool.query<HeroDetail["sourceFiles"][number]>(
-      `SELECT f.source_path, f.raw_sha256, f.size_bytes::text, f.encoding
+  const [roles, localizations, files, abilities, facets, comparisonMeta] =
+    await Promise.all([
+      pool.query<HeroDetail["roles"][number]>(
+        "SELECT role, role_level FROM hero_roles WHERE dataset_version_id = $1 AND hero_id = $2 ORDER BY role_level DESC, role",
+        [meta.datasetVersionId, hero.hero_id],
+      ),
+      pool.query<HeroDetail["localizations"][number]>(
+        "SELECT * FROM hero_localizations WHERE dataset_version_id = $1 AND hero_id = $2 ORDER BY locale",
+        [meta.datasetVersionId, hero.hero_id],
+      ),
+      pool.query<HeroDetail["sourceFiles"][number]>(
+        `SELECT f.source_path, f.raw_sha256, f.size_bytes::text, f.encoding
        FROM source_snapshot_files f
-       JOIN hero_dataset_versions v ON v.source_snapshot_id = f.source_snapshot_id
+       JOIN hero_catalog_dataset_versions v ON v.source_snapshot_id = f.source_snapshot_id
        WHERE v.id = $1 ORDER BY f.source_path`,
-      [meta.datasetVersionId],
-    ),
-    pool.query<{
-      id: string;
-      source_commit: string;
-      package_version: string;
-      comparator_version: string;
-      created_at: Date;
-    }>(
-      `SELECT c.id, s.source_commit, s.package_version, c.comparator_version, c.created_at
+        [meta.datasetVersionId],
+      ),
+      pool.query<HeroDetail["abilities"][number]>(
+        `SELECT a.internal_name, zh.display_name AS zh_name, en.display_name AS en_name,
+         a.catalog_status, a.definition_kind, a.is_innate, a.is_ultimate,
+         a.has_scepter_upgrade, a.has_shard_upgrade,
+         b.relation_kind, b.source_slot, b.ordinal, b.is_current
+       FROM hero_ability_bindings b
+       JOIN abilities a ON a.dataset_version_id = b.dataset_version_id
+         AND a.internal_name = b.ability_internal_name
+       LEFT JOIN ability_localizations zh ON zh.dataset_version_id = a.dataset_version_id
+         AND zh.ability_internal_name = a.internal_name AND zh.locale = 'zh-CN'
+       LEFT JOIN ability_localizations en ON en.dataset_version_id = a.dataset_version_id
+         AND en.ability_internal_name = a.internal_name AND en.locale = 'en'
+       WHERE b.dataset_version_id = $1 AND b.hero_id = $2
+       ORDER BY b.is_current DESC, b.ordinal, b.relation_kind, a.internal_name`,
+        [meta.datasetVersionId, hero.hero_id],
+      ),
+      pool.query<HeroDetail["facets"][number]>(
+        `SELECT facet_key, icon, color, gradient_id, deprecated, source_path, source_line
+       FROM facets WHERE dataset_version_id = $1 AND hero_id = $2
+       ORDER BY deprecated, facet_key`,
+        [meta.datasetVersionId, hero.hero_id],
+      ),
+      pool.query<{
+        id: string;
+        source_commit: string;
+        package_version: string;
+        comparator_version: string;
+        created_at: Date;
+      }>(
+        `SELECT c.id, s.source_commit, s.package_version, c.comparator_version, c.created_at
        FROM hero_reference_comparisons c
        JOIN reference_snapshots s ON s.id = c.reference_snapshot_id
        WHERE c.dataset_version_id = $1
        ORDER BY c.created_at DESC, c.id DESC LIMIT 1`,
-      [meta.datasetVersionId],
-    ),
-  ]);
+        [meta.datasetVersionId],
+      ),
+    ]);
 
   let comparison: HeroDetail["comparison"] = null;
   if (comparisonMeta.rowCount) {
@@ -266,11 +316,13 @@ export async function getHeroBySlug(slug: string): Promise<HeroDetail | null> {
     roles: roles.rows,
     localizations: localizations.rows,
     sourceFiles: files.rows,
+    abilities: abilities.rows,
+    facets: facets.rows,
     comparison,
   };
 }
 
-async function getActiveMeta(): Promise<ActiveDatasetMeta | null> {
+export async function getActiveCatalogMeta(): Promise<ActiveDatasetMeta | null> {
   const result = await getWebPool().query<{
     dataset_version_id: string;
     client_version: string;
@@ -284,16 +336,21 @@ async function getActiveMeta(): Promise<ActiveDatasetMeta | null> {
     source_remote_url: string;
     issues: Array<{ severity?: string }>;
     total_heroes: number;
+    total_abilities: number;
+    gate_status: ActiveDatasetMeta["gateStatus"];
+    review_status: ActiveDatasetMeta["reviewStatus"];
   }>(
     `SELECT v.id AS dataset_version_id, s.client_version, s.source_revision, s.source_commit,
        s.imported_at, v.promoted_at, v.importer_version, v.target_schema_version,
+       v.gate_status, v.review_status,
        s.source_repository, s.source_remote_url, r.issues,
-       (SELECT count(*)::int FROM heroes hero WHERE hero.dataset_version_id = v.id) AS total_heroes
+       (SELECT count(*)::int FROM heroes hero WHERE hero.dataset_version_id = v.id) AS total_heroes,
+       (SELECT count(*)::int FROM abilities ability WHERE ability.dataset_version_id = v.id) AS total_abilities
      FROM dataset_heads h
-     JOIN hero_dataset_versions v ON v.id = h.hero_dataset_version_id
+     JOIN hero_catalog_dataset_versions v ON v.id = h.catalog_dataset_version_id
      JOIN source_snapshots s ON s.id = v.source_snapshot_id
      JOIN import_runs r ON r.id = v.import_run_id
-     WHERE h.dataset_key = 'heroes'`,
+     WHERE h.dataset_key = 'hero_catalog'`,
   );
   if (!result.rowCount) return null;
   const row = result.rows[0];
@@ -311,6 +368,9 @@ async function getActiveMeta(): Promise<ActiveDatasetMeta | null> {
     warningCount: row.issues.filter((issue) => issue.severity === "warning")
       .length,
     totalHeroes: row.total_heroes,
+    totalAbilities: row.total_abilities,
+    gateStatus: row.gate_status,
+    reviewStatus: row.review_status,
   };
 }
 

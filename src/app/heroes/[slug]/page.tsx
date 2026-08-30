@@ -10,9 +10,11 @@ import {
   GitCommitHorizontal,
   ScrollText,
   Shield,
+  Sparkles,
   Swords,
   TriangleAlert,
 } from "lucide-react";
+import { AbilityIcon } from "@/components/ability-icon";
 import { HeroCrest } from "@/components/hero-crest";
 import { getHeroBySlug } from "@/server/repositories/heroes";
 
@@ -47,10 +49,13 @@ const labels: Record<string, string> = {
 
 export default async function HeroDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ lang?: string }>;
 }) {
   const { slug } = await params;
+  const lang = (await searchParams).lang === "en" ? "en" : "zh-CN";
   let detail: Awaited<ReturnType<typeof getHeroBySlug>>;
   try {
     detail = await getHeroBySlug(slug);
@@ -90,6 +95,7 @@ export default async function HeroDetailPage({
           name={en.display_name}
           attribute={String(hero.primary_attribute)}
           large
+          src={`/valve-assets/hero/${String(hero.internal_name)}`}
         />
         <div>
           <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-zinc-500">
@@ -98,9 +104,11 @@ export default async function HeroDetailPage({
             <span>{hero.internal_name}</span>
           </div>
           <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-white sm:text-6xl">
-            {zh.display_name}
+            {lang === "en" ? en.display_name : zh.display_name}
           </h1>
-          <p className="mt-2 text-lg text-zinc-500">{en.display_name}</p>
+          <p className="mt-2 text-lg text-zinc-500">
+            {lang === "en" ? zh.display_name : en.display_name}
+          </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Badge>{labels[String(hero.primary_attribute)]}</Badge>
             <Badge>
@@ -134,12 +142,47 @@ export default async function HeroDetailPage({
             label="Dataset"
             value={detail.meta.datasetVersionId.slice(0, 8)}
           />
+          <Link
+            href={`/heroes/${slug}`}
+            aria-current={lang === "zh-CN" ? "page" : undefined}
+            className="bg-[#111317] p-3 text-center text-xs hover:bg-[var(--surface-hover)]"
+          >
+            简中
+          </Link>
+          <Link
+            href={`/heroes/${slug}?lang=en`}
+            aria-current={lang === "en" ? "page" : undefined}
+            className="bg-[#111317] p-3 text-center text-xs hover:bg-[var(--surface-hover)]"
+          >
+            EN
+          </Link>
         </div>
       </section>
 
+      <nav
+        aria-label="Hero sections"
+        className="sticky top-16 z-20 flex overflow-x-auto border-b border-[var(--border-default)] bg-[var(--surface-overlay)] text-xs backdrop-blur"
+      >
+        {[
+          ["overview", "Overview"],
+          ["abilities", "Abilities"],
+          ["talents", "Talents & Upgrades"],
+          ["raw", "Raw"],
+          ["provenance", "Provenance"],
+        ].map(([id, label]) => (
+          <a
+            key={id}
+            href={`#${id}`}
+            className="shrink-0 px-4 py-3 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+          >
+            {label}
+          </a>
+        ))}
+      </nav>
+
       <div className="mt-10 grid gap-10 xl:grid-cols-[minmax(0,1fr)_350px]">
         <div className="space-y-10">
-          <section>
+          <section id="overview">
             <SectionTitle
               icon={<ScrollText />}
               eyebrow="Overview"
@@ -151,7 +194,62 @@ export default async function HeroDetailPage({
             </div>
           </section>
 
-          <section>
+          <section id="abilities">
+            <SectionTitle
+              icon={<Swords />}
+              eyebrow="Ability graph"
+              title="Abilities"
+            />
+            <HeroAbilityList
+              abilities={detail.abilities.filter(
+                (ability) =>
+                  ability.relation_kind !== "talent" &&
+                  ability.relation_kind !== "declared_in_hero_file",
+              )}
+              lang={lang}
+            />
+          </section>
+
+          <section id="talents">
+            <SectionTitle
+              icon={<Sparkles />}
+              eyebrow="Talents · Facets · Aghanim"
+              title="Talents & Upgrades"
+            />
+            <HeroAbilityList
+              abilities={detail.abilities.filter(
+                (ability) =>
+                  ability.relation_kind === "talent" ||
+                  ability.relation_kind === "upgrade_granted" ||
+                  ability.has_scepter_upgrade ||
+                  ability.has_shard_upgrade,
+              )}
+              lang={lang}
+            />
+            <div className="mt-5 grid gap-2 sm:grid-cols-2">
+              {detail.facets.map((facet) => (
+                <div
+                  key={facet.facet_key}
+                  className="border border-[var(--border-default)] bg-[var(--surface-panel)] p-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <code className="text-xs text-[var(--text-primary)]">
+                      {facet.facet_key}
+                    </code>
+                    <Badge muted={facet.deprecated}>
+                      {facet.deprecated ? "Deprecated" : "Current"}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-[10px] text-[var(--text-muted)]">
+                    {facet.icon ?? "no icon"} · {facet.color ?? "no color"} ·
+                    gradient {facet.gradient_id ?? "—"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section id="raw">
             <SectionTitle
               icon={<Database />}
               eyebrow="Raw components"
@@ -233,7 +331,7 @@ export default async function HeroDetailPage({
           <ReferenceComparison comparison={detail.comparison} />
         </div>
 
-        <aside className="space-y-5">
+        <aside id="provenance" className="space-y-5">
           <section className="border border-white/9 bg-[#121418] p-5">
             <p className="text-[10px] uppercase tracking-[0.22em] text-zinc-600">
               角色强度
@@ -374,6 +472,64 @@ function StatGroup({
   );
 }
 
+function HeroAbilityList({
+  abilities,
+  lang,
+}: {
+  abilities: NonNullable<
+    Awaited<ReturnType<typeof getHeroBySlug>>
+  >["abilities"];
+  lang: "en" | "zh-CN";
+}) {
+  if (!abilities.length) {
+    return (
+      <div className="mt-5 border border-dashed border-[var(--border-default)] p-6 text-sm text-[var(--text-muted)]">
+        当前关系图没有此类 Ability。
+      </div>
+    );
+  }
+  return (
+    <div className="mt-5 grid gap-2 md:grid-cols-2">
+      {abilities.map((ability) => (
+        <Link
+          key={`${ability.internal_name}-${ability.relation_kind}-${ability.source_slot}`}
+          href={`/abilities/${ability.internal_name}${lang === "en" ? "?lang=en" : ""}`}
+          className="flex gap-3 border border-[var(--border-default)] bg-[var(--surface-panel)] p-3 hover:bg-[var(--surface-hover)]"
+        >
+          <AbilityIcon
+            internalName={ability.internal_name}
+            name={
+              (lang === "en" ? ability.en_name : ability.zh_name) ??
+              ability.en_name ??
+              ability.internal_name
+            }
+          />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold text-[var(--text-primary)]">
+              {(lang === "en" ? ability.en_name : ability.zh_name) ??
+                ability.en_name ??
+                ability.internal_name}
+            </span>
+            <code className="mt-1 block truncate text-[9px] text-[var(--text-muted)]">
+              {ability.internal_name}
+            </code>
+            <span className="mt-2 flex flex-wrap gap-1">
+              <Badge>{ability.relation_kind}</Badge>
+              <Badge muted={!ability.is_current}>
+                {ability.is_current ? "current" : ability.catalog_status}
+              </Badge>
+              {ability.is_innate && <Badge>innate</Badge>}
+              {ability.is_ultimate && <Badge>ultimate</Badge>}
+              {ability.has_scepter_upgrade && <Badge>scepter</Badge>}
+              {ability.has_shard_upgrade && <Badge>shard</Badge>}
+            </span>
+          </span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 function Provenance({
   detail,
 }: {
@@ -384,10 +540,10 @@ function Provenance({
     <section className="border border-white/9 bg-[#121418] p-5">
       <div className="flex items-center gap-2">
         <GitCommitHorizontal className="size-4 text-[#d86144]" />
-        <h2 className="text-sm font-semibold text-white">MVP Provenance</h2>
+        <h2 className="text-sm font-semibold text-white">Catalog Provenance</h2>
       </div>
       <p className="mt-2 text-[10px] leading-4 text-zinc-600">
-        快照级 + 记录级溯源；不声称字段级血缘。
+        共享 Catalog 快照 + 记录级溯源；Ability 可继续下钻到 ordered source。
       </p>
       <dl className="mt-5 space-y-3 text-[11px]">
         <Trace label="Repository" value={detail.meta.sourceRepository} />

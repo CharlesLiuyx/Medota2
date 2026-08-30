@@ -15,6 +15,7 @@ export interface HeroFilters {
   roles: HeroRole[];
   attacks: AttackType[];
   cm: "all" | "true" | "false";
+  lang: "zh-CN" | "en";
 }
 
 export interface ParsedHeroFilters {
@@ -22,7 +23,7 @@ export interface ParsedHeroFilters {
   errors: string[];
 }
 
-const allowedKeys = new Set(["q", "attribute", "role", "attack", "cm"]);
+const allowedKeys = new Set(["q", "attribute", "role", "attack", "cm", "lang"]);
 
 export function parseHeroFilters(params: SearchParams): ParsedHeroFilters {
   const errors: string[] = [];
@@ -47,6 +48,10 @@ export function parseHeroFilters(params: SearchParams): ParsedHeroFilters {
     ? (cmValue as HeroFilters["cm"])
     : "all";
   if (cm !== cmValue) errors.push(`未知 CM 状态：${cmValue}`);
+  const langValue = singleValue(params.lang, "lang", errors) ?? "zh-CN";
+  const lang =
+    langValue === "en" || langValue === "zh-CN" ? langValue : "zh-CN";
+  if (lang !== langValue) errors.push(`未知语言：${langValue}`);
 
   return {
     filters: {
@@ -55,6 +60,7 @@ export function parseHeroFilters(params: SearchParams): ParsedHeroFilters {
       roles,
       attacks,
       cm,
+      lang,
     },
     errors,
   };
@@ -67,6 +73,7 @@ export function canonicalHeroQuery(filters: HeroFilters): string {
   for (const value of filters.roles) query.append("role", value);
   for (const value of filters.attacks) query.append("attack", value);
   if (filters.cm !== "all") query.set("cm", filters.cm);
+  if (filters.lang !== "zh-CN") query.set("lang", filters.lang);
   return query.toString();
 }
 

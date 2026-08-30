@@ -9,6 +9,7 @@ describe("hero query contract", () => {
       role: ["support", "carry"],
       attack: "melee",
       cm: "false",
+      lang: "zh-CN",
     });
     expect(parsed.errors).toEqual([]);
     expect(parsed.filters).toEqual({
@@ -17,6 +18,7 @@ describe("hero query contract", () => {
       roles: ["carry", "support"],
       attacks: ["melee"],
       cm: "false",
+      lang: "zh-CN",
     });
   });
 

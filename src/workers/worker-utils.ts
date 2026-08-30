@@ -55,7 +55,10 @@ export async function failImportRun(
   stage: string,
   error: unknown,
   metrics: Record<string, unknown>,
-  details?: { issues?: ImportIssue[]; counts?: ParsedHeroDataset["counts"] },
+  details?: {
+    issues?: ImportIssue[];
+    counts?: ParsedHeroDataset["counts"] | Record<string, number>;
+  },
 ): Promise<void> {
   const message = error instanceof Error ? error.message : String(error);
   const issues = details?.issues ?? [
@@ -78,6 +81,10 @@ export async function failImportRun(
   await pool.query("DELETE FROM hero_import_staging WHERE import_run_id = $1", [
     runId,
   ]);
+  await pool.query(
+    "DELETE FROM catalog_import_staging WHERE import_run_id = $1",
+    [runId],
+  );
 }
 
 export async function prepareWorker(target: "main" | "test" = "main"): Promise<{

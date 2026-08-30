@@ -1,0 +1,34 @@
+"DOTAAbilities"
+{
+  "antimage_blink"
+  {
+    "BaseClass" "ability_base"
+    "AbilityBehavior" "DOTA_ABILITY_BEHAVIOR_POINT"
+    "AbilityCastRange" "1200"
+    "AbilityCooldown" "12 10 8 6"
+    "AbilityManaCost" "50"
+    "LinkedAbility" "antimage_high_slot_helper"
+    "AbilityValues"
+    {
+      "blink_range"
+      {
+        "value" "750 900 1050 1200"
+        "special_bonus_unique_antimage_fixture" "+100"
+      }
+      "minimum_distance" "200"
+    }
+  }
+  "antimage_innate"
+  {
+    "Innate" "1"
+    "AbilityBehavior" "DOTA_ABILITY_BEHAVIOR_PASSIVE"
+  }
+  "antimage_high_slot_helper"
+  {
+    "AbilityBehavior" "DOTA_ABILITY_BEHAVIOR_HIDDEN"
+  }
+  "antimage_facet_spell"
+  {
+    "HasShardUpgrade" "1"
+  }
+}

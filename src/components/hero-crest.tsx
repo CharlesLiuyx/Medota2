@@ -1,32 +1,56 @@
+"use client";
+
+import Image from "next/image";
+import { useState } from "react";
+
 export function HeroCrest({
   name,
   attribute,
   large = false,
+  src,
 }: {
   name: string;
   attribute: string;
   large?: boolean;
+  src?: string;
 }) {
+  const [failed, setFailed] = useState(false);
   const initials = name
     .split(/[\s-]+/u)
     .slice(0, 2)
     .map((part) => part[0])
     .join("")
     .toUpperCase();
-  const palette =
+  const color =
     attribute === "strength"
-      ? "from-[#852e28] via-[#3b1c1a] to-[#171313] text-[#f3a090]"
+      ? "var(--attribute-strength)"
       : attribute === "agility"
-        ? "from-[#316b4a] via-[#193526] to-[#111713] text-[#8be0ae]"
+        ? "var(--attribute-agility)"
         : attribute === "intelligence"
-          ? "from-[#315b7c] via-[#192d3e] to-[#11151a] text-[#93c9ec]"
-          : "from-[#79662b] via-[#40371c] to-[#171611] text-[#ead081]";
+          ? "var(--attribute-intelligence)"
+          : "var(--attribute-universal)";
 
   return (
     <div
-      className={`relative grid shrink-0 place-items-center overflow-hidden border border-white/12 bg-gradient-to-br ${palette} ${large ? "size-28 sm:size-36" : "size-16"}`}
-      aria-label="英雄图片占位"
+      className={`relative grid shrink-0 place-items-center overflow-hidden border border-[var(--border-default)] ${large ? "size-28 sm:size-36" : "size-14"}`}
+      style={{
+        color,
+        background: `linear-gradient(145deg, color-mix(in srgb, ${color} 58%, var(--surface-panel)), var(--surface-sunken))`,
+      }}
+      role={!src || failed ? "img" : undefined}
+      aria-label={!src || failed ? `${name} portrait unavailable` : undefined}
     >
+      {src && !failed && (
+        <Image
+          src={src}
+          alt={`${name} portrait`}
+          fill
+          sizes={large ? "144px" : "56px"}
+          unoptimized
+          className="z-10 object-cover"
+          onError={() => setFailed(true)}
+        />
+      )}
       <span
         className={`${large ? "text-3xl" : "text-xl"} font-black tracking-[-0.08em] opacity-85`}
       >

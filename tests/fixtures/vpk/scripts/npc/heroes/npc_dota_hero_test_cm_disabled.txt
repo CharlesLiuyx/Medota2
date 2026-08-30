@@ -1,0 +1,8 @@
+"DOTAAbilities"
+{
+  "fixture_guard"
+  {
+    "AbilityBehavior" "DOTA_ABILITY_BEHAVIOR_PASSIVE"
+    "CustomFixtureField" "preserved"
+  }
+}

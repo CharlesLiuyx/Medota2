@@ -7,5 +7,12 @@
     "npc_dota_hero_antimage__en:n" "Anti-Mage"
     "npc_dota_hero_test_cm_disabled:n" "测试守卫"
     "npc_dota_hero_test_cm_disabled__en:n" "Fixture Guardian"
+    "DOTA_Tooltip_ability_antimage_blink" "闪烁"
+    "DOTA_Tooltip_ability_antimage_blink_Description" "传送一小段距离。"
+    "DOTA_Tooltip_ability_antimage_innate" "迫害者"
+    "DOTA_Tooltip_ability_antimage_high_slot_helper" "高槽位辅助"
+    "DOTA_Tooltip_ability_antimage_facet_spell" "命石技能"
+    "DOTA_Tooltip_ability_special_bonus_unique_antimage_fixture" "+100 测试距离"
+    "DOTA_Tooltip_ability_fixture_guard" "测试守卫技能"
   }
 }
