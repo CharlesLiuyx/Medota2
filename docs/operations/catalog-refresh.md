@@ -62,8 +62,11 @@ Yellow Review：
 ```bash
 pnpm data:diff:catalog --candidate <dataset-version-id>
 pnpm data:review:catalog --candidate <dataset-version-id> --decision approved --reason "<reason>"
+pnpm data:import:assets --catalog-version <dataset-version-id>
 pnpm data:promote:catalog --candidate <dataset-version-id>
 ```
+
+若命令因跨 Catalog 的 exact/native 覆盖率下降而停止，先核对 VPK 提取来源和候选资产；只有确认接受 fallback 降级时，才在实际 promotion 命令追加 `--allow-fallback-downgrade`。此前为候选导入资产时使用过该开关，不会自动授权后续 Catalog head 切换。
 
 拒绝候选：
 
@@ -81,7 +84,7 @@ pnpm data:review:catalog --candidate <dataset-version-id> --decision rejected --
 pnpm data:rollback:catalog --to <compatible-dataset-version-id> --reason "<reason>"
 ```
 
-数据库函数会验证目标版本存在且 schema 兼容，并在同一事务内记录操作者、from/to version、原因和时间。
+数据库函数会验证目标版本存在、schema 兼容且已有完整匹配的 asset head，并在同一事务内记录操作者、from/to version、原因和时间。对尚无图片资产的旧版本，先运行 `pnpm data:import:assets --catalog-version <compatible-dataset-version-id>` 回填并提升资产；否则 rollback 会保持当前 head 并明确失败。
 
 ## 计划任务
 
@@ -92,7 +95,7 @@ pnpm data:rollback:catalog --to <compatible-dataset-version-id> --reason "<reaso
 3. 创建 `.medota2/logs/`。
 4. 把生成的 plist 安装到当前用户的 `~/Library/LaunchAgents/` 并用 `launchctl bootstrap` 启用。
 
-示例不会自动安装，以免未经确认修改用户系统调度。生产环境可用任意调度器调用同一 `pnpm data:refresh:catalog` 命令，但同一数据库上仍只有一个 advisory-lock owner 能执行 promotion。
+示例不会自动安装，以免未经确认修改用户系统调度。生产环境可用任意调度器调用同一 `pnpm data:refresh:catalog` 命令，但同一数据库上仍只有一个 advisory-lock owner 能执行 promotion。Catalog promotion 在同一事务中固定先取得 Catalog lock、再取得 asset lock，手写运维脚本不得反转顺序。
 
 ## 指标与 SLO
 
@@ -103,6 +106,7 @@ pnpm data:rollback:catalog --to <compatible-dataset-version-id> --reason "<reaso
 - 远端发现、锁定、解析、数据库写入和 gate 各阶段耗时；
 - accepted/excluded/warning/blocker 数量及与当前 head 的差异；
 - source commit、ClientVersion、SourceRevision、manifest checksum；
+- asset exact/alias/generated coverage、缺失实体、LoD 完整率和当前 asset head；
 - 当前 head 是否改变，Yellow/Red 时是否仍指向上一有效版本；
 - webhook 和调度进程退出码。
 

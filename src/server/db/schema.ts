@@ -2,6 +2,7 @@ import {
   bigint,
   boolean,
   check,
+  customType,
   foreignKey,
   integer,
   jsonb,
@@ -22,6 +23,10 @@ import type {
   HeroAbilityBinding,
 } from "@/domain/abilities";
 import type { CanonicalHero } from "@/domain/heroes";
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType: () => "bytea",
+});
 
 export const sourceSnapshots = pgTable(
   "source_snapshots",
@@ -555,6 +560,249 @@ export const assetRefs = pgTable(
         table.entityKey,
         table.assetKind,
       ],
+    }),
+  ],
+);
+
+export const assetBlobs = pgTable(
+  "asset_blobs",
+  {
+    contentSha256: text("content_sha256").primaryKey(),
+    mimeType: text("mime_type").notNull(),
+    width: integer().notNull(),
+    height: integer().notNull(),
+    byteSize: bigint("byte_size", { mode: "number" }).notNull(),
+    content: bytea().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      "asset_blobs_content_sha256_check",
+      sql`${table.contentSha256} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check("asset_blobs_mime_type_check", sql`${table.mimeType} <> ''`),
+    check("asset_blobs_width_check", sql`${table.width} > 0`),
+    check("asset_blobs_height_check", sql`${table.height} > 0`),
+    check("asset_blobs_byte_size_check", sql`${table.byteSize} > 0`),
+    check(
+      "asset_blobs_byte_size_matches_content",
+      sql`${table.byteSize} = octet_length(${table.content})`,
+    ),
+    check(
+      "asset_blobs_content_sha256_matches_content",
+      sql`encode(public.digest(${table.content}, 'sha256'), 'hex') = ${table.contentSha256}`,
+    ),
+  ],
+);
+
+export const assetObjects = pgTable(
+  "asset_objects",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    objectSha256: text("object_sha256").notNull().unique(),
+    assetKind: text("asset_kind").notNull(),
+    logicalPath: text("logical_path").notNull(),
+    sourceType: text("source_type").notNull(),
+    sourceRepository: text("source_repository"),
+    sourceCommit: text("source_commit"),
+    clientVersion: text("client_version"),
+    sourceContentSha256: text("source_content_sha256"),
+    originalBlobSha256: text("original_blob_sha256")
+      .notNull()
+      .references(() => assetBlobs.contentSha256),
+    providerVersion: text("provider_version").notNull(),
+    metadata: jsonb().notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      "asset_objects_object_sha256_check",
+      sql`${table.objectSha256} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check("asset_objects_asset_kind_check", sql`${table.assetKind} = 'icon'`),
+    check("asset_objects_logical_path_check", sql`${table.logicalPath} <> ''`),
+    check(
+      "asset_objects_source_type_check",
+      sql`${table.sourceType} IN ('exact', 'alias', 'generated_fallback')`,
+    ),
+    check(
+      "asset_objects_source_commit_check",
+      sql`${table.sourceCommit} IS NULL OR ${table.sourceCommit} ~ '^[0-9a-f]{40}$'`,
+    ),
+    check(
+      "asset_objects_source_content_sha256_check",
+      sql`${table.sourceContentSha256} IS NULL OR ${table.sourceContentSha256} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      "asset_objects_provider_version_check",
+      sql`${table.providerVersion} <> ''`,
+    ),
+    check(
+      "asset_objects_metadata_check",
+      sql`jsonb_typeof(${table.metadata}) = 'object'`,
+    ),
+  ],
+);
+
+export const assetVariants = pgTable(
+  "asset_variants",
+  {
+    assetObjectId: uuid("asset_object_id")
+      .notNull()
+      .references(() => assetObjects.id),
+    lodKey: text("lod_key").notNull(),
+    targetWidth: integer("target_width"),
+    blobSha256: text("blob_sha256")
+      .notNull()
+      .references(() => assetBlobs.contentSha256),
+    transformerVersion: text("transformer_version").notNull(),
+    quality: integer(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.assetObjectId, table.lodKey] }),
+    check(
+      "asset_variants_lod_key_check",
+      sql`${table.lodKey} IN ('original', 'w64', 'w128', 'w256')`,
+    ),
+    check(
+      "asset_variants_lod_target_width_check",
+      sql`(${table.lodKey} = 'original' AND ${table.targetWidth} IS NULL)
+        OR (${table.lodKey} = 'w64' AND ${table.targetWidth} = 64)
+        OR (${table.lodKey} = 'w128' AND ${table.targetWidth} = 128)
+        OR (${table.lodKey} = 'w256' AND ${table.targetWidth} = 256)`,
+    ),
+    check(
+      "asset_variants_transformer_version_check",
+      sql`${table.transformerVersion} <> ''`,
+    ),
+    check(
+      "asset_variants_quality_check",
+      sql`${table.quality} IS NULL OR ${table.quality} BETWEEN 1 AND 100`,
+    ),
+  ],
+);
+
+export const assetDatasetVersions = pgTable(
+  "asset_dataset_versions",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    catalogDatasetVersionId: uuid("catalog_dataset_version_id")
+      .notNull()
+      .references(() => heroCatalogDatasetVersions.id),
+    manifestSha256: text("manifest_sha256").notNull(),
+    clientVersion: text("client_version"),
+    providerVersion: text("provider_version").notNull(),
+    lodPolicyVersion: text("lod_policy_version").notNull(),
+    sourceCounts: jsonb("source_counts").notNull().default({}),
+    importedAt: timestamp("imported_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      "asset_dataset_versions_manifest_sha256_check",
+      sql`${table.manifestSha256} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      "asset_dataset_versions_provider_version_check",
+      sql`${table.providerVersion} <> ''`,
+    ),
+    check(
+      "asset_dataset_versions_lod_policy_version_check",
+      sql`${table.lodPolicyVersion} <> ''`,
+    ),
+    check(
+      "asset_dataset_versions_source_counts_check",
+      sql`jsonb_typeof(${table.sourceCounts}) = 'object'`,
+    ),
+    unique("asset_dataset_versions_identity").on(
+      table.catalogDatasetVersionId,
+      table.manifestSha256,
+      table.providerVersion,
+      table.lodPolicyVersion,
+    ),
+    unique("asset_dataset_versions_catalog_pair").on(
+      table.catalogDatasetVersionId,
+      table.id,
+    ),
+  ],
+);
+
+export const entityAssetBindings = pgTable(
+  "entity_asset_bindings",
+  {
+    assetDatasetVersionId: uuid("asset_dataset_version_id")
+      .notNull()
+      .references(() => assetDatasetVersions.id),
+    entityType: text("entity_type").notNull(),
+    entityKey: text("entity_key").notNull(),
+    assetKind: text("asset_kind").notNull(),
+    assetObjectId: uuid("asset_object_id")
+      .notNull()
+      .references(() => assetObjects.id),
+    resolutionKind: text("resolution_kind").notNull(),
+    sourceStatus: text("source_status").notNull(),
+    requestedLogicalPath: text("requested_logical_path").notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
+        table.assetDatasetVersionId,
+        table.entityType,
+        table.entityKey,
+        table.assetKind,
+      ],
+    }),
+    check(
+      "entity_asset_bindings_entity_type_check",
+      sql`${table.entityType} IN ('hero', 'ability')`,
+    ),
+    check(
+      "entity_asset_bindings_entity_key_check",
+      sql`${table.entityKey} <> ''`,
+    ),
+    check(
+      "entity_asset_bindings_asset_kind_check",
+      sql`${table.assetKind} = 'icon'`,
+    ),
+    check(
+      "entity_asset_bindings_resolution_kind_check",
+      sql`${table.resolutionKind} IN ('exact', 'alias', 'generated_fallback')`,
+    ),
+    check(
+      "entity_asset_bindings_source_status_check",
+      sql`${table.sourceStatus} IN ('available', 'fallback', 'mismatch', 'error')`,
+    ),
+    check(
+      "entity_asset_bindings_requested_logical_path_check",
+      sql`${table.requestedLogicalPath} <> ''`,
+    ),
+  ],
+);
+
+export const assetDatasetHeads = pgTable(
+  "asset_dataset_heads",
+  {
+    catalogDatasetVersionId: uuid("catalog_dataset_version_id")
+      .primaryKey()
+      .references(() => heroCatalogDatasetVersions.id),
+    assetDatasetVersionId: uuid("asset_dataset_version_id").notNull().unique(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.catalogDatasetVersionId, table.assetDatasetVersionId],
+      foreignColumns: [
+        assetDatasetVersions.catalogDatasetVersionId,
+        assetDatasetVersions.id,
+      ],
+      name: "asset_dataset_heads_matching_catalog_fk",
     }),
   ],
 );

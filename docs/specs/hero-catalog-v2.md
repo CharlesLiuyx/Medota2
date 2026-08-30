@@ -15,7 +15,7 @@
 - 参考 Liquipedia Dota 2 Heroes Portal 的信息架构，建立可复用的 Design System；
 - 从唯一规范来源接入完整 Heroes 与 Abilities 数据，并保留可复现 provenance；
 - 支持简体中文、英文，并为继续增加语言预留稳定模型；
-- 从本地 Valve 客户端资源读取英雄与技能图片，满足自用场景；
+- 从本地 Valve 客户端资源读取英雄与技能图标，生成多层 LoD 并以独立资产数据集存入 PostgreSQL；
 - 建立发现、锁定、导入、差异审查、发布和回滚管线，使游戏更新后可以快速、安全地刷新数据。
 
 本文同时作为实现合同与验收记录。Hero Catalog v2 已落地；本文中与旧 MVP 冲突的 Catalog 合同取代[英雄元数据显示 MVP 功能 Spec](hero-metadata-mvp.md)中的对应范围。
@@ -26,7 +26,7 @@
 
 1. 接入全部 Ability 定义。产品默认展示当前英雄直接绑定的内容，历史、遗留、辅助、升级授予及未绑定定义仍可查询和审计。
 2. 首期界面支持 `zh-CN` 与 `en`，存储和 API 不写死双语列，为其他 locale 扩展做好准备。
-3. 自用场景允许使用 Valve 英雄与技能资产。资产从用户本地 Dota 2 客户端或其只读提取缓存获取，不把完整 VPK 或大批资产提交进 Medota2。
+3. 自用场景允许使用 Valve 英雄与技能资产。资产从用户本地 Dota 2 客户端的只读 VPK 内容或其提取缓存获取，二进制与 LoD 存入 PostgreSQL；完整 VPK、提取缓存和批量资产不提交进 Git。
 4. 更新发布采用三级门禁：Green 自动发布；Yellow 生成候选版本并等待人工 Review；Red 阻止发布。失败时继续提供上一有效版本。
 
 ## 3. 术语与命名
@@ -40,6 +40,8 @@
 | 英雄与技能关系 | `HeroAbilityBinding`        | 表达技能槽、天赋、升级授予、Facet 等关系，不把“定义存在”误判为“当前可用”    |
 | 目录数据版本   | `HeroCatalogDatasetVersion` | Heroes、Abilities、关系和本地化共享的不可变版本                             |
 | 当前版本指针   | `hero_catalog` head         | 所有目录页面在同一个原子快照上查询，避免英雄与技能版本撕裂                  |
+| 图标资产版本   | `AssetDatasetVersion`       | 绑定到具体 Catalog、可独立迭代的不可变图片 manifest                         |
+| 图标资产指针   | asset dataset head          | 每个 Catalog dataset 当前采用的完整 Hero/Ability 图标集合                   |
 
 “Ability 定义”与“英雄当前技能”不是同一概念。某个定义可以存在于 VPK，但属于基类、隐藏辅助能力、子能力、历史内容或升级授予内容；只有显式关系和状态可以说明其产品语义。
 
@@ -52,6 +54,7 @@
 - Hero 详情完整展示普通技能、先天技能、天赋、Facet 及 Aghanim 相关关系。
 - Ability 详情展示定义、数值、升级条件、归属关系、本地化和来源。
 - 每个规范实体都能追溯到固定上游 commit、文件、source key、原始字节 checksum 和转换器版本。
+- 每个 Hero 和每个 accepted Ability 都有数据库中的 `original`、`w64`、`w128`、`w256` 图标；原生资源缺失时使用可审计的确定性 fallback，最终显示覆盖率为 100%。
 - 上游发布新 commit 后，系统能自动生成候选目录，提供语义差异，并按门禁安全发布。
 - UI 组件、颜色、排版、状态和响应式规则形成可复用 Design System，而不是只存在于页面私有样式中。
 
@@ -171,7 +174,7 @@ Heroes 和 Abilities 的规范玩法数据统一来自固定 commit 的 `dota_vp
 - `dotaconstants` 继续作为隔离的 QA/reference 来源，可用于覆盖率和差异提示，不参与规范值、fallback 或发布阻断。
 - `GameTracking-Dota2` 只用于 ClientVersion、协议或非 VPK 事实的交叉核对，不作为 Hero/Ability 玩法 SSOT。
 - Liquipedia 只作为 UI 设计参考，不作为 Hero/Ability 数据来源。
-- Valve 本地客户端只作为资产二进制来源；玩法字段仍以锁定的 `dota_vpk_updates` commit 为准。
+- Valve 本地客户端只作为资产二进制来源；`dota_vpk_updates` 提供资源引用但不提供完整图标字节，玩法字段仍以锁定 commit 为准。
 
 ### 6.3 调研基线
 
@@ -320,22 +323,39 @@ entity_localizations
 
 ## 9. Valve 资产合同
 
-### 9.1 来源与使用方式
+### 9.1 来源、提取与解析
 
-Hero portrait、Hero icon 和 Ability icon 使用 Valve Dota 2 客户端资产。由于 `dota_vpk_updates` 不保证包含完整图片二进制，资产由独立的 `ValveAssetProvider` 从以下之一只读获取：
+Hero icon 和 Ability icon 的规范资源引用来自当前 Hero Catalog，图片二进制来自用户本地 Dota 2 `pak01_dir.vpk`。`dota_vpk_updates` 不保证提交这些图片字节，`GameTracking-Dota2/game/dota/pak01_dir.txt` 也只是文件索引；二者不能替代真实 VPK。
 
-1. 用户配置的本地 Dota 2 客户端 VPK；
-2. 从同一客户端版本提取的本地只读资产目录。
+Source 2 Viewer CLI 只读处理显式配置的 VPK，限定提取 `panorama/images/heroes`、`panorama/images/spellicons` 和所需 Innate icon 路径中的 `vtex_c`。提取目录是 Git 忽略的本地中间产物；运行时不直接读取 VPK。
 
-资产 provider 不参与玩法 SSOT。它根据规范定义中的资源引用解析内容，并记录 ClientVersion、VPK/文件路径、内容 SHA-256、提取器版本和生成格式。
+导入器针对当前 Catalog 的每个实体按以下顺序解析：
 
-### 9.2 缓存与降级
+1. 精确 Valve 路径：Hero 使用 `heroes/icons/{internal_name}`，Ability 使用已经应用 `AbilityTextureName` override 的 `spellicons/{texture_name}`；
+2. 版本化 Valve alias：Hero default、Talent `attribute_bonus`、Innate icon 和 Ability `empty` 等显式通用资源；
+3. 以 `(entity_type, entity_key)` 为输入生成确定性、实体专属 fallback。
 
-- 转换后的 Web 图片只进入本地生成缓存或部署时受控产物，不批量提交到 Git。
-- `asset_refs` 保存逻辑资源键、来源版本、checksum、mime、尺寸和本地缓存状态，不把机器绝对路径写成可移植领域值。
-- 单个资产缺失或解码失败形成 warning，并使用 `AssetFallback`；资产来源 ClientVersion 整体不匹配、覆盖率显著下降或 provider 系统性失败进入 Yellow Review。资产问题不形成 Red，也不破坏当前玩法目录。
-- 页面不能因图片缺失而丢失 Hero/Ability 文本与数据。
-- 若未来公开发布、共享部署或分发缓存，必须重新进行 Valve 资产许可与商标审查；“自用”决策不自动扩展到公开分发。
+alias 和 generated fallback 都是正式入库的图片对象，不是请求 404 后才出现的浏览器占位。系统分别报告 native Valve coverage 和 display coverage，保留 `exact`、`alias`、`generated_fallback` 以及 mismatch/error 状态。
+
+### 9.2 数据库存储与 LoD
+
+- 图片实际字节存入 PostgreSQL `asset_blobs`，按内容 SHA-256 去重，并记录 MIME、宽高和字节数。
+- `asset_objects` 保存逻辑路径、来源类型、ClientVersion、provider version 和原始 blob；`entity_asset_bindings` 保存实体在某个 asset dataset 中采用的对象。
+- 每个对象必须有 `original`、`w64`、`w128`、`w256` 四个 `asset_variants`。`original` 保留解析后源图编码与尺寸；其余使用版本化 Sharp/WebP recipe，禁止放大较小源图但仍保留对应 LoD key 和实际尺寸。
+- HTTP 资产路由只从当前 asset head 读取数据库字节，根据请求宽度选择最小的足够 rendition，并以内容 SHA-256 提供 ETag；机器绝对路径不进入 URL、领域模型或响应。
+- VPK、提取目录、转换缓存、数据库 dump 与批量图片不提交到 Git。
+
+### 9.3 版本、完整性与降级
+
+资产使用独立的不可变 `asset_dataset_versions` 和 `asset_dataset_heads`，不参与 Hero Catalog 的玩法幂等身份。每个 asset dataset 绑定到一个具体 Catalog dataset；来源图片、manifest、provider 或 LoD policy 变化可以创建并提升新资产版本，而不重建玩法 Catalog。
+
+提升 asset head 前必须验证：目标 Catalog 的全部 Hero 和全部 accepted Ability 各有一个 icon binding，且每个 binding 都有四个可显示 LoD。该门禁包括 `current`、`indirect`、`defined_unbound`、`template` 和 `deprecated` Ability，并校验精确实体键集合、binding/object 来源一致性与 blob 内容 SHA-256。原生资源缺失不会降低 display coverage，因为 importer 会生成 fallback；只有最终图片或任一 LoD 无法生成、校验或持久化时，整个资产事务才失败。已有 asset head 的原生覆盖下降时默认拒绝 promotion，必须显式批准 fallback downgrade。切换到不同 Catalog 时以 `exact / total` 和 `(exact + alias) / total` 的比例比较当前与目标资产 head，避免新增 fallback 实体绕过绝对数量检查，也避免删除实体造成误报；override 必须在实际 Catalog promotion 调用中再次显式提供。
+
+Hero Catalog promotion/rollback 必须先确认目标 Catalog 已有匹配且完整的 asset head；候选和历史 Catalog 可以通过 `data:import:assets --catalog-version <uuid>` 预先回填。Catalog 与 asset 发布各有 advisory lock；Catalog 导入和 promotion 必须固定先取得 Catalog lock、再取得 asset lock，使完整性与跨 Catalog 覆盖率比较不会和独立资产更新竞争同一 head。
+
+页面在资产导入失败时仍保留玩法文本和数据；完成一次资产导入后的正常验收要求数据库显示覆盖率为 100%，不能把 CSS/HTTP 临时占位计入覆盖。完整决策见 [ADR 0004](../adr/0004-database-icon-asset-datasets.md)。
+
+数据库中的 Valve 字节仅限当前批准的本地私有使用。公开发布、共享部署、数据库备份分发或向第三方提供资产接口前，必须重新进行 Valve 内容与商标审查；使用 MIT 许可的 Source 2 Viewer 不改变其输出中 Valve 内容的权利归属。
 
 ## 10. 数据模型
 
@@ -362,7 +382,13 @@ v2 使用一个 Hero Catalog dataset version 覆盖 Heroes、Abilities、关系�
 | `ability_localizations`         | Ability locale-neutral 文本及 token provenance                            |
 | `facet_localizations`           | Facet locale-neutral 文本及 token provenance                              |
 | `entity_source_records`         | source path/key/位置、ordered AST、原始/规范 checksum、继承诊断和未知字段 |
-| `asset_refs`                    | 逻辑资源引用、Valve 客户端版本、checksum 和缓存状态                       |
+| `asset_refs`                    | 仅为兼容旧 schema 保留且不再写入；历史行不能作为来源状态依据              |
+| `asset_blobs`                   | 内容寻址的图片 `bytea`、MIME、实际宽高和字节数                            |
+| `asset_objects`                 | 可复用图标对象、原始 blob、逻辑路径、来源类型和 provider provenance       |
+| `asset_variants`                | 对象的 `original`、`w64`、`w128`、`w256` rendition 与转换 recipe          |
+| `asset_dataset_versions`        | 绑定 Catalog 的不可变资产 manifest、版本化策略和覆盖计数                  |
+| `entity_asset_bindings`         | asset dataset 内 Hero/Ability 到图标对象的绑定及解析状态                  |
+| `asset_dataset_heads`           | 每个 Catalog dataset 当前采用的 asset dataset 指针                        |
 | `catalog_semantic_diffs`        | 候选版本相对当前版本的实体/字段/关系差异                                  |
 
 实现 migration 前必须先让 Drizzle TypeScript schema 与现有 SQL migration 中的实际表、约束和权限一致，再扩展 v2；不能在两个 schema 表达继续漂移的基础上增加目录表。
@@ -371,9 +397,9 @@ v2 使用一个 Hero Catalog dataset version 覆盖 Heroes、Abilities、关系�
 
 - 来源快照身份继续使用 repository、commit 和按路径排序的原始文件 manifest checksum。
 - Catalog 幂等键至少包含 `source_snapshot_id + importer_version + target_schema_version + selector_version`。
-- Asset 缓存有独立幂等键，不影响玩法 dataset 身份。
+- Asset dataset 以 Catalog version、资产 manifest、provider version 和 LoD policy version 建立独立幂等身份；ClientVersion 作为来源信息记录并反映在对象/manifest 身份中，不影响玩法 dataset 身份。
 - 同一幂等键重复运行返回既有候选/成功版本，不复制记录。
-- 旧成功版本默认保留；回滚只移动 head，不重写或删除数据。
+- Catalog 与 asset 的旧成功版本默认保留；回滚或图片迭代只移动各自的 head，不重写或删除数据。
 
 ## 11. 更新管线
 
@@ -476,9 +502,14 @@ diff 必须可机器读取，也必须提供适合人工 Review 的摘要。任�
 pnpm data:source:discover:vpk
 pnpm data:source:lock:vpk --commit <sha>
 pnpm data:import:catalog --lock <lock-file> --no-promote
+pnpm data:extract:assets:vpk
+pnpm data:import:assets
+pnpm data:import:assets --catalog-version <uuid> --no-promote
+pnpm data:audit:assets
 pnpm data:diff:catalog --candidate <dataset-version-id>
 pnpm data:review:catalog --candidate <dataset-version-id> --decision approved --reason <text>
 pnpm data:promote:catalog --candidate <dataset-version-id>
+pnpm data:promote:catalog --candidate <dataset-version-id> --allow-fallback-downgrade
 pnpm data:rollback:catalog --to <dataset-version-id> --reason <text>
 pnpm data:refresh:catalog
 ```
@@ -490,7 +521,7 @@ pnpm data:refresh:catalog
 - locale allowlist；
 - selector 和 importer 版本；
 - PostgreSQL Worker 连接；
-- 可选的本地 Dota 2 VPK 或已提取资产目录；
+- 可选的本地 Dota 2 VPK、Source 2 Viewer CLI 和 Git 忽略的已提取资产目录；没有资产源时 importer 仍生成并入库完整 fallback dataset；
 - 调度频率与通知出口。
 
 配置不能依赖某个开发者用户名或固定绝对路径。CLI 必须在缺失来源、权限不足、版本不匹配和资产不可用时给出明确、结构化错误。
@@ -502,7 +533,7 @@ pnpm data:refresh:catalog
 - 页面顶部显示当前 catalog 的 ClientVersion、SourceRevision、commit、更新时间和健康状态。
 - Hero 按 Strength、Agility、Intelligence、Universal 分组；组内使用稳定排序。
 - 支持名称、内部名称、HeroID 搜索，以及主属性、角色、攻击类型、CM 状态组合筛选。
-- Hero tile 使用 Valve portrait/icon；缺失时使用不改变布局的 fallback。
+- Hero tile 使用当前 asset head 中的数据库 icon 和适合显示宽度的 LoD；Valve 源缺失时使用已经入库、不会改变布局的实体 fallback。
 - 筛选状态保存在 URL，并在 locale 切换后保留。
 
 ### 13.2 Hero detail `/heroes/[slug]`
@@ -522,7 +553,7 @@ pnpm data:refresh:catalog
 
 ### 13.4 Ability detail `/abilities/[internal-name]`
 
-- Valve icon、本地化名称和描述；
+- 当前 asset head 中的数据库 icon、适合显示宽度的 LoD、本地化名称和描述；
 - behavior、target、damage、cast、cooldown、mana 和逐级 values；
 - modifier/condition、Scepter/Shard/Facet 等升级差异；
 - 所属 Heroes、relation kind、source slot 和当前状态；
@@ -536,7 +567,8 @@ pnpm data:refresh:catalog
 - Raw viewer 限制单节点和整页输出大小，防止异常输入拖垮页面。
 - Git remote、source path 和错误内容在日志/UI 中按不可信数据处理。
 - Web 账号继续只读；Worker 无 DDL 和直接修改 head 的权限，只能调用受约束 promotion/rollback 函数。
-- 资产提取器只读访问明确配置的 Dota 2 路径，不能扫描无关目录或写回客户端安装。
+- 资产提取器只处理明确配置的 Dota 2 VPK 与 allowlist 路径，不扫描无关目录或修改 VPK 内容；提取结果只写入配置的 Git 忽略目录。
+- Web 只从 PostgreSQL 当前 asset head 读取图片；提取目录路径、数据库内部来源 metadata 和机器绝对路径不能暴露给浏览器。
 
 ## 15. 测试与验收
 
@@ -561,6 +593,9 @@ pnpm data:refresh:catalog
 - 同一幂等键不会重复写入；并发 refresh 只有一个 promotion；
 - Green 自动提升、Yellow 等待 Review、Red 阻止提升；
 - rollback 原子恢复历史版本并保留审计记录；
+- asset blob 的 SHA-256、`bytea`、MIME 与实际宽高一致，相同内容跨对象/版本去重；
+- asset import 覆盖全部 Hero 和全部 accepted Ability，每个 binding 都有 `original`、`w64`、`w128`、`w256`；
+- asset dataset 的幂等复用、事务失败和独立 head 提升不改变 Hero Catalog head；
 - Web/Worker/migration owner 权限边界生效。
 
 ### 15.3 UI/E2E
@@ -569,7 +604,8 @@ pnpm data:refresh:catalog
 - Hero 详情的 Abilities、Talents & Upgrades、Raw 和 Provenance；
 - `/abilities` 默认 current、状态切换和组合筛选；
 - Ability 详情 values、modifier、归属关系和 provenance；
-- Valve asset 成功、缺失、版本不匹配和 fallback；
+- exact Valve、alias、无源/版本不匹配 generated fallback 都能从数据库返回可解码图片；
+- Hero/Ability 列表与详情按显示宽度请求 LoD，响应尺寸、MIME、ETag 和 cache header 正确；
 - 未导入、最近更新失败、Yellow 等待 Review、404 和空结果；
 - 桌面与移动端视觉回归、键盘导航、焦点、对比度和语义检查。
 
@@ -582,11 +618,13 @@ pnpm data:refresh:catalog
 - Hero、Ability、Facet、bindings 和 locale 文本共享一个原子 current version。
 - UI 默认展示当前内容，但历史、辅助、未绑定和 deprecated 定义可筛选并有清楚标签。
 - `zh-CN`、`en` 可用；增加新 locale 不需要修改 Hero/Ability 核心表。
-- Valve 资产可从配置的本地来源生成并展示；缺失资产不阻断目录。
+- Valve 资产可先从配置的本地 VPK 受限提取再入库；没有来源时也能生成确定性 fallback asset dataset。
+- 当前 Catalog 的全部 Hero 与全部 accepted Ability 都有数据库 icon 及 `original`、`w64`、`w128`、`w256`，最终 display coverage 为 100%。
+- 资产可以通过独立 dataset/head 增加、修改和重新生成，不改变玩法 Catalog 版本身份。
 - 每个 Hero/Ability 详情能定位到来源 commit、path、source key、checksum 和转换版本。
 - Green 更新自动发布；Yellow 不自动发布；Red 与任意失败都不改变 current head。
 - 可以把 head 原子回滚到兼容的历史目录版本。
-- 三个上游 Git 仓库和本地 Dota 2 客户端始终只读，Medota2 不提交完整快照或批量 Valve 资产。
+- 三个上游 Git 仓库和本地 Dota 2 VPK 内容始终只读；Medota2 不提交完整快照、提取缓存、数据库 dump 或批量 Valve 资产。
 
 ## 16. 实施阶段
 
@@ -615,13 +653,14 @@ pnpm data:refresh:catalog
 - 共享 Hero Catalog migration；
 - run-scoped staging/COPY、完整校验和不可变候选；
 - semantic diff、三级门禁、atomic promotion 和 rollback。
+- 内容寻址 asset blob/object/variant、独立 dataset/head、全实体覆盖门禁和幂等资产导入。
 
 ### Phase 4：查询与 UI
 
 - `/heroes` 与 Hero 详情完整改版；
 - `/abilities` 与 Ability 详情；
 - 双语及 locale-neutral API；
-- Valve asset provider、缓存和 fallback。
+- 数据库 asset route、按宽度选择 LoD 和已入库 fallback。
 
 ### Phase 5：更新自动化
 
@@ -639,11 +678,11 @@ pnpm data:refresh:catalog
 
 ### 实施与验收记录（2026-08-31）
 
-- Phase 0：共享版本、Valve 资产和三级门禁 ADR 已建立；领域合同与真实快照审计报告已固化。
+- Phase 0：共享版本、Valve 资产、数据库 asset dataset 和三级门禁 ADR 已建立；领域合同与真实快照审计报告已固化。
 - Phase 1：语义 token、UI primitives、组件画廊及 Heroes 分组目录已实现。
 - Phase 2：动态 selector、ordered KeyValues、继承、全部 Ability 定义、关系、Facets、双语和 exclusion/coverage 审计已实现。
-- Phase 3：共享 PostgreSQL catalog、run-scoped staging/COPY、semantic diff、Green/Yellow/Red、Review、原子 promotion 与 rollback 已实现。
-- Phase 4：Heroes / Abilities 总览和详情、URL 筛选、双语、record-level provenance 与本地 Valve asset provider 已实现。
+- Phase 3：共享 PostgreSQL catalog、run-scoped staging/COPY、semantic diff、Green/Yellow/Red、Review、原子 promotion/rollback，以及独立数据库 icon asset dataset/head 已实现。
+- Phase 4：Heroes / Abilities 总览和详情、URL 筛选、双语、record-level provenance、数据库图片路由与多 LoD 选择已实现。
 - Phase 5：远端发现、exact-commit lock、detached worktree、手动/计划刷新、HTTPS 通知与运维手册已实现。
 - Phase 6：单元测试、真实 PostgreSQL 集成、桌面/移动 E2E、键盘/landmark 检查、四份视觉基线和真实锁定全量 refresh 演练均已通过。
 
@@ -654,7 +693,7 @@ pnpm data:refresh:catalog
 - **上游延迟**：第三方跟踪仓库的提交延迟不在 Medota2 控制范围；近实时需求需另行评估直接 depot adapter。
 - **KeyValues 漂移**：Ability 数据形态复杂，必须依靠无损原始层和 Yellow 门禁吸收未知变化。
 - **关系误判**：slot、文件归属和当前可用性不等价；关系规则需要真实反例 fixture。
-- **资产版本**：玩法 commit 与本地客户端可能版本不一致；UI 必须显示版本不匹配并允许 fallback。
+- **资产版本**：玩法 commit 与本地客户端可能版本不一致；导入必须保留 mismatch 状态、生成 fallback，并通过独立 asset dataset/head 迭代，不能污染玩法版本身份。
 - **资产许可**：当前批准仅限自用；产品公开发布前重新审查。
 - **数据规模**：先以全量重建确保正确性；只有 benchmark 证明必要时再做增量发布。
 - **多语言覆盖**：新增 locale 可能缺少部分 token；覆盖率阈值按 current/legacy 状态分别定义，不能用 fallback 掩盖来源缺失。
@@ -668,3 +707,5 @@ pnpm data:refresh:catalog
 - [项目技术选型与数据处理架构](../architecture/technology-selection.md)
 - [外部仓库总览与选源指南](../repositories/README.md)
 - [dota_vpk_updates 调研](../repositories/dota-vpk-updates.md)
+- [ADR 0004：Hero 与 Ability 图标使用数据库资产数据集](../adr/0004-database-icon-asset-datasets.md)
+- [Source 2 Viewer CLI](https://github.com/ValveResourceFormat/ValveResourceFormat/blob/master/docs/guides/command-line.md)

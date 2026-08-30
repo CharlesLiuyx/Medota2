@@ -99,6 +99,7 @@ export default async function AbilitiesPage({
             <AbilityCard
               key={ability.internalName}
               ability={ability}
+              assetVersion={meta.assetDatasetVersionId}
               lang={parsed.filters.lang}
             />
           ))}

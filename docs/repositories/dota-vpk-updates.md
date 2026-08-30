@@ -58,10 +58,24 @@ dota_vpk_updates/
 ## 数据形态与限制
 
 - 文件以 Valve KeyValues/VDF、KV3、XML、CSS、JavaScript 和文本资源为主，字段会随补丁变化。
+- 审阅基线中没有可直接作为 Hero/Ability 图标入库的 `panorama/images/heroes` 或 `panorama/images/spellicons` 图片二进制；玩法文件里的资源引用和 `AbilityTextureName` 只说明逻辑路径，不等于图片内容已经提交到仓库。
 - “已反编译”不代表能无损还原原始源文件。`panorama/` 与 `panorama_stripped/` 的具体取舍没有在本地 README 中形成稳定契约；使用前应以目标文件做 diff 和解析测试。
 - 仓库没有本地可见的独立更新/构建入口，应把内容视为上游生成并提交的快照。
 - 原始目录可能包含历史活动、废弃内容、测试条目和基础模板。不能仅因某条目存在就判定它在当前正常比赛中可用。
 - 审阅基线中的工作树约 624 MiB（不含约 1.5 GiB 的 Git 历史）；这些数字会随上游变化，不要在产品启动时全量扫描。
+
+### 图标资源的四层分工
+
+Hero/Ability 图标需要区分“规范引用、VPK 索引、真实字节、可导入图片”四层：
+
+| 来源                                         | 能提供什么                                                               | 不能替代什么                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------- |
+| `dota_vpk_updates`                           | Hero/Ability 定义、`AbilityTextureName`、ClientVersion 和逻辑资源引用    | 不保证包含 `.vtex_c` 或解码后图片二进制       |
+| `GameTracking-Dota2/game/dota/pak01_dir.txt` | 固定客户端快照中的 VPK path、CRC/size 等索引事实，可用于验证资源是否存在 | 不是 VPK，不能读取或解码图片字节              |
+| 用户本地 `game/dota/pak01_dir.vpk`           | 对应客户端安装中的真实 `.vtex_c` 内容                                    | 不是稳定应用 schema，也不能提交进 Medota2     |
+| Source 2 Viewer 提取目录                     | 从受限 VPK 路径解码出的 PNG/Web 图片，是资产 importer 的只读输入         | 只是 Git 忽略的中间缓存，不是运行时资产数据库 |
+
+因此，玩法 importer 从锁定的 `dota_vpk_updates` commit 获取实体和资源引用；独立资产流程再用同一 ClientVersion 的 VPK/index 交叉核对，从真实 VPK 提取所需图片并存入 PostgreSQL。来源缺图时仍要保留 requested logical path 和解析状态，再使用明确 Valve alias 或确定性生成 fallback，不能把 index 文本或远程 CDN 当作图片本体。
 
 ## Medota2 应如何使用
 
@@ -73,6 +87,7 @@ dota_vpk_updates/
 - 核对固定 snapshot/client version 对应的英雄、技能、物品、单位和游戏规则字段。
 - 解析多语言展示文本、补丁文本和客户端 UI 行为。
 - 为需要固定客户端快照的玩法事实提供原始依据。
+- 为 Hero/Ability 资产 importer 提供规范实体、`AbilityTextureName` 和 ClientVersion；图标二进制另从同版本本地 VPK 提取。
 
 不适合：
 

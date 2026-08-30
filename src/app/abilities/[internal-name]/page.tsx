@@ -50,7 +50,12 @@ export default async function AbilityDetailPage({
         <ArrowLeft className="size-3.5" /> 返回 Abilities
       </Link>
       <header className="mt-7 grid gap-6 border-b border-[var(--border-default)] pb-9 md:grid-cols-[auto_1fr_auto] md:items-end">
-        <AbilityIcon internalName={internalName} name={name} large />
+        <AbilityIcon
+          internalName={internalName}
+          name={name}
+          assetVersion={detail.meta.assetDatasetVersionId}
+          large
+        />
         <div>
           <p className="font-data text-[10px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
             {internalName}

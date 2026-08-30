@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import valveAssetImageLoader from "./valve-asset-image-loader";
 
 export function HeroCrest({
   name,
@@ -38,15 +39,16 @@ export function HeroCrest({
         background: `linear-gradient(145deg, color-mix(in srgb, ${color} 58%, var(--surface-panel)), var(--surface-sunken))`,
       }}
       role={!src || failed ? "img" : undefined}
-      aria-label={!src || failed ? `${name} portrait unavailable` : undefined}
+      aria-label={!src || failed ? `${name} icon unavailable` : undefined}
     >
       {src && !failed && (
         <Image
+          loader={valveAssetImageLoader}
           src={src}
-          alt={`${name} portrait`}
+          alt={`${name} icon`}
           fill
-          sizes={large ? "144px" : "56px"}
-          unoptimized
+          sizes={large ? "(min-width: 640px) 144px, 112px" : "56px"}
+          loading={large ? "eager" : "lazy"}
           className="z-10 object-cover"
           onError={() => setFailed(true)}
         />

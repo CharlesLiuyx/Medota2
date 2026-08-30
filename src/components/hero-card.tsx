@@ -24,9 +24,11 @@ const roleLabel: Record<string, string> = {
 
 export function HeroCard({
   hero,
+  assetVersion,
   lang = "zh-CN",
 }: {
   hero: HeroCardRow;
+  assetVersion: string;
   lang?: "zh-CN" | "en";
 }) {
   return (
@@ -38,7 +40,7 @@ export function HeroCard({
         <HeroCrest
           name={hero.enName}
           attribute={hero.primaryAttribute}
-          src={`/valve-assets/hero/${hero.internalName}`}
+          src={`/valve-assets/hero/${hero.internalName}?v=${encodeURIComponent(assetVersion)}`}
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">

@@ -140,6 +140,7 @@ export default async function HeroesPage({
                   <HeroCard
                     key={hero.heroId}
                     hero={hero}
+                    assetVersion={meta.assetDatasetVersionId}
                     lang={parsed.filters.lang}
                   />
                 ))}

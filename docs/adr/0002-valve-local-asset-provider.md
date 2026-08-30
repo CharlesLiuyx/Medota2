@@ -1,12 +1,14 @@
 # ADR 0002：Valve 资产使用本地只读 Provider
 
-- 状态：Accepted for private use
+- 状态：Accepted for private use；运行时本地 Provider/缓存部分已由 [ADR 0004](0004-database-icon-asset-datasets.md) 取代
 - 日期：2026-08-30
 - 关联：[Hero Catalog v2 Spec](../specs/hero-catalog-v2.md)
 
 ## Context
 
 `dota_vpk_updates` 能提供玩法定义和资源引用，但不保证包含完整 Hero portrait 和 Ability icon 二进制。当前产品是自用场景，已确认可以使用本地 Valve Dota 2 资产。
+
+本 ADR 的本地只读来源、Git 提交和私有使用边界继续有效；关于运行时从本地提取目录供图以及使用本机内容寻址缓存的决策已由 [ADR 0004](0004-database-icon-asset-datasets.md) 取代。当前方案只把 VPK 和提取目录作为离线导入来源，运行时仅从 PostgreSQL asset dataset 读取图片。
 
 ## Decision
 

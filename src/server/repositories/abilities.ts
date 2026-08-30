@@ -280,20 +280,6 @@ export async function getAbilityByInternalName(
   };
 }
 
-export async function getActiveAbilityTexture(
-  internalName: string,
-): Promise<string | null> {
-  await ensureReady();
-  if (!/^[a-z0-9_]+$/u.test(internalName)) return null;
-  const result = await getWebPool().query<{ texture_name: string }>(
-    `SELECT a.texture_name FROM dataset_heads h
-     JOIN abilities a ON a.dataset_version_id = h.catalog_dataset_version_id
-     WHERE h.dataset_key = 'hero_catalog' AND a.internal_name = $1`,
-    [internalName],
-  );
-  return result.rows[0]?.texture_name ?? null;
-}
-
 function escapeLike(value: string): string {
   return value.replace(/[\\%_]/gu, (character) => `\\${character}`);
 }

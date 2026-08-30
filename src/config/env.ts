@@ -44,7 +44,9 @@ export function getRequiredPath(
   return resolve(process.cwd(), value);
 }
 
-export function getOptionalPath(key: "DOTA_VALVE_ASSET_PATH"): string | null {
+export function getOptionalPath(
+  key: "DOTA_VALVE_ASSET_PATH" | "DOTA_VPK_PATH" | "SOURCE2VIEWER_CLI_PATH",
+): string | null {
   loadLocalEnv();
   const value = process.env[key]?.trim();
   return value ? resolve(process.cwd(), value) : null;

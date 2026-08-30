@@ -6,6 +6,9 @@ test("overview, canonical search URL and CM filter", async ({ page }) => {
     page.getByRole("heading", { name: "游戏内定义，原样可追溯。" }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "敌法师" })).toBeVisible();
+  await expect(
+    page.getByRole("img", { name: "Anti-Mage icon", exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole("heading", { name: "测试守卫" })).toBeVisible();
   await expect(
     page.getByText("最近一次 VPK 导入失败", { exact: false }),

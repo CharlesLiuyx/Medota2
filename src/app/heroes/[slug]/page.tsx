@@ -95,7 +95,7 @@ export default async function HeroDetailPage({
           name={en.display_name}
           attribute={String(hero.primary_attribute)}
           large
-          src={`/valve-assets/hero/${String(hero.internal_name)}`}
+          src={`/valve-assets/hero/${String(hero.internal_name)}?v=${encodeURIComponent(detail.meta.assetDatasetVersionId)}`}
         />
         <div>
           <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-zinc-500">
@@ -206,6 +206,7 @@ export default async function HeroDetailPage({
                   ability.relation_kind !== "talent" &&
                   ability.relation_kind !== "declared_in_hero_file",
               )}
+              assetVersion={detail.meta.assetDatasetVersionId}
               lang={lang}
             />
           </section>
@@ -224,6 +225,7 @@ export default async function HeroDetailPage({
                   ability.has_scepter_upgrade ||
                   ability.has_shard_upgrade,
               )}
+              assetVersion={detail.meta.assetDatasetVersionId}
               lang={lang}
             />
             <div className="mt-5 grid gap-2 sm:grid-cols-2">
@@ -474,11 +476,13 @@ function StatGroup({
 
 function HeroAbilityList({
   abilities,
+  assetVersion,
   lang,
 }: {
   abilities: NonNullable<
     Awaited<ReturnType<typeof getHeroBySlug>>
   >["abilities"];
+  assetVersion: string;
   lang: "en" | "zh-CN";
 }) {
   if (!abilities.length) {
@@ -498,6 +502,7 @@ function HeroAbilityList({
         >
           <AbilityIcon
             internalName={ability.internal_name}
+            assetVersion={assetVersion}
             name={
               (lang === "en" ? ability.en_name : ability.zh_name) ??
               ability.en_name ??

@@ -8,6 +8,9 @@ test("registry defaults to current and restores canonical filter URL", async ({
     page.getByRole("heading", { name: "当前技能优先，全部定义可审计。" }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "闪烁" })).toBeVisible();
+  await expect(
+    page.getByRole("img", { name: "闪烁 icon", exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("fixture_unbound", { exact: true })).toHaveCount(
     0,
   );
@@ -52,7 +55,7 @@ test("ability detail exposes values, modifiers, relations and provenance", async
   await expect(page.getByText("991daaf6fc24", { exact: false })).toBeVisible();
 });
 
-test("missing abilities are exact 404s and local asset fallback remains accessible", async ({
+test("missing abilities are exact 404s and stored icons remain accessible", async ({
   page,
 }) => {
   await page.goto("/abilities/not_a_real_ability");
@@ -62,6 +65,30 @@ test("missing abilities are exact 404s and local asset fallback remains accessib
 
   await page.goto("/abilities/antimage_blink");
   await expect(
-    page.getByRole("img", { name: "闪烁 icon unavailable" }),
+    page.getByRole("img", { name: "闪烁 icon", exact: true }),
   ).toBeVisible();
+});
+
+test("asset route selects the smallest sufficient stored LoD", async ({
+  request,
+}) => {
+  for (const [width, expectedLod, expectedType] of [
+    [56, "w64", "image/webp"],
+    [96, "w128", "image/webp"],
+    [200, "w256", "image/webp"],
+    [300, "w256", "image/webp"],
+  ] as const) {
+    const response = await request.get(
+      `/valve-assets/ability/antimage_blink?width=${width}`,
+    );
+    expect(response.ok()).toBe(true);
+    expect(response.headers()["x-medota2-asset-lod"]).toBe(expectedLod);
+    expect(response.headers()["content-type"]).toBe(expectedType);
+    expect((await response.body()).byteLength).toBeGreaterThan(0);
+  }
+
+  const original = await request.get("/valve-assets/ability/antimage_blink");
+  expect(original.ok()).toBe(true);
+  expect(original.headers()["x-medota2-asset-lod"]).toBe("original");
+  expect(original.headers()["content-type"]).toBe("image/png");
 });

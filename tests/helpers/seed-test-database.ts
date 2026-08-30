@@ -6,9 +6,12 @@ import {
   CATALOG_IMPORT_LOCK_KEYS,
   CATALOG_SELECTOR_VERSION,
 } from "@/importers/dota-vpk/constants";
+import { ASSET_IMPORT_LOCK_KEYS } from "@/domain/assets";
 import { parseHeroDataset } from "@/importers/dota-vpk/hero-adapter";
 import { parseSteamInf } from "@/importers/dota-vpk/steam";
+import { prepareCatalogAssets } from "@/importers/valve-assets/catalog-assets";
 import { sha256 } from "@/lib/hash";
+import { publishAssetDataset } from "@/server/assets/asset-store";
 import { currentTargetSchemaVersion } from "@/server/db/migrations";
 import { runMigrations } from "@/server/db/run-migrations";
 import { loadCatalogFixture } from "./vpk-fixture";
@@ -35,6 +38,16 @@ async function main(): Promise<void> {
     const abilityDataset = parseAbilityDataset(files, dataset.heroes);
     const steam = parseSteamInf(
       files.find((file) => file.path === "steam.inf")!.text,
+    );
+    const assetDataset = await prepareCatalogAssets(
+      dataset.heroes,
+      abilityDataset.abilities,
+      steam.clientVersion,
+      {
+        sourceRoot: null,
+        assetClientVersion: null,
+        catalogSourceCommit: "991daaf6fc24b08445209d9ce8767e145bab107e",
+      },
     );
     const schemaVersion = await currentTargetSchemaVersion();
     const manifestText = [...files]
@@ -114,6 +127,10 @@ async function main(): Promise<void> {
     await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
       ...CATALOG_IMPORT_LOCK_KEYS,
     ]);
+    await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
+      ...ASSET_IMPORT_LOCK_KEYS,
+    ]);
+    await publishAssetDataset(client, version.rows[0].id, assetDataset);
     await client.query("SELECT promote_hero_catalog_version($1)", [
       version.rows[0].id,
     ]);

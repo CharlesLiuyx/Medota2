@@ -40,6 +40,9 @@
     "data:rollback:catalog": "tsx src/workers/rollback-catalog.ts",
     "data:source:discover:vpk": "tsx src/workers/discover-vpk-source.ts",
     "data:source:lock:vpk": "tsx src/workers/lock-vpk-source.ts",
+    "data:extract:assets:vpk": "tsx src/workers/extract-vpk-assets.ts",
+    "data:import:assets": "tsx src/workers/import-assets.ts",
+    "data:audit:assets": "tsx src/workers/audit-assets.ts",
     "data:refresh:catalog": "tsx src/workers/refresh-catalog.ts"
   },
   "dependencies": {
@@ -52,6 +55,7 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "0.0.1",
+    "sharp": "0.35.4",
     "tailwindcss": "4.3.3",
     "zod": "4.5.4"
   },
@@ -60,8 +64,8 @@
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.3",
     "@types/node": "26.4.0",
-    "@types/pg-copy-streams": "1.2.5",
     "@types/pg": "8.23.1",
+    "@types/pg-copy-streams": "1.2.5",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
     "drizzle-kit": "0.31.10",

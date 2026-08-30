@@ -18,6 +18,10 @@ import {
   type ParsedAbilityDataset,
 } from "@/domain/abilities";
 import {
+  ASSET_IMPORT_LOCK_KEYS,
+  type PreparedAssetDataset,
+} from "@/domain/assets";
+import {
   HeroImportValidationError,
   type CanonicalHero,
   type ImportIssue,
@@ -45,11 +49,8 @@ import {
   prepareCatalogSourceWorktree,
   verifySnapshotAgainstLock,
 } from "@/importers/catalog-source-lock";
-import {
-  inspectValveCatalogAssets,
-  VALVE_ASSET_PROVIDER_VERSION,
-  type ValveAssetRef,
-} from "@/server/assets/valve-assets";
+import { prepareCatalogAssets } from "@/importers/valve-assets/catalog-assets";
+import { publishAssetDataset } from "@/server/assets/asset-store";
 import { loadCatalogProjection } from "@/server/catalog-projection";
 import { runMigrations } from "@/server/db/run-migrations";
 import {
@@ -76,6 +77,10 @@ const { Pool: PgPool } = pg;
 async function main(): Promise<void> {
   const localPreview = process.argv.includes("--local-preview");
   const noPromote = process.argv.includes("--no-promote");
+  const allowFallbackDowngrade = process.argv.includes(
+    "--allow-fallback-downgrade",
+  );
+  const downloadMissingAssets = process.argv.includes("--download-missing");
   const metrics = startMetrics();
   const build = await readBuildIdentity();
   const importerVersion = `hero-catalog-v2/${build.buildId}${localPreview ? "/local-preview" : ""}`;
@@ -140,10 +145,14 @@ async function main(): Promise<void> {
     );
     const selectorManifestSha256 =
       sourceLock?.selectorManifestSha256 ?? canonicalJsonSha256(dynamicPaths);
-    const assetRefs = await inspectValveCatalogAssets(
+    const assetDataset = await prepareCatalogAssets(
       heroDataset.heroes,
       abilityDataset.abilities,
       steam.clientVersion,
+      {
+        catalogSourceCommit: snapshot.commit,
+        downloadMissing: downloadMissingAssets,
+      },
     );
 
     stage = "persist_diff_and_gate";
@@ -159,8 +168,9 @@ async function main(): Promise<void> {
       abilities: abilityDataset,
       counts: { heroes: heroDataset.counts, abilities: abilityDataset.counts },
       issues: [...heroDataset.issues, ...abilityDataset.issues],
-      assetRefs,
+      assetDataset,
       noPromote,
+      allowFallbackDowngrade,
     });
     const finalMetrics = metrics.finish({
       inputBytes: snapshot.files.reduce((sum, file) => sum + file.sizeBytes, 0),
@@ -308,8 +318,9 @@ async function persistCatalog(
     abilities: ParsedAbilityDataset;
     counts: Record<string, unknown>;
     issues: ImportIssue[];
-    assetRefs: ValveAssetRef[];
+    assetDataset: PreparedAssetDataset;
     noPromote: boolean;
+    allowFallbackDowngrade: boolean;
   },
 ): Promise<{
   catalogVersionId: string;
@@ -323,6 +334,9 @@ async function persistCatalog(
     await client.query("BEGIN");
     await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
       ...CATALOG_IMPORT_LOCK_KEYS,
+    ]);
+    await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
+      ...ASSET_IMPORT_LOCK_KEYS,
     ]);
     const existing = await client.query<{
       id: string;
@@ -341,14 +355,18 @@ async function persistCatalog(
     );
     if (existing.rowCount) {
       const version = existing.rows[0];
+      await publishAssetDataset(client, version.id, input.assetDataset, {
+        allowFallbackDowngrade: input.allowFallbackDowngrade,
+      });
       const canPromote =
         !input.noPromote &&
         (version.gate_status === "green" ||
           (version.gate_status === "yellow" &&
             version.review_status === "approved"));
       if (canPromote) {
-        await client.query("SELECT promote_hero_catalog_version($1)", [
+        await client.query("SELECT promote_hero_catalog_version($1, $2)", [
           version.id,
+          input.allowFallbackDowngrade,
         ]);
       }
       await finishRun(client, input, version.id, canPromote);
@@ -377,7 +395,7 @@ async function persistCatalog(
           input.selectorManifestSha256,
         ),
       ),
-      input.assetRefs,
+      input.assetDataset,
     );
     const reviewStatus = gate.gate === "yellow" ? "pending" : "not_required";
 
@@ -409,14 +427,17 @@ async function persistCatalog(
     );
     const catalogVersionId = version.rows[0].id;
     await materializeCatalog(client, input.runId, catalogVersionId);
-    await materializeAssetRefs(client, catalogVersionId, input.assetRefs);
+    await publishAssetDataset(client, catalogVersionId, input.assetDataset, {
+      allowFallbackDowngrade: input.allowFallbackDowngrade,
+    });
     await persistDiffs(client, catalogVersionId, gate);
     await validateMaterialization(client, catalogVersionId, input);
 
     const promoted = gate.gate === "green" && !input.noPromote;
     if (promoted) {
-      await client.query("SELECT promote_hero_catalog_version($1)", [
+      await client.query("SELECT promote_hero_catalog_version($1, $2)", [
         catalogVersionId,
+        input.allowFallbackDowngrade,
       ]);
     }
     await finishRun(client, input, catalogVersionId, promoted);
@@ -442,12 +463,10 @@ async function persistCatalog(
 
 function applyAssetGate(
   gate: CatalogGateResult,
-  refs: ValveAssetRef[],
+  assets: PreparedAssetDataset,
 ): CatalogGateResult {
-  const mismatches = refs.filter(
-    (ref) => ref.cacheStatus === "mismatch",
-  ).length;
-  const errors = refs.filter((ref) => ref.cacheStatus === "error").length;
+  const mismatches = assets.counts.mismatched;
+  const errors = assets.counts.errors;
   if (mismatches === 0 && errors === 0) return gate;
   const diffKind =
     mismatches > 0 ? "asset_client_version_mismatch" : "asset_provider_errors";
@@ -458,46 +477,13 @@ function applyAssetGate(
     entityKey: "catalog",
     fieldName: "coverage",
     beforeValue: null,
-    afterValue: { mismatches, errors, total: refs.length },
+    afterValue: { mismatches, errors, total: assets.counts.total },
   });
   gate.gate = "yellow";
   gate.summary.total += 1;
   gate.summary.yellow += 1;
   gate.summary.reasons[diffKind] = 1;
   return gate;
-}
-
-async function materializeAssetRefs(
-  client: PoolClient,
-  datasetVersionId: string,
-  refs: ValveAssetRef[],
-): Promise<void> {
-  await client.query(
-    `INSERT INTO asset_refs
-      (dataset_version_id, entity_type, entity_key, asset_kind, logical_path,
-       client_version, content_sha256, mime_type, width, height, cache_status, provider_version)
-     SELECT $1, r.entity_type, r.entity_key, r.asset_kind, r.logical_path,
-       r.client_version, r.content_sha256, r.mime_type, NULL, NULL, r.cache_status, $3
-     FROM jsonb_to_recordset($2::jsonb) AS r(
-       entity_type text, entity_key text, asset_kind text, logical_path text,
-       client_version text, content_sha256 text, mime_type text, cache_status text)`,
-    [
-      datasetVersionId,
-      JSON.stringify(
-        refs.map((ref) => ({
-          entity_type: ref.entityType,
-          entity_key: ref.entityKey,
-          asset_kind: ref.assetKind,
-          logical_path: ref.logicalPath,
-          client_version: ref.clientVersion,
-          content_sha256: ref.contentSha256,
-          mime_type: ref.mimeType,
-          cache_status: ref.cacheStatus,
-        })),
-      ),
-      VALVE_ASSET_PROVIDER_VERSION,
-    ],
-  );
 }
 
 function stagingRows(

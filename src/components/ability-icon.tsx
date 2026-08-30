@@ -3,14 +3,17 @@
 import Image from "next/image";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
+import valveAssetImageLoader from "./valve-asset-image-loader";
 
 export function AbilityIcon({
   internalName,
   name,
+  assetVersion,
   large = false,
 }: {
   internalName: string;
   name: string;
+  assetVersion: string;
   large?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
@@ -24,11 +27,12 @@ export function AbilityIcon({
       <Sparkles className={large ? "size-8" : "size-5"} aria-hidden="true" />
       {!failed && (
         <Image
-          src={`/valve-assets/ability/${internalName}`}
+          loader={valveAssetImageLoader}
+          src={`/valve-assets/ability/${internalName}?v=${encodeURIComponent(assetVersion)}`}
           alt={`${name} icon`}
           fill
-          sizes={large ? "112px" : "56px"}
-          unoptimized
+          sizes={large ? "(min-width: 640px) 112px, 96px" : "56px"}
+          loading={large ? "eager" : "lazy"}
           className="object-cover"
           onError={() => setFailed(true)}
         />

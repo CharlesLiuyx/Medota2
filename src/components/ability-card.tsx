@@ -14,9 +14,11 @@ const statusTone = {
 
 export function AbilityCard({
   ability,
+  assetVersion,
   lang,
 }: {
   ability: AbilityCardRow;
+  assetVersion: string;
   lang: "en" | "zh-CN";
 }) {
   return (
@@ -28,6 +30,7 @@ export function AbilityCard({
         <AbilityIcon
           internalName={ability.internalName}
           name={ability.displayName}
+          assetVersion={assetVersion}
         />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">

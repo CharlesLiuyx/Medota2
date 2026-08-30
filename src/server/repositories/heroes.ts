@@ -5,6 +5,7 @@ import { assertSchemaCurrent } from "@/server/db/migrations";
 
 export interface ActiveDatasetMeta {
   datasetVersionId: string;
+  assetDatasetVersionId: string;
   clientVersion: string;
   sourceRevision: string;
   sourceCommit: string;
@@ -325,6 +326,7 @@ export async function getHeroBySlug(slug: string): Promise<HeroDetail | null> {
 export async function getActiveCatalogMeta(): Promise<ActiveDatasetMeta | null> {
   const result = await getWebPool().query<{
     dataset_version_id: string;
+    asset_dataset_version_id: string;
     client_version: string;
     source_revision: string;
     source_commit: string;
@@ -340,7 +342,9 @@ export async function getActiveCatalogMeta(): Promise<ActiveDatasetMeta | null> 
     gate_status: ActiveDatasetMeta["gateStatus"];
     review_status: ActiveDatasetMeta["reviewStatus"];
   }>(
-    `SELECT v.id AS dataset_version_id, s.client_version, s.source_revision, s.source_commit,
+    `SELECT v.id AS dataset_version_id,
+       asset_head.asset_dataset_version_id,
+       s.client_version, s.source_revision, s.source_commit,
        s.imported_at, v.promoted_at, v.importer_version, v.target_schema_version,
        v.gate_status, v.review_status,
        s.source_repository, s.source_remote_url, r.issues,
@@ -348,6 +352,8 @@ export async function getActiveCatalogMeta(): Promise<ActiveDatasetMeta | null> 
        (SELECT count(*)::int FROM abilities ability WHERE ability.dataset_version_id = v.id) AS total_abilities
      FROM dataset_heads h
      JOIN hero_catalog_dataset_versions v ON v.id = h.catalog_dataset_version_id
+     JOIN asset_dataset_heads asset_head
+       ON asset_head.catalog_dataset_version_id = v.id
      JOIN source_snapshots s ON s.id = v.source_snapshot_id
      JOIN import_runs r ON r.id = v.import_run_id
      WHERE h.dataset_key = 'hero_catalog'`,
@@ -356,6 +362,7 @@ export async function getActiveCatalogMeta(): Promise<ActiveDatasetMeta | null> 
   const row = result.rows[0];
   return {
     datasetVersionId: row.dataset_version_id,
+    assetDatasetVersionId: row.asset_dataset_version_id,
     clientVersion: row.client_version,
     sourceRevision: row.source_revision,
     sourceCommit: row.source_commit,
