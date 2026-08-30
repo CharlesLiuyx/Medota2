@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# Logs and caches
+*.log
+.cache/
+coverage/
+
+# JavaScript / TypeScript
+node_modules/
+dist/
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+
+# Local data and databases
+data/local/
+*.db
+*.db-shm
+*.db-wal
