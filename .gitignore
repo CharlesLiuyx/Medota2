@@ -20,6 +20,7 @@ playwright-report/
 test-results/
 output/
 *.tsbuildinfo
+next-env.d.ts
 
 # Python
 .venv/
