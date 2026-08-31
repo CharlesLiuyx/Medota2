@@ -76,16 +76,22 @@ pnpm data:import:catalog
 
 正式导入要求 Medota2 checkout 干净，使 `importer_version` 能准确标识转换代码。分支名和目录时间戳都不能替代 source lock。
 
-### 审阅真实数据与最终界面
+### 一键启动真实数据审阅环境
 
-需要在独立环境中导入真实快照、下载缺失的官方图片并查看最终页面时：
+先在 `.env` 中配置只读的 `DOTA_VPK_UPDATES_PATH`，之后首次初始化和日常启动都只需要：
 
 ```bash
-pnpm db:local-review:provision
-pnpm db:migrate:local
-pnpm data:import:vpk:local
-pnpm dev:local
+pnpm local
 ```
+
+`pnpm local` 是 `pnpm dev:local` 的短别名。它会幂等地完成以下准备后启动 Web：
+
+1. receipt 不存在时 provision 独立 local-review PostgreSQL stack，已存在时只启动原 stack；
+2. 应用尚未执行的 migration；
+3. 已有 active Catalog 时直接复用，不重复导入；
+4. 首次没有 Catalog 时，从配置的只读 VPK checkout 导入真实快照并补齐官方图片。
+
+首次导入若只有暂时的 `asset_provider_errors`，启动器会重试资产；仅当重试结果达到完整 LoD、零 fallback、零 mismatch、零 error 时，才会自动批准并晋升这个 asset-only Yellow 候选。任何玩法、来源或其他语义差异仍会停在人工 Review 门禁，不会为了启动页面而绕过。
 
 local-review 使用独立的 Compose project、54322 端口、volume 和 receipt，页面入口为：
 

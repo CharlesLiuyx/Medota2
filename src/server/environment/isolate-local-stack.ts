@@ -82,6 +82,13 @@ interface ControlSessionIdentity {
   systemIdentifier: string;
 }
 
+export function localStackReceiptsAreReady(): boolean {
+  return (
+    readLocalEnvironmentReceipt() !== null &&
+    readLocalDatabaseCredentials() !== null
+  );
+}
+
 interface ControlShapeRow extends QueryResultRow {
   database_owner: string;
   schema_owner: string;

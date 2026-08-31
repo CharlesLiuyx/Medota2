@@ -11,7 +11,9 @@
   },
   "scripts": {
     "dev": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/development MEDOTA2_PROCESS_ROLE=web MEDOTA2_ENVIRONMENT=development MEDOTA2_DATA_CLASS=sandbox NEXT_DIST_DIR=.next next dev -H 127.0.0.1 -p 3000",
-    "dev:local": "pnpm db:local-review:start && MEDOTA2_STATE_DIRECTORY=.medota2/environments/local-review MEDOTA2_PROCESS_ROLE=web MEDOTA2_ENVIRONMENT=local-review MEDOTA2_DATA_CLASS=production-snapshot NEXT_DIST_DIR=.next-local next dev --webpack -H 127.0.0.1 -p 3001",
+    "local": "pnpm dev:local",
+    "local:prepare": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/local-review MEDOTA2_PROCESS_ROLE=control MEDOTA2_ENVIRONMENT=local-review MEDOTA2_DATA_CLASS=production-snapshot MEDOTA2_DATABASE_CONFIRMATION=medota2_local tsx src/workers/prepare-local-review.ts",
+    "dev:local": "pnpm local:prepare && MEDOTA2_STATE_DIRECTORY=.medota2/environments/local-review MEDOTA2_PROCESS_ROLE=web MEDOTA2_ENVIRONMENT=local-review MEDOTA2_DATA_CLASS=production-snapshot NEXT_DIST_DIR=.next-local next dev --webpack -H 127.0.0.1 -p 3001",
     "dev:test": "pnpm test:e2e",
     "build": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/development MEDOTA2_PROCESS_ROLE=web MEDOTA2_ENVIRONMENT=development MEDOTA2_DATA_CLASS=sandbox NEXT_DIST_DIR=.next next build --webpack",
     "start": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/development MEDOTA2_PROCESS_ROLE=web MEDOTA2_ENVIRONMENT=development MEDOTA2_DATA_CLASS=sandbox NEXT_DIST_DIR=.next next start -H 127.0.0.1 -p 3000",
@@ -53,6 +55,7 @@
     "data:compare:heroes": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/development MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=development MEDOTA2_DATA_CLASS=sandbox tsx src/workers/compare-heroes.ts",
     "data:audit:catalog": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/development MEDOTA2_PROCESS_ROLE=web MEDOTA2_ENVIRONMENT=development MEDOTA2_DATA_CLASS=sandbox tsx src/workers/audit-catalog.ts",
     "data:diff:catalog": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/development MEDOTA2_PROCESS_ROLE=web MEDOTA2_ENVIRONMENT=development MEDOTA2_DATA_CLASS=sandbox tsx src/workers/diff-catalog.ts",
+    "data:diff:catalog:local": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/local-review MEDOTA2_PROCESS_ROLE=web MEDOTA2_ENVIRONMENT=local-review MEDOTA2_DATA_CLASS=production-snapshot tsx src/workers/diff-catalog.ts",
     "data:review:catalog": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/development MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=development MEDOTA2_DATA_CLASS=sandbox tsx src/workers/review-catalog.ts",
     "data:promote:catalog": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/development MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=development MEDOTA2_DATA_CLASS=sandbox tsx src/workers/promote-catalog.ts",
     "data:rollback:catalog": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/development MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=development MEDOTA2_DATA_CLASS=sandbox tsx src/workers/rollback-catalog.ts",

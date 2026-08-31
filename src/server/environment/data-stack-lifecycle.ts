@@ -6,7 +6,10 @@ import { promisify } from "node:util";
 import { writeLocalEnvironmentReceipt } from "@/config/environment-receipt";
 import type { RuntimeEnvironment } from "@/domain/environment";
 import { LOCAL_STACK_ADOPTION_CONFIRMATION } from "./adopt-local-stack";
-import { isolateLocalStack } from "./isolate-local-stack";
+import {
+  isolateLocalStack,
+  localStackReceiptsAreReady,
+} from "./isolate-local-stack";
 
 const execFileAsync = promisify(execFile);
 const MANAGED_ENVIRONMENTS = ["development", "local-review", "test"] as const;
@@ -41,6 +44,10 @@ export class DataStackProvisionError extends Error {
     super(message, { cause });
     this.name = "DataStackProvisionError";
   }
+}
+
+export function persistentDataStackIsProvisioned(): boolean {
+  return localStackReceiptsAreReady();
 }
 
 export async function provisionDataStack(

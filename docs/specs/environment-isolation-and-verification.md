@@ -140,14 +140,16 @@ Harness implementation 负责：Run Identity、目录、端口、Compose 生命�
 
 本地 stack 的生命周期矩阵为：
 
-| Runtime Environment | Compose project        | 数据存储         | 默认 host port | state root                           | 生命周期                            |
-| ------------------- | ---------------------- | ---------------- | -------------- | ------------------------------------ | ----------------------------------- |
-| development         | `medota2-development`  | 独立持久 volume  | `54321`        | `.medota2/environments/development`  | 显式 start/stop；允许受控 rebuild   |
-| local-review        | `medota2-local-review` | 独立持久 volume  | `54322`        | `.medota2/environments/local-review` | 显式 start/stop；rebuild 需精确确认 |
-| test                | `medota2-test-<run>`   | tmpfs/disposable | 动态           | `.medota2/test-runs/<run>/state`     | Harness 独占；结束后销毁            |
-| production          | 部署 ADR 决定          | 独立持久基础设施 | 无本地默认     | secret/trust adapter 决定            | 本地 Compose 不提供 fallback        |
+| Runtime Environment | Compose project        | 数据存储         | 默认 host port | state root                           | 生命周期                                       |
+| ------------------- | ---------------------- | ---------------- | -------------- | ------------------------------------ | ---------------------------------------------- |
+| development         | `medota2-development`  | 独立持久 volume  | `54321`        | `.medota2/environments/development`  | 显式 start/stop；允许受控 rebuild              |
+| local-review        | `medota2-local-review` | 独立持久 volume  | `54322`        | `.medota2/environments/local-review` | `pnpm local` 幂等准备/启动；rebuild 需精确确认 |
+| test                | `medota2-test-<run>`   | tmpfs/disposable | 动态           | `.medota2/test-runs/<run>/state`     | Harness 独占；结束后销毁                       |
+| production          | 部署 ADR 决定          | 独立持久基础设施 | 无本地默认     | secret/trust adapter 决定            | 本地 Compose 不提供 fallback                   |
 
 development 与 local-review 必须使用不同 Compose project、volume、port 和 state root。即使 logical database 名相同或兼容性 bootstrap 仍创建额外空数据库，也不能把两个环境的活动数据放在同一 volume。
+
+`pnpm local` / `pnpm dev:local` 是 local-review 的单入口。准备器在 receipt 缺失时 provision，否则只启动原 stack；随后幂等 migration，有 active Catalog 时直接启动 Web，没有 head 时才从配置化只读来源执行首次 Catalog/Asset 导入。它不能把任意 Yellow 当作“首次启动需要”而跳过 Review：只允许在所有 diff 都是 `asset_provider_errors`，且重试资产后英雄/技能绑定与四档 LoD 完整、`generated_fallbacks = mismatches = errors = 0` 时自动批准首个候选。其他 Yellow/Red 必须停止并保留候选供人工审阅。
 
 ### 5.4 Verification Evidence
 

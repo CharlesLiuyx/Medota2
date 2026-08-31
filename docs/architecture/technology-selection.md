@@ -267,6 +267,7 @@ pnpm db:local-review:provision
 pnpm db:migrate
 pnpm db:environment:doctor
 pnpm dev
+pnpm local
 pnpm dev:local
 pnpm typecheck
 pnpm lint
@@ -278,7 +279,7 @@ pnpm verify
 pnpm build
 ```
 
-development 固定监听 `127.0.0.1:3000`，local-review 固定监听 `127.0.0.1:3001`，test/E2E 由 Test Run Harness 每 run 分配唯一 loopback origin，避免共享 origin-scoped 浏览器状态和自动化产物。端口不隔离 Cookie，也不是环境身份；页面表示仍来自 fresh attestation。Drizzle config 只用于离线 schema generation，contract v1 不提供会绕过 verified capability seam 的 `db:studio`。英雄导入、development-only Catalog 刷新与参考比较命令见 MVP Spec 和 README。修改命令时必须同步更新 README。
+development 固定监听 `127.0.0.1:3000`，local-review 固定监听 `127.0.0.1:3001`，test/E2E 由 Test Run Harness 每 run 分配唯一 loopback origin，避免共享 origin-scoped 浏览器状态和自动化产物。`pnpm local` 是 local-review 的幂等一键入口：按需 provision、migration、首次 Catalog/Asset 导入后启动 Web；已有 active Catalog 时不刷新数据。首次导入只允许对“纯 asset provider 临时错误且重试后完整 native coverage”执行受约束的自动 Review，其他 Yellow 保留人工门禁。端口不隔离 Cookie，也不是环境身份；页面表示仍来自 fresh attestation。Drizzle config 只用于离线 schema generation，contract v1 不提供会绕过 verified capability seam 的 `db:studio`。英雄导入、development-only Catalog 刷新与参考比较命令见 MVP Spec 和 README。修改命令时必须同步更新 README。
 
 ## 15. 安全与运维约束
 
