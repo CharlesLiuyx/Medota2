@@ -1,81 +1,42 @@
 # Medota2
 
-> 本地运行、以来源可追溯和原子版本为核心的 Dota 2 Heroes / Abilities Catalog。
+> 本地优先、来源可追溯、原子版本化的 Dota 2 Heroes / Abilities Catalog。
 
-Hero Catalog v2 已实现从固定 `dota_vpk_updates` commit 到 PostgreSQL、查询界面和更新门禁的完整链路。Heroes、Abilities、Facets、关系与本地化共享同一个不可变 catalog version；`dotaconstants` 仅作为隔离参考，不覆盖 VPK 规范值。
+Medota2 把锁定 commit 的 Dota 2 原始数据转换为可复现的 PostgreSQL 数据集，并提供本地 Web 查询、差异审阅、安全发布与回滚。它不把上游目录直接当作产品模型，也不以分支名、`latest` 或文件修改时间代表数据版本。
 
-全产品所有内容 List 的加载与渲染统一遵循[全局 List 无限滚动与 3× 预加载 Spec](docs/specs/infinite-lists.md)；该合同取代旧有分页或一次性 DOM 全量渲染约定。
+## 项目状态
+
+| 范围         | 当前状态                                                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 产品切片     | Hero Catalog v2 已完成：Heroes、Abilities、Facets、关系、本地化、图标资产与查询界面                                                   |
+| 数据链路     | exact-commit source lock → 全量候选 → semantic diff → Green/Yellow/Red gate → 原子发布/回滚                                           |
+| 运行方式     | 本地开发与本地真实数据审阅；尚未定义远程 production 部署形态                                                                          |
+| 环境安全     | Environment Contract v1、独立数据库角色、per-checkout attestation、run-scoped Test Harness 已实现                                     |
+| 最近完整验收 | 2026-08-31：186 个 Unit tests、19 个 Integration tests、34 个 E2E tests、production build/start smoke 全部通过                        |
+| 数据审计基线 | commit `991daaf6fc24b08445209d9ce8767e145bab107e`：127 Heroes、2,703 accepted Abilities、4,752 bindings、339 Facets、0 blocking error |
+
+审计数字描述一次真实快照，不是业务常量。后续版本会从锁定来源重新发现文件并执行完整校验。
+
+当前产品不包含比赛、玩家、胜率、出装、实时对局或 replay 分析；这些属于后续数据域，不应从 Catalog 能力推断为已经实现。
 
 ## 已实现能力
 
 - 从 `dota_vpk_updates` 动态发现全部分 Hero 文件，导入正式 Heroes 与完整 Ability 定义集。
 - 保留 ordered KeyValues、重复定义、BaseClass 继承、AbilityValues、modifier、数值 ID 映射和结构化 exclusion reason。
 - 建模 `loadout`、`talent`、`draft`、`facet`、`linked`、`sub_ability`、`upgrade_granted` 与声明归属关系。
-- `/heroes` 按 Strength、Agility、Intelligence、Universal 分组；Hero 详情包含 Abilities、Talents & Upgrades、Raw 与 Provenance。
-- `/abilities` 默认展示 current，并可查询 indirect、defined/unbound、template 和 deprecated；详情可查看逐级数值、关系、原始定义和来源。
-- 首期支持 `zh-CN` 与 `en`；本地化使用行模型，增加 locale 不需要修改 Hero/Ability 核心表。
-- Design System 使用语义 token、复用组件、键盘焦点和桌面/移动响应式规则；组件画廊位于 `/design-system`。
-- Hero 与 Ability icon 以内容寻址二进制和 `original`、`w64`、`w128`、`w256` LoD 存入 PostgreSQL；本地 Valve 源缺失时也会生成并入库确定性 fallback，保证显示覆盖率为 100%。
-- 资产使用独立的不可变 dataset version 与 head；替换来源图片、调整 LoD 策略或增加新图片时不需要重建玩法 Catalog。
-- 远端发现、exact-commit source lock、detached worktree、全量候选、semantic diff、Green/Yellow/Red gate、Review、原子发布与回滚均已实现。
+- `/heroes` 按 Strength、Agility、Intelligence、Universal 分组；Hero 详情展示 Abilities、Talents & Upgrades、Raw 与 Provenance。
+- `/abilities` 默认展示 current，并可查询 indirect、defined/unbound、template 和 deprecated；详情展示逐级数值、关系、原始定义和来源。
+- 首期支持 `zh-CN` 与 `en`；本地化使用行模型，增加 locale 不需要修改核心实体表。
+- 所有内容列表共享无限滚动、cursor continuation 和 3× 视口预加载合同。
+- Hero 与 Ability 图标以内容寻址二进制和 `original`、`w64`、`w128`、`w256` LoD 存入 PostgreSQL。
+- Catalog 与 Asset Dataset 分别版本化；替换图标或调整 LoD 不需要重建玩法数据。
+- Design System 使用语义 token、键盘焦点与桌面/移动响应式规则，组件画廊位于 `/design-system`。
 
-审计快照 `991daaf6fc24b08445209d9ce8767e145bab107e` 的一次真实全量运行得到 127 Heroes、2,703 accepted Abilities、4,752 bindings、339 Facets，0 blocking error。它们是审计结果，不是写死的业务常量；后续版本由 selector 和验证规则重新计算。
+## 快速开始
 
-## 技术栈
+前置条件：Node.js 24 LTS（最低 `22.12`）、pnpm 11、Git、Docker。E2E 还需要项目锁定的 Playwright Chromium。
 
-- Node.js 24 LTS（最低 `22.12`）、pnpm 11；
-- Next.js 16、React 19、TypeScript strict、Tailwind CSS 4；
-- PostgreSQL 18、Drizzle schema、node-postgres、`pg-copy-streams`；
-- Sharp 图片解码、校验与 WebP LoD 转换；
-- Zod、Vitest、Playwright、ESLint、Prettier；
-- Docker Compose 本地数据库。
-
-Web、Worker 与 migration 使用独立 PostgreSQL 账号。浏览器不直连数据库；Web 账号只读，Worker 无 DDL 权限，也不能直接改 current head。
-
-## 环境合同
-
-Medota2 不再用 `NODE_ENV`、URL 后缀或缺省的 `main` 推断数据环境。每个进程必须声明 Runtime Environment 与 Data Class；初始化时读取外部 receipt 并冻结 expected identity，每次 PostgreSQL pool checkout 再重置 session、进入只读 attestation，核对冻结期望与 PostgreSQL system identifier、数据库内 identity marker、server endpoint、role/ACL 和操作策略。验证成功后，应用层只接收 opaque verified capability；migration、Worker、seed/reset 不接受裸 URL。receipt 不是实时撤销通道，变更后必须重启进程。
-
-| Runtime Environment | Data Class            | 本地数据库       | 浏览器 origin                | 用途                                       |
-| ------------------- | --------------------- | ---------------- | ---------------------------- | ------------------------------------------ |
-| `development`       | `sandbox`             | `medota2`        | `http://127.0.0.1:3000`      | 内部开发与可重建沙箱                       |
-| `test`              | `synthetic-fixture`   | `medota2_test`   | Harness 分配的 loopback 端口 | 每 run 一次性 fixture stack                |
-| `local-review`      | `production-snapshot` | `medota2_local`  | `http://127.0.0.1:3001`      | 本机审阅真实来源数据，不等同 live 线上库   |
-| `production`        | `live-production`     | 不提供本地缺省值 | 由部署配置显式提供           | 需外部 identity receipt 与 verify-full TLS |
-
-contract v1 的 capability 矩阵默认拒绝，当前明确开放范围如下：
-
-| 环境           | Web    | Worker                           | Migration            | 额外门禁                                           |
-| -------------- | ------ | -------------------------------- | -------------------- | -------------------------------------------------- |
-| `development`  | `read` | `import/review/promote/rollback` | `migrate/reset`      | reset 需精确确认 `medota2`                         |
-| `test`         | `read` | `fixture`                        | `migrate/seed/reset` | 必须有 Run ID，marker 必须为 `run-scoped`          |
-| `local-review` | `read` | `import/review/promote/rollback` | `migrate/reset`      | 非 Web 均需精确确认；reset 还需 `explicit-rebuild` |
-| `production`   | `read` | 拒绝                             | 拒绝                 | 三项外部身份 + `verify-full` TLS                   |
-
-Web capability 的每次 checkout 都恢复 `default_transaction_read_only=on`，并证明它没有业务 DML、持久 DDL、列级写授权、control marker 写授权或可写 security-definer 函数；所有应用 SECURITY DEFINER 定义同时受签名、owner、`search_path` 与规范化函数体 SHA-256 清单约束，应用 trigger/rule 默认拒绝。Worker 还必须证明无持久 DDL、control 写入、role membership 与高权限属性。operation 是 capability 路由和 policy 意图，不是 SQL parser；最终数据库权限仍由独立 PostgreSQL role 强制执行。
-
-Fresh Docker volume 会在产品 migration 前创建三个 `quarantined` marker，同时保持全部环境角色 `NOLOGIN`。`db:development:provision`、`db:local-review:provision` 和 Test Run Harness 会生成一次性 bootstrap secret，并在同一受管生命周期内完成 preflight、credential rotation、owner/ACL 收敛和 active postflight。它们不会运行产品 migration、TRUNCATE、业务表 DML 或移动 Catalog/Asset head。
-
-下面的低层 cutover 入口只用于已经存在且带 contract-v1 marker 的旧三库栈；它会终止连接并轮换 credential，必须获得单独精确授权，不能当作新受管栈的日常初始化步骤：
-
-```bash
-pnpm db:environment:adopt:local-stack -- --confirm adopt:medota2,medota2_local,medota2_test
-```
-
-legacy adoption 只接受三库都已有、结构正确且彼此一致的 contract-v1 marker；未知、无 marker 的旧库不会被 CLI 自动“认领”为可信环境。此类旧库必须先走另行 Review 的 provisioning/restore 流程，或把数据恢复到新建的受管栈。失败发生在 cutover 前时不改数据库状态；cutover 开始后的失败会尽力收敛到三库 `quarantined`、runtime `NOLOGIN`。若恢复本身无法被证明，状态必须视为未知：保持应用停止并人工核对，不能假定连接一定已经关闭。
-
-日常可用 doctor 核对三个 role 是否收敛到同一个安全数据库指纹。每次签发非只读 capability 时也会先完成同样的三角色 identity convergence；任一 peer URL、server 或 marker 分叉都会拒绝写入：
-
-```bash
-pnpm db:environment:doctor
-pnpm db:environment:doctor:local
-```
-
-所有页面顶部常驻显示 `DEVELOPMENT`、`TEST`、`LOCAL REVIEW` 或 `PRODUCTION`、Data Class、数据库验证状态、安全指纹与 run ID；`local-review` 只声明 `production-snapshot` 分类，不声称自动证明已经与线上物理隔离。identity 验证失败时会明确显示 `DATA ACCESS BLOCKED`，不会猜测目标。Catalog API 同时返回 `X-Medota2-Environment`、Data Class、verification、run ID 和安全数据库指纹响应头，不暴露 URL、credential、完整 UUID 或本机路径。完整概念见 [Medota2 Domain Context](CONTEXT.md)，决策与威胁边界见 [ADR 0005](docs/adr/0005-environment-contract.md)。
-
-## 本地启动
-
-前置条件：Node.js、pnpm、Git、Docker；E2E 还需安装项目锁定的 Playwright Chromium。复制配置后，创建并接管独立 development stack，再运行产品 migration：
+首次创建 development sandbox：
 
 ```bash
 pnpm install
@@ -85,20 +46,39 @@ pnpm db:migrate
 pnpm dev
 ```
 
-provision 成功后，日常 `pnpm db:development:start` / `stop` 只读取 `.medota2/environments/development/` 下当前用户所有、权限为 `0600` 的 receipt。local-review 使用独立的 `medota2-local-review` project、54322 port、volume 与 `.medota2/environments/local-review/` receipt。一个本机用户仍可读取各自 receipt 内的本地角色凭据，因此 `MEDOTA2_PROCESS_ROLE` 是应用层 admission label，不是操作系统级 secret 隔离。需要对恶意本机进程隔离时，应把 Web、Worker 和 migration 放入不同 OS/container identity 并分别注入单一 credential。
+打开 [http://127.0.0.1:3000](http://127.0.0.1:3000)。新数据库在导入 Catalog 前可以正常启动，但不会凭空生成真实游戏数据。
 
-已有 `127.0.0.1:54321` legacy stack 不会被这些命令静默迁移、删除或重新解释；端口已被占用时新 development provision 会失败。对旧栈执行低层 adoption 或数据搬迁仍需单独授权。
+首次 provision 成功后，日常启动和停止数据库使用：
 
-推荐从远端锁定精确 commit 后导入：
+```bash
+pnpm db:development:start
+pnpm dev
+pnpm db:development:stop
+```
+
+`provision` 只建立受管数据栈、轮换本地凭据并签发 `.medota2/environments/development/` 下权限为 `0600` 的 receipt；它不会运行产品 migration、清空业务表或移动 Catalog/Asset head。
+
+### 导入锁定的上游数据
+
+推荐从远端发现并锁定精确 commit：
 
 ```bash
 pnpm data:source:discover:vpk
 pnpm data:source:lock:vpk --commit <40-character-sha>
 pnpm data:import:catalog --lock <lock-file>
-pnpm dev
 ```
 
-也可把 `DOTA_VPK_UPDATES_PATH` 指向现有本地 checkout 后直接运行 `pnpm data:import:catalog`。正式导入要求 Medota2 checkout 干净，使 `importer_version` 能准确标识转换代码；当前工作区尚未提交、但需要运行最终本地界面时使用独立的 `medota2_local`：
+也可以在 `.env` 中把 `DOTA_VPK_UPDATES_PATH` 指向已有的只读 checkout，再运行：
+
+```bash
+pnpm data:import:catalog
+```
+
+正式导入要求 Medota2 checkout 干净，使 `importer_version` 能准确标识转换代码。分支名和目录时间戳都不能替代 source lock。
+
+### 审阅真实数据与最终界面
+
+需要在独立环境中导入真实快照、下载缺失的官方图片并查看最终页面时：
 
 ```bash
 pnpm db:local-review:provision
@@ -107,38 +87,82 @@ pnpm data:import:vpk:local
 pnpm dev:local
 ```
 
-`data:import:vpk:local` 会把本机 `DOTA_VPK_UPDATES_PATH` 指向的真实快照以版本化候选导入独立的 `medota2_local`，不会在检查 source lock、解析或资产下载前清空已有 snapshot。优先使用配置的本机 Valve 资产；缺少本机 VPK 资产源时，从 importer 已限定的 Valve Steam static origin 补齐真实图片，并生成 `original / w64 / w128 / w256`。需要有意清空并重建时，必须单独运行 `pnpm data:reset:local-review -- --confirm medota2_local`；该动作与导入分离。随后 `dev:local` 在 [http://127.0.0.1:3001](http://127.0.0.1:3001) 启动最终本地界面；重启 Web 不会重置或改写数据。`pnpm dev:demo` 保留为 `dev:local` 的兼容别名。
-
-页面入口：
+local-review 使用独立的 Compose project、54322 端口、volume 和 receipt，页面入口为：
 
 - [http://127.0.0.1:3001/heroes](http://127.0.0.1:3001/heroes)
 - [http://127.0.0.1:3001/abilities](http://127.0.0.1:3001/abilities)
 - [http://127.0.0.1:3001/design-system](http://127.0.0.1:3001/design-system)
 
+导入失败不会预先清空已有 snapshot。只有确实需要重建时，才单独执行带精确确认的 `pnpm data:reset:local-review -- --confirm medota2_local`。
+
+## 架构概览
+
+```text
+exact upstream commit
+        │
+        ▼
+read-only source lock ── checksums / manifest / selector version
+        │
+        ▼
+TypeScript importer ─── ordered KV / adapters / validation
+        │
+        ├──────────────► immutable Hero Catalog Dataset
+        │                           │
+Valve VPK / Steam static ──────────┴──► immutable Asset Dataset
+                                            │
+                           review / gate / atomic heads
+                                            │
+                                            ▼
+                              PostgreSQL 18 + read-only Web
+                                            │
+                                            ▼
+                                Next.js local application
+```
+
+核心不变量：
+
+1. Heroes、Abilities、关系与本地化共享同一个不可变 Catalog version，查询不会跨版本撕裂。
+2. Asset Dataset 独立版本化，但必须绑定到具体 Catalog；发布和回滚都会验证完整匹配的 asset head。
+3. 浏览器不直连数据库；Web、Worker、Migration 使用独立角色和最小权限。
+4. 导入、Git 更新、VPK 提取和批量转换不在 Next.js 请求生命周期内执行。
+5. 所有派生数据保留来源 commit、路径、checksum、ClientVersion、importer version 与 schema version。
+
+### 技术栈
+
+| 层次                 | 选择                                                          |
+| -------------------- | ------------------------------------------------------------- |
+| Runtime              | Node.js 24 LTS、pnpm 11                                       |
+| Web                  | Next.js 16.3、React 19.2、TypeScript 6 strict、Tailwind CSS 4 |
+| Database             | PostgreSQL 18.2、Drizzle ORM、`pg`、`pg-copy-streams`         |
+| Images               | Sharp 解码、校验与 WebP LoD 转换                              |
+| Validation           | Zod 4、显式领域校验、已审阅 SQL migration                     |
+| Tests                | Vitest、Testing Library、Playwright                           |
+| Local infrastructure | Docker Compose                                                |
+
+首期没有引入 Redis、Kafka、独立 API 服务或 Rust Worker。只有 profiling 与可复现 benchmark 证明需要时，才评估新的运行时或大型框架。
+
 ## 数据来源与版本身份
 
-| 来源                                                                                                    | 职责                                       |
-| ------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| [spirit-bear-productions/dota_vpk_updates](https://github.com/spirit-bear-productions/dota_vpk_updates) | Heroes / Abilities 玩法与本地化唯一 SSOT   |
-| [odota/dotaconstants](https://github.com/odota/dotaconstants)                                           | 隔离 QA/reference，不参与规范值或 fallback |
-| [SteamDatabase/GameTracking-Dota2](https://github.com/SteamDatabase/GameTracking-Dota2)                 | 协议、Source 2 schema 与非 VPK 交叉核对    |
+| 来源                                                                                                    | 当前职责                                                |
+| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| [spirit-bear-productions/dota_vpk_updates](https://github.com/spirit-bear-productions/dota_vpk_updates) | Heroes / Abilities 玩法与本地化唯一 SSOT                |
+| [odota/dotaconstants](https://github.com/odota/dotaconstants)                                           | 隔离 QA/reference 与官方图片路径映射，不覆盖 VPK 规范值 |
+| [SteamDatabase/GameTracking-Dota2](https://github.com/SteamDatabase/GameTracking-Dota2)                 | 协议、Source 2 schema 与非 VPK 事实交叉核对             |
 
-导入身份由 source repository、完整 commit、selector version、动态文件集合、每个 blob SHA-256、manifest SHA-256、ClientVersion、SourceRevision、importer version 与 schema version 共同确定。Steam static 路径所依赖的 `dotaconstants` image map 也把 checkout commit、dirty/input-match、两个 tracked JSON 路径及 checksum 写入 Asset Dataset provenance。分支名、“latest”和目录修改时间都不是版本身份。
+导入身份由 source repository、完整 commit、selector version、动态文件集合、每个 blob SHA-256、manifest SHA-256、ClientVersion、SourceRevision、importer version 与 schema version 共同确定。Asset Dataset 还记录图片映射 checkout 与输入文件 checksum。
 
-本机运行缓存位于 `.medota2/` 并被 Git 忽略。三个上游 checkout 始终只读，也不会随 Medota2 发布。
+三个上游都是独立、可选、只读的外部来源，不属于本仓库，也不会随 Medota2 发布。详细选源边界见[外部仓库总览](docs/repositories/README.md)。
 
-## 本地 Valve 资产
+## 图标资产
 
-资产导入依赖已经物化到数据库的 Hero Catalog，不要求它已发布为 current；未指定版本时默认使用 current，也可通过 `--catalog-version <uuid>` 为候选或历史 Catalog 导入。若本机有 Dota 2 客户端 VPK 和 [Source 2 Viewer CLI](https://github.com/ValveResourceFormat/ValveResourceFormat/blob/master/docs/guides/command-line.md)，先配置只读输入与 Git 忽略的提取目录：
+如果本机有 Dota 2 VPK 和 [Source 2 Viewer CLI](https://github.com/ValveResourceFormat/ValveResourceFormat/blob/master/docs/guides/command-line.md)，配置只读输入与新的版本化输出目录：
 
 ```dotenv
 DOTA_VPK_PATH=/absolute/path/to/game/dota/pak01_dir.vpk
 SOURCE2VIEWER_CLI_PATH=/absolute/path/to/Source2Viewer-CLI
-DOTA_VALVE_ASSET_PATH=.medota2/cache/valve-assets/6918
-DOTA_VALVE_ASSET_CLIENT_VERSION=6918
+DOTA_VALVE_ASSET_PATH=.medota2/cache/valve-assets/<client-version>
+DOTA_VALVE_ASSET_CLIENT_VERSION=<client-version>
 ```
-
-先从 VPK 只读提取受限的 Hero、spellicon 和 Innate icon 资源，再把当前 Catalog 的完整资产集导入数据库：
 
 ```bash
 pnpm data:extract:assets:vpk
@@ -146,108 +170,138 @@ pnpm data:import:assets
 pnpm data:audit:assets
 ```
 
-本机没有 VPK，或 VPK 中缺少某个精确资源时，可显式下载 Valve Steam static CDN 中由 `dotaconstants` 映射的官方 Hero/Ability 图片，并把下载字节与全部 LoD 直接固化进 PostgreSQL：
+本机没有完整 VPK 资产时，可在导入阶段显式下载 Valve Steam static 资源：
 
 ```bash
 pnpm data:import:assets --download-missing
 pnpm data:audit:assets
 ```
 
-该开关只在导入阶段联网；网页运行时不访问 CDN。解析优先级为“VPK 精确资源 → Steam 官方精确资源 → VPK alias → Steam 官方 alias → 生成 fallback”。Hero 使用高分辨率 `dota_react/heroes` 图片；Talent、Innate 和确实没有独立图标的定义使用 Valve 的 `attribute_bonus`、`innate_icon` 或 `empty` 图片，而不是字母占位图。
+网页运行时不访问 CDN。解析优先级为“VPK 精确资源 → Steam 官方精确资源 → VPK alias → Steam 官方 alias → generated fallback”。普通离线开发允许可审计 fallback；正式资产验收默认要求 `generated_fallbacks = 0`。
 
-提取器要求显式 ClientVersion，且 `DOTA_VALVE_ASSET_PATH` 指向的最终目录必须尚不存在。它先在最终目录同一父目录下创建一次性 staging，校验 CLI 成功且确实生成文件后，写入 `medota2-valve-asset-extraction.json`，最后才原子改名为最终目录；失败会清理 staging，不会留下可被 importer 误认的半成品。已有目录（即使为空）不会被覆盖或复用，更新客户端后应选择新的版本化目录。输出目录也不能位于 VPK 所在目录内，提取流程不会启用会在 VPK 旁写状态的 cache 模式。
-
-提取 manifest 记录 schema、ClientVersion、完整 VPK SHA-256/字节数、Source 2 Viewer 版本、实际参数、精确 filters、线程数、完成时间和文件数。Importer 在读取图片前验证该 manifest，不能仅凭手填环境变量把未知版本的旧目录声明成当前客户端。含本机命令路径的完整 manifest 只保留在 Git 忽略的本地提取目录；数据库仅记录去除绝对路径后的 VPK/CLI 指纹，HTTP 响应不暴露这些信息。
-
-最后一个命令核对当前 Catalog/asset head、缺失实体、不完整 LoD，以及 VPK/CDN/generated 来源数量，作为素材正确性与 100% 显示覆盖的验收入口。正式验收默认要求 `generated_fallbacks = 0`；只有非验收的离线开发才可显式传 `--allow-generated`。提取命令也接受 `--vpk`、`--cli`、`--output`、`--client-version` 覆盖环境变量，调用 Source 2 Viewer 时固定只处理所需的 `vtex_c` 路径。未传 `--download-missing` 且没有可用 VPK 时，导入器仍生成可显示 fallback，但严格审计会失败，不能再把它当作正确素材验收通过。
-
-`asset_blobs` 保存实际图片字节并按 SHA-256 去重；`asset_objects`、`asset_variants` 和 `entity_asset_bindings` 保存来源、逻辑路径及实体绑定。每个对象都有保留源编码与尺寸的 `original`，以及面向列表和详情页的 `w64`、`w128`、`w256` WebP 变体；HTTP 路由按请求宽度从当前 asset head 选择合适 LoD。资产 dataset/head 与玩法 Catalog 版本身份分离但绑定到具体 Catalog，因此可以重复导入、增加或替换图片并独立提升，不改变玩法数据。
-
-独立导入默认以当前 Catalog 为目标；可用 `--catalog-version <uuid>` 先为候选或历史 Catalog 回填图片，用 `--no-promote` 只创建并校验候选资产版本。若当前 head 已有更多原生 Valve 命中，导入器会拒绝把它静默降级成 alias/generated fallback；只有明确传入 `--allow-fallback-downgrade` 才允许这种替换。切换到不同 Catalog 时还会比较当前与候选的 exact/native 覆盖率，新增 fallback 实体导致的比例下降也会阻止自动 promotion；确需接受时，必须在实际执行 `data:import:catalog` 或 `data:promote:catalog` 时显式传入同一开关。Catalog 的 promotion 与 rollback 也会重新校验目标 Catalog 已有完全匹配的 asset head，因此不会把页面切换到全图 404 的版本。
-
-提取目录、生成缓存、VPK 和批量图片都不提交到 Git；运行时只从 PostgreSQL 提供图片，不暴露机器绝对路径。数据库中的 Valve 资产仅限当前批准的本地自用范围。
+提取器不会覆盖已有输出目录，先在同一父目录原子 staging，并通过 manifest 固化 VPK/CLI/ClientVersion 指纹。完整设计与发布门禁见 [ADR 0002](docs/adr/0002-valve-local-asset-provider.md) 和 [ADR 0004](docs/adr/0004-database-icon-asset-datasets.md)。
 
 ## 更新、Review 与回滚
 
-手动和计划任务调用同一个幂等入口：
+development sandbox 的幂等刷新入口：
 
 ```bash
 pnpm data:refresh:catalog:development
 ```
 
-该复合刷新入口只绑定 `development + sandbox`，不代表 production 调度已经实现。默认建议开发机每 15 分钟 discover 一次；无新 commit 时 no-op；Green 自动发布；Yellow 保留候选等待 Review；Red 或任意失败保持上一 current head。常用操作：
+- Green：已知安全变化，自动发布。
+- Yellow：保留候选与 semantic diff，等待人工 Review。
+- Red：拒绝发布，继续提供上一有效版本。
+
+常用审阅操作：
 
 ```bash
 pnpm data:diff:catalog --candidate <dataset-version-id>
 pnpm data:review:catalog --candidate <dataset-version-id> --decision approved --reason "<reason>"
+pnpm data:import:assets --catalog-version <dataset-version-id>
 pnpm data:promote:catalog --candidate <dataset-version-id>
-pnpm data:promote:catalog --candidate <dataset-version-id> --allow-fallback-downgrade
 pnpm data:rollback:catalog --to <dataset-version-id> --reason "<reason>"
-pnpm data:rollback:catalog --to <dataset-version-id> --reason "<reason>" --allow-fallback-downgrade
 ```
 
-完整配置、launchd 示例、通知、指标、SLO 与恢复流程见[Hero Catalog 更新操作手册](docs/operations/catalog-refresh.md)。
+如果 exact/native 资产覆盖率下降，promotion/rollback 默认失败。只有完成来源核对并明确接受降级时，才在实际 head 切换命令追加 `--allow-fallback-downgrade`。
+
+该刷新入口和 `ops/launchd/` 示例只面向 `development + sandbox`，不代表 production Worker 或生产调度已经实现。完整流程见[Hero Catalog 更新操作手册](docs/operations/catalog-refresh.md)。
+
+## 环境合同
+
+Medota2 不用 `NODE_ENV`、数据库名后缀或缺省的 `main` 推断数据环境。每个进程必须声明 Runtime Environment 与 Data Class，并通过外部 receipt、数据库 identity marker、PostgreSQL system identifier、endpoint、role/ACL 和 operation policy 的联合验证。
+
+| Runtime Environment | Data Class            | 本地数据库      | 浏览器 origin    | 用途                             |
+| ------------------- | --------------------- | --------------- | ---------------- | -------------------------------- |
+| `development`       | `sandbox`             | `medota2`       | `127.0.0.1:3000` | 可重建开发沙箱                   |
+| `test`              | `synthetic-fixture`   | run-scoped      | Harness 动态分配 | 一次性测试栈                     |
+| `local-review`      | `production-snapshot` | `medota2_local` | `127.0.0.1:3001` | 本机真实快照审阅，不等同线上生产 |
+| `production`        | `live-production`     | 无本地默认值    | 部署显式提供     | 当前只开放 Web/read              |
+
+安全边界：
+
+- 非生产数据库 URL 由受管 lifecycle 写入私有 receipt，不写入 `.env`。
+- Web 每次 pool checkout 恢复只读状态并重新验证身份与权限；Worker 无持久 DDL/control 写权限。
+- production contract v1 只签发 `Web/read`，Worker 与 Migration 默认拒绝。
+- identity、marker、peer role 或安全函数签名不一致时 fail closed，页面显示 `DATA ACCESS BLOCKED`。
+- 既有 `127.0.0.1:54321` legacy stack 不会被 provision 命令静默迁移、删除或重新解释。
+
+日常诊断：
+
+```bash
+pnpm db:environment:doctor
+pnpm db:environment:doctor:local
+```
+
+旧数据栈 adoption 会轮换 credential、调整 owner/ACL 并终止连接，不是日常启动步骤；只能按照 [ADR 0005](docs/adr/0005-environment-contract.md) 与相关 preflight 证据单独授权执行。完整模型见 [CONTEXT.md](CONTEXT.md)。
 
 ## 开发与验证
 
 ```bash
-pnpm typecheck             # TypeScript strict
-pnpm lint                  # ESLint
-pnpm format:check          # Prettier
-pnpm test                  # parser/domain/service 单元测试
-pnpm test:integration      # 真实 PostgreSQL migration/权限/原子性/回滚
-pnpm test:e2e              # Desktop + Mobile Chromium，含视觉回归
-pnpm test:e2e:concurrent   # 两个完整 E2E run 并发并核对资源零重叠
-pnpm test:harness:isolation # 一个 run 注入失败时另一个完成，且两者精确清理
-pnpm verify                # 本地/CI 共用全量门禁与版本化证据
-pnpm build                 # Webpack 生产构建
-pnpm data:audit:catalog    # 真实 checkout 全量 parser 审计
+pnpm typecheck               # TypeScript strict
+pnpm lint                    # ESLint
+pnpm format:check            # Prettier
+pnpm test                    # Unit tests
+pnpm test:integration        # PostgreSQL migration/权限/原子性/回滚
+pnpm test:e2e                # Desktop + Mobile Chromium，含视觉回归
+pnpm test:e2e:concurrent     # 两个完整 E2E run 并发隔离
+pnpm test:harness:isolation  # 注入失败不影响并发 survivor
+pnpm verify                  # 本地/CI 共用全量门禁与版本化证据
+pnpm build                   # Webpack production build
+pnpm data:audit:catalog      # 真实 checkout 全量 parser 审计
 ```
 
-Integration、E2E 与 `verify` 每次都由 Test Run Harness 创建独立的 PostgreSQL 18.2 tmpfs stack、Run ID、动态数据库/Web 端口、receipt root、Next dist、run-local TypeScript config overlay 和 artifact root；成功或普通失败后只销毁该 run 的精确 Compose project。测试进程使用 `loopback-only` policy，Steam CDN、remote Git、webhook 与浏览器外网请求均 fail closed。`run.json`、`index.md`、逐步日志、coverage 和 Playwright 产物保存在 `.medota2/test-runs/<run-id>/`，不会被下一次运行覆盖。视觉基线仍位于 `tests/e2e/visual.spec.ts-snapshots/`。
+Integration、E2E 与 `verify` 每次创建独立 PostgreSQL 18.2 tmpfs stack、Run ID、动态数据库/Web 端口、receipt root、Next dist 和 artifact root。测试网络策略为 `loopback-only`；成功或失败后只清理该 run 的精确资源。
 
-Integration 红队用例会以 run-scoped control credential 临时制造 role/ACL/函数/trigger 漂移，只能运行在 Harness 创建的一次性 cluster；Playwright config 缺少 Harness context 时直接拒绝启动。测试 Worker 只开放 `fixture` operation，不能把 production-snapshot import adapter 当作 fixture seam。
-
-Drizzle config 仅用于离线 schema generation，不包含任何数据库 URL。Drizzle Studio 无法消费 `VerifiedSession`，会绕过 per-checkout attestation 和环境条幅，因此 contract v1 明确不提供 `db:studio`；需要数据库观察时使用 doctor、应用页面或经过 verified capability 的专用只读命令。
-
-整体环境方案与验收基线见 [Environment Isolation、Test Run Harness 与 Verification Evidence Spec](docs/specs/environment-isolation-and-verification.md)。Environment Contract、run-scoped Harness、分离持久栈、验证证据、mapping provenance 与 promotion/rollback 对称门禁均已进入实现；现有 legacy 54321 栈的破坏性 cutover 仍明确未执行。
+证据保存在 `.medota2/test-runs/<run-id>/`，包含 `run.json`、摘要、逐步日志、coverage 和 Playwright 产物。Drizzle config 只用于离线 schema generation；contract v1 不提供会绕过 VerifiedSession 的 `db:studio`。
 
 ## 仓库结构
 
 ```text
 Medota2/
 ├── src/app/                 # Heroes、Abilities、Design System、asset routes
-├── src/components/          # Catalog 与 UI primitives
-├── src/domain/              # Hero/Ability/Catalog contracts 与 semantic diff
-├── src/importers/           # KeyValues、SSOT adapters、source lock
+├── src/components/          # Catalog 组件与 UI primitives
+├── src/domain/              # 领域合同、版本与 semantic diff
+├── src/importers/           # KeyValues、来源 adapters、source lock、资产导入
 ├── src/server/              # schema、repositories、asset provider
 │   └── environment/         # attestation、policy、provision/adoption boundary
+├── src/testing/             # run-scoped Test Harness
 ├── src/workers/             # import、refresh、Review、promotion、rollback CLI
 ├── drizzle/                 # 已审阅 SQL migrations
-├── ops/                     # 调度示例
-├── tests/                   # fixtures、unit、integration、E2E 与视觉基线
-└── docs/                    # Spec、ADR、Design System、来源与运维文档
+├── docker/                  # PostgreSQL roles 与 environment identity bootstrap
+├── ops/                     # development 调度示例
+├── tests/                   # fixtures、Unit、Integration、E2E 与视觉基线
+├── docs/                    # Spec、ADR、来源、设计与运维文档
+└── .github/workflows/       # 全量 verify CI
 ```
 
-## 设计与架构文档
+## 路线图与决策边界
 
+以下是后续方向，不是当前已有能力：
+
+1. 通过新 ADR 定义远程 production topology、secret distribution、常驻 Worker、调度重试与可观测性。
+2. 选择并规范第一个比赛/API/replay 输入，继续沿用来源隔离、provenance 与版本兼容规则。
+3. 在规范比赛数据之上增加分析模型、本地查询与可视化。
+4. 只有 profiling 证明 TypeScript/SQL/批处理不足时，才引入独立 Rust Worker。
+
+新增大型框架、服务、生产写能力或 Rust 前必须先提交 ADR。计划项进入实现后，同步更新本文、相关 Spec、可执行命令和验证证据。
+
+## 文档入口
+
+- [Medota2 Domain Context](CONTEXT.md)
 - [Hero Catalog v2 Spec](docs/specs/hero-catalog-v2.md)
 - [全局 List 无限滚动与 3× 预加载 Spec](docs/specs/infinite-lists.md)
 - [Medota2 Design System](docs/design-system.md)
+- [技术选型与数据处理架构](docs/architecture/technology-selection.md)
 - [Hero Catalog 更新操作手册](docs/operations/catalog-refresh.md)
-- [ADR：共享 Hero Catalog 版本边界](docs/adr/0001-hero-catalog-version-boundary.md)
-- [ADR：Valve 本地资产 Provider](docs/adr/0002-valve-local-asset-provider.md)
-- [ADR：Green / Yellow / Red 更新门禁](docs/adr/0003-catalog-refresh-gates.md)
-- [ADR：数据库图标资产数据集](docs/adr/0004-database-icon-asset-datasets.md)
-- [ADR：Environment Contract](docs/adr/0005-environment-contract.md)
-- [ADR：Run-scoped Harness 与验证证据](docs/adr/0006-run-scoped-verification.md)
-- [Environment Isolation、Test Run Harness 与 Verification Evidence Spec](docs/specs/environment-isolation-and-verification.md)
-- [测试、环境与依赖架构 Review（历史基线）](docs/architecture/environment-contract-review.md)
+- [Environment Contract ADR](docs/adr/0005-environment-contract.md)
+- [Run-scoped Harness 与验证证据 ADR](docs/adr/0006-run-scoped-verification.md)
+- [Environment Isolation 与 Verification Spec](docs/specs/environment-isolation-and-verification.md)
 - [真实快照审计报告](docs/data/real-snapshot-audit-991daaf6.json)
-- [外部仓库选源指南](docs/repositories/README.md)
+- [外部仓库总览与选源指南](docs/repositories/README.md)
 
 ## 许可与声明
 
-本项目尚未选择开源许可证。公开可见不等于授予复制、修改或再分发许可。上游仓库可能包含 Valve 或其他第三方内容；Medota2 不把完整 VPK、声音、模型、提取缓存或批量 Valve 资产提交到 Git 或纳入公开发行物。
+本项目尚未选择开源许可证。公开可见不等于授予复制、修改或再分发许可。完整 VPK、声音、模型、提取缓存和批量 Valve 资产不会提交到 Git 或纳入公开发行物；数据库中的 Valve 资产仅限当前批准的本地自用范围。
 
-Medota2 是非官方自用项目，与 Valve Corporation、Dota 2、SteamDatabase、OpenDota、Liquipedia 及其他上游项目没有隶属或背书关系。Dota 2 和相关商标、游戏内容归其各自权利人所有。
+Medota2 是非官方项目，与 Valve Corporation、Dota 2、SteamDatabase、OpenDota、Liquipedia 及其他上游项目没有隶属或背书关系。Dota 2 和相关商标、游戏内容归其各自权利人所有。
