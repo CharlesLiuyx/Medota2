@@ -2,7 +2,7 @@
 
 > 状态：v1 已实现；随 Hero Catalog 继续演进
 >
-> 来源合同：[Hero Catalog v2 Spec](specs/hero-catalog-v2.md#5-design-system)、[全局 List 无限滚动与 3× 预加载 Spec](specs/infinite-lists.md)
+> 来源合同：[Hero Catalog v2 Spec](specs/hero-catalog-v2.md#5-design-system)、[全局 List 无限滚动与上 7× / 下 10× 预加载 Spec](specs/infinite-lists.md)
 
 ## 目标
 
@@ -51,7 +51,7 @@ Token 定义在 `src/app/globals.css`，组件只消费语义变量：
 
 开发画廊位于 `/design-system`，用于视觉回归和状态审阅。
 
-『InfiniteList』是 Design System 级行为基座，而不是 Catalog 页面的私有组件。远程查询、本地数组、卡片网格、关系记录和表格行的适配及上下 `3 × viewport` 预加载规则，以[全局 List Spec](specs/infinite-lists.md)为准。
+『InfiniteList』是 Design System 级行为基座，而不是 Catalog 页面的私有组件。远程查询、本地数组、卡片网格、关系记录和表格行的适配及上方 `7 × viewport`、下方 `10 × viewport` 预加载规则，以[全局 List Spec](specs/infinite-lists.md)为准。
 
 ## 响应式与无障碍
 

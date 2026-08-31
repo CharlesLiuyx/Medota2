@@ -101,19 +101,25 @@ test("hero catalog continuously loads five chunks without repeating group headin
   await expect
     .poll(() => list.locator("[data-infinite-list-chunk]").count())
     .toBeGreaterThanOrEqual(5);
-  await expect
-    .poll(() => list.locator("[data-infinite-list-spacer]").count())
-    .toBeGreaterThan(0);
-  await expect
-    .poll(() => list.locator("[data-infinite-list-item]").count())
-    .toBeLessThan(194);
 
   const footer = page.getByRole("contentinfo");
   await footer.scrollIntoViewIfNeeded();
   await expect(footer).toBeVisible();
 
   const firstItem = list.locator(`[data-infinite-list-key="${firstItemKey}"]`);
+  await addScrollRunway(page);
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect
+    .poll(() => list.locator("[data-infinite-list-spacer]").count())
+    .toBeGreaterThan(0);
+  await expect
+    .poll(() => list.locator("[data-infinite-list-item]").count())
+    .toBeLessThan(194);
   await expect(firstItem).toHaveCount(0);
+
+  await page.locator("[data-e2e-scroll-runway]").evaluate((element) => {
+    element.remove();
+  });
   await list
     .locator('[data-infinite-list-sentinel="before"]')
     .scrollIntoViewIfNeeded();
@@ -207,6 +213,16 @@ async function scrollBoundaryUntil(
   }
   await observe();
   expect(await done()).toBe(true);
+}
+
+async function addScrollRunway(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const runway = document.createElement("div");
+    runway.setAttribute("data-e2e-scroll-runway", "");
+    runway.style.height = `${window.innerHeight * 8}px`;
+    runway.setAttribute("aria-hidden", "true");
+    document.body.append(runway);
+  });
 }
 
 async function observeHeroGroups(

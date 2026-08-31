@@ -1,5 +1,6 @@
 import {
-  INFINITE_LIST_PREFETCH_VIEWPORTS,
+  INFINITE_LIST_PREFETCH_VIEWPORTS_AFTER,
+  INFINITE_LIST_PREFETCH_VIEWPORTS_BEFORE,
   INFINITE_LIST_SLICE_LIMIT,
   type InfiniteListProblem,
   type ListLoadDirection,
@@ -7,7 +8,10 @@ import {
 } from "./infinite-list";
 
 export const CATALOG_SLICE_LIMIT = INFINITE_LIST_SLICE_LIMIT;
-export const CATALOG_PREFETCH_VIEWPORTS = INFINITE_LIST_PREFETCH_VIEWPORTS;
+export const CATALOG_PREFETCH_VIEWPORTS_BEFORE =
+  INFINITE_LIST_PREFETCH_VIEWPORTS_BEFORE;
+export const CATALOG_PREFETCH_VIEWPORTS_AFTER =
+  INFINITE_LIST_PREFETCH_VIEWPORTS_AFTER;
 
 export type CatalogEntityKind = "heroes" | "abilities";
 export type CatalogLoadDirection = ListLoadDirection;
@@ -22,4 +26,7 @@ export type {
   ListSlice,
   VersionedListSlice,
 } from "./infinite-list";
-export { infiniteListPrefetchRootMargin } from "./infinite-list";
+export {
+  infiniteListPrefetchMargins,
+  infiniteListPrefetchRootMargin,
+} from "./infinite-list";

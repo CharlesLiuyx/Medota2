@@ -1,8 +1,8 @@
-# 全局 List 无限滚动与 3× 预加载 Spec
+# 全局 List 无限滚动与上 7× / 下 10× 预加载 Spec
 
 > 状态：已实现并通过验收
 >
-> 最后更新：2026-08-31
+> 最后更新：2026-09-01
 >
 > 目标版本：Medota2 Global Infinite List v1
 >
@@ -16,7 +16,7 @@
 
 ## 1. 文档目的
 
-Medota2 的所有 List——无论是远程查询结果、本地已有数组、卡片网格、关系记录、审计记录还是表格行——统一使用无限滚动与惰性渲染，不再用“上一页 / 下一页”、页码或 `page x / y` 切断浏览，也不因集合当前较小就绕开共享行为。用户沿页面文档流持续滚动；接近已加载或已渲染范围任一端时，系统在可见区上方和下方各提前三个 viewport 加载或恢复内容。
+Medota2 的所有 List——无论是远程查询结果、本地已有数组、卡片网格、关系记录、审计记录还是表格行——统一使用无限滚动与惰性渲染，不再用“上一页 / 下一页”、页码或 `page x / y` 切断浏览，也不因集合当前较小就绕开共享行为。用户沿页面文档流持续滚动；接近已加载或已渲染范围任一端时，系统在可见区上方提前七个 viewport、下方提前十个 viewport 加载或恢复内容。
 
 本需求属于全局集合浏览的执行切面。它不改变 Hero、Ability、Facet 或来源记录的领域定义，也不改变 VPK SSOT、Catalog 原子版本和 provenance 边界。目标是把同一套持续浏览语法沉淀为 Design System 级『InfiniteList』：Catalog 只是远程 cursor 适配器之一，详情页的本地有界集合和表格行同样消费该基座。不能只删除 `/abilities` 截图中的分页按钮。
 
@@ -28,7 +28,7 @@ Medota2 的所有 List——无论是远程查询结果、本地已有数组、�
 
 - 全产品每个 List 统一使用连续、双向、惰性加载或惰性渲染的『InfiniteList』。
 - 远程 List 使用 cursor source adapter；本地数组使用 local source adapter；表格使用保持原生 row/header 语义的 table adapter。
-- 可见区上下各 `3 × viewport height` 是空间预取合同，不等同于固定条数或固定 chunk 数。
+- 可见区上方 `7 × viewport height`、下方 `10 × viewport height` 是空间预取合同，不等同于固定条数或固定 chunk 数。
 - 首屏仍由 Server Component 输出可读内容；后续 chunk 才由浏览器请求。
 - 下滚可持续取得后续结果；向上滚可恢复已回收的 DOM，并在从中段恢复时取得前序结果。
 - 滚动期间固定同一个 Catalog 与 asset dataset，避免版本撕裂、重复和漏项。
@@ -50,7 +50,7 @@ Medota2 的所有 List——无论是远程查询结果、本地已有数组、�
 | -------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
 | 【List】       | Collection / 列表        | 任何按稳定顺序重复呈现同类 item 的内容集合；可来自远程查询或本地数组，可呈现为卡片、行、网格、关系记录或审计记录。            |
 | 【可视窗口】   | Viewport                 | 浏览器文档视口；本需求不创建嵌套滚动容器。一个 viewport 的高度以当前根视口为准。                                              |
-| 【预取带】     | Prefetch band / Overscan | 可视窗口向上 `300vh`、向下 `300vh` 扩展后的区域；边界进入该区域即加载或恢复。                                                 |
+| 【预取带】     | Prefetch band / Overscan | 可视窗口向上 `700vh`、向下 `1000vh` 扩展后的区域；边界进入该区域即加载或恢复。                                                |
 | 【数据窗口】   | Chunk / Slice            | 一次从 source adapter 取得的有界连续片段；远程片段带双向 cursor，本地片段使用数组边界。                                       |
 | 【渲染窗口】   | Rendered window          | 当前真正挂载到 DOM 的 chunk 集合；至少覆盖上 3 屏、当前屏和下 3 屏。                                                          |
 | 【滚动锚点】   | Scroll anchor            | prepend、DOM 回收或历史恢复前后用来保持同一视觉位置的稳定实体及像素偏移。                                                     |
@@ -114,7 +114,7 @@ graph LR
 | `/heroes` Hero 结果                                                | 远程卡片 List              | 必须迁移到共享『InfiniteList』remote adapter；服务端按属性 rank + HeroID 稳定排序，跨 chunk 保持四属性分组与完整组计数。 |
 | `/abilities` Ability 结果                                          | 远程卡片 List              | 必须迁移到同一 remote adapter；删除分页 UI、页码文案和 `page` URL 输出。                                                 |
 | Hero detail 的普通 Abilities、Talents & Upgrades                   | 本地关系卡片 List          | 使用 local adapter 分块惰性渲染；保持 section 与 link 语义。                                                             |
-| Hero detail 的 Facets                                              | 本地卡片 List              | 使用 local adapter；数量很小时可能因完整落入 3× 预取带而立即渲染，这是空间合同的正常结果。                               |
+| Hero detail 的 Facets                                              | 本地卡片 List              | 使用 local adapter；数量很小时可能因完整落入预取带而立即渲染，这是空间合同的正常结果。                                   |
 | Hero detail 的 roles、source files、localizations、reference diffs | 本地审计 / 定义 List       | 全部接入 local adapter；`dl`、row 与 disclosure 语义不变。                                                               |
 | Hero detail 的 StatGroup rows                                      | 本地 definition List       | 使用 headless/local adapter，继续输出合法 `dl > div > dt/dd` 结构。                                                      |
 | Ability detail 的 AbilityValues                                    | 本地 table row List        | 使用 table adapter；继续输出原生 `table/thead/tbody/tr/th/td`，sentinel 与 spacer 使用合法跨列表格行。                   |
@@ -137,7 +137,7 @@ graph LR
 | `{catalogDatasetVersionId}`         | Remote Catalog 首屏 meta                 | 仅 Catalog source 使用；会话内固定                                                    |
 | `{assetDatasetVersionId}`           | Remote Catalog 首屏 meta                 | 仅 Catalog source 使用；会话内固定；图片路由必须真实按该版本读取                      |
 | `{previousCursor}` / `{nextCursor}` | remote source                            | opaque；边界耗尽时为 `null`；local/table source 使用数组区间                          |
-| `{prefetchMargin}`                  | Design System                            | 上下固定 `300vh`，resize 后按新 viewport 生效                                         |
+| `{prefetchMargin}`                  | Design System                            | 上方固定 `700vh`、下方固定 `1000vh`，resize 后按新 viewport 生效                      |
 | `{chunkLimit}`                      | source 合同                              | remote 由服务端固定上限；local/table 使用组件默认值或受控值，不按 viewport 猜固定条数 |
 | `{renderedChunks}`                  | 浏览器测量                               | 只保留预取带内 chunk、可见焦点所在 chunk 与锚点所需 chunk                             |
 | `{measuredHeight}`                  | ResizeObserver / 实际布局                | DOM 回收后生成等高 spacer，避免滚动条跳变                                             |
@@ -145,35 +145,35 @@ graph LR
 
 ### 7.2 状态机
 
-| 状态                   | 进入条件                                        | 退出条件                 | 可见反馈                                                        |
-| ---------------------- | ----------------------------------------------- | ------------------------ | --------------------------------------------------------------- |
-| `<initial>`            | 首屏 SSR                                        | hydration 完成           | 首批 items 立即可读，原生 list/table/dl 语义完整                |
-| `<idle>`               | 当前预取带已填满                                | 任一 sentinel 进入预取带 | 无额外噪声                                                      |
-| `<loading-before>`     | 顶部边界进入上方 300vh 且 source 尚有前序 slice | 成功 / 失败 / 取消       | Remote 显示顶部非阻塞 loading，`aria-busy=true`；local 直接恢复 |
-| `<loading-after>`      | 底部边界进入下方 300vh 且 source 尚有后序 slice | 成功 / 失败 / 取消       | Remote 显示底部非阻塞 loading，`aria-busy=true`；local 直接展开 |
-| `<error-before/after>` | 对应请求失败                                    | 原位重试成功或流身份变化 | 保留现有项、显示方向明确的重试                                  |
-| `<start/end>`          | previous / next cursor 为 `null`                | 流身份变化               | 末端只显示一次完成状态；起点不占视觉空间                        |
-| `<empty>`              | source items / 初始 total 为 0                  | source 身份变化          | 仅显示对应 Empty state，不启动 observer                         |
-| `<stale>`              | dataset/cursor/筛选身份不匹配或历史版本不可用   | 自动重置到当前流         | 清楚提示并安全重置，绝不混合数据                                |
+| 状态                   | 进入条件                                         | 退出条件                 | 可见反馈                                                        |
+| ---------------------- | ------------------------------------------------ | ------------------------ | --------------------------------------------------------------- |
+| `<initial>`            | 首屏 SSR                                         | hydration 完成           | 首批 items 立即可读，原生 list/table/dl 语义完整                |
+| `<idle>`               | 当前预取带已填满                                 | 任一 sentinel 进入预取带 | 无额外噪声                                                      |
+| `<loading-before>`     | 顶部边界进入上方 700vh 且 source 尚有前序 slice  | 成功 / 失败 / 取消       | Remote 显示顶部非阻塞 loading，`aria-busy=true`；local 直接恢复 |
+| `<loading-after>`      | 底部边界进入下方 1000vh 且 source 尚有后序 slice | 成功 / 失败 / 取消       | Remote 显示底部非阻塞 loading，`aria-busy=true`；local 直接展开 |
+| `<error-before/after>` | 对应请求失败                                     | 原位重试成功或流身份变化 | 保留现有项、显示方向明确的重试                                  |
+| `<start/end>`          | previous / next cursor 为 `null`                 | 流身份变化               | 末端只显示一次完成状态；起点不占视觉空间                        |
+| `<empty>`              | source items / 初始 total 为 0                   | source 身份变化          | 仅显示对应 Empty state，不启动 observer                         |
+| `<stale>`              | dataset/cursor/筛选身份不匹配或历史版本不可用    | 自动重置到当前流         | 清楚提示并安全重置，绝不混合数据                                |
 
 上下方向允许并行，但每个方向最多一个 in-flight 请求。同方向 cursor 只消费一次；错误不是终点。
 
 ## 8. L5 行为合同
 
-| 模式 / 状态     | 激活条件                                                                                      | 功能                                                      | 结果与反馈                                               |
-| --------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------- |
-| 初始浏览        | 打开含 List 的页面或 source 变化                                                              | SSR / 初始 local slice，随后观察上下边界                  | 无 skeleton 替换首屏内容                                 |
-| 向下预取        | 底部 sentinel 与运行时 `rootMargin: ${3 × viewportHeight}px 0px` 相交 `&& nextCursor != null` | 请求 after slice；若追加后边界仍在预取带，继续串行补齐    | 连续追加，不抢焦点                                       |
-| 向上预取        | 顶部 sentinel 与同一 root margin 相交 `&& previousCursor != null`                             | 请求 before slice或恢复已缓存 chunk                       | prepend 后用 ScrollAnchor 校正，无视觉跳跃               |
-| Local 向下展开  | local/table slice 的底部边界进入下方 300vh                                                    | 从本地数组取得下一 slice                                  | 不发网络请求，但与 remote 使用同一 reducer/去重/渲染窗口 |
-| Local 向上恢复  | spacer 或前序 local 边界进入上方 300vh                                                        | 从本地缓存恢复前序 slice                                  | 保持锚点与原生语义                                       |
-| DOM 惰性恢复    | spacer 进入任一方向 300vh 预取带                                                              | 用 source 缓存数据恢复真实 chunk                          | spacer 高度被实测内容替换                                |
-| DOM 回收        | chunk 完全离开上下 300vh `&&` 不含焦点 `&&` 不是当前锚点                                      | 记录高度并换成 spacer                                     | DOM 节点数不随总浏览量线性增长                           |
-| Source 身份变化 | 新 URL、筛选、locale 或本地 items 身份生效                                                    | abort 旧请求、提升 generation、清空旧窗口、回到新结果顶部 | 旧响应即使晚到也被丢弃                                   |
-| 请求失败        | fetch、解析或身份校验失败                                                                     | 保留 cursor 和已显示项；展示“重试加载更早/更多结果”       | 重试从同一 cursor 继续                                   |
-| Observer 不可用 | 浏览器无 IntersectionObserver                                                                 | 用 scroll + resize 的同等 300vh 边界检查降级              | 仍为自动连续加载                                         |
-| 辅助操作        | 自动加载错误或用户主动触发                                                                    | 提供非分页式“继续加载 / 重试”按钮                         | 不出现页码或前后页                                       |
-| 页面 / 详情往返 | 从任意 List item 进入下级页面后浏览器返回                                                     | 优先复用 mounted/history 状态并恢复 item 锚点             | 已浏览位置合理恢复，且可向上下继续                       |
+| 模式 / 状态     | 激活条件                                                                                         | 功能                                                       | 结果与反馈                                               |
+| --------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- | -------------------------------------------------------- |
+| 初始浏览        | 打开含 List 的页面或 source 变化                                                                 | SSR / 初始 local slice，随后观察上下边界                   | 无 skeleton 替换首屏内容                                 |
+| 向下预取        | 底部 sentinel 与运行时 `rootMargin` 的下方 `10 × viewportHeight` 相交 `&& nextCursor != null`    | 请求 after slice；若追加后边界仍在预取带，继续串行补齐     | 连续追加，不抢焦点                                       |
+| 向上预取        | 顶部 sentinel 与运行时 `rootMargin` 的上方 `7 × viewportHeight` 相交 `&& previousCursor != null` | 请求 before slice或恢复已缓存 chunk                        | prepend 后用 ScrollAnchor 校正，无视觉跳跃               |
+| Local 向下展开  | local/table slice 的底部边界进入下方 1000vh                                                      | 从本地数组取得下一 slice                                   | 不发网络请求，但与 remote 使用同一 reducer/去重/渲染窗口 |
+| Local 向上恢复  | spacer 或前序 local 边界进入上方 700vh                                                           | 从本地缓存恢复前序 slice                                   | 保持锚点与原生语义                                       |
+| DOM 惰性恢复    | spacer 进入其所在方向对应的预取带                                                                | 用 source 缓存数据恢复真实 chunk                           | spacer 高度被实测内容替换                                |
+| DOM 回收        | chunk 完全离开上方 700vh / 下方 1000vh `&&` 不含焦点 `&&` 不是当前锚点                           | 记录高度并换成 spacer                                      | DOM 节点数不随总浏览量线性增长                           |
+| Source 身份变化 | 新 URL、筛选、locale 或本地 items 身份生效                                                       | abort 旧请求、提升 generation、清空旧窗口、回到新结果顶部  | 旧响应即使晚到也被丢弃                                   |
+| 请求失败        | fetch、解析或身份校验失败                                                                        | 保留 cursor 和已显示项；展示“重试加载更早/更多结果”        | 重试从同一 cursor 继续                                   |
+| Observer 不可用 | 浏览器无 IntersectionObserver                                                                    | 用 scroll + resize 的同等上 700vh / 下 1000vh 边界检查降级 | 仍为自动连续加载                                         |
+| 辅助操作        | 自动加载错误或用户主动触发                                                                       | 提供非分页式“继续加载 / 重试”按钮                          | 不出现页码或前后页                                       |
+| 页面 / 详情往返 | 从任意 List item 进入下级页面后浏览器返回                                                        | 优先复用 mounted/history 状态并恢复 item 锚点              | 已浏览位置合理恢复，且可向上下继续                       |
 
 键盘焦点永不因 append、prepend 或 DOM 回收而被主动移动。含焦点的 chunk 不回收；新增内容用 polite live status 报告，不逐卡朗读。
 
@@ -220,7 +220,7 @@ interface ListSlice<T> {
 2. URL 只保存可分享的查询意图：搜索、筛选、排序和 locale；像素位置与 cursor 属于浏览历史状态。
 3. 旧 `/abilities?page=N` 规范化到移除 `page` 的同筛选 URL，从列表顶部开始；无错误空页。
 4. 一个 List 只接受同一 `sourceIdentity` 的 slice；Remote Catalog 还必须满足同一 `datasetVersionId + assetDatasetVersionId`。
-5. 3× 是上下对称的空间距离。初始 chunk 不足时可以连续取多个 chunk，直到边界离开预取带或真正耗尽。
+5. 预取空间向上为 7×、向下为 10×；向下保留更大的提前量以适配主要浏览方向。初始 chunk 不足时可以连续取多个 chunk，直到边界离开预取带或真正耗尽。
 6. append / prepend 后顺序必须等同一次性执行同一稳定查询的结果；不得重复、漏项或跨组乱序。
 7. prepend 和 spacer 恢复必须保持 ScrollAnchor；允许布局本身的正常图片解码变化，不允许代码造成可见跳动。
 8. 已显示内容在 continuation 失败时继续可点击、可聚焦、可返回；错误不得清空 List。local source 不制造伪网络 loading/error。
@@ -245,9 +245,9 @@ interface ListSlice<T> {
 
 - cursor：Unicode sort key、畸形 base64、超长输入、错 kind、错 filter、错 locale、错 dataset、双向 round-trip。
 - 通用 window reducer：remote/local/table 的 append、prepend、稳定 key 去重、重复边界、防重入、stale generation、abort、retry 与 end。
-- IntersectionObserver 精确使用上下 `3 × window.innerHeight` 的像素 root margin；不能使用按 root 宽度解析的百分比。resize 时重建 observer，无 observer 降级等价。
+- IntersectionObserver 精确使用上方 `7 × window.innerHeight`、下方 `10 × window.innerHeight` 的像素 root margin；不能使用按 root 宽度解析的百分比。resize 时重建 observer，无 observer 降级等价。
 - prepend 与 spacer 恢复保持锚点；含焦点 chunk 不回收；离开预取带的 chunk 变 spacer。
-- local adapter 在小集合、大集合、空集合中与 remote 使用同一 300vh/virtual chunk 规则；table/dl/list 的 HTML 语义快照合法。
+- local adapter 在小集合、大集合、空集合中与 remote 使用同一上 700vh / 下 1000vh virtual chunk 规则；table/dl/list 的 HTML 语义快照合法。
 - 旧 `page` URL 被安全移除，其他 canonical filters 不丢失。
 
 ### 12.2 PostgreSQL integration
@@ -261,7 +261,7 @@ interface ListSlice<T> {
 
 - 使用至少跨 4 个 chunk 的合成 fixture；Desktop Chrome 与 Pixel 7 都连续下滚、向上恢复并到达 footer。
 - Hero detail 与 Ability detail 的每一种内容 List 都能读取完整 items；在强制小 chunk 测试模式下可观察 local/table adapter 的向下展开与向上恢复。
-- 页面没有分页 nav、页码文案或 `page` URL；加载触发点落在上下 3 屏预取带。
+- 页面没有分页 nav、页码文案或 `page` URL；加载触发点落在上方 7 屏、下方 10 屏预取带。
 - 快速切换筛选时旧响应不污染；网络失败保留卡片并可重试；end 后不再请求。
 - 详情→后退恢复合理锚点；键盘可进入所有已渲染卡片，新增内容不抢焦点。
 - 长距离滚动后卡片 DOM 数保持有界；视觉基线固定初始窗口、loading/error/end 状态，避免 full-page 截图触发不确定的无限加载。
@@ -269,7 +269,7 @@ interface ListSlice<T> {
 ## 13. 验收标准
 
 - [x] `/heroes`、`/abilities` 以及所有 Hero/Ability detail 内容 List 均使用同一『InfiniteList』controller；没有分页控件、页码或公开 page 状态。
-- [x] Remote、local 与 table List 都在距可见区上 / 下 3 个 viewport 时加载、展开或恢复，且 resize 后仍正确。
+- [x] Remote、local 与 table List 都在距可见区上方 7 个 / 下方 10 个 viewport 时加载、展开或恢复，且 resize 后仍正确。
 - [x] `/heroes` 跨 chunk 后保持 Strength → Agility → Intelligence → Universal 与组内稳定顺序，组计数是完整筛选计数。
 - [x] `/abilities` 可连续加载超过 4 个 chunk；一次到底与 keyset 遍历结果一致。
 - [x] 连续上下滚动无缺项、重复、乱序、焦点丢失或视觉锚点跳跃。
@@ -284,7 +284,7 @@ interface ListSlice<T> {
 
 1. **Spec 与合同**：固化本文；更新 Hero Catalog v2、历史 MVP、Design System 与 README 的冲突条款。
 2. **查询基座**：共享 remote cursor codec / ListSlice contract；Heroes、Abilities 双向 keyset；按 dataset 固定资产查询。
-3. **交互基座**：全局 InfiniteList controller + remote/local/table adapters、双 sentinel、300vh 预取、并发/取消/重试、chunk 测量与 spacer。
+3. **交互基座**：全局 InfiniteList controller + remote/local/table adapters、双 sentinel、上 700vh / 下 1000vh 预取、并发/取消/重试、chunk 测量与 spacer。
 4. **页面迁移**：Abilities 删除分页；Heroes 改为 lazy 分组；Hero/Ability detail 的全部内容集合和表格接入 local/table adapter；保留现有筛选、卡片和未提交 DatasetBadge 改动。
 5. **验证**：单元、数据库、E2E、视觉与手工滚动回归；本文状态改为“已实现并通过验收”。
 

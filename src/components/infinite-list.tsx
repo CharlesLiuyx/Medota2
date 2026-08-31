@@ -11,6 +11,7 @@ import {
 } from "react";
 import {
   INFINITE_LIST_LOCAL_CHUNK_SIZE,
+  infiniteListPrefetchMargins,
   infiniteListPrefetchRootMargin,
   type InfiniteListProblem,
   type ListLoadDirection,
@@ -1114,7 +1115,8 @@ function findNonEmptyChunk<T>(
 }
 
 function isWithinPrefetchBand(rect: DOMRect, viewportHeight: number): boolean {
-  return rect.bottom >= -3 * viewportHeight && rect.top <= 4 * viewportHeight;
+  const { before, after } = infiniteListPrefetchMargins(viewportHeight);
+  return rect.bottom >= -before && rect.top <= viewportHeight + after;
 }
 
 function isListSlice(value: unknown): value is ListSlice<unknown> {

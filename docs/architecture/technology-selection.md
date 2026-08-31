@@ -10,7 +10,7 @@
 
 本文独立记录 Medota2 的技术选型上下文、权衡和演进边界。它回答“为什么这样选”和“各运行时负责什么”，不定义某个产品版本的具体页面与字段。
 
-第一个产品切片见[英雄元数据显示 MVP 功能 Spec](../specs/hero-metadata-mvp.md)，全产品内容 List 的共享加载与渲染边界见[全局 List 无限滚动与 3× 预加载 Spec](../specs/infinite-lists.md)。后者取代早期分页或一次性 DOM 全量渲染条款。本文中的 Web、PostgreSQL、TypeScript Worker、权限边界和工具链已经由 MVP 实现；Rust 和后续重计算能力仍是演进规则。
+第一个产品切片见[英雄元数据显示 MVP 功能 Spec](../specs/hero-metadata-mvp.md)，全产品内容 List 的共享加载与渲染边界见[全局 List 无限滚动与上 7× / 下 10× 预加载 Spec](../specs/infinite-lists.md)。后者取代早期分页或一次性 DOM 全量渲染条款。本文中的 Web、PostgreSQL、TypeScript Worker、权限边界和工具链已经由 MVP 实现；Rust 和后续重计算能力仍是演进规则。
 
 ## 2. 项目上下文
 

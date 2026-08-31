@@ -6,7 +6,7 @@
 >
 > 版本范围：Medota2 第一个可运行版本
 >
-> 后续全局列表合同：[全局 List 无限滚动与 3× 预加载 Spec](infinite-lists.md)
+> 后续全局列表合同：[全局 List 无限滚动与上 7× / 下 10× 预加载 Spec](infinite-lists.md)
 
 ## 1. 文档目的
 

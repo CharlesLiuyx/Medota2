@@ -10,7 +10,10 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { InfiniteList } from "@/components/infinite-list";
-import { infiniteListPrefetchRootMargin } from "@/domain/infinite-list";
+import {
+  INFINITE_LIST_PREFETCH_VIEWPORTS_BEFORE,
+  infiniteListPrefetchRootMargin,
+} from "@/domain/infinite-list";
 
 interface Item {
   id: string;
@@ -91,7 +94,7 @@ afterEach(() => {
 });
 
 describe("InfiniteList", () => {
-  it("uses the exact symmetric 3x-height margin, updates it on resize, and appends a remote slice", async () => {
+  it("uses exact 7x-before and 10x-after margins, updates them on resize, and appends a remote slice", async () => {
     vi.stubGlobal("innerHeight", 720);
     const fetchMock = vi.fn().mockResolvedValue(
       response({
@@ -111,12 +114,12 @@ describe("InfiniteList", () => {
     expect(observers[0].rootMargin).toBe(
       infiniteListPrefetchRootMargin(window.innerHeight),
     );
-    expect(observers[0].rootMargin).toBe("2160px 0px 2160px 0px");
+    expect(observers[0].rootMargin).toBe("5040px 0px 7200px 0px");
 
     vi.stubGlobal("innerHeight", 900);
     fireEvent(window, new Event("resize"));
     await waitFor(() => expect(observers).toHaveLength(2));
-    expect(observers[1].rootMargin).toBe("2700px 0px 2700px 0px");
+    expect(observers[1].rootMargin).toBe("6300px 0px 9000px 0px");
 
     const bottom = document.querySelector(
       '[data-infinite-list-sentinel="after"]',
@@ -409,7 +412,12 @@ describe("InfiniteList", () => {
     );
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
       function (this: HTMLElement) {
-        if (this.textContent?.includes("Alpha")) return rect(-5_000, 120);
+        if (this.textContent?.includes("Alpha")) {
+          return rect(
+            -(INFINITE_LIST_PREFETCH_VIEWPORTS_BEFORE + 1) * window.innerHeight,
+            120,
+          );
+        }
         if (this.textContent?.includes("Beta")) return rect(100, 120);
         return rect(0, 1);
       },
@@ -441,7 +449,12 @@ describe("InfiniteList", () => {
   it("keeps a chunk mounted while one of its disclosures is open", async () => {
     vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
       function (this: HTMLElement) {
-        if (this.textContent?.includes("Alpha")) return rect(-5_000, 120);
+        if (this.textContent?.includes("Alpha")) {
+          return rect(
+            -(INFINITE_LIST_PREFETCH_VIEWPORTS_BEFORE + 1) * window.innerHeight,
+            120,
+          );
+        }
         if (this.textContent?.includes("Beta")) return rect(100, 120);
         return rect(0, 1);
       },

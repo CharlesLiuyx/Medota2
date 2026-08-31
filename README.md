@@ -27,7 +27,7 @@ Medota2 把锁定 commit 的 Dota 2 原始数据转换为可复现的 PostgreSQL
 - `/heroes` 按 Strength、Agility、Intelligence、Universal 分组；Hero 详情展示 Abilities、Talents & Upgrades、Raw 与 Provenance。
 - `/abilities` 默认展示 current，并可查询 indirect、defined/unbound、template 和 deprecated；详情展示逐级数值、关系、原始定义和来源。
 - 首期支持 `zh-CN` 与 `en`；本地化使用行模型，增加 locale 不需要修改核心实体表。
-- 所有内容列表共享无限滚动、cursor continuation 和 3× 视口预加载合同。
+- 所有内容列表共享无限滚动、cursor continuation 和上方 7× / 下方 10× 视口预加载合同。
 - Hero 与 Ability 图标以内容寻址二进制和 `original`、`w64`、`w128`、`w256` LoD 存入 PostgreSQL。
 - Catalog 与 Asset Dataset 分别版本化；替换图标或调整 LoD 不需要重建玩法数据。
 - Design System 使用语义 token、键盘焦点与桌面/移动响应式规则，组件画廊位于 `/design-system`。
@@ -296,7 +296,7 @@ Medota2/
 
 - [Medota2 Domain Context](CONTEXT.md)
 - [Hero Catalog v2 Spec](docs/specs/hero-catalog-v2.md)
-- [全局 List 无限滚动与 3× 预加载 Spec](docs/specs/infinite-lists.md)
+- [全局 List 无限滚动与上 7× / 下 10× 预加载 Spec](docs/specs/infinite-lists.md)
 - [Medota2 Design System](docs/design-system.md)
 - [技术选型与数据处理架构](docs/architecture/technology-selection.md)
 - [Hero Catalog 更新操作手册](docs/operations/catalog-refresh.md)

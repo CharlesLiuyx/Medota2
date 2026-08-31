@@ -8,7 +8,7 @@
 >
 > 前置版本：[英雄元数据显示 MVP 功能 Spec](hero-metadata-mvp.md)
 >
-> 全局列表合同：[全局 List 无限滚动与 3× 预加载 Spec](infinite-lists.md)
+> 全局列表合同：[全局 List 无限滚动与上 7× / 下 10× 预加载 Spec](infinite-lists.md)
 
 ## 1. 文档目的
 
@@ -22,7 +22,7 @@
 
 本文同时作为实现合同与验收记录。Hero Catalog v2 已落地；本文中与旧 MVP 冲突的 Catalog 合同取代[英雄元数据显示 MVP 功能 Spec](hero-metadata-mvp.md)中的对应范围。
 
-全产品 List 的加载与渲染以[全局 List 无限滚动与 3× 预加载 Spec](infinite-lists.md)为更高优先级合同；它取代本文涉及分页、页码 URL 或一次性 DOM 全量渲染的旧条款，Hero Catalog 其余领域、来源和版本边界保持不变。
+全产品 List 的加载与渲染以[全局 List 无限滚动与上 7× / 下 10× 预加载 Spec](infinite-lists.md)为更高优先级合同；它取代本文涉及分页、页码 URL 或一次性 DOM 全量渲染的旧条款，Hero Catalog 其余领域、来源和版本边界保持不变。
 
 ## 2. 已确认决策
 
