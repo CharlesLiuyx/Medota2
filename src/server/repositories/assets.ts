@@ -1,7 +1,8 @@
 import "server-only";
 
-import { getWebPool } from "@/server/db/client";
+import { getWebDatabase } from "@/server/db/client";
 import { assertSchemaCurrent } from "@/server/db/migrations";
+import type { VerifiedDatabase } from "@/server/environment/contract";
 
 export type AssetEntityType = "hero" | "ability";
 
@@ -33,9 +34,11 @@ interface ActiveAssetVariantRow {
 
 let schemaPromise: Promise<string> | undefined;
 
-async function ensureReady(): Promise<void> {
-  schemaPromise ??= assertSchemaCurrent(getWebPool());
+async function ensureReady(): Promise<VerifiedDatabase> {
+  const database = await getWebDatabase();
+  schemaPromise ??= assertSchemaCurrent(database);
   await schemaPromise;
+  return database;
 }
 
 export async function getActiveEntityIcon(
@@ -44,8 +47,8 @@ export async function getActiveEntityIcon(
   requestedWidth: number | null,
   assetDatasetVersionId?: string,
 ): Promise<ActiveAssetVariant | null> {
-  await ensureReady();
-  const result = await getWebPool().query<ActiveAssetVariantRow>(
+  const database = await ensureReady();
+  const result = await database.query<ActiveAssetVariantRow>(
     `SELECT b.content, b.content_sha256, b.mime_type, b.width, b.height,
        b.byte_size::text, v.lod_key, v.target_width, o.source_type, o.logical_path
      FROM entity_asset_bindings binding

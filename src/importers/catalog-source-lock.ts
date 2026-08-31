@@ -12,6 +12,7 @@ import {
   VPK_SOURCE_REPOSITORY,
 } from "@/importers/dota-vpk/constants";
 import { canonicalJsonSha256, sha256 } from "@/lib/hash";
+import { assertOutboundNetworkAllowed } from "@/config/network-policy";
 
 const execFileAsync = promisify(execFile);
 const sha = /^[0-9a-f]{40}$/u;
@@ -239,6 +240,7 @@ async function ensureMirror(
 ): Promise<void> {
   const exists = await stat(config.mirrorPath).catch(() => null);
   if (!exists) {
+    assertOutboundNetworkAllowed(config.remoteUrl, "Catalog Git adapter");
     await mkdir(dirname(config.mirrorPath), { recursive: true });
     await gitText(
       process.cwd(),
@@ -258,6 +260,7 @@ async function ensureMirror(
     }
   }
   if (fetchRemote) {
+    assertOutboundNetworkAllowed(config.remoteUrl, "Catalog Git adapter");
     await gitText(config.mirrorPath, ["fetch", "--prune", "origin"], true);
   }
 }

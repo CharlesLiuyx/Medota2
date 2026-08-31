@@ -61,7 +61,7 @@ html {
   background: var(--surface-canvas);
   color: var(--text-primary);
   color-scheme: dark;
-  scroll-padding-top: 88px;
+  scroll-padding-top: 124px;
 }
 
 body {

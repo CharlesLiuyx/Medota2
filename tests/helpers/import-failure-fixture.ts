@@ -1,11 +1,12 @@
-import pg from "pg";
-
-const { Pool } = pg;
+import {
+  openVerifiedDatabase,
+  type VerifiedDatabase,
+} from "@/server/environment/contract";
 
 const FAILURE_TRANSFORMER_VERSION = "hero-vpk-v1/e2e-isolated-failure-scenario";
 
 export async function insertImportFailureFixture(): Promise<string> {
-  const pool = createTestPool();
+  const pool = await createTestPool();
   try {
     const result = await pool.query<{ id: string }>(
       `INSERT INTO import_runs
@@ -36,7 +37,7 @@ export async function insertImportFailureFixture(): Promise<string> {
 }
 
 export async function deleteImportFailureFixture(id: string): Promise<void> {
-  const pool = createTestPool();
+  const pool = await createTestPool();
   try {
     await pool.query(
       `DELETE FROM import_runs
@@ -48,12 +49,6 @@ export async function deleteImportFailureFixture(id: string): Promise<void> {
   }
 }
 
-function createTestPool(): pg.Pool {
-  const databaseUrl = process.env.DATABASE_URL_MIGRATION_TEST;
-  if (!databaseUrl || !databaseUrl.includes("_test")) {
-    throw new Error(
-      "The isolated failure scenario requires DATABASE_URL_MIGRATION_TEST.",
-    );
-  }
-  return new Pool({ connectionString: databaseUrl, max: 1 });
+function createTestPool(): Promise<VerifiedDatabase> {
+  return openVerifiedDatabase({ role: "migration", operation: "seed" });
 }

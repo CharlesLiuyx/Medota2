@@ -1,21 +1,22 @@
 import { performance } from "node:perf_hooks";
-import pg from "pg";
-import { getDatabaseUrl, type DatabaseTarget } from "@/config/env";
+import { getDatabaseConfirmation } from "@/config/env";
+import type { DatabaseOperation } from "@/domain/environment";
 import type { ImportIssue, ParsedHeroDataset } from "@/domain/heroes";
 import { assertSchemaCurrent } from "@/server/db/migrations";
+import {
+  openVerifiedDatabase,
+  type VerifiedDatabase,
+} from "@/server/environment/contract";
 
-const { Pool } = pg;
+type WorkerOperation = Extract<
+  DatabaseOperation,
+  "read" | "import" | "review" | "promote" | "rollback"
+>;
 
-export function createWorkerPool(target: DatabaseTarget = "main"): pg.Pool {
-  return new Pool({
-    connectionString: getDatabaseUrl("worker", target),
-    application_name: "medota2-data-worker",
-    max: 4,
-  });
-}
+type WorkerMutationOperation = Exclude<WorkerOperation, "read">;
 
 export async function createImportRun(
-  pool: pg.Pool,
+  pool: VerifiedDatabase<"import">,
   input: {
     sourceKind: "vpk" | "dotaconstants" | "comparison";
     commit: string;
@@ -39,7 +40,7 @@ export async function createImportRun(
 }
 
 export async function updateRunStage(
-  pool: pg.Pool,
+  pool: VerifiedDatabase<"import">,
   runId: string,
   stage: string,
 ): Promise<void> {
@@ -50,7 +51,7 @@ export async function updateRunStage(
 }
 
 export async function failImportRun(
-  pool: pg.Pool,
+  pool: VerifiedDatabase<"import">,
   runId: string,
   stage: string,
   error: unknown,
@@ -87,13 +88,35 @@ export async function failImportRun(
   );
 }
 
-export async function prepareWorker(target: DatabaseTarget = "main"): Promise<{
-  pool: pg.Pool;
+interface PreparedWorker<Operation extends WorkerOperation> {
+  pool: VerifiedDatabase<Operation>;
   targetSchemaVersion: string;
-}> {
-  const pool = createWorkerPool(target);
-  const targetSchemaVersion = await assertSchemaCurrent(pool);
-  return { pool, targetSchemaVersion };
+}
+
+export function prepareWorker(
+  operation: "read",
+): Promise<PreparedWorker<"read">>;
+export function prepareWorker<Operation extends WorkerMutationOperation>(
+  operation: Operation,
+): Promise<PreparedWorker<Operation>>;
+export async function prepareWorker(
+  operation: WorkerOperation,
+): Promise<PreparedWorker<WorkerOperation>> {
+  const pool: VerifiedDatabase<WorkerOperation> =
+    operation === "read"
+      ? await openVerifiedDatabase({ role: "web", operation: "read" })
+      : await openVerifiedDatabase({
+          role: "worker",
+          operation: operation satisfies WorkerMutationOperation,
+          confirmation: getDatabaseConfirmation(),
+        });
+  try {
+    const targetSchemaVersion = await assertSchemaCurrent(pool);
+    return { pool, targetSchemaVersion };
+  } catch (error) {
+    await pool.end();
+    throw error;
+  }
 }
 
 export function startMetrics(): {

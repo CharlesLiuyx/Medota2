@@ -1,7 +1,10 @@
 import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import type { Pool, PoolClient } from "pg";
+import type {
+  VerifiedDatabase,
+  VerifiedSession,
+} from "@/server/environment/contract";
 
 export interface MigrationIdentity {
   id: string;
@@ -40,9 +43,11 @@ export async function currentTargetSchemaVersion(
   return `${latest.id}:${latest.sha256}`;
 }
 
-export async function ensureMigrationLedger(client: PoolClient): Promise<void> {
+export async function ensureMigrationLedger(
+  client: VerifiedSession,
+): Promise<void> {
   await client.query(`
-    CREATE TABLE IF NOT EXISTS schema_migrations (
+    CREATE TABLE IF NOT EXISTS public.schema_migrations (
       migration_id text PRIMARY KEY,
       file_sha256 text NOT NULL CHECK (file_sha256 ~ '^[0-9a-f]{64}$'),
       applied_at timestamptz NOT NULL DEFAULT now()
@@ -51,11 +56,11 @@ export async function ensureMigrationLedger(client: PoolClient): Promise<void> {
 }
 
 export async function assertSchemaCurrent(
-  pool: Pool,
+  database: VerifiedDatabase,
   root = process.cwd(),
 ): Promise<string> {
   const migrations = await listMigrations(root);
-  const result = await pool.query<{
+  const result = await database.query<{
     migration_id: string;
     file_sha256: string;
   }>(

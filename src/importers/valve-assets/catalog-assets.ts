@@ -38,6 +38,15 @@ const MAX_INPUT_PIXELS = 16_777_216;
 const EMPTY_STEAM_IMAGE_MAP: SteamStaticImageMap = {
   heroes: new Map(),
   abilities: new Map(),
+  provenance: {
+    sourceRepository: "odota/dotaconstants",
+    sourceRemoteUrl: "",
+    sourceCommit: "",
+    sourceDirty: false,
+    sourceInputsMatchHead: true,
+    manifestSha256: "",
+    files: [],
+  },
 };
 
 interface AssetJob {
@@ -271,8 +280,12 @@ export async function prepareCatalogAssets(
     errors: assets.filter((asset) => asset.sourceStatus === "error").length,
     total: assets.length,
   };
-  const manifestSha256 = canonicalJsonSha256(
-    assets.map((asset) => ({
+  const sourceProvenance = {
+    dotaconstantsImageMap: downloadMissing ? steamImageMap.provenance : null,
+  };
+  const manifestSha256 = canonicalJsonSha256({
+    sourceProvenance,
+    assets: assets.map((asset) => ({
       entityType: asset.entityType,
       entityKey: asset.entityKey,
       assetKind: asset.assetKind,
@@ -286,7 +299,7 @@ export async function prepareCatalogAssets(
         contentSha256: variant.contentSha256,
       })),
     })),
-  );
+  });
 
   return {
     assets,
@@ -294,6 +307,7 @@ export async function prepareCatalogAssets(
     clientVersion: assetClientVersion ?? catalogClientVersion,
     providerVersion: ASSET_PROVIDER_VERSION,
     lodPolicyVersion: ASSET_LOD_POLICY_VERSION,
+    sourceProvenance,
     counts,
   };
 }

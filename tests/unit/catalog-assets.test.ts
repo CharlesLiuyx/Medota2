@@ -1,6 +1,8 @@
+import { execFile } from "node:child_process";
 import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { promisify } from "node:util";
 import sharp from "sharp";
 import { afterEach, describe, expect, it } from "vitest";
 import {
@@ -18,6 +20,7 @@ import {
 import type { SteamStaticFetcher } from "@/importers/valve-assets/steam-static-assets";
 
 const roots: string[] = [];
+const execFileAsync = promisify(execFile);
 
 afterEach(async () => {
   await Promise.all(
@@ -167,6 +170,7 @@ describe("database-backed catalog asset preparation", () => {
         }),
       ),
     ]);
+    await initializeDotaconstantsCheckout(root);
     const [heroBytes, abilityBytes, emptyBytes] = await Promise.all([
       pngBytes(256, 144, "#b91c1c"),
       pngBytes(128, 128, "#1d4ed8"),
@@ -220,6 +224,22 @@ describe("database-backed catalog asset preparation", () => {
       generatedFallback: 0,
       total: 3,
     });
+    expect(result.sourceProvenance.dotaconstantsImageMap).toMatchObject({
+      sourceRepository: "odota/dotaconstants",
+      sourceRemoteUrl: "https://github.com/odota/dotaconstants.git",
+      sourceDirty: false,
+      sourceInputsMatchHead: true,
+      files: [
+        { sourcePath: "build/heroes.json" },
+        { sourcePath: "build/abilities.json" },
+      ],
+    });
+    expect(result.sourceProvenance.dotaconstantsImageMap?.sourceCommit).toMatch(
+      /^[0-9a-f]{40}$/u,
+    );
+    expect(
+      result.sourceProvenance.dotaconstantsImageMap?.manifestSha256,
+    ).toMatch(/^[0-9a-f]{64}$/u);
     expect(
       result.assets.find((asset) => asset.entityKey === "npc_dota_hero_axe"),
     ).toMatchObject({
@@ -387,6 +407,33 @@ describe("database-backed catalog asset preparation", () => {
     expect(clean.assets[0].metadata).not.toHaveProperty("sourceStatus");
   });
 });
+
+async function initializeDotaconstantsCheckout(root: string): Promise<void> {
+  await execFileAsync("git", ["init", "--quiet"], { cwd: root });
+  await execFileAsync("git", ["config", "user.name", "Medota2 Test"], {
+    cwd: root,
+  });
+  await execFileAsync(
+    "git",
+    ["config", "user.email", "medota2-test@example.invalid"],
+    { cwd: root },
+  );
+  await execFileAsync(
+    "git",
+    ["remote", "add", "origin", "https://github.com/odota/dotaconstants.git"],
+    { cwd: root },
+  );
+  await execFileAsync(
+    "git",
+    ["add", "build/heroes.json", "build/abilities.json"],
+    {
+      cwd: root,
+    },
+  );
+  await execFileAsync("git", ["commit", "--quiet", "-m", "fixture"], {
+    cwd: root,
+  });
+}
 
 async function writeExtractionManifest(
   root: string,

@@ -1,4 +1,5 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
+import { expect, test } from "./test-fixture";
 
 const TABLE_LIST = 'table[data-infinite-list][aria-label="Ability values"]';
 

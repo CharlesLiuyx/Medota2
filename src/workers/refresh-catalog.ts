@@ -13,7 +13,7 @@ const execFileAsync = promisify(execFile);
 async function main(): Promise<void> {
   const config = await getCatalogSourceConfig();
   const commit = await discoverRemoteCommit(config.remoteUrl);
-  const { pool } = await prepareWorker();
+  const { pool } = await prepareWorker("read");
   try {
     const active = await pool.query<{ source_commit: string }>(
       `SELECT s.source_commit FROM dataset_heads h
@@ -32,7 +32,7 @@ async function main(): Promise<void> {
   const locked = await createCatalogSourceLock(commit);
   const { stdout, stderr } = await execFileAsync(
     "pnpm",
-    ["data:import:catalog", "--lock", locked.path],
+    ["exec", "tsx", "src/workers/import-catalog.ts", "--lock", locked.path],
     {
       cwd: process.cwd(),
       encoding: "utf8",

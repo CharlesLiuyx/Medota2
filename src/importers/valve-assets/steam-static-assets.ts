@@ -1,6 +1,6 @@
-import { readFile } from "node:fs/promises";
-import { resolve } from "node:path";
 import sharp from "sharp";
+import { assertOutboundNetworkAllowed } from "@/config/network-policy";
+import { inspectGitCheckout } from "@/importers/git-checkout";
 
 export const STEAM_STATIC_SOURCE = "Valve Steam static CDN";
 export const STEAM_STATIC_ORIGIN = "https://cdn.steamstatic.com";
@@ -17,6 +17,19 @@ const ALLOWED_FINAL_HOSTS = new Set([
 export interface SteamStaticImageMap {
   heroes: Map<string, string>;
   abilities: Map<string, string>;
+  provenance: {
+    sourceRepository: "odota/dotaconstants";
+    sourceRemoteUrl: string;
+    sourceCommit: string;
+    sourceDirty: boolean;
+    sourceInputsMatchHead: true;
+    manifestSha256: string;
+    files: Array<{
+      sourcePath: string;
+      sha256: string;
+      sizeBytes: number;
+    }>;
+  };
 }
 
 export interface SteamStaticSource {
@@ -36,10 +49,13 @@ export type SteamStaticFetcher = (
 export async function loadDotaconstantsSteamImageMap(
   dotaconstantsRoot: string,
 ): Promise<SteamStaticImageMap> {
-  const [heroesJson, abilitiesJson] = await Promise.all([
-    readFile(resolve(dotaconstantsRoot, "build/heroes.json"), "utf8"),
-    readFile(resolve(dotaconstantsRoot, "build/abilities.json"), "utf8"),
+  const snapshot = await inspectGitCheckout(dotaconstantsRoot, [
+    "build/heroes.json",
+    "build/abilities.json",
   ]);
+  const files = new Map(snapshot.files.map((file) => [file.path, file]));
+  const heroesJson = files.get("build/heroes.json")!.text;
+  const abilitiesJson = files.get("build/abilities.json")!.text;
   const heroes = new Map<string, string>();
   for (const value of Object.values(parseRecord(heroesJson, "heroes.json"))) {
     if (!isRecord(value) || typeof value.name !== "string") continue;
@@ -54,7 +70,23 @@ export async function loadDotaconstantsSteamImageMap(
     const path = normalizedDotaReactPath(value.img);
     if (path) abilities.set(internalName, path);
   }
-  return { heroes, abilities };
+  return {
+    heroes,
+    abilities,
+    provenance: {
+      sourceRepository: "odota/dotaconstants",
+      sourceRemoteUrl: snapshot.remoteUrl,
+      sourceCommit: snapshot.commit,
+      sourceDirty: snapshot.dirty,
+      sourceInputsMatchHead: snapshot.inputsMatchHead,
+      manifestSha256: snapshot.manifestSha256,
+      files: snapshot.files.map((file) => ({
+        sourcePath: file.path,
+        sha256: file.sha256,
+        sizeBytes: file.sizeBytes,
+      })),
+    },
+  };
 }
 
 export function derivedSteamHeroPath(internalName: string): string | null {
@@ -92,6 +124,7 @@ export async function readSteamStaticSource(
   const normalizedPath = normalizedDotaReactPath(path);
   if (!normalizedPath) return null;
   const sourceUrl = new URL(normalizedPath, STEAM_STATIC_ORIGIN).href;
+  assertOutboundNetworkAllowed(sourceUrl, "Steam static asset adapter");
   const response = await fetcher(sourceUrl, {
     headers: {
       Accept: "image/png,image/webp,image/jpeg",

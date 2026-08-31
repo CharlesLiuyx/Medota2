@@ -1,16 +1,16 @@
-import type { PoolClient } from "pg";
 import type {
   CatalogProjection,
   CatalogProjectionEntity,
 } from "@/domain/catalog-diff";
 import { canonicalJsonSha256 } from "@/lib/hash";
+import type { VerifiedSession } from "@/server/environment/contract";
 
 interface VersionRow {
   selector_manifest_sha256: string;
 }
 
 export async function loadCatalogProjection(
-  client: PoolClient,
+  client: VerifiedSession,
   datasetVersionId: string,
 ): Promise<CatalogProjection> {
   const version = await client.query<VersionRow>(

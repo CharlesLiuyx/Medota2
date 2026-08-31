@@ -8,7 +8,7 @@ async function main(): Promise<void> {
   if (decision !== "approved" && decision !== "rejected") {
     throw new Error("--decision must be approved or rejected.");
   }
-  const { pool } = await prepareWorker();
+  const { pool } = await prepareWorker("review");
   try {
     await pool.query("SELECT review_hero_catalog_version($1, $2, $3)", [
       candidate,

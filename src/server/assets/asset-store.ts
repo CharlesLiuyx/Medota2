@@ -1,10 +1,12 @@
-import type { PoolClient } from "pg";
 import type {
   PreparedAssetDataset,
   PreparedAssetVariant,
   PreparedEntityAsset,
 } from "@/domain/assets";
 import { sha256 } from "@/lib/hash";
+import type { VerifiedSession } from "@/server/environment/contract";
+
+type PoolClient = VerifiedSession;
 
 export interface PublishedAssetDataset {
   assetDatasetVersionId: string;
@@ -18,7 +20,7 @@ export interface PublishAssetDatasetOptions {
 }
 
 export async function publishAssetDataset(
-  client: PoolClient,
+  client: VerifiedSession,
   catalogDatasetVersionId: string,
   prepared: PreparedAssetDataset,
   options: PublishAssetDatasetOptions = {},
@@ -40,8 +42,8 @@ export async function publishAssetDataset(
   const inserted = await client.query<{ id: string }>(
     `INSERT INTO asset_dataset_versions
       (catalog_dataset_version_id, manifest_sha256, client_version, provider_version,
-       lod_policy_version, source_counts)
-     VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+       lod_policy_version, source_counts, source_provenance)
+     VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb)
      ON CONFLICT (catalog_dataset_version_id, manifest_sha256, provider_version, lod_policy_version)
      DO NOTHING
      RETURNING id`,
@@ -52,6 +54,7 @@ export async function publishAssetDataset(
       prepared.providerVersion,
       prepared.lodPolicyVersion,
       JSON.stringify(prepared.counts),
+      JSON.stringify(prepared.sourceProvenance),
     ],
   );
   const existing =

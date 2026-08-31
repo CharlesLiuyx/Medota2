@@ -4,8 +4,9 @@ import {
   type CatalogSlice,
 } from "@/domain/catalog-stream";
 import { PRIMARY_ATTRIBUTES, type PrimaryAttribute } from "@/domain/heroes";
-import { getWebDatabase, getWebPool } from "@/server/db/client";
+import { getWebDatabase } from "@/server/db/client";
 import { assertSchemaCurrent } from "@/server/db/migrations";
+import type { VerifiedDatabase } from "@/server/environment/contract";
 import {
   assertListCursorMatches,
   createListFilterIdentity,
@@ -150,10 +151,11 @@ type ReferenceDiffRow = NonNullable<HeroDetail["comparison"]>["diffs"][number];
 
 let schemaPromise: Promise<string> | undefined;
 
-async function ensureReady(): Promise<void> {
-  getWebDatabase();
-  schemaPromise ??= assertSchemaCurrent(getWebPool());
+async function ensureReady(): Promise<VerifiedDatabase> {
+  const database = await getWebDatabase();
+  schemaPromise ??= assertSchemaCurrent(database);
   await schemaPromise;
+  return database;
 }
 
 export async function getHeroOverview(
@@ -204,7 +206,7 @@ export async function getHeroCatalogSlice(
   filters: HeroFilters,
   request: ListSliceRequest = {},
 ): Promise<CatalogSlice<HeroCardRow>> {
-  await ensureReady();
+  const database = await ensureReady();
   const resolved = await resolveHeroSliceRequest(filters, request);
   const query = buildHeroFilterQuery(filters, resolved.catalogDatasetVersionId);
   const countValues = [...query.values];
@@ -221,7 +223,7 @@ export async function getHeroCatalogSlice(
   const limitIndex = query.values.length;
   const order = resolved.direction === "before" ? "DESC" : "ASC";
 
-  const rowsPromise = getWebPool().query<HeroCardQueryRow>(
+  const rowsPromise = database.query<HeroCardQueryRow>(
     `WITH selected AS (
        SELECT h.hero_id, ${HERO_ATTRIBUTE_RANK_SQL} AS attribute_rank
        FROM heroes h ${query.localizationJoins}
@@ -249,7 +251,7 @@ export async function getHeroCatalogSlice(
   );
   const countsPromise = resolved.direction
     ? null
-    : getWebPool().query<{ primary_attribute: string; count: number }>(
+    : database.query<{ primary_attribute: string; count: number }>(
         `SELECT h.primary_attribute, count(*)::int AS count
          FROM heroes h ${query.localizationJoins}
          WHERE ${countConditions.join(" AND ")}
@@ -504,8 +506,7 @@ function mapHeroCardRow(row: HeroCardQueryRow): HeroCardRow {
 }
 
 export async function getHeroBySlug(slug: string): Promise<HeroDetail | null> {
-  await ensureReady();
-  const pool = getWebPool();
+  const pool = await ensureReady();
   const meta = await getActiveCatalogMeta();
   if (!meta) return null;
   const heroResult = await pool.query<HeroDetail["hero"]>(
@@ -602,7 +603,8 @@ export async function getHeroBySlug(slug: string): Promise<HeroDetail | null> {
 }
 
 export async function getActiveCatalogMeta(): Promise<ActiveDatasetMeta | null> {
-  const result = await getWebPool().query<{
+  const database = await ensureReady();
+  const result = await database.query<{
     dataset_version_id: string;
     asset_dataset_version_id: string;
     client_version: string;
@@ -663,8 +665,8 @@ export async function assertCatalogDatasetPairAvailable(
   catalogDatasetVersionId: string,
   assetDatasetVersionId: string,
 ): Promise<void> {
-  await ensureReady();
-  const result = await getWebPool().query<{ available: boolean }>(
+  const database = await ensureReady();
+  const result = await database.query<{ available: boolean }>(
     `SELECT EXISTS (
        SELECT 1
        FROM hero_catalog_dataset_versions catalog
@@ -680,7 +682,8 @@ export async function assertCatalogDatasetPairAvailable(
 async function getLatestFailure(
   promotedAt: Date | null,
 ): Promise<LatestImportFailure | null> {
-  const result = await getWebPool().query<{
+  const database = await ensureReady();
+  const result = await database.query<{
     stage: string;
     error_summary: string | null;
     issues: LatestImportFailure["issues"];

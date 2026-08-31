@@ -1,4 +1,3 @@
-import type { PoolClient } from "pg";
 import {
   assertSourceImportBuildIsClean,
   readBuildIdentity,
@@ -8,6 +7,7 @@ import {
   type CanonicalComparisonHero,
   type ReferenceComparisonHero,
 } from "@/importers/dotaconstants/comparator";
+import type { VerifiedSession } from "@/server/environment/contract";
 import {
   createImportRun,
   failImportRun,
@@ -20,7 +20,7 @@ async function main(): Promise<void> {
   const metrics = startMetrics();
   const build = await readBuildIdentity();
   const comparatorVersion = `hero-reference-v1/${build.buildId}`;
-  const { pool, targetSchemaVersion } = await prepareWorker();
+  const { pool, targetSchemaVersion } = await prepareWorker("import");
   const runId = await createImportRun(pool, {
     sourceKind: "comparison",
     commit: build.commit,
@@ -85,7 +85,7 @@ async function main(): Promise<void> {
 }
 
 async function compareAndPersist(
-  client: PoolClient,
+  client: VerifiedSession,
   runId: string,
   datasetVersionId: string,
   referenceSnapshotId: string,
@@ -204,7 +204,7 @@ async function compareAndPersist(
 }
 
 async function finishRun(
-  client: PoolClient,
+  client: VerifiedSession,
   runId: string,
   comparisonId: string,
   diffCount: number,

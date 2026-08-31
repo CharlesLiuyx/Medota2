@@ -48,6 +48,21 @@ export interface PreparedAssetDataset {
   clientVersion: string | null;
   providerVersion: string;
   lodPolicyVersion: string;
+  sourceProvenance: {
+    dotaconstantsImageMap: {
+      sourceRepository: "odota/dotaconstants";
+      sourceRemoteUrl: string;
+      sourceCommit: string;
+      sourceDirty: boolean;
+      sourceInputsMatchHead: true;
+      manifestSha256: string;
+      files: Array<{
+        sourcePath: string;
+        sha256: string;
+        sizeBytes: number;
+      }>;
+    } | null;
+  };
   counts: {
     heroes: number;
     abilities: number;

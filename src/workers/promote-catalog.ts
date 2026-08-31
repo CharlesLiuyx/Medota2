@@ -8,7 +8,7 @@ async function main(): Promise<void> {
   const allowFallbackDowngrade = process.argv.includes(
     "--allow-fallback-downgrade",
   );
-  const { pool } = await prepareWorker();
+  const { pool } = await prepareWorker("promote");
   const client = await pool.connect();
   try {
     await client.query("BEGIN");

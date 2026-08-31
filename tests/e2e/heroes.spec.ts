@@ -1,4 +1,23 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
+import { expect, test } from "./test-fixture";
+
+test("catalog APIs expose the verified test environment without private identity", async ({
+  request,
+}) => {
+  for (const path of ["/api/catalog/heroes", "/api/catalog/abilities"]) {
+    const response = await request.get(path);
+    expect(response.ok()).toBe(true);
+    const headers = response.headers();
+    expect(headers["x-medota2-environment"]).toBe("test");
+    expect(headers["x-medota2-data-class"]).toBe("synthetic-fixture");
+    expect(headers["x-medota2-environment-verification"]).toBe("verified");
+    expect(headers["x-medota2-database-name"]).toBe("medota2_test");
+    expect(headers["x-medota2-database-fingerprint"]).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{8}$/u,
+    );
+    expect(headers["x-medota2-run-id"]).toBe(process.env.MEDOTA2_RUN_ID);
+  }
+});
 
 const HERO_GROUP_ORDER = ["agility", "intelligence", "universal"] as const;
 type HeroGroup = (typeof HERO_GROUP_ORDER)[number];

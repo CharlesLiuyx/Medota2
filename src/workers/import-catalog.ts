@@ -2,12 +2,14 @@ import { performance } from "node:perf_hooks";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { from as copyFrom } from "pg-copy-streams";
-import pg, { type Pool, type PoolClient } from "pg";
 import {
   assertSourceImportBuildIsClean,
   readBuildIdentity,
 } from "@/config/build-identity";
-import { getDatabaseUrl, getRequiredPath } from "@/config/env";
+import { getEnvironmentDeclaration, getRequiredPath } from "@/config/env";
+import type { VerifiedSession } from "@/server/environment/contract";
+
+type PoolClient = VerifiedSession;
 import {
   evaluateCatalogGate,
   projectCatalog,
@@ -52,7 +54,7 @@ import {
 import { prepareCatalogAssets } from "@/importers/valve-assets/catalog-assets";
 import { publishAssetDataset } from "@/server/assets/asset-store";
 import { loadCatalogProjection } from "@/server/catalog-projection";
-import { runMigrations } from "@/server/db/run-migrations";
+import type { VerifiedDatabase } from "@/server/environment/contract";
 import {
   createImportRun,
   failImportRun,
@@ -72,8 +74,6 @@ interface StagingRow {
   payload: unknown;
 }
 
-const { Pool: PgPool } = pg;
-
 async function main(): Promise<void> {
   const localPreview = process.argv.includes("--local-preview");
   const noPromote = process.argv.includes("--no-promote");
@@ -85,10 +85,15 @@ async function main(): Promise<void> {
   const build = await readBuildIdentity();
   const importerVersion = `hero-catalog-v2/${build.buildId}${localPreview ? "/local-preview" : ""}`;
 
-  if (localPreview) await resetLocalPreviewDatabase();
-  const { pool, targetSchemaVersion } = await prepareWorker(
-    localPreview ? "local" : "main",
-  );
+  if (localPreview) {
+    const declaration = getEnvironmentDeclaration();
+    if (declaration.environment !== "local-review") {
+      throw new Error(
+        "--local-preview requires MEDOTA2_ENVIRONMENT=local-review.",
+      );
+    }
+  }
+  const { pool, targetSchemaVersion } = await prepareWorker("import");
   const runId = await createImportRun(pool, {
     sourceKind: "vpk",
     commit: build.commit,
@@ -222,36 +227,8 @@ async function main(): Promise<void> {
   }
 }
 
-async function resetLocalPreviewDatabase(): Promise<void> {
-  const databaseUrl = getDatabaseUrl("migration", "local");
-  await runMigrations(databaseUrl);
-  const pool = new PgPool({ connectionString: databaseUrl, max: 1 });
-  try {
-    const database = await pool.query<{ name: string }>(
-      "SELECT current_database() AS name",
-    );
-    const configuredDatabase = new URL(databaseUrl).pathname.replace(
-      /^\//u,
-      "",
-    );
-    if (
-      database.rows[0].name !== configuredDatabase ||
-      !database.rows[0].name.endsWith("_local")
-    ) {
-      throw new Error(
-        "Local preview refuses to reset anything except its configured _local database.",
-      );
-    }
-    await pool.query(
-      "TRUNCATE source_snapshots, import_runs, reference_snapshots CASCADE",
-    );
-  } finally {
-    await pool.end();
-  }
-}
-
 async function persistSourceSnapshot(
-  pool: Pool,
+  pool: VerifiedDatabase<"import">,
   snapshot: GitCheckoutSnapshot,
   steam: ReturnType<typeof parseSteamInf>,
 ): Promise<SnapshotIdentity> {
@@ -316,7 +293,7 @@ async function persistSourceSnapshot(
 }
 
 async function persistCatalog(
-  pool: Pool,
+  pool: VerifiedDatabase<"import">,
   input: {
     runId: string;
     sourceSnapshotId: string;

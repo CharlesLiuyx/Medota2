@@ -1,5 +1,3 @@
-import pg from "pg";
-import { loadLocalEnv } from "@/config/env";
 import { parseAbilityDataset } from "@/importers/dota-vpk/ability-adapter";
 import {
   ABILITY_DERIVATION_VERSION,
@@ -14,26 +12,32 @@ import { sha256 } from "@/lib/hash";
 import { publishAssetDataset } from "@/server/assets/asset-store";
 import { currentTargetSchemaVersion } from "@/server/db/migrations";
 import { runMigrations } from "@/server/db/run-migrations";
+import {
+  openVerifiedDatabase,
+  type VerifiedSession,
+} from "@/server/environment/contract";
 import { loadCatalogFixture } from "./vpk-fixture";
 
-const { Pool } = pg;
 const SCROLL_FIXTURE_SIZE = 192;
+type PoolClient = VerifiedSession;
 
 async function main(): Promise<void> {
-  loadLocalEnv();
   const includeLargeList = process.argv.includes("--include-large-list");
-  const databaseUrl = process.env.DATABASE_URL_MIGRATION_TEST;
-  if (!databaseUrl || !databaseUrl.includes("_test"))
-    throw new Error("E2E seed requires DATABASE_URL_MIGRATION_TEST.");
-  await runMigrations(databaseUrl);
-  const pool = new Pool({ connectionString: databaseUrl, max: 1 });
-  const client = await pool.connect();
+  const migrationDatabase = await openVerifiedDatabase({
+    role: "migration",
+    operation: "migrate",
+  });
   try {
-    const database = await client.query<{ name: string }>(
-      "SELECT current_database() AS name",
-    );
-    if (!database.rows[0].name.endsWith("_test"))
-      throw new Error("Refusing to seed a non-test database.");
+    await runMigrations(migrationDatabase);
+  } finally {
+    await migrationDatabase.end();
+  }
+  const database = await openVerifiedDatabase({
+    role: "migration",
+    operation: "seed",
+  });
+  const client = await database.connect();
+  try {
     const files = await loadCatalogFixture();
     const dataset = parseHeroDataset(files);
     const abilityDataset = parseAbilityDataset(files, dataset.heroes);
@@ -217,19 +221,19 @@ async function main(): Promise<void> {
     await client.query("COMMIT");
     const syntheticCount = includeLargeList ? SCROLL_FIXTURE_SIZE : 0;
     console.log(
-      `seeded ${dataset.heroes.length + syntheticCount} heroes and ${abilityDataset.abilities.length + syntheticCount} abilities into ${database.rows[0].name}`,
+      `seeded ${dataset.heroes.length + syntheticCount} heroes and ${abilityDataset.abilities.length + syntheticCount} abilities into ${database.identity.databaseName}`,
     );
   } catch (error) {
     await client.query("ROLLBACK").catch(() => undefined);
     throw error;
   } finally {
     client.release();
-    await pool.end();
+    await database.end();
   }
 }
 
 async function insertHero(
-  client: pg.PoolClient,
+  client: PoolClient,
   versionId: string,
   hero: ReturnType<typeof parseHeroDataset>["heroes"][number],
 ): Promise<void> {
@@ -317,7 +321,7 @@ async function insertHero(
 }
 
 async function insertAbilities(
-  client: pg.PoolClient,
+  client: PoolClient,
   versionId: string,
   dataset: ReturnType<typeof parseAbilityDataset>,
 ): Promise<void> {
@@ -495,7 +499,7 @@ async function insertAbilities(
 }
 
 async function insertScrollableHeroFixture(
-  client: pg.PoolClient,
+  client: PoolClient,
   versionId: string,
   count: number,
 ): Promise<void> {
@@ -584,7 +588,7 @@ async function insertScrollableHeroFixture(
 }
 
 async function insertScrollableAbilityFixture(
-  client: pg.PoolClient,
+  client: PoolClient,
   versionId: string,
   count: number,
 ): Promise<void> {
@@ -653,7 +657,7 @@ async function insertScrollableAbilityFixture(
 }
 
 async function insertScrollableHeroAssetBindings(
-  client: pg.PoolClient,
+  client: PoolClient,
   assetDatasetVersionId: string,
   count: number,
 ): Promise<void> {
@@ -675,7 +679,7 @@ async function insertScrollableHeroAssetBindings(
 }
 
 async function insertScrollableAbilityAssetBindings(
-  client: pg.PoolClient,
+  client: PoolClient,
   assetDatasetVersionId: string,
   count: number,
 ): Promise<void> {

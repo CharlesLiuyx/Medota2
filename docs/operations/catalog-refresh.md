@@ -1,6 +1,6 @@
 # Hero Catalog 更新操作手册
 
-本文是 Hero Catalog v2 的手动刷新、计划调度、Yellow Review、失败恢复与回滚手册。所有入口调用同一个幂等工作流；上游仓库、锁定 worktree 与本地 Valve 资产始终只读。
+本文是 Hero Catalog v2 在 `development + sandbox` 中的手动刷新、计划调度、Yellow Review、失败恢复与回滚手册。所有入口调用同一个幂等工作流；上游仓库、锁定 worktree 与本地 Valve 资产始终只读。production 当前只开放 `Web/read`，尚未实现可签发 production Worker capability 的调度 topology；本手册和 launchd 示例都不能解释为 production 运维入口。
 
 ## 运行合同
 
@@ -20,7 +20,7 @@ remote HEAD discovery
 
 ## 配置
 
-复制 `.env.example` 为 `.env`，至少配置数据库连接。更新渠道默认值如下，均可覆盖：
+复制 `.env.example` 为 `.env`，配置外部来源与通知参数。非生产数据库连接不写入 `.env`，而由 `db:development:provision` 创建在 `.medota2/environments/development/` 的本机 `0600` identity/runtime receipt 提供；调度进程仍必须声明 `development + sandbox + control`。更新渠道默认值如下，均可覆盖：
 
 ```dotenv
 DOTA_VPK_REMOTE_URL=https://github.com/spirit-bear-productions/dota_vpk_updates.git
@@ -38,7 +38,7 @@ Webhook 可选且必须是 HTTPS。它接收 `no_change`、`succeeded` 或 `fail
 
 ```bash
 pnpm data:source:discover:vpk
-pnpm data:refresh:catalog
+pnpm data:refresh:catalog:development
 ```
 
 需要复现或预审指定 commit 时：
@@ -84,18 +84,24 @@ pnpm data:review:catalog --candidate <dataset-version-id> --decision rejected --
 pnpm data:rollback:catalog --to <compatible-dataset-version-id> --reason "<reason>"
 ```
 
-数据库函数会验证目标版本存在、schema 兼容且已有完整匹配的 asset head，并在同一事务内记录操作者、from/to version、原因和时间。对尚无图片资产的旧版本，先运行 `pnpm data:import:assets --catalog-version <compatible-dataset-version-id>` 回填并提升资产；否则 rollback 会保持当前 head 并明确失败。
+数据库函数要求调用事务依次持有 Catalog lock 和 Asset lock，验证目标版本存在、schema 兼容且已有完整匹配的 asset head，并在同一事务内记录操作者、from/to version、原因和时间。默认还会比较 current/target 的 exact/native Valve coverage 比例并拒绝下降；确认有意接受时才使用：
+
+```bash
+pnpm data:rollback:catalog --to <compatible-dataset-version-id> --reason "<reason>" --allow-fallback-downgrade
+```
+
+对尚无图片资产的旧版本，先运行 `pnpm data:import:assets --catalog-version <compatible-dataset-version-id>` 回填并提升资产；否则 rollback 会保持当前 head 并明确失败。旧二参数 rollback SQL interface 不再授予 Worker，手写 SQL 不能绕过该门禁。
 
 ## 计划任务
 
-默认建议每 15 分钟 discover 一次。macOS 示例位于 `ops/launchd/ai.one2x.medota2.catalog-refresh.plist.example`：
+development sandbox 默认建议每 15 分钟 discover 一次。macOS 示例位于 `ops/launchd/ai.one2x.medota2.catalog-refresh.plist.example`：
 
 1. 将 `__MEDOTA2_ROOT__` 替换为当前仓库绝对路径。
 2. 确保调度环境能找到 `pnpm`，必要时把 `/usr/bin/env` 与 `pnpm` 替换为实际可执行文件绝对路径。
 3. 创建 `.medota2/logs/`。
 4. 把生成的 plist 安装到当前用户的 `~/Library/LaunchAgents/` 并用 `launchctl bootstrap` 启用。
 
-示例不会自动安装，以免未经确认修改用户系统调度。生产环境可用任意调度器调用同一 `pnpm data:refresh:catalog` 命令，但同一数据库上仍只有一个 advisory-lock owner 能执行 promotion。Catalog promotion 在同一事务中固定先取得 Catalog lock、再取得 asset lock，手写运维脚本不得反转顺序。
+示例不会自动安装，以免未经确认修改用户系统调度；它只调用 `pnpm data:refresh:catalog:development`，因此只面向本机 development sandbox。production 调度暂不可用：未来必须先通过部署 ADR 定义独立 credential、Worker capability、secret distribution、可观测性和回滚责任，不能复用或改写此 development alias 来绕过 Environment Contract。同一 development 数据库上仍只有一个 advisory-lock owner 能执行 promotion/rollback。两种 head 切换在同一事务中都固定先取得 Catalog lock、再取得 Asset lock，手写运维脚本不得反转顺序。
 
 ## 指标与 SLO
 

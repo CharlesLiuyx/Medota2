@@ -1,4 +1,6 @@
 import type { InfiniteListProblem } from "@/domain/infinite-list";
+import type { PublicEnvironmentIdentity } from "@/domain/environment";
+import { createEnvironmentResponseHeaders } from "@/server/environment/public-projection";
 import type { SearchParams } from "@/server/services/hero-filters";
 import {
   isListDatasetVersionId,
@@ -68,7 +70,21 @@ export function parseListRouteRequest(url: URL): {
   };
 }
 
-export function listProblemResponse(error: unknown): Response {
+export function catalogJsonResponse(
+  body: unknown,
+  identity: PublicEnvironmentIdentity,
+  status = 200,
+): Response {
+  return Response.json(body, {
+    status,
+    headers: createEnvironmentResponseHeaders(identity),
+  });
+}
+
+export function listProblemResponse(
+  error: unknown,
+  identity: PublicEnvironmentIdentity,
+): Response {
   let status = 500;
   let problem: InfiniteListProblem = {
     code: "query_failed",
@@ -84,10 +100,7 @@ export function listProblemResponse(error: unknown): Response {
     status = 410;
     problem = { code: error.code, message: error.message };
   }
-  return Response.json(problem, {
-    status,
-    headers: { "Cache-Control": "no-store" },
-  });
+  return catalogJsonResponse(problem, identity, status);
 }
 
 function singleTransportValue(

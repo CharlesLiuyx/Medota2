@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:18.2-alpine
+    environment:
+      POSTGRES_DB: medota2
+      POSTGRES_USER: medota2_owner
+      POSTGRES_PASSWORD: ${MEDOTA2_POSTGRES_BOOTSTRAP_PASSWORD:-}
+    ports:
+      - "127.0.0.1:${MEDOTA2_POSTGRES_PORT:?managed stack port is required}:5432"
+    volumes:
+      - medota2-postgres:/var/lib/postgresql
+      - ./docker/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medota2_owner -d medota2"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  medota2-postgres:

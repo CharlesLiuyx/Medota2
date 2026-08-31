@@ -1,0 +1,4 @@
+services:
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${MEDOTA2_POSTGRES_BOOTSTRAP_PASSWORD:?export a private bootstrap password before first-time database provisioning}

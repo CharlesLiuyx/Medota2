@@ -164,9 +164,9 @@ server/db              # Drizzle schema、pg Pool、migration
 | Worker writer   | 写入 import run、staging 和规范数据；获取导入 advisory lock；调用快照提升事务 | DDL、修改 migration 历史、绕过校验直接改 active pointer |
 | Web reader      | 查询当前规范数据、来源信息和参考差异                                          | 导入、提升快照、写 staging、DDL                         |
 
-本地 bootstrap 可以由一个管理员账号创建这些角色，但应用运行时仍分别使用 `DATABASE_URL_MIGRATION`、`DATABASE_URL_WORKER` 和 `DATABASE_URL_WEB`。首期没有 Web 管理后台；导入和快照提升只由 Worker/CLI 发起。Web 与 Worker 启动时都要检查数据库 schema 版本，只有 Worker 持有导入锁。
+本地 bootstrap 可以由一个管理员账号创建这些角色，但非生产应用运行时从当前用户所有的 `0600` receipt 经 credential adapter 选择本进程 role 的 URL，再由 `openVerifiedDatabase` 签发 capability；caller 不直接读取 `DATABASE_URL_*`。production URL 由部署显式注入并受 `verify-full` 与 expected identity 约束。首期没有 Web 管理后台；导入和快照提升只由 Worker/CLI 发起。Web 与 Worker 启动时都要检查数据库 schema 版本，只有 Worker 持有导入锁。
 
-active pointer 只能通过 migration owner 创建的 `SECURITY DEFINER` 数据库函数切换。该函数固定安全 `search_path`，验证目标版本状态与 advisory lock，并在调用者事务中更新 head；Worker 只有 `EXECUTE` 权限，没有对 head 表的直接 `UPDATE` 权限。函数名和参数由具体数据域 Spec 固定。
+active pointer 只能通过 migration owner 创建的 `SECURITY DEFINER` 数据库函数切换。该函数固定安全 `search_path`，验证目标版本状态与 advisory lock，并在调用者事务中更新 head；Worker 只有 `EXECUTE` 权限，没有对 head 表的直接 `UPDATE` 权限。函数签名、owner、kind、配置和规范化定义 SHA-256 均进入 Environment Contract manifest；不可直接执行的 definer helper 也在同一 dependency boundary 内。函数名和参数由具体数据域 Spec 固定。
 
 ## 10. Data Worker 设计
 
@@ -258,22 +258,27 @@ Medota2/
 
 ## 14. 配置与命令
 
-项目使用 `.env` 提供本地配置，提交 `.env.example` 而不提交凭据。数据库连接按职责拆为 `DATABASE_URL_MIGRATION`、`DATABASE_URL_WORKER` 和 `DATABASE_URL_WEB`；外部来源路径使用来源专属变量，不写死相邻仓库。当前提供：
+项目使用 `.env` 提供非敏感本地配置，提交 `.env.example` 而不提交凭据。非 production 数据库连接由受管 stack 在环境专属 `0600` receipt 中按 migration/Worker/Web 职责生成；production 才显式注入三条 `DATABASE_URL_*_PRODUCTION`。外部来源路径使用来源专属变量，不写死相邻仓库。当前提供：
 
 ```bash
 pnpm db:generate
+pnpm db:development:provision
+pnpm db:local-review:provision
 pnpm db:migrate
-pnpm db:studio
+pnpm db:environment:doctor
 pnpm dev
+pnpm dev:local
 pnpm typecheck
 pnpm lint
 pnpm test
 pnpm test:integration
 pnpm test:e2e
+pnpm test:e2e:concurrent
+pnpm verify
 pnpm build
 ```
 
-英雄导入与参考比较命令见 MVP Spec 和 README。修改命令时必须同步更新 README。
+development 固定监听 `127.0.0.1:3000`，local-review 固定监听 `127.0.0.1:3001`，test/E2E 由 Test Run Harness 每 run 分配唯一 loopback origin，避免共享 origin-scoped 浏览器状态和自动化产物。端口不隔离 Cookie，也不是环境身份；页面表示仍来自 fresh attestation。Drizzle config 只用于离线 schema generation，contract v1 不提供会绕过 verified capability seam 的 `db:studio`。英雄导入、development-only Catalog 刷新与参考比较命令见 MVP Spec 和 README。修改命令时必须同步更新 README。
 
 ## 15. 安全与运维约束
 

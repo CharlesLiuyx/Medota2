@@ -1,4 +1,5 @@
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test } from "./test-fixture";
 
 test.beforeEach(async ({ page }, testInfo) => {
   await page.setViewportSize(
@@ -15,10 +16,13 @@ test("heroes catalog visual baseline", async ({ page }) => {
     page.getByRole("img", { name: "Anti-Mage icon", exact: true }),
   ).toBeVisible();
   await waitForImages(page);
+  await stabilizeRunIdentity(page);
   await expect(page).toHaveScreenshot("heroes-catalog.png", {
     fullPage: false,
     animations: "disabled",
     caret: "initial",
+    mask: [page.locator("[data-environment-fingerprint]")],
+    maskColor: "#2b2106",
   });
 });
 
@@ -31,10 +35,13 @@ test("ability detail visual baseline", async ({ page }) => {
     page.getByRole("img", { name: "Blink icon", exact: true }),
   ).toBeVisible();
   await waitForImages(page);
+  await stabilizeRunIdentity(page);
   await expect(page).toHaveScreenshot("ability-detail.png", {
     fullPage: false,
     animations: "disabled",
     caret: "initial",
+    mask: [page.locator("[data-environment-fingerprint]")],
+    maskColor: "#2b2106",
   });
 });
 
@@ -47,6 +54,33 @@ test("landmarks and heading structure remain semantic", async ({ page }) => {
     page.getByRole("navigation", { name: "Catalog entities" }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+
+  const environmentStrip = page.getByRole("status", {
+    name: "Runtime environment",
+  });
+  await expect(environmentStrip).toBeVisible();
+  await expect(environmentStrip).toContainText("TEST ENVIRONMENT");
+  await expect(environmentStrip).toContainText(
+    "SYNTHETIC-FIXTURE CLASS — NOT LIVE-PRODUCTION CLASS",
+  );
+  await expect(environmentStrip).toContainText("DATABASE VERIFIED");
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-environment",
+    "test",
+  );
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-data-class",
+    "synthetic-fixture",
+  );
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-environment-verification",
+    "verified",
+  );
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-environment-run",
+    /\S+/u,
+  );
+  await expect(page).toHaveTitle(/^\[TEST\]/u);
 });
 
 async function waitForImages(page: Page): Promise<void> {
@@ -63,5 +97,11 @@ async function waitForImages(page: Page): Promise<void> {
         if (visible) await image.decode();
       }),
     );
+  });
+}
+
+async function stabilizeRunIdentity(page: Page): Promise<void> {
+  await page.locator("[data-environment-run-value]").evaluate((element) => {
+    element.textContent = "RUN · shared-e2e";
   });
 }

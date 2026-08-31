@@ -1,4 +1,5 @@
 import { getOptionalValue } from "@/config/env";
+import { assertOutboundNetworkAllowed } from "@/config/network-policy";
 
 export async function notifyCatalogEvent(event: {
   status: "no_change" | "succeeded" | "failed";
@@ -17,6 +18,7 @@ export async function notifyCatalogEvent(event: {
   if (parsed.protocol !== "https:") {
     throw new Error("CATALOG_NOTIFICATION_WEBHOOK_URL must use https://.");
   }
+  assertOutboundNetworkAllowed(parsed, "Catalog notification adapter");
   const response = await fetch(parsed, {
     method: "POST",
     headers: { "content-type": "application/json" },

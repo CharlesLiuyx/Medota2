@@ -1,20 +1,21 @@
-import { loadLocalEnv } from "@/config/env";
 import { runMigrations } from "@/server/db/run-migrations";
+import { openVerifiedDatabase } from "@/server/environment/contract";
 
 async function main(): Promise<void> {
-  loadLocalEnv();
-  const url = process.env.DATABASE_URL_MIGRATION_TEST;
-  if (!url || !url.includes("_test")) {
-    throw new Error(
-      "DATABASE_URL_MIGRATION_TEST must point to an explicitly named test database.",
+  const database = await openVerifiedDatabase({
+    role: "migration",
+    operation: "migrate",
+  });
+  try {
+    const applied = await runMigrations(database);
+    console.log(
+      applied.length
+        ? `applied ${applied.join(", ")}`
+        : "test database is current",
     );
+  } finally {
+    await database.end();
   }
-  const applied = await runMigrations(url);
-  console.log(
-    applied.length
-      ? `applied ${applied.join(", ")}`
-      : "test database is current",
-  );
 }
 
 main().catch((error: unknown) => {

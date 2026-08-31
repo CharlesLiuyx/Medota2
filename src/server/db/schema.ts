@@ -698,6 +698,7 @@ export const assetDatasetVersions = pgTable(
     providerVersion: text("provider_version").notNull(),
     lodPolicyVersion: text("lod_policy_version").notNull(),
     sourceCounts: jsonb("source_counts").notNull().default({}),
+    sourceProvenance: jsonb("source_provenance").notNull().default({}),
     importedAt: timestamp("imported_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
@@ -718,6 +719,10 @@ export const assetDatasetVersions = pgTable(
     check(
       "asset_dataset_versions_source_counts_check",
       sql`jsonb_typeof(${table.sourceCounts}) = 'object'`,
+    ),
+    check(
+      "asset_dataset_versions_source_provenance_check",
+      sql`jsonb_typeof(${table.sourceProvenance}) = 'object'`,
     ),
     unique("asset_dataset_versions_identity").on(
       table.catalogDatasetVersionId,

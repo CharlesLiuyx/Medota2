@@ -4,8 +4,7 @@ import { publishAssetDataset } from "@/server/assets/asset-store";
 import { prepareWorker } from "./worker-utils";
 
 async function main(): Promise<void> {
-  const target = process.argv.includes("--test") ? "test" : "main";
-  const { pool } = await prepareWorker(target);
+  const { pool } = await prepareWorker("import");
   try {
     const requestedCatalogVersion = optionalArgument("catalog-version");
     if (

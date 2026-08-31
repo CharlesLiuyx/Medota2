@@ -515,7 +515,8 @@ pnpm data:review:catalog --candidate <dataset-version-id> --decision approved --
 pnpm data:promote:catalog --candidate <dataset-version-id>
 pnpm data:promote:catalog --candidate <dataset-version-id> --allow-fallback-downgrade
 pnpm data:rollback:catalog --to <dataset-version-id> --reason <text>
-pnpm data:refresh:catalog
+pnpm data:rollback:catalog --to <dataset-version-id> --reason <text> --allow-fallback-downgrade
+pnpm data:refresh:catalog:development
 ```
 
 配置至少包括：
@@ -524,7 +525,7 @@ pnpm data:refresh:catalog
 - 临时 detached worktree/cache 位置；
 - locale allowlist；
 - selector 和 importer 版本；
-- PostgreSQL Worker 连接；
+- 由 Environment Contract receipt 提供的 PostgreSQL Worker capability；
 - 可选的本地 Dota 2 VPK、Source 2 Viewer CLI 和 Git 忽略的已提取资产目录；没有资产源时 importer 仍生成并入库完整 fallback dataset；
 - 调度频率与通知出口。
 

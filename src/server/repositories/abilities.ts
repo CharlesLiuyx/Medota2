@@ -4,8 +4,9 @@ import {
   CATALOG_SLICE_LIMIT,
   type CatalogSlice,
 } from "@/domain/catalog-stream";
-import { getWebPool } from "@/server/db/client";
+import { getWebDatabase } from "@/server/db/client";
 import { assertSchemaCurrent } from "@/server/db/migrations";
+import type { VerifiedDatabase } from "@/server/environment/contract";
 import {
   canonicalAbilityQuery,
   type AbilityFilters,
@@ -118,9 +119,11 @@ export interface AbilityDetail {
   }>;
 }
 
-async function ensureReady(): Promise<void> {
-  schemaPromise ??= assertSchemaCurrent(getWebPool());
+async function ensureReady(): Promise<VerifiedDatabase> {
+  const database = await getWebDatabase();
+  schemaPromise ??= assertSchemaCurrent(database);
   await schemaPromise;
+  return database;
 }
 
 export async function getAbilityOverview(
@@ -149,7 +152,7 @@ export async function getAbilityCatalogSlice(
   filters: AbilityFilters,
   request: ListSliceRequest = {},
 ): Promise<CatalogSlice<AbilityCardRow>> {
-  await ensureReady();
+  const database = await ensureReady();
   const resolved = await resolveAbilitySliceRequest(filters, request);
   const query = buildAbilityFilterQuery(
     filters,
@@ -169,7 +172,7 @@ export async function getAbilityCatalogSlice(
   const limitIndex = query.values.length;
   const order = resolved.direction === "before" ? "DESC" : "ASC";
 
-  const rowsPromise = getWebPool().query<AbilityCardQueryRow>(
+  const rowsPromise = database.query<AbilityCardQueryRow>(
     `WITH selected AS (
        SELECT a.internal_name, ${ABILITY_SORT_NAME_SQL} AS localized_sort_name
        FROM abilities a ${query.localizationJoins}
@@ -207,7 +210,7 @@ export async function getAbilityCatalogSlice(
   );
   const totalPromise = resolved.direction
     ? null
-    : getWebPool().query<{ count: number }>(
+    : database.query<{ count: number }>(
         `SELECT count(*)::int AS count
          FROM abilities a ${query.localizationJoins}
          WHERE ${countConditions.join(" AND ")}`,
@@ -445,29 +448,29 @@ export async function getAbilityByInternalName(
   internalName: string,
   locale: "en" | "zh-CN",
 ): Promise<AbilityDetail | null> {
-  await ensureReady();
+  const database = await ensureReady();
   const meta = await getActiveCatalogMeta();
   if (!meta) return null;
-  const ability = await getWebPool().query<AbilityDetail["ability"]>(
+  const ability = await database.query<AbilityDetail["ability"]>(
     "SELECT * FROM abilities WHERE dataset_version_id = $1 AND internal_name = $2",
     [meta.datasetVersionId, internalName],
   );
   if (!ability.rowCount) return null;
   const [localizations, values, idMappings, bindings, sources] =
     await Promise.all([
-      getWebPool().query<AbilityDetail["localizations"][number]>(
+      database.query<AbilityDetail["localizations"][number]>(
         "SELECT * FROM ability_localizations WHERE dataset_version_id = $1 AND ability_internal_name = $2 ORDER BY CASE WHEN locale = $3 THEN 0 WHEN locale = 'en' THEN 1 ELSE 2 END, locale",
         [meta.datasetVersionId, internalName, locale],
       ),
-      getWebPool().query<AbilityDetail["values"][number]>(
+      database.query<AbilityDetail["values"][number]>(
         "SELECT value_key, ordinal, scalar_value, level_values, modifiers, raw_value FROM ability_values WHERE dataset_version_id = $1 AND ability_internal_name = $2 ORDER BY ordinal",
         [meta.datasetVersionId, internalName],
       ),
-      getWebPool().query<AbilityDetail["idMappings"][number]>(
+      database.query<AbilityDetail["idMappings"][number]>(
         "SELECT ability_id, source_path, source_line FROM ability_id_mappings WHERE dataset_version_id = $1 AND internal_name = $2 ORDER BY ability_id, source_line",
         [meta.datasetVersionId, internalName],
       ),
-      getWebPool().query<AbilityDetail["bindings"][number]>(
+      database.query<AbilityDetail["bindings"][number]>(
         `SELECT b.hero_id, h.internal_name AS hero_internal_name, h.slug,
            COALESCE(req.display_name, en.display_name, h.internal_name) AS hero_name,
            b.relation_kind, b.source_slot, b.ordinal, b.is_current, b.source_path, b.source_line
@@ -479,7 +482,7 @@ export async function getAbilityByInternalName(
          ORDER BY b.is_current DESC, b.hero_id, b.ordinal, b.relation_kind`,
         [meta.datasetVersionId, internalName, locale],
       ),
-      getWebPool().query<AbilityDetail["sources"][number]>(
+      database.query<AbilityDetail["sources"][number]>(
         `SELECT occurrence_ordinal, source_path, source_line, declaration_kind, raw_definition,
            resolved_definition, raw_sha256, resolved_sha256, unknown_fields
          FROM entity_source_records

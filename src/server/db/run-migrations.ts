@@ -1,19 +1,23 @@
 import { readFile } from "node:fs/promises";
-import pg from "pg";
+import type { VerifiedDatabase } from "@/server/environment/contract";
 import { ensureMigrationLedger, listMigrations } from "./migrations";
 
-const { Pool } = pg;
-
-export async function runMigrations(databaseUrl: string): Promise<string[]> {
-  const pool = new Pool({ connectionString: databaseUrl, max: 1 });
-  const client = await pool.connect();
+export async function runMigrations(
+  database: VerifiedDatabase<"migrate">,
+): Promise<string[]> {
+  const client = await database.connect();
   const applied: string[] = [];
   try {
+    // Attestation deliberately resolves built-ins from pg_catalog first. The
+    // checked historical migrations contain unqualified application objects,
+    // so only this already-verified migration session selects public as the
+    // DDL target. PUBLIC cannot CREATE there and the migrator owns the database.
+    await client.query("SET search_path TO public, pg_catalog");
     await ensureMigrationLedger(client);
     const migrations = await listMigrations();
     for (const migration of migrations) {
       const existing = await client.query<{ file_sha256: string }>(
-        "SELECT file_sha256 FROM schema_migrations WHERE migration_id = $1",
+        "SELECT file_sha256 FROM public.schema_migrations WHERE migration_id = $1",
         [migration.id],
       );
       if (existing.rowCount) {
@@ -29,7 +33,7 @@ export async function runMigrations(databaseUrl: string): Promise<string[]> {
       try {
         await client.query(sql);
         await client.query(
-          "INSERT INTO schema_migrations (migration_id, file_sha256) VALUES ($1, $2)",
+          "INSERT INTO public.schema_migrations (migration_id, file_sha256) VALUES ($1, $2)",
           [migration.id, migration.sha256],
         );
         await client.query("COMMIT");
@@ -42,6 +46,5 @@ export async function runMigrations(databaseUrl: string): Promise<string[]> {
     return applied;
   } finally {
     client.release();
-    await pool.end();
   }
 }

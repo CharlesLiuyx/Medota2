@@ -3,7 +3,7 @@ import { prepareWorker } from "./worker-utils";
 
 async function main(): Promise<void> {
   const candidate = requiredArgument("candidate");
-  const { pool } = await prepareWorker();
+  const { pool } = await prepareWorker("read");
   try {
     const version = await pool.query(
       `SELECT id, status, gate_status, review_status, gate_summary, source_counts,

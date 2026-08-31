@@ -1,9 +1,8 @@
 import { prepareWorker } from "./worker-utils";
 
 async function main(): Promise<void> {
-  const target = process.argv.includes("--test") ? "test" : "main";
   const allowGenerated = process.argv.includes("--allow-generated");
-  const { pool } = await prepareWorker(target);
+  const { pool } = await prepareWorker("read");
   try {
     const active = await pool.query<{
       catalog_id: string;

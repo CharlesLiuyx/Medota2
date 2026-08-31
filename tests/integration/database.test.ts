@@ -1,8 +1,11 @@
-import type { PoolClient } from "pg";
-import pg from "pg";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { loadLocalEnv } from "@/config/env";
+import pg from "pg";
+import { readLocalDatabaseControlCredential } from "@/config/database-control-credential";
 import { ASSET_IMPORT_LOCK_KEYS } from "@/domain/assets";
+import {
+  CONTROL_OWNER_ROLE_NAMES_BY_ENVIRONMENT,
+  DATABASE_ROLE_NAMES_BY_ENVIRONMENT,
+} from "@/domain/environment";
 import {
   CATALOG_SLICE_LIMIT,
   type CatalogSlice,
@@ -19,28 +22,62 @@ import {
   currentTargetSchemaVersion,
 } from "@/server/db/migrations";
 import { runMigrations } from "@/server/db/run-migrations";
+import {
+  openVerifiedDatabase,
+  type VerifiedDatabase,
+  type VerifiedSession as PoolClient,
+} from "@/server/environment/contract";
 
 vi.mock("server-only", () => ({}));
 
 const { Pool } = pg;
-loadLocalEnv();
+const TEST_ROLES = DATABASE_ROLE_NAMES_BY_ENVIRONMENT.test;
+const TEST_CONTROL_OWNER = CONTROL_OWNER_ROLE_NAMES_BY_ENVIRONMENT.test;
 
-const migrationUrl = requiredTestUrl("DATABASE_URL_MIGRATION_TEST");
-const workerUrl = requiredTestUrl("DATABASE_URL_WORKER_TEST");
-const webUrl = requiredTestUrl("DATABASE_URL_WEB_TEST");
-const owner = new Pool({ connectionString: migrationUrl, max: 1 });
-const worker = new Pool({ connectionString: workerUrl, max: 1 });
-const competingWorker = new Pool({ connectionString: workerUrl, max: 1 });
-const web = new Pool({ connectionString: webUrl, max: 1 });
-const originalWebUrl = process.env.DATABASE_URL_WEB;
-let repositoryWebPool: pg.Pool | undefined;
+let owner!: VerifiedDatabase<"reset">;
+let worker!: VerifiedDatabase<"fixture">;
+let competingWorker!: VerifiedDatabase<"fixture">;
+let web!: VerifiedDatabase<"read">;
+let repositoryWebDatabase: VerifiedDatabase<"read"> | undefined;
+let controlPool: pg.Pool;
 let getAbilityCatalogSlice: typeof GetAbilityCatalogSlice;
 let getHeroCatalogSlice: typeof GetHeroCatalogSlice;
 let identity = 0;
 
 describe("PostgreSQL Hero Catalog v2 contract", () => {
   beforeAll(async () => {
-    await runMigrations(migrationUrl);
+    const controlCredential = readLocalDatabaseControlCredential();
+    if (!controlCredential)
+      throw new Error("Missing database control credential.");
+    controlPool = new Pool({
+      connectionString: withDatabase(
+        controlCredential.controlUrl,
+        "medota2_test",
+      ),
+      max: 1,
+    });
+    const migrator = await openVerifiedDatabase({
+      role: "migration",
+      operation: "migrate",
+    });
+    try {
+      await runMigrations(migrator);
+    } finally {
+      await migrator.end();
+    }
+    owner = await openVerifiedDatabase({
+      role: "migration",
+      operation: "reset",
+    });
+    worker = await openVerifiedDatabase({
+      role: "worker",
+      operation: "fixture",
+    });
+    competingWorker = await openVerifiedDatabase({
+      role: "worker",
+      operation: "fixture",
+    });
+    web = await openVerifiedDatabase({ role: "web", operation: "read" });
     expect(
       (await owner.query<{ name: string }>("SELECT current_database() AS name"))
         .rows[0].name,
@@ -48,11 +85,12 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
     await owner.query(
       "TRUNCATE source_snapshots, import_runs, reference_snapshots, asset_blobs CASCADE",
     );
-    process.env.DATABASE_URL_WEB = webUrl;
     ({ getAbilityCatalogSlice } =
       await import("@/server/repositories/abilities"));
     ({ getHeroCatalogSlice } = await import("@/server/repositories/heroes"));
-    repositoryWebPool = (await import("@/server/db/client")).getWebPool();
+    repositoryWebDatabase = await (
+      await import("@/server/db/client")
+    ).getWebDatabase();
   });
 
   afterAll(async () => {
@@ -61,14 +99,13 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
       worker.end(),
       competingWorker.end(),
       web.end(),
-      repositoryWebPool?.end(),
+      repositoryWebDatabase?.end(),
+      controlPool.end(),
     ]);
-    if (originalWebUrl === undefined) delete process.env.DATABASE_URL_WEB;
-    else process.env.DATABASE_URL_WEB = originalWebUrl;
   });
 
   it("applies the checked migration ledger and creates the shared catalog schema", async () => {
-    await expect(assertSchemaCurrent(worker)).resolves.toBe(
+    await expect(assertSchemaCurrent(owner)).resolves.toBe(
       await currentTargetSchemaVersion(),
     );
     const tables = await owner.query<{ table_name: string }>(
@@ -96,7 +133,82 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
     ]);
   });
 
+  it("prevents a pooled migration session from assuming another runtime role", async () => {
+    const drifted = await owner.connect();
+    try {
+      await expect(drifted.query("SET ROLE " + TEST_ROLES.web)).rejects.toThrow(
+        /permission denied/u,
+      );
+      const identity = await drifted.query<{
+        current_role: string;
+        session_role: string;
+      }>(
+        "SELECT current_user::text AS current_role, session_user::text AS session_role",
+      );
+      expect(identity.rows[0]).toEqual({
+        current_role: TEST_ROLES.migration,
+        session_role: TEST_ROLES.migration,
+      });
+    } finally {
+      drifted.release();
+    }
+  });
+
+  it("discards pooled GUC and temporary-object drift before reuse", async () => {
+    const poisoned = await owner.connect();
+    await poisoned.query(
+      "CREATE TEMP TABLE medota2_session_poison (id integer)",
+    );
+    await poisoned.query("SET search_path = pg_temp");
+    await poisoned.query("SET row_security = off");
+    await expect(
+      poisoned.query("SET session_replication_role = replica"),
+    ).rejects.toThrow(/permission denied/u);
+    await poisoned.query("SET default_transaction_read_only = on");
+    await poisoned.query("SET application_name = 'poisoned-session'");
+    poisoned.release();
+
+    const clean = await owner.connect();
+    try {
+      const baseline = await clean.query<{
+        search_path: string;
+        row_security: string;
+        session_replication_role: string;
+        default_transaction_read_only: string;
+        application_name: string;
+        poisoned_relation: string | null;
+      }>(
+        "SELECT current_setting('search_path') AS search_path, " +
+          "current_setting('row_security') AS row_security, " +
+          "current_setting('session_replication_role') AS session_replication_role, " +
+          "current_setting('default_transaction_read_only') AS default_transaction_read_only, " +
+          "current_setting('application_name') AS application_name, " +
+          "to_regclass('pg_temp.medota2_session_poison')::text AS poisoned_relation",
+      );
+      expect(baseline.rows[0]).toMatchObject({
+        search_path: "pg_catalog, public, pg_temp",
+        row_security: "on",
+        session_replication_role: "origin",
+        default_transaction_read_only: "off",
+        poisoned_relation: null,
+      });
+      expect(baseline.rows[0].application_name).toMatch(
+        /^medota2-test-migration-reset-/u,
+      );
+    } finally {
+      clean.release();
+    }
+  });
+
   it("keeps Web read-only and prevents Worker DDL or direct head updates", async () => {
+    expect("connect" in web).toBe(false);
+    await expect(
+      web.query<{ default_transaction_read_only: string }>(
+        "SHOW default_transaction_read_only",
+      ),
+    ).resolves.toMatchObject({
+      rows: [{ default_transaction_read_only: "on" }],
+    });
     await expect(
       web.query("SELECT count(*) FROM abilities"),
     ).resolves.toBeDefined();
@@ -107,7 +219,23 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
          VALUES ('vpk', 'running', 'test', $1, 'test', 'test')`,
         ["0".repeat(40)],
       ),
-    ).rejects.toThrow(/permission denied/u);
+    ).rejects.toThrow(/permission denied|read-only/u);
+    await expect(
+      web.query(
+        "SET TRANSACTION READ WRITE; " +
+          "INSERT INTO import_runs " +
+          "(source_kind, status, stage, medota2_commit, transformer_version, target_schema_version) " +
+          "VALUES ('vpk', 'running', 'escape', '0000000000000000000000000000000000000000', 'escape', 'escape')",
+      ),
+    ).rejects.toThrow(/multiple commands|read-only|permission denied/u);
+    await expect(web.query("SELECT pg_catalog.lo_create(0)")).rejects.toThrow(
+      /permission denied|read-only/u,
+    );
+    await expect(
+      web.query(
+        "SELECT pg_catalog.pg_logical_emit_message(false, 'medota2', 'escape', false)",
+      ),
+    ).rejects.toThrow(/permission denied|read-only/u);
     await expect(
       worker.query("CREATE TABLE forbidden_worker_ddl (id int)"),
     ).rejects.toThrow(/permission denied/u);
@@ -130,6 +258,283 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
            'icon', 'legacy', 'available', 'legacy')`,
       ),
     ).rejects.toThrow(/permission denied/u);
+  });
+
+  it("fails closed on column, control, DDL and definer grant drift", async () => {
+    try {
+      await owner.query(
+        "GRANT UPDATE (stage) ON import_runs TO " + TEST_ROLES.web,
+      );
+      await expect(web.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await owner.query(
+        "REVOKE UPDATE (stage) ON import_runs FROM " + TEST_ROLES.web,
+      );
+    }
+
+    try {
+      await controlPool.query(
+        "GRANT UPDATE (data_class) ON medota2_control.environment_identity TO " +
+          TEST_ROLES.web,
+      );
+      await expect(web.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await controlPool.query(
+        "REVOKE UPDATE (data_class) ON medota2_control.environment_identity FROM " +
+          TEST_ROLES.web,
+      );
+    }
+
+    try {
+      await owner.query(
+        "GRANT CREATE ON SCHEMA public TO " + TEST_ROLES.worker,
+      );
+      await expect(worker.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await owner.query(
+        "REVOKE CREATE ON SCHEMA public FROM " + TEST_ROLES.worker,
+      );
+    }
+
+    try {
+      await owner.query(
+        "GRANT UPDATE ON dataset_heads TO " + TEST_ROLES.worker,
+      );
+      await expect(worker.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await owner.query(
+        "REVOKE UPDATE ON dataset_heads FROM " + TEST_ROLES.worker,
+      );
+    }
+
+    try {
+      await owner.query(
+        "GRANT EXECUTE ON FUNCTION asset_dataset_version_is_complete(uuid, uuid) TO " +
+          TEST_ROLES.worker,
+      );
+      await expect(worker.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await owner.query(
+        "REVOKE EXECUTE ON FUNCTION asset_dataset_version_is_complete(uuid, uuid) FROM " +
+          TEST_ROLES.worker,
+      );
+    }
+
+    try {
+      await owner.query(
+        "GRANT EXECUTE ON FUNCTION promote_hero_catalog_version(uuid) TO " +
+          TEST_ROLES.web,
+      );
+      await expect(web.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await owner.query(
+        "REVOKE EXECUTE ON FUNCTION promote_hero_catalog_version(uuid) FROM " +
+          TEST_ROLES.web,
+      );
+    }
+
+    try {
+      await controlPool.query(
+        "ALTER DEFAULT PRIVILEGES FOR ROLE " +
+          TEST_ROLES.migration +
+          " IN SCHEMA public " +
+          "GRANT UPDATE ON TABLES TO " +
+          TEST_ROLES.web,
+      );
+      await expect(web.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await controlPool.query(
+        "ALTER DEFAULT PRIVILEGES FOR ROLE " +
+          TEST_ROLES.migration +
+          " IN SCHEMA public " +
+          "REVOKE UPDATE ON TABLES FROM " +
+          TEST_ROLES.web,
+      );
+    }
+
+    await expect(web.verifyIdentity()).resolves.toMatchObject({
+      databaseRole: "web",
+      environment: "test",
+    });
+  });
+
+  it("rejects changed definer bodies and indirect trigger execution seams", async () => {
+    const original = await controlPool.query<{ definition: string }>(
+      "SELECT pg_catalog.pg_get_functiondef(" +
+        "'public.asset_dataset_version_is_complete(uuid,uuid)'::pg_catalog.regprocedure" +
+        ") AS definition",
+    );
+    try {
+      await controlPool.query(
+        "CREATE OR REPLACE FUNCTION public.asset_dataset_version_is_complete(" +
+          "target_catalog_version_id uuid, target_asset_dataset_version_id uuid) " +
+          "RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER " +
+          "SET search_path = pg_catalog, public AS 'SELECT true'",
+      );
+      await expect(worker.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await controlPool.query(original.rows[0]!.definition);
+    }
+
+    try {
+      await controlPool.query(
+        "CREATE FUNCTION public.medota2_contract_rogue_trigger() RETURNS trigger " +
+          "LANGUAGE plpgsql AS 'BEGIN RETURN NEW; END'",
+      );
+      await controlPool.query(
+        "ALTER FUNCTION public.medota2_contract_rogue_trigger() OWNER TO " +
+          TEST_ROLES.migration,
+      );
+      await controlPool.query(
+        "CREATE TRIGGER medota2_contract_rogue BEFORE INSERT ON public.import_runs " +
+          "FOR EACH ROW EXECUTE FUNCTION public.medota2_contract_rogue_trigger()",
+      );
+      await expect(worker.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await controlPool.query(
+        "DROP TRIGGER IF EXISTS medota2_contract_rogue ON public.import_runs",
+      );
+      await controlPool.query(
+        "DROP FUNCTION IF EXISTS public.medota2_contract_rogue_trigger()",
+      );
+    }
+
+    try {
+      await controlPool.query(
+        "CREATE TABLE public.medota2_contract_fk_victim (" +
+          "import_run_id uuid NOT NULL, hero_id integer NOT NULL, " +
+          "PRIMARY KEY (import_run_id, hero_id), " +
+          "CONSTRAINT medota2_contract_rogue_fk FOREIGN KEY (import_run_id, hero_id) " +
+          "REFERENCES public.hero_import_staging(import_run_id, hero_id) ON DELETE CASCADE)",
+      );
+      await controlPool.query(
+        "ALTER TABLE public.medota2_contract_fk_victim OWNER TO " +
+          TEST_ROLES.migration,
+      );
+      await expect(worker.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await controlPool.query(
+        "DROP TABLE IF EXISTS public.medota2_contract_fk_victim",
+      );
+    }
+
+    await expect(worker.verifyIdentity()).resolves.toMatchObject({
+      databaseRole: "worker",
+      environment: "test",
+    });
+  });
+
+  it("detects grant-option, cross-database, parameter, builtin and control-owner drift", async () => {
+    try {
+      await controlPool.query(
+        "GRANT " + TEST_ROLES.migration + " TO " + TEST_ROLES.web,
+      );
+      await expect(web.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await controlPool.query(
+        "REVOKE " + TEST_ROLES.migration + " FROM " + TEST_ROLES.web,
+      );
+    }
+
+    try {
+      await controlPool.query(
+        "ALTER ROLE " + TEST_ROLES.migration + " SUPERUSER",
+      );
+      await expect(web.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await controlPool.query(
+        "ALTER ROLE " + TEST_ROLES.migration + " NOSUPERUSER",
+      );
+    }
+
+    try {
+      await owner.query(
+        "GRANT SELECT ON heroes TO " + TEST_ROLES.web + " WITH GRANT OPTION",
+      );
+      await expect(web.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await owner.query(
+        "REVOKE GRANT OPTION FOR SELECT ON heroes FROM " + TEST_ROLES.web,
+      );
+    }
+
+    try {
+      await controlPool.query(
+        "GRANT CONNECT ON DATABASE medota2 TO " + TEST_ROLES.web,
+      );
+      await expect(web.verifyIdentity()).rejects.toThrow(/ENV_MARKER_INVALID/u);
+    } finally {
+      await controlPool.query(
+        "REVOKE CONNECT ON DATABASE medota2 FROM " + TEST_ROLES.web,
+      );
+    }
+
+    try {
+      await controlPool.query(
+        "GRANT SET ON PARAMETER session_replication_role TO " + TEST_ROLES.web,
+      );
+      await expect(web.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await controlPool.query(
+        "REVOKE SET ON PARAMETER session_replication_role FROM " +
+          TEST_ROLES.web,
+      );
+    }
+
+    try {
+      await controlPool.query(
+        "GRANT EXECUTE ON FUNCTION pg_catalog.lo_create(oid) TO " +
+          TEST_ROLES.web,
+      );
+      await expect(web.verifyIdentity()).rejects.toThrow(
+        /ENV_ROLE_PRIVILEGE_DRIFT/u,
+      );
+    } finally {
+      await controlPool.query(
+        "REVOKE EXECUTE ON FUNCTION pg_catalog.lo_create(oid) FROM " +
+          TEST_ROLES.web,
+      );
+    }
+
+    try {
+      await controlPool.query("ALTER ROLE " + TEST_CONTROL_OWNER + " LOGIN");
+      await expect(web.verifyIdentity()).rejects.toThrow(/ENV_MARKER_INVALID/u);
+    } finally {
+      await controlPool.query("ALTER ROLE " + TEST_CONTROL_OWNER + " NOLOGIN");
+    }
+
+    await expect(web.verifyIdentity()).resolves.toMatchObject({
+      databaseRole: "web",
+      environment: "test",
+    });
   });
 
   it("requires the asset lock, exact entity keys, real content hashes and all LoDs", async () => {
@@ -270,7 +675,7 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
       await client.query("SAVEPOINT rollback_without_assets");
       await expect(
         client.query(
-          "SELECT rollback_hero_catalog_version($1, 'missing assets')",
+          "SELECT rollback_hero_catalog_version($1, 'missing assets', false)",
           [rollbackTargetWithoutAssets],
         ),
       ).rejects.toThrow(/matching complete asset head/u);
@@ -358,6 +763,130 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
     }
   });
 
+  it("requires the asset lock and removes the legacy rollback interface from Worker", async () => {
+    const client = await worker.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
+        ...CATALOG_IMPORT_LOCK_KEYS,
+      ]);
+      await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
+        ...ASSET_IMPORT_LOCK_KEYS,
+      ]);
+      const first = await insertVersion(client, "green");
+      await client.query("SELECT promote_hero_catalog_version($1)", [first]);
+      const second = await insertVersion(client, "green");
+      await client.query("SELECT promote_hero_catalog_version($1)", [second]);
+      await client.query("COMMIT");
+
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
+        ...CATALOG_IMPORT_LOCK_KEYS,
+      ]);
+      await expect(
+        client.query(
+          "SELECT rollback_hero_catalog_version($1, 'missing asset lock', false)",
+          [first],
+        ),
+      ).rejects.toThrow(
+        /asset import advisory lock is required for catalog rollback/u,
+      );
+      await client.query("ROLLBACK");
+
+      await expect(
+        client.query(
+          "SELECT rollback_hero_catalog_version($1, 'legacy bypass')",
+          [first],
+        ),
+      ).rejects.toThrow(/permission denied/u);
+    } finally {
+      await client.query("ROLLBACK").catch(() => undefined);
+      client.release();
+    }
+  });
+
+  it("blocks a rollback coverage downgrade unless explicitly allowed", async () => {
+    const client = await worker.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
+        ...CATALOG_IMPORT_LOCK_KEYS,
+      ]);
+      await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
+        ...ASSET_IMPORT_LOCK_KEYS,
+      ]);
+
+      const lowerCoverage = await insertVersion(client, "green", {
+        publishAssets: false,
+      });
+      await client.query(
+        `INSERT INTO abilities
+          (dataset_version_id, internal_name, declaration_kind, definition_kind, catalog_status,
+           is_innate, is_passive, is_hidden, is_ultimate, has_scepter_upgrade,
+           has_shard_upgrade, is_granted_by_scepter, is_granted_by_shard, texture_name,
+           raw_sha256, resolved_sha256)
+         VALUES ($1, $2, 'top_level', 'ability', 'current',
+           false, false, false, false, false, false, false, false, $2, $3, $3)`,
+        [lowerCoverage, FIXTURE_EXTRA_ABILITY_KEY, sha256("rollback-extra")],
+      );
+      const lowerAssets = await insertAssetDataset(client, lowerCoverage, {
+        objectSourceType: "exact",
+      });
+      const fallbackObject = await insertAssetDataset(client, lowerCoverage);
+      await client.query(
+        `INSERT INTO entity_asset_bindings
+          (asset_dataset_version_id, entity_type, entity_key, asset_kind, asset_object_id,
+           resolution_kind, source_status, requested_logical_path)
+         VALUES ($1, 'ability', $2, 'icon', $3, 'generated_fallback', 'fallback',
+           'panorama/images/spellicons/fixture_extra_ability_png.vtex_c')`,
+        [lowerAssets.id, FIXTURE_EXTRA_ABILITY_KEY, fallbackObject.objectId],
+      );
+      await client.query("SELECT promote_asset_dataset_version($1)", [
+        lowerAssets.id,
+      ]);
+      await client.query("SELECT promote_hero_catalog_version($1, true)", [
+        lowerCoverage,
+      ]);
+
+      const higherCoverage = await insertVersion(client, "green", {
+        publishAssets: false,
+      });
+      const higherAssets = await insertAssetDataset(client, higherCoverage, {
+        objectSourceType: "exact",
+      });
+      await client.query("SELECT promote_asset_dataset_version($1)", [
+        higherAssets.id,
+      ]);
+      await client.query("SELECT promote_hero_catalog_version($1)", [
+        higherCoverage,
+      ]);
+
+      await client.query("SAVEPOINT rollback_coverage_regression");
+      await expect(
+        client.query(
+          "SELECT rollback_hero_catalog_version($1, 'coverage regression', false)",
+          [lowerCoverage],
+        ),
+      ).rejects.toThrow(
+        /rollback.*exact 2\/2 -> 2\/3, native 2\/2 -> 2\/3.*allow-fallback-downgrade/u,
+      );
+      await client.query("ROLLBACK TO SAVEPOINT rollback_coverage_regression");
+
+      await client.query(
+        "SELECT rollback_hero_catalog_version($1, 'approved regression', true)",
+        [lowerCoverage],
+      );
+      const head = await client.query<{ id: string }>(
+        "SELECT catalog_dataset_version_id AS id FROM dataset_heads WHERE dataset_key = 'hero_catalog'",
+      );
+      expect(head.rows[0].id).toBe(lowerCoverage);
+      await client.query("ROLLBACK");
+    } finally {
+      await client.query("ROLLBACK").catch(() => undefined);
+      client.release();
+    }
+  });
+
   it("auto-promotes Green, holds Yellow for Review, then promotes it", async () => {
     const client = await worker.connect();
     try {
@@ -401,7 +930,7 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
         "SELECT reviewer FROM catalog_reviews WHERE candidate_version_id = $1",
         [yellow],
       );
-      expect(review.rows[0].reviewer).toBe("medota2_worker");
+      expect(review.rows[0].reviewer).toBe(TEST_ROLES.worker);
       await client.query("COMMIT");
     } finally {
       client.release();
@@ -460,7 +989,7 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
       const second = await insertVersion(client, "green");
       await client.query("SELECT promote_hero_catalog_version($1)", [second]);
       await client.query(
-        "SELECT rollback_hero_catalog_version($1, 'integration rollback')",
+        "SELECT rollback_hero_catalog_version($1, 'integration rollback', false)",
         [first],
       );
       const head = await client.query<{ id: string }>(
@@ -476,7 +1005,7 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
       );
       expect(rollback.rows[0]).toMatchObject({
         from_version_id: second,
-        actor: "medota2_worker",
+        actor: TEST_ROLES.worker,
       });
       await client.query("COMMIT");
     } finally {
@@ -1404,10 +1933,8 @@ async function insertAssetDataset(
   };
 }
 
-function requiredTestUrl(key: string): string {
-  const value = process.env[key];
-  if (!value || !value.includes("_test")) {
-    throw new Error(`${key} must point to an explicitly named test database.`);
-  }
-  return value;
+function withDatabase(rawUrl: string, databaseName: string): string {
+  const parsed = new URL(rawUrl);
+  parsed.pathname = "/" + databaseName;
+  return parsed.toString();
 }

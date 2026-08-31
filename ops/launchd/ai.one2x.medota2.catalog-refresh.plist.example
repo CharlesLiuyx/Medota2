@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>ai.one2x.medota2.catalog-refresh</string>
+  <string>ai.one2x.medota2.catalog-refresh.development</string>
   <key>ProgramArguments</key>
   <array>
     <string>/usr/bin/env</string>
     <string>pnpm</string>
-    <string>data:refresh:catalog</string>
+    <string>data:refresh:catalog:development</string>
   </array>
   <key>WorkingDirectory</key>
   <string>__MEDOTA2_ROOT__</string>

@@ -1,4 +1,3 @@
-import type { PoolClient } from "pg";
 import {
   assertSourceImportBuildIsClean,
   readBuildIdentity,
@@ -10,6 +9,7 @@ import {
 } from "@/importers/dotaconstants/constants";
 import { parseReferenceHeroes } from "@/importers/dotaconstants/adapter";
 import { inspectGitCheckout } from "@/importers/git-checkout";
+import type { VerifiedSession } from "@/server/environment/contract";
 import {
   createImportRun,
   failImportRun,
@@ -22,7 +22,7 @@ async function main(): Promise<void> {
   const metrics = startMetrics();
   const build = await readBuildIdentity();
   const transformerVersion = `hero-reference-v1/${build.buildId}`;
-  const { pool, targetSchemaVersion } = await prepareWorker();
+  const { pool, targetSchemaVersion } = await prepareWorker("import");
   const runId = await createImportRun(pool, {
     sourceKind: "dotaconstants",
     commit: build.commit,
@@ -162,7 +162,7 @@ async function main(): Promise<void> {
 }
 
 async function insertReferenceRecords(
-  client: PoolClient,
+  client: VerifiedSession,
   referenceSnapshotId: string,
   heroes: ReturnType<typeof parseReferenceHeroes>["heroes"],
 ): Promise<void> {
