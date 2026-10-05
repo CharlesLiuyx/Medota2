@@ -61,6 +61,18 @@ pnpm dev:sample              # 在终端执行同一个小样例
 
 开发日志位于 `.medota2/development/server.log`。多个 Session 共用目录和当前分支，各自维护 `.medota2/sessions/<id>.md`；提交、分支切换、依赖安装和数据库写操作先协调。详见 [AGENTS.md](AGENTS.md)。
 
+### 配置 OpenDota Secret
+
+在项目根目录的 `.env` 中填写以下变量（本地文件，不提交 Git）：
+
+```dotenv
+OPENDOTA_API_KEY=你的_OpenDota_API_Key
+```
+
+首次从 `.env.example` 创建文件后，运行 `chmod 600 .env`，使它仅对当前用户开放读写。通过编辑器填写 Key，保存后重启需要使用它的进程。请勿将真实值填入 `.env.example` 或使用 `NEXT_PUBLIC_` 前缀。
+
+Node.js 服务端和 Worker 通过 `src/config/env.ts` 的 `getOpenDotaApiKey()` 读取；进程环境变量优先于 `.env`，未填写时返回 `null`。当前只提供 Secret 配置入口，尚未接入 OpenDota 比赛查询、付费调用或录像下载。详细约定见 [OpenDota Secret Spec](docs/specs/opendota-secret.md)。
+
 ### 导入锁定的上游数据
 
 推荐从远端发现并锁定精确 commit：

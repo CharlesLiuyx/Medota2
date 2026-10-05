@@ -231,6 +231,12 @@ export function getOptionalValue(
   return configurationValue(key)?.trim() || null;
 }
 
+/** Private Node.js configuration; never serialize this value into client props or logs. */
+export function getOpenDotaApiKey(): string | null {
+  loadLocalEnv();
+  return configurationValue("OPENDOTA_API_KEY")?.trim() || null;
+}
+
 export function assertProcessMayUseDatabaseRole(role: DatabaseRole): void {
   loadLocalEnv();
   const processRole = configurationValue("MEDOTA2_PROCESS_ROLE")?.trim();

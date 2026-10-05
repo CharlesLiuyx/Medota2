@@ -28,7 +28,7 @@
 
 ## 已知情况
 
-本次开始前已有 OpenDota 私密配置相关的未提交修改（`.env.example`、`README.md`、`src/config/env.ts` 和对应 Spec）；实施时保留。方案 HTML 位于 `docs/reviews/`，实现规范位于 `docs/specs/development-workbench.md`。
+OpenDota 私密配置入口（`.env.example`、`README.md`、`src/config/env.ts` 和对应 Spec）已按用户要求一并纳入本地 `main`；真实凭据继续保存在忽略的本地配置中。方案 HTML 位于 `docs/reviews/`，实现规范位于 `docs/specs/development-workbench.md`。
 
 ## 验证记录
 
