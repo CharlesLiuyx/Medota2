@@ -11,9 +11,11 @@ Medota2 把锁定 commit 的 Dota 2 原始数据转换为可复现的 PostgreSQL
 | 产品切片     | Hero Catalog v2 已完成：Heroes、Abilities、Facets、关系、本地化、图标资产与查询界面                                                   |
 | 数据链路     | exact-commit source lock → 全量候选 → semantic diff → Green/Yellow/Red gate → 原子发布/回滚                                           |
 | 运行方式     | 本地开发与本地真实数据审阅；尚未定义远程 production 部署形态                                                                          |
-| 环境安全     | Environment Contract v1、独立数据库角色、per-checkout attestation、run-scoped Test Harness 已实现                                     |
+| 环境安全     | Environment Contract v1、独立数据库角色、共享开发连接验证缓存、显式独立 Test Harness 已实现                                           |
 | 最近完整验收 | 2026-08-31：186 个 Unit tests、19 个 Integration tests、34 个 E2E tests、production build/start smoke 全部通过                        |
 | 数据审计基线 | commit `991daaf6fc24b08445209d9ce8767e145bab107e`：127 Heroes、2,703 accepted Abilities、4,752 bindings、339 Facets、0 blocking error |
+
+开发工作台已于 2026-10-06 完成本机验收：199 个单元测试、19 个数据库集成测试、共享与固定数据关键流程、独立产物构建/启动均通过。具体范围与反馈延迟见 [当前进展](docs/current.md)。上表保留此前完整产品验收基线。
 
 审计数字描述一次真实快照，不是业务常量。后续版本会从锁定来源重新发现文件并执行完整校验。
 
@@ -36,27 +38,28 @@ Medota2 把锁定 commit 的 Dota 2 原始数据转换为可复现的 PostgreSQL
 
 前置条件：Node.js 24 LTS（最低 `22.12`）、pnpm 11、Git、Docker。E2E 还需要项目锁定的 Playwright Chromium。
 
-首次创建 development sandbox：
+首次启动共享开发工作台：
 
 ```bash
 pnpm install
-cp .env.example .env
-pnpm db:development:provision
-pnpm db:migrate
+cp .env.example .env  # 已有 .env 时保留原文件
 pnpm dev
 ```
 
-打开 [http://127.0.0.1:3000](http://127.0.0.1:3000)。新数据库在导入 Catalog 前可以正常启动，但不会凭空生成真实游戏数据。
+打开 [http://127.0.0.1:3000/heroes](http://127.0.0.1:3000/heroes)。该入口默认优先复用已准备的 local-review 真实 Catalog 和资产，启动前检查图片覆盖；已有数据保持原样。没有真实审阅环境时，才使用 development 数据库，空库加载含占位图的小样例，并在开发面板标明。第二个 Session 再运行 `pnpm dev` 会连接同一个后台服务。
 
-首次 provision 成功后，日常启动和停止数据库使用：
+保存页面代码后自动热更新。页面右下角“共享开发”显示真实解析器的小样例、运行状态、耗时与错误；连续保存合并重算，旧结果不会覆盖新结果。页面数据与下方计算样例相互独立，计算使用的小 fixture 不替换页面的真实数据。冷启动与首次页面编译会慢一些。
+
+`.env` 的 `MEDOTA2_WORKBENCH_DATA` 默认为 `auto`；可显式设为 `local-review` 或 `development`，修改后运行 `pnpm dev:restart`。真实数据模式的资产检查不通过时会报错，不会静默切换为占位图。
 
 ```bash
-pnpm db:development:start
-pnpm dev
-pnpm db:development:stop
+pnpm dev:restart             # 配置、迁移或脚手架变化后重新准备并恢复预览
+pnpm dev:stop                # 停止共享 Web 和样例进程，保留数据库
+pnpm db:development:stop     # 需要时单独停止开发数据库
+pnpm dev:sample              # 在终端执行同一个小样例
 ```
 
-`provision` 只建立受管数据栈、轮换本地凭据并签发 `.medota2/environments/development/` 下权限为 `0600` 的 receipt；它不会运行产品 migration、清空业务表或移动 Catalog/Asset head。
+开发日志位于 `.medota2/development/server.log`。多个 Session 共用目录和当前分支，各自维护 `.medota2/sessions/<id>.md`；提交、分支切换、依赖安装和数据库写操作先协调。详见 [AGENTS.md](AGENTS.md)。
 
 ### 导入锁定的上游数据
 
@@ -217,17 +220,17 @@ pnpm data:rollback:catalog --to <dataset-version-id> --reason "<reason>"
 
 Medota2 不用 `NODE_ENV`、数据库名后缀或缺省的 `main` 推断数据环境。每个进程必须声明 Runtime Environment 与 Data Class，并通过外部 receipt、数据库 identity marker、PostgreSQL system identifier、endpoint、role/ACL 和 operation policy 的联合验证。
 
-| Runtime Environment | Data Class            | 本地数据库      | 浏览器 origin    | 用途                             |
-| ------------------- | --------------------- | --------------- | ---------------- | -------------------------------- |
-| `development`       | `sandbox`             | `medota2`       | `127.0.0.1:3000` | 可重建开发沙箱                   |
-| `test`              | `synthetic-fixture`   | run-scoped      | Harness 动态分配 | 一次性测试栈                     |
-| `local-review`      | `production-snapshot` | `medota2_local` | `127.0.0.1:3001` | 本机真实快照审阅，不等同线上生产 |
-| `production`        | `live-production`     | 无本地默认值    | 部署显式提供     | 当前只开放 Web/read              |
+| Runtime Environment | Data Class            | 本地数据库      | 浏览器 origin                    | 用途                             |
+| ------------------- | --------------------- | --------------- | -------------------------------- | -------------------------------- |
+| `development`       | `sandbox`             | `medota2`       | `3000` 选择 development 时       | 可重建开发沙箱                   |
+| `test`              | `synthetic-fixture`   | 受管测试库      | Runner 动态分配                  | 可复用；支持显式独立测试栈       |
+| `local-review`      | `production-snapshot` | `medota2_local` | 共享预览 `3000`；独立审阅 `3001` | 本机真实快照审阅，不等同线上生产 |
+| `production`        | `live-production`     | 无本地默认值    | 部署显式提供                     | 当前只开放 Web/read              |
 
 安全边界：
 
 - 非生产数据库 URL 由受管 lifecycle 写入私有 receipt，不写入 `.env`。
-- Web 每次 pool checkout 恢复只读状态并重新验证身份与权限；Worker 无持久 DDL/control 写权限。
+- Web 每次 pool checkout 恢复只读状态。共享 development Web 对每个物理连接验证一次身份与权限；其他模式继续完整验证。迁移后重启开发 Web；Worker 无持久 DDL/control 写权限。
 - production contract v1 只签发 `Web/read`，Worker 与 Migration 默认拒绝。
 - identity、marker、peer role 或安全函数签名不一致时 fail closed，页面显示 `DATA ACCESS BLOCKED`。
 - 既有 `127.0.0.1:54321` legacy stack 不会被 provision 命令静默迁移、删除或重新解释。
@@ -239,27 +242,41 @@ pnpm db:environment:doctor
 pnpm db:environment:doctor:local
 ```
 
-旧数据栈 adoption 会轮换 credential、调整 owner/ACL 并终止连接，不是日常启动步骤；只能按照 [ADR 0005](docs/adr/0005-environment-contract.md) 与相关 preflight 证据单独授权执行。完整模型见 [CONTEXT.md](CONTEXT.md)。
+旧数据栈 adoption 会轮换 credential、调整 owner/ACL 并终止连接，不是日常启动步骤；只能按照 [ADR 0005](docs/adr/0005-environment-contract.md) 与相关 preflight 证据单独授权执行。概念入口见 [CONTEXT.md](CONTEXT.md)，详细约束见[环境合同](docs/architecture/environment-contract-details.md)。
 
 ## 开发与验证
 
 ```bash
-pnpm typecheck               # TypeScript strict
-pnpm lint                    # ESLint
-pnpm format:check            # Prettier
-pnpm test                    # Unit tests
-pnpm test:integration        # PostgreSQL migration/权限/原子性/回滚
-pnpm test:e2e                # Desktop + Mobile Chromium，含视觉回归
-pnpm test:e2e:concurrent     # 两个完整 E2E run 并发隔离
-pnpm test:harness:isolation  # 注入失败不影响并发 survivor
-pnpm verify                  # 本地/CI 共用全量门禁与版本化证据
-pnpm build                   # Webpack production build
-pnpm data:audit:catalog      # 真实 checkout 全量 parser 审计
+pnpm check --plan            # 只显示影响范围、理由和准备需求
+pnpm check                   # 运行必要检查，复用仍有效的静态检查结果
+pnpm check --files src/components/hero-card.tsx
+pnpm check --base <git-ref>  # 检查指定 Git 状态之后的组合改动
+pnpm check --watch           # 相关内容变化后重跑
+pnpm test:journeys           # 在共享开发页面执行短流程，不重置开发数据
+pnpm test:journeys --fixture # 在可复用测试库核对已知数据与页面
+pnpm test:integration --testNamePattern 'enforces canonical'
+pnpm test:e2e tests/e2e/heroes.spec.ts --grep 'overview'
+pnpm bench --iterations 5   # 真实解析器的小样例耗时与内存
+pnpm bench --input <vpk-directory> --iterations 3
+pnpm release                # 构建并启动检查 Web 产物，相同输入复用
+pnpm test:clean             # 清理本工具持有的可复用测试栈
 ```
 
-Integration、E2E 与 `verify` 每次创建独立 PostgreSQL 18.2 tmpfs stack、Run ID、动态数据库/Web 端口、receipt root、Next dist 和 artifact root。测试网络策略为 `loopback-only`；成功或失败后只清理该 run 的精确资源。
+`check` 按文件与功能选择少量 E2E、已有针对性单测、静态检查和必要构建。纯文档不启动产品数据库或浏览器；普通页面改动不跑全量构建。类型检查使用独立的 `tsconfig.check.json` 和 TypeScript 增量缓存，避免开发服务重新生成 `.next` 类型时相互干扰；框架生成的路由约束由正式构建检查。工具链变化会扩大范围，完整验证仍可显式运行：
 
-证据保存在 `.medota2/test-runs/<run-id>/`，包含 `run.json`、摘要、逐步日志、coverage 和 Playwright 产物。Drizzle config 只用于离线 schema generation；contract v1 不提供会绕过 VerifiedSession 的 `db:studio`。
+```bash
+pnpm typecheck
+pnpm test
+pnpm test:integration:isolated  # 每次全新数据库，适合身份/权限合同检查
+pnpm test:e2e:isolated          # 完整 Desktop + Mobile 与视觉回归
+pnpm verify                     # 显式全量诊断，包含覆盖率
+```
+
+日常固定数据测试复用一套 PostgreSQL，相关写入排队；浏览器状态和报告每次独立。测试 API 固定数据版本，相关代码或数据变化时结果作废。`check` 的证据位于 `.medota2/checks/`，测试报告位于 `.medota2/shared-tests/runs/`；独立验证仍在 `.medota2/test-runs/`。
+
+CI 在安装 Chromium 或准备数据库前计算范围，调用同一个 `pnpm check`，并取消同分支已过期的运行。仅完整输入与执行条件一致时复用结果；本地与 CI 分别记录。默认无覆盖率门槛。
+
+`release` 当前只准备 `.medota2/releases/` 下的 Web 产物，并用固定测试数据做启动检查。远程部署目标尚未配置。计算引擎、独立部署单元和大型调度按实际需要扩展。详见[开发工作台规范](docs/specs/development-workbench.md)。
 
 ## 仓库结构
 
@@ -271,14 +288,16 @@ Medota2/
 ├── src/importers/           # KeyValues、来源 adapters、source lock、资产导入
 ├── src/server/              # schema、repositories、asset provider
 │   └── environment/         # attestation、policy、provision/adoption boundary
-├── src/testing/             # run-scoped Test Harness
+├── src/development/         # 共享工作台、样例与测试环境
+├── scripts/development/     # 本地与 CI 共用的检查范围规则
+├── src/testing/             # 显式独立验证 Harness
 ├── src/workers/             # import、refresh、Review、promotion、rollback CLI
 ├── drizzle/                 # 已审阅 SQL migrations
 ├── docker/                  # PostgreSQL roles 与 environment identity bootstrap
 ├── ops/                     # development 调度示例
 ├── tests/                   # fixtures、Unit、Integration、E2E 与视觉基线
 ├── docs/                    # Spec、ADR、来源、设计与运维文档
-└── .github/workflows/       # 全量 verify CI
+└── .github/workflows/       # 按需检查 CI
 ```
 
 ## 路线图与决策边界
@@ -295,6 +314,9 @@ Medota2/
 ## 文档入口
 
 - [Medota2 Domain Context](CONTEXT.md)
+- [当前进展与接手](docs/current.md)
+- [共享开发工作台规范](docs/specs/development-workbench.md)
+- [共享开发与按需验证 ADR](docs/adr/0007-shared-development-workbench.md)
 - [Hero Catalog v2 Spec](docs/specs/hero-catalog-v2.md)
 - [全局 List 无限滚动与上 7× / 下 10× 预加载 Spec](docs/specs/infinite-lists.md)
 - [Medota2 Design System](docs/design-system.md)

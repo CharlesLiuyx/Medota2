@@ -149,3 +149,52 @@ code,
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Local development feedback stays alongside the current product page. */
+.development-workbench {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 60;
+  width: min(460px, calc(100vw - 24px));
+  max-height: 45vh;
+  overflow: auto;
+  border: 1px solid #587689;
+  border-radius: 8px;
+  background: #10202bf2;
+  color: #e4edf1;
+  box-shadow: 0 4px 18px #0005;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.development-workbench summary {
+  cursor: pointer;
+  padding: 9px 12px;
+}
+.development-workbench[data-sample-state="error"] {
+  border-color: #e78e78;
+}
+.development-workbench-body {
+  padding: 0 12px 12px;
+  overflow-wrap: anywhere;
+}
+.development-workbench-body p {
+  margin: 8px 0;
+}
+.development-workbench-actions {
+  display: flex;
+  gap: 8px;
+}
+.development-workbench button {
+  border: 1px solid #587689;
+  padding: 3px 9px;
+  cursor: pointer;
+}
+.development-workbench button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.development-workbench table {
+  width: 100%;
+  text-align: left;
+}

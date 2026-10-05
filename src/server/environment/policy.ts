@@ -723,7 +723,7 @@ function assertEnvironmentAllowsOperation(
   }
   if (
     declaration.environment === "development" &&
-    operation === "reset" &&
+    (operation === "reset" || operation === "seed") &&
     (resetPolicy !== "manual" || confirmation !== databaseName)
   ) {
     throw new EnvironmentContractError("ENV_DESTRUCTIVE_CONFIRMATION_REQUIRED");
@@ -739,7 +739,7 @@ const ENVIRONMENT_OPERATION_POLICY: Readonly<
   development: {
     web: ["read"],
     worker: ["import", "review", "promote", "rollback"],
-    migration: ["migrate", "reset"],
+    migration: ["migrate", "seed", "reset"],
   },
   test: {
     web: ["read"],

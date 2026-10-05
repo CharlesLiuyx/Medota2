@@ -4,9 +4,14 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: verify-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verify:
@@ -14,6 +19,25 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Uses only Node built-ins: decide before installing browsers or preparing DBs.
+      - name: Plan affected checks
+        id: plan
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+        shell: bash
+        run: |
+          base="${PR_BASE:-$PUSH_BASE}"
+          if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
+            base="$(git rev-parse HEAD^ 2>/dev/null || git hash-object -t tree /dev/null)"
+          fi
+          mkdir -p .medota2
+          node scripts/development/check-plan.mjs --base "$base" > .medota2/check-plan.json
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          node --input-type=module -e 'import fs from "node:fs"; const p=JSON.parse(fs.readFileSync(".medota2/check-plan.json","utf8")); fs.appendFileSync(process.env.GITHUB_OUTPUT,`browser=${p.browser}\ndatabase=${p.database}\n`); console.log(p.summary); for(const t of p.tasks) console.log(`${t.id}: ${t.reason}`);'
 
       - uses: pnpm/action-setup@v4
         with:
@@ -28,18 +52,42 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Chromium
+      - name: Restore verified check results
+        uses: actions/cache@v4
+        with:
+          path: .medota2/check-cache
+          key: checks-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('pnpm-lock.yaml', 'scripts/development/**') }}-${{ github.sha }}
+          restore-keys: |
+            checks-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('pnpm-lock.yaml', 'scripts/development/**') }}-
+
+      - name: Install Chromium when a browser journey is affected
+        if: steps.plan.outputs.browser == 'true'
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run the repository verification interface
-        run: pnpm verify
+      - name: Run affected checks through the local interface
+        env:
+          CHECK_BASE: ${{ steps.plan.outputs.base }}
+        run: pnpm check --base "$CHECK_BASE"
 
-      - name: Upload verification evidence
+      - name: Release this job's reusable test database
+        if: always() && steps.plan.outputs.database == 'true'
+        run: pnpm test:clean
+
+      - name: Upload check evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: medota2-verification-${{ github.run_id }}
           path: |
+            .medota2/check-plan.json
+            .medota2/checks/*/run.json
+            .medota2/checks/*/*.log
+            .medota2/shared-tests/runs/*/*.log
+            .medota2/shared-tests/runs/*/run.json
+            .medota2/shared-tests/runs/*/report
+            .medota2/shared-tests/runs/*/test-results
+            .medota2/benchmarks/runs
+            .medota2/releases/*/manifest.json
             .medota2/test-runs/*/run.json
             .medota2/test-runs/*/index.md
             .medota2/test-runs/*/logs

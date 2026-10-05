@@ -370,6 +370,7 @@ class PostgresVerifiedDatabase<Operation extends DatabaseOperation> {
   readonly #authorizeOperation: boolean;
   readonly #expectedMarkerState: "active" | "quarantined";
   #identity: DatabaseIdentity | null = null;
+  readonly #verifiedConnections = new WeakSet<PoolClient>();
 
   constructor(input: {
     declaration: EnvironmentDeclaration;
@@ -430,12 +431,23 @@ class PostgresVerifiedDatabase<Operation extends DatabaseOperation> {
     }
     try {
       await this.#establishSessionBaseline(client);
+      // The shared local workbench audits each physical reader connection once.
+      // Database permissions and the session baseline still apply on every use.
+      const reuseLocalIdentity =
+        this.#declaration.environment === "development" &&
+        this.role === "web" &&
+        this.operation === "read" &&
+        process.env.MEDOTA2_WORKBENCH === "1";
+      if (reuseLocalIdentity && this.#verifiedConnections.has(client)) {
+        return createVerifiedSession(client);
+      }
       const identity = await this.#attest(client);
       if (this.#identity) {
         assertSameDatabaseIdentity(this.#identity, identity);
       } else {
         this.#identity = Object.freeze(identity);
       }
+      if (reuseLocalIdentity) this.#verifiedConnections.add(client);
       return createVerifiedSession(client);
     } catch (error) {
       client.release(error instanceof Error ? error : new Error("attestation"));

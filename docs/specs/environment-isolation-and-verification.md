@@ -1,5 +1,7 @@
 # Environment Isolation、Test Run Harness 与 Verification Evidence Spec
 
+> 2026-10-06 更新：日常共享开发、可复用测试环境、按需 CI 和 development Web 连接验证方式由 [ADR 0007](../adr/0007-shared-development-workbench.md) 与[开发工作台规范](../specs/development-workbench.md)替代。本文保留完整隔离验证与数据库合同的详细依据；其中每次独占资源、CI 默认全量 verify 的表述仅适用于历史方案或显式独立验证。
+
 - 状态：Implemented locally；legacy stack rollout 待单独授权
 - 日期：2026-08-31
 - 关联：[Medota2 Domain Context](../../CONTEXT.md)、[ADR 0005：使用可证明的 Environment Contract 隔离运行环境](../adr/0005-environment-contract.md)、[ADR 0004：Hero 与 Ability 图标使用数据库资产数据集](../adr/0004-database-icon-asset-datasets.md)

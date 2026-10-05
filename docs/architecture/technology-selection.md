@@ -2,7 +2,7 @@
 
 > 状态：已由英雄元数据 MVP 落地；后续能力仍按本文演进
 >
-> 最后更新：2026-08-31
+> 最后更新：2026-10-06
 >
 > 适用范围：Medota2 的 Web、应用服务、PostgreSQL、数据 Worker、开发工具链与高性能计算演进
 
@@ -11,6 +11,8 @@
 本文独立记录 Medota2 的技术选型上下文、权衡和演进边界。它回答“为什么这样选”和“各运行时负责什么”，不定义某个产品版本的具体页面与字段。
 
 第一个产品切片见[英雄元数据显示 MVP 功能 Spec](../specs/hero-metadata-mvp.md)，全产品内容 List 的共享加载与渲染边界见[全局 List 无限滚动与上 7× / 下 10× 预加载 Spec](../specs/infinite-lists.md)。后者取代早期分页或一次性 DOM 全量渲染条款。本文中的 Web、PostgreSQL、TypeScript Worker、权限边界和工具链已经由 MVP 实现；Rust 和后续重计算能力仍是演进规则。
+
+开发流程已按 [ADR 0007](../adr/0007-shared-development-workbench.md) 更新：多个 AI Session 共用预览和开发数据，日常由 `pnpm check` 选择检查范围，独立 Test Run Harness 用于显式诊断。具体行为与命令见[共享工作台 Spec](../specs/development-workbench.md)。
 
 ## 2. 项目上下文
 
@@ -279,7 +281,7 @@ pnpm verify
 pnpm build
 ```
 
-development 固定监听 `127.0.0.1:3000`，local-review 固定监听 `127.0.0.1:3001`，test/E2E 由 Test Run Harness 每 run 分配唯一 loopback origin，避免共享 origin-scoped 浏览器状态和自动化产物。`pnpm local` 是 local-review 的幂等一键入口：按需 provision、migration、首次 Catalog/Asset 导入后启动 Web；已有 active Catalog 时不刷新数据。首次导入只允许对“纯 asset provider 临时错误且重试后完整 native coverage”执行受约束的自动 Review，其他 Yellow 保留人工门禁。端口不隔离 Cookie，也不是环境身份；页面表示仍来自 fresh attestation。Drizzle config 只用于离线 schema generation，contract v1 不提供会绕过 verified capability seam 的 `db:studio`。英雄导入、development-only Catalog 刷新与参考比较命令见 MVP Spec 和 README。修改命令时必须同步更新 README。
+共享工作台固定监听 `127.0.0.1:3000`，优先读取已有 local-review 真实数据和资产，也可显式选择 development；独立 local-review 入口监听 `127.0.0.1:3001`。只读日常 E2E 复用开发 origin 并使用独立浏览器上下文；需要写入的固定数据测试串行复用一个测试栈与 Web 编译缓存，每次保留独立报告。显式 isolated/verify 仍由 Test Run Harness 每 run 分配独立 origin。`pnpm local` 是 local-review 的幂等一键入口：按需 provision、migration、首次 Catalog/Asset 导入后启动 Web；已有 active Catalog 时不刷新数据。首次导入只允许对“纯 asset provider 临时错误且重试后完整 native coverage”执行受约束的自动 Review，其他 Yellow 保留人工门禁。端口不隔离 Cookie，也不是环境身份；页面表示仍来自 fresh attestation。Drizzle config 只用于离线 schema generation，contract v1 不提供会绕过 verified capability seam 的 `db:studio`。英雄导入、development-only Catalog 刷新与参考比较命令见 MVP Spec 和 README。修改命令时必须同步更新 README。
 
 ## 15. 安全与运维约束
 

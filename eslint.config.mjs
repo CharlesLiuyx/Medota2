@@ -44,6 +44,7 @@ export default defineConfig([
     ".next-local/**",
     ".next-preview/**",
     ".next-validation/**",
+    ".next-release/**",
     ".medota2/**",
     "coverage/**",
     "dist/**",

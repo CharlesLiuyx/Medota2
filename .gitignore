@@ -19,6 +19,7 @@ node_modules/
 .next-local/
 .next-preview/
 .next-validation/
+.next-release/
 .playwright-cli/
 dist/
 playwright-report/

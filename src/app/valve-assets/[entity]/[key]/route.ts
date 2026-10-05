@@ -47,6 +47,7 @@ export async function GET(
       "Cache-Control": cacheControl,
       "X-Medota2-Asset-Path": asset.logicalPath,
       "X-Medota2-Asset-LoD": asset.lodKey,
+      "X-Medota2-Asset-Source": asset.sourceType,
     },
   });
 }

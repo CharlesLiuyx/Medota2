@@ -105,6 +105,7 @@ export interface TestRunContext {
 
 export interface TestRunOptions {
   faultAfterProvision?: boolean;
+  runnerArgs?: string[];
 }
 
 interface ChildStepResult {
@@ -276,7 +277,14 @@ export async function runTestSuite(
       await runStep(
         "integration",
         "pnpm",
-        ["exec", "vitest", "run", "--config", "vitest.integration.config.ts"],
+        [
+          "exec",
+          "vitest",
+          "run",
+          "--config",
+          "vitest.integration.config.ts",
+          ...(options.runnerArgs ?? []),
+        ],
         { ...testEnvironment, MEDOTA2_PROCESS_ROLE: "control" },
       );
     }
@@ -309,10 +317,15 @@ export async function runTestSuite(
     }
 
     if (suite === "e2e" || suite === "verify") {
-      await runStep("e2e", "pnpm", ["exec", "playwright", "test"], {
-        ...testEnvironment,
-        MEDOTA2_PROCESS_ROLE: "control",
-      });
+      await runStep(
+        "e2e",
+        "pnpm",
+        ["exec", "playwright", "test", ...(options.runnerArgs ?? [])],
+        {
+          ...testEnvironment,
+          MEDOTA2_PROCESS_ROLE: "control",
+        },
+      );
     }
 
     const evidenceResult = await runStep(

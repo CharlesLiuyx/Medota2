@@ -17,11 +17,21 @@ import {
   type VerifiedSession,
 } from "@/server/environment/contract";
 import { loadCatalogFixture } from "./vpk-fixture";
+import {
+  getDatabaseConfirmation,
+  getEnvironmentDeclaration,
+} from "@/config/env";
 
 const SCROLL_FIXTURE_SIZE = 192;
 type PoolClient = VerifiedSession;
 
 async function main(): Promise<void> {
+  const development = getEnvironmentDeclaration().environment === "development";
+  if (development && !process.argv.includes("--if-empty")) {
+    throw new Error(
+      "Development fixture initialization requires --if-empty; existing data is retained.",
+    );
+  }
   const includeLargeList = process.argv.includes("--include-large-list");
   const migrationDatabase = await openVerifiedDatabase({
     role: "migration",
@@ -35,6 +45,7 @@ async function main(): Promise<void> {
   const database = await openVerifiedDatabase({
     role: "migration",
     operation: "seed",
+    confirmation: getDatabaseConfirmation(),
   });
   const client = await database.connect();
   try {
@@ -61,6 +72,19 @@ async function main(): Promise<void> {
       .join("");
 
     await client.query("BEGIN");
+    if (development) {
+      await client.query("SELECT pg_advisory_xact_lock($1, $2)", [
+        ...CATALOG_IMPORT_LOCK_KEYS,
+      ]);
+      const existing = await client.query<{ present: boolean }>(
+        "SELECT EXISTS (SELECT 1 FROM source_snapshots UNION ALL SELECT 1 FROM import_runs UNION ALL SELECT 1 FROM reference_snapshots) AS present",
+      );
+      if (existing.rows[0].present) {
+        await client.query("COMMIT");
+        console.log("Development data already exists; kept unchanged.");
+        return;
+      }
+    }
     await client.query(
       "TRUNCATE source_snapshots, import_runs, reference_snapshots CASCADE",
     );

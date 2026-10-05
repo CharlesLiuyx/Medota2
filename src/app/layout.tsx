@@ -5,6 +5,7 @@ import {
   toPublicEnvironmentIdentity,
 } from "@/server/environment/contract";
 import { getWebDatabase } from "@/server/db/client";
+import { DevelopmentWorkbench } from "@/components/development-workbench";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +45,8 @@ export default async function RootLayout({
     >
       <body>
         <AppShell environment={environment}>{children}</AppShell>
+        {process.env.NODE_ENV === "development" &&
+          process.env.MEDOTA2_WORKBENCH === "1" && <DevelopmentWorkbench />}
       </body>
     </html>
   );

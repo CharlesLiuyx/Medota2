@@ -1,5 +1,7 @@
 # ADR 0006：使用 Run-scoped Harness 隔离自动验证
 
+> 2026-10-06 更新：日常共享开发、可复用测试环境、按需 CI 和 development Web 连接验证方式由 [ADR 0007](0007-shared-development-workbench.md) 与[开发工作台规范](../specs/development-workbench.md)替代。本文保留完整隔离验证与数据库合同的详细依据；其中每次独占资源、CI 默认全量 verify 的表述仅适用于历史方案或显式独立验证。
+
 - 状态：Accepted
 - 日期：2026-08-31
 - 关联：[Environment Isolation、Test Run Harness 与 Verification Evidence Spec](../specs/environment-isolation-and-verification.md)、[ADR 0005](0005-environment-contract.md)

@@ -463,7 +463,7 @@ describe("Environment Contract destructive-operation policy", () => {
     ).not.toThrow();
   });
 
-  it("allows seed only for a run-scoped synthetic test", () => {
+  it("requires a run identity for synthetic test seeding", () => {
     expect(() =>
       attestEnvironment(
         scenario({
@@ -504,6 +504,26 @@ describe("Environment Contract destructive-operation policy", () => {
         ),
       "ENV_DESTRUCTIVE_CONFIRMATION_REQUIRED",
     );
+  });
+
+  it("requires the exact development database name for initial seeding", () => {
+    const input = scenario({
+      role: "migration",
+      operation: "seed",
+      resetPolicy: "manual",
+      expectedRoleName: "medota2_owner",
+      endpointUsername: "medota2_owner",
+      currentUser: "medota2_owner",
+      sessionUser: "medota2_owner",
+      markerRoleName: "medota2_owner",
+    });
+    expectContractError(
+      () => attestEnvironment(input),
+      "ENV_DESTRUCTIVE_CONFIRMATION_REQUIRED",
+    );
+    expect(() =>
+      attestEnvironment({ ...input, confirmation: "medota2" }),
+    ).not.toThrow();
   });
 
   it("requires the exact local-review database name for reset", () => {

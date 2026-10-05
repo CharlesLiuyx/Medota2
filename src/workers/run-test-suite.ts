@@ -5,8 +5,16 @@ async function main(): Promise<void> {
   if (!suite || !(["integration", "e2e", "verify"] as const).includes(suite)) {
     throw new Error("Usage: run-test-suite <integration|e2e|verify>.");
   }
+  const runnerArgs = process.argv
+    .slice(3)
+    .filter((arg) => arg !== "--fault-after-provision");
+  if (suite === "verify" && runnerArgs.length)
+    throw new Error(
+      "Use integration or e2e for runner filtering; verify is the explicit full diagnostic.",
+    );
   const runRoot = await runTestSuite(suite, {
     faultAfterProvision: process.argv.includes("--fault-after-provision"),
+    runnerArgs,
   });
   console.log(`Verification evidence: ${runRoot}`);
 }
