@@ -83,3 +83,47 @@ test("heroes: fixed fixture has the known movement speed", async ({
     .locator("dd");
   await expect(speed).toHaveText("310");
 });
+
+test("heroes and abilities: readable tooltips and mobile layout", async ({
+  page,
+}) => {
+  await page.goto("/heroes/antimage");
+  await expect(
+    page.getByRole("heading", { name: "天赋树", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "英雄属性", exact: true }),
+  ).toBeVisible();
+  const text = await page.locator("main").innerText();
+  expect(text).not.toMatch(
+    /npc_dota_|DOTA_ABILITY_|special_bonus_|\{s:|%[a-z_]+%|SourceRevision|SHA-256/u,
+  );
+  await page.goto("/abilities/antimage_blink");
+  await expect(
+    page.getByRole("heading", { name: "闪烁", level: 1 }),
+  ).toBeVisible();
+  await expect(page.locator("main")).toContainText("冷却");
+  await expect(page.locator("main")).toContainText("魔法消耗");
+  expect(await page.locator("main").innerText()).not.toMatch(
+    /antimage_blink|DOTA_|blink_range|BaseClass|Provenance/u,
+  );
+  if (process.env.MEDOTA2_SHARED_WEB !== "1") {
+    await expect(page.locator("main")).toContainText("12 / 10 / 8 / 6");
+    await expect(page.locator("main")).toContainText("750 / 900 / 1050 / 1200");
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const route of [
+    "/heroes",
+    "/heroes/antimage",
+    "/abilities",
+    "/abilities/antimage_blink",
+  ]) {
+    await page.goto(route);
+    await expect(page.locator("h1")).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+  }
+});

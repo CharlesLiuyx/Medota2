@@ -24,21 +24,21 @@ type HeroGroup = (typeof HERO_GROUP_ORDER)[number];
 
 test("overview, canonical search URL and CM filter", async ({ page }) => {
   await page.goto("/heroes");
-  await expect(
-    page.getByRole("heading", { name: "游戏内定义，原样可追溯。" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "英雄图鉴" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "敌法师" })).toBeVisible();
   await expect(
     page.getByRole("img", { name: "Anti-Mage icon", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("最近一次 VPK 导入失败", { exact: false }),
+    page.getByText("资料更新暂未完成，当前显示上一次可用的游戏资料。", {
+      exact: true,
+    }),
   ).toHaveCount(0);
 
   await page
-    .getByPlaceholder("搜索中文名、英文名或内部名称…")
+    .getByPlaceholder("搜索英雄名称、拼音或别称…")
     .fill("  Ａnti-Mage  ");
-  await page.getByRole("button", { name: "应用筛选" }).click();
+
   await expect(page).toHaveURL(/\/heroes\?q=anti-mage$/u);
   await expect(page.getByRole("heading", { name: "敌法师" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "测试守卫" })).toHaveCount(0);
@@ -102,6 +102,28 @@ test("hero catalog continuously loads five chunks without repeating group headin
     .poll(() => list.locator("[data-infinite-list-chunk]").count())
     .toBeGreaterThanOrEqual(5);
 
+  // A fetch boundary within one attribute must continue the previous row.
+  const cells = await list
+    .locator("[data-infinite-list-item]")
+    .evaluateAll((nodes) =>
+      nodes.map((node) => {
+        const rect = node.getBoundingClientRect();
+        return {
+          group: node.getAttribute("data-hero-attribute"),
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+        };
+      }),
+    );
+  const rowEnd = Math.max(...cells.map((cell) => cell.right));
+  for (let index = 1; index < cells.length; index++) {
+    const previous = cells[index - 1]!;
+    const current = cells[index]!;
+    if (current.group === previous.group && current.top > previous.top + 2)
+      expect(Math.abs(previous.right - rowEnd)).toBeLessThan(2);
+  }
+
   const footer = page.getByRole("contentinfo");
   await footer.scrollIntoViewIfNeeded();
   await expect(footer).toBeVisible();
@@ -129,52 +151,124 @@ test("hero catalog continuously loads five chunks without repeating group headin
   await expect(firstItem).toBeVisible();
 });
 
-test("detail renders ability graph, raw values, provenance and paired reference drift", async ({
+test("compact hero previews open immediately and filters stay keyboard accessible", async ({
+  page,
+}) => {
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 840 });
+    await page.goto("/heroes");
+    const hero = page.locator('a[href="/heroes/antimage"]').last();
+    await expect(hero).toBeVisible();
+    await hero.hover();
+    const tooltip = page.getByRole("tooltip");
+    await expect(tooltip).toBeVisible({ timeout: 500 });
+    await expect(tooltip).toContainText("移动速度 310");
+    await expect(tooltip).toContainText("操作难度");
+    expect(await hero.getAttribute("title")).toBeNull();
+    const bounds = await tooltip.boundingBox();
+    expect(bounds!.x).toBeGreaterThanOrEqual(8);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width - 8);
+    await tooltip.hover();
+    await expect(tooltip).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(tooltip).toHaveCount(0);
+    await hero.focus();
+    await expect(tooltip).toBeVisible();
+    await page.keyboard.press("Escape");
+    await page.locator("summary").filter({ hasText: "主属性" }).click();
+    await page.getByRole("checkbox", { name: "敏捷", exact: true }).check();
+    await page.keyboard.press("Escape");
+    await expect(
+      page.getByRole("checkbox", { name: "敏捷", exact: true }),
+    ).not.toBeVisible();
+
+    const mode = page.getByRole("combobox", { name: "队长模式" });
+    await mode.focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(
+      page.getByRole("option", { name: "全部", exact: true }),
+    ).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("Enter");
+    await expect(mode).toBeFocused();
+    await expect(page).toHaveURL(/cm=true/u);
+    await mode.click();
+    await page.keyboard.press("Escape");
+    await expect(mode).toHaveAttribute("aria-expanded", "false");
+    await expect(page).toHaveURL(/attribute=agility/u);
+    await expect(page.getByRole("heading", { name: "测试守卫" })).toHaveCount(
+      0,
+    );
+  }
+});
+
+test("detail renders readable skills, talents, facets and base stats", async ({
   page,
 }) => {
   await page.goto("/heroes/antimage");
   await expect(
     page.getByRole("heading", { name: "敌法师", level: 1 }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Abilities", level: 2 }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Talents & Upgrades", level: 2 }),
-  ).toBeVisible();
-  await expect(page.getByRole("link", { name: /闪烁/u }).first()).toBeVisible();
-  await expect(page.getByText("基础 / 原始定义")).toBeVisible();
-  await expect(page.getByText("Catalog Provenance")).toBeVisible();
-  await expect(
-    page.getByText("共享 Catalog 快照", { exact: false }),
-  ).toBeVisible();
-  await expect(
-    page.getByText("dotaconstants 参考，不参与规范值"),
-  ).toBeVisible();
-  await expect(page.getByText("base_health", { exact: true })).toBeVisible();
-  await expect(
-    page.getByRole("code").filter({ hasText: /^120$/u }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("code").filter({ hasText: /^999$/u }),
-  ).toBeVisible();
-
-  const detailLists = page.locator("[data-infinite-list]");
-  await expect(detailLists).toHaveCount(13);
-  for (let index = 0; index < 13; index += 1) {
+  for (const name of ["英雄技能", "天赋树", "命石", "英雄属性", "英雄故事"])
     await expect(
-      detailLists.nth(index).locator("[data-infinite-list-item]").first(),
-    ).toBeAttached();
+      page.getByRole("heading", { name, level: 2, exact: true }),
+    ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "闪烁", exact: true }).first(),
+  ).toBeVisible();
+  await expect(page.locator("main")).toContainText("310");
+  expect(await page.locator("main").innerText()).not.toMatch(
+    /npc_dota_|special_bonus_|DOTA_ABILITY_|SHA-256|base_health|Catalog Provenance/u,
+  );
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 600 });
+    const nav = page.getByRole("navigation", { name: "英雄详情" });
+    await nav.getByRole("link", { name: "属性", exact: true }).click();
+    await expect(page).toHaveURL(/#stats$/u);
+    await expect(
+      nav.getByRole("link", { name: "属性", exact: true }),
+    ).toHaveAttribute("aria-current", "location");
+    await expect
+      .poll(async () => (await nav.boundingBox())!.y)
+      .toBeCloseTo(40, 0);
+    const navBounds = (await nav.boundingBox())!;
+    const statsBounds = (await page.locator("#stats").boundingBox())!;
+    expect(statsBounds.y).toBeGreaterThanOrEqual(
+      navBounds.y + navBounds.height,
+    );
+    await nav.getByRole("link", { name: "技能", exact: true }).click();
+    await expect(
+      nav.getByRole("link", { name: "技能", exact: true }),
+    ).toHaveAttribute("aria-current", "location");
+    await page.locator("#talents").evaluate((node) => node.scrollIntoView());
+    await expect(
+      nav.getByRole("link", { name: "天赋树", exact: true }),
+    ).toHaveAttribute("aria-current", "location");
+    await page.evaluate(() =>
+      window.scrollTo(0, document.documentElement.scrollHeight),
+    );
+    await expect(
+      nav.getByRole("link", { name: "英雄故事", exact: true }),
+    ).toHaveAttribute("aria-current", "location");
+    await nav.getByRole("link", { name: "技能", exact: true }).click();
+    const skillsBounds = (await page.locator("#abilities").boundingBox())!;
+    expect(skillsBounds.y).toBeGreaterThanOrEqual(76);
+    expect(
+      await page
+        .locator("h1")
+        .evaluate((node) => parseFloat(getComputedStyle(node).fontSize)),
+    ).toBeLessThanOrEqual(width < 640 ? 18 : 20);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(width);
   }
-  await expect(page.locator('a[role="listitem"]')).toHaveCount(0);
-  await expect(page.locator('details[role="listitem"]')).toHaveCount(0);
 });
 
 test("locale switch preserves the selected hero and exposes keyboard focus", async ({
   page,
 }) => {
   await page.goto("/heroes/antimage");
-  await page.getByRole("link", { name: "EN", exact: true }).click();
+  await page.getByRole("link", { name: "English", exact: true }).click();
   await expect(page).toHaveURL("/heroes/antimage?lang=en");
   await expect(
     page.getByRole("heading", { name: "Anti-Mage", level: 1 }),
@@ -182,9 +276,18 @@ test("locale switch preserves the selected hero and exposes keyboard focus", asy
 
   await page.goto("/heroes");
   await page.keyboard.press("Tab");
-  const identity = page.getByRole("link", { name: "Medota2 Heroes" });
+  const identity = page.getByRole("link", { name: "Medota2 英雄图鉴" });
   await expect(identity).toBeFocused();
-  await expect(identity).toHaveCSS("outline-style", "solid");
+  await expect(identity).toHaveCSS("outline-style", "none");
+  await expect
+    .poll(async () =>
+      identity.evaluate((node) =>
+        Number(
+          getComputedStyle(node).backgroundColor.match(/, ([\d.]+)\)$/)?.[1],
+        ),
+      ),
+    )
+    .toBeCloseTo(0.025, 2);
 });
 
 test("unknown query values are visible and unknown slugs return 404", async ({
@@ -192,9 +295,14 @@ test("unknown query values are visible and unknown slugs return 404", async ({
 }) => {
   await page.goto("/heroes?attribute=luck");
   await expect(page.getByText("未知主属性：luck")).toBeVisible();
+  await page.getByRole("textbox", { name: "搜索英雄" }).fill("dfs");
+  await expect(page.getByText("未知主属性：luck")).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "敌法师", exact: true }),
+  ).toBeVisible();
   await page.goto("/heroes/not-a-real-hero");
   await expect(
-    page.getByRole("heading", { name: "没有这个英雄 slug" }),
+    page.getByRole("heading", { name: "未找到这个英雄" }),
   ).toBeVisible();
 });
 
@@ -253,3 +361,101 @@ async function observeHeroGroups(
     headingText.set(group, heading.text);
   }
 }
+
+test("online fallback handles aliases, IME, cache and URL restoration without a page request", async ({
+  page,
+}) => {
+  await page.route("**/api/catalog/replica", (route) => route.abort());
+  await page.goto("/heroes");
+  const input = page.getByRole("textbox", { name: "搜索英雄" });
+  await expect(input).toBeVisible();
+  await expect(page.getByRole("button", { name: "应用筛选" })).toHaveCount(0);
+  const searchRequests: string[] = [];
+  const documentRequests: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (
+      url.pathname === "/api/catalog/heroes" &&
+      url.searchParams.has("q") &&
+      !url.searchParams.has("after")
+    )
+      searchRequests.push(url.searchParams.get("q")!);
+    if (request.isNavigationRequest() || url.searchParams.has("_rsc"))
+      documentRequests.push(request.url());
+  });
+  await input.pressSequentially("difashi", { delay: 8 });
+  await expect(page.locator("[data-live-results]")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
+  await expect(
+    page.getByRole("heading", { name: "敌法师", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "测试守卫", exact: true }),
+  ).toHaveCount(0);
+  expect(searchRequests).toEqual(["difashi"]);
+  expect(documentRequests).toEqual([]);
+  await input.fill("dfs");
+  await expect(page.locator("[data-live-results]")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
+  await expect(page).toHaveURL(/q=dfs$/u);
+  await input.fill("magina");
+  await expect(page.locator("[data-live-results]")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
+  await input.fill("dfs");
+  await expect(page.locator("[data-live-results]")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
+  expect(searchRequests.filter((q) => q === "dfs")).toHaveLength(1);
+
+  const beforeComposition = searchRequests.length;
+  await input.dispatchEvent("compositionstart");
+  await input.fill("di");
+  await page.waitForTimeout(140);
+  expect(searchRequests).toHaveLength(beforeComposition);
+  await input.fill("敌法");
+  await input.dispatchEvent("compositionend", { data: "敌法" });
+  await expect(page.locator("[data-live-results]")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
+  await expect(page).toHaveURL(/q=%E6%95%8C%E6%B3%95$/u);
+  await expect(input).toBeFocused();
+  await page.locator('a[href="/heroes/antimage"]').last().click();
+  await expect(page).toHaveURL(/\/heroes\/antimage$/u);
+  await page.goBack();
+  await expect(input).toHaveValue("敌法");
+  await expect(
+    page.getByRole("heading", { name: "测试守卫", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: /清除/u }).click();
+  await expect(input).toHaveValue("");
+  await expect(page).toHaveURL(/\/heroes$/u);
+  await expect(
+    page.getByRole("heading", { name: "测试守卫", exact: true }),
+  ).toBeVisible();
+});
+
+test("clearing a search fills a tall viewport without needing another scroll", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1680, height: 1480 });
+  await page.goto("/heroes");
+  const cards = page.locator("[data-infinite-list-item]");
+  const input = page.getByRole("textbox", { name: "搜索英雄" });
+  await expect(cards).toHaveCount(194);
+  await input.fill("dfs");
+  await expect(cards).toHaveCount(1);
+  await input.fill("");
+  await expect(cards).toHaveCount(194);
+  await input.fill("antimage");
+  await expect(cards).toHaveCount(1);
+  await page.getByRole("button", { name: "清除 1", exact: true }).click();
+  await expect(cards).toHaveCount(194);
+});

@@ -7,17 +7,17 @@ export default function HeroNotFound() {
       <div>
         <SearchX className="mx-auto size-10 text-zinc-700" />
         <p className="mt-5 text-[10px] uppercase tracking-[0.24em] text-[#cb5b40]">
-          404 · active dataset
+          404 · 英雄图鉴
         </p>
         <h1 className="mt-2 text-3xl font-semibold text-white">
-          没有这个英雄 slug
+          未找到这个英雄
         </h1>
         <p className="mt-3 text-sm text-zinc-500">
-          详情页不会回退到模糊名称匹配。
+          请返回英雄图鉴搜索其他英雄。
         </p>
         <Link
           href="/heroes"
-          className="mt-7 inline-block border border-white/12 px-5 py-3 text-xs text-zinc-300 hover:border-white/25 hover:text-white"
+          className="mt-7 inline-block px-5 py-3 text-xs text-zinc-300 hover:text-white"
         >
           返回英雄总览
         </Link>

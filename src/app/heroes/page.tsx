@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { HeroFilterForm } from "@/components/hero-filter-form";
-import { InfiniteHeroCatalog } from "@/components/infinite-hero-catalog";
+import { LiveHeroCatalog } from "@/components/live-catalog";
 import { ImportFailureBanner, SetupState } from "@/components/system-state";
 import { DatasetBadge } from "@/components/ui/dataset-badge";
-import { PageHeader } from "@/components/ui/page-header";
-import { ValidationErrorList } from "@/components/validation-error-list";
+import { getGameplayVersion } from "@/server/services/gameplay-version";
 import { getHeroOverview } from "@/server/repositories/heroes";
 import {
   canonicalHeroQuery,
@@ -14,7 +12,7 @@ import {
   type SearchParams,
 } from "@/server/services/hero-filters";
 
-export const metadata: Metadata = { title: "Heroes" };
+export const metadata: Metadata = { title: "英雄" };
 export const dynamic = "force-dynamic";
 
 export default async function HeroesPage({
@@ -56,57 +54,38 @@ export default async function HeroesPage({
   }
 
   const meta = overview.meta;
-  const endpointParams = new URLSearchParams(
-    canonicalHeroQuery(parsed.filters),
+  const gameplayVersion = await getGameplayVersion(
+    meta.datasetVersionId,
+    meta.sourceCommit,
   );
-  endpointParams.set("datasetVersionId", meta.datasetVersionId);
-  endpointParams.set("assetDatasetVersionId", meta.assetDatasetVersionId);
-
   return (
-    <main className="mx-auto max-w-[var(--content-max)] px-4 py-9 sm:px-7 lg:px-10 lg:py-12">
-      <PageHeader
-        eyebrow="Hero Catalog · VPK SSOT"
-        title="游戏内定义，原样可追溯。"
-        description="按 Dota 2 四种主属性浏览当前 Hero。所有规范字段来自固定 VPK 快照；基础数值不等同于一级英雄最终面板。"
-        aside={
-          <DatasetBadge
-            clientVersion={meta.clientVersion}
-            sourceCommit={meta.sourceCommit}
-            gateStatus={meta.gateStatus}
-          />
-        }
-      />
+    <main className="mx-auto max-w-[var(--content-max)] px-4 py-4 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <h1 className="text-xl font-semibold tracking-wide">英雄图鉴</h1>
+        <DatasetBadge
+          clientVersion={meta.clientVersion}
+          sourceCommit={meta.sourceCommit}
+          gateStatus={meta.gateStatus}
+          gameplayVersion={gameplayVersion}
+        />
+      </div>
 
-      <div className="mt-8 space-y-3">
+      <div className="mt-3 space-y-2">
         {overview.latestFailure && (
           <ImportFailureBanner
             stage={overview.latestFailure.stage}
             message={overview.latestFailure.errorSummary}
           />
         )}
-        {parsed.errors.length > 0 && (
-          <ValidationErrorList errors={parsed.errors} surface />
-        )}
-        <HeroFilterForm filters={parsed.filters} />
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--text-muted)]">
-        <p>
-          <span className="font-data font-medium text-[var(--text-primary)]">
-            {overview.total}
-          </span>{" "}
-          / {meta.totalHeroes} Heroes
-        </p>
-        <p className="font-data">
-          SourceRevision {meta.sourceRevision} · imported{" "}
-          {formatDate(meta.importedAt)}
-        </p>
-      </div>
-
-      <InfiniteHeroCatalog
+      <LiveHeroCatalog
+        key={`${meta.datasetVersionId}:${meta.assetDatasetVersionId}:${canonicalHeroQuery(parsed.filters)}`}
         initialSlice={overview.slice}
-        endpoint={`/api/catalog/heroes?${endpointParams}`}
-        lang={parsed.filters.lang}
+        initialFilters={parsed.filters}
+        initialErrors={parsed.errors}
+        total={meta.totalHeroes}
+        updatedAt={formatDate(meta.importedAt)}
       />
     </main>
   );

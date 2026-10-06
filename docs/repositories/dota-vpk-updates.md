@@ -102,3 +102,19 @@ Hero/Ability 图标需要区分“规范引用、VPK 索引、真实字节、可
 仓库根目录当前没有独立 `LICENSE` 文件，而且内容来自 Dota 2 客户端；其中部分 `gameevents` 文件还带有 Valve 的版权/限制声明。将文本、图片、声音或 UI 资产随产品分发前，应确认 Valve 与上游仓库的许可条件。
 
 接入时至少记录：上游仓库 URL、commit、`steam.inf` 中的版本信息、原始相对路径及反编译产物类型。
+
+## 游戏图鉴展示层补充（2026-10-06）
+
+当前审阅基线不变。展示层可读取同一 source snapshot 已记录 checksum 的 `abilities_schinese.txt` / `abilities_english.txt`，补充数值标签、机制注释、命石名称及说明。只接受完整文件 SHA-256 与当前 Catalog 记录一致的本地文件；路径沿用已有可配置 checkout / worktree 根目录。没有匹配文件时保留数据库已有说明及已知中文标签，不加载其他版本或在线补全。不会复制原始本地化文件进仓库。
+
+核对发现：该基线中 `AbilityValues.AbilityCooldown` / `AbilityCastRange` 覆盖继承的顶层默认值；天赋的 `{s:bonus_*}` 取自相应数值条目的同名天赋 modifier；神杖／魔晶说明使用对应 modifier 生效后的数值。只解析有明确数值语义的加减、乘法或替换；未知条件表达式明确缺失，不执行原始表达式。
+
+游戏性版本新增只读来源 `scripts/change_log.txt` 的 `patch_name` 与 `date`。读取固定 source commit 的 Git 对象，先核对同 commit `steam.inf` 的 SHA-256 与 Catalog 记录，再选择不晚于构建日期的最新补丁。当前基线为 7.41e／6918；这不代表上游当前最新版本。未导入或复制完整 changelog。
+
+## 单位只读模型（2026-10-06）
+
+审阅基线保持上述 commit／客户端版本不变。新增按固定 Git 对象读取 `scripts/npc/npc_units.txt`，搭配同 commit 的 `abilities_schinese.txt` / `abilities_english.txt`；先核对已入库 `steam.inf` checksum。明确解析 `include_keys_from` 递归继承，保留未知原文与文件 checksum。分类仅用于浏览，不把文件中的活动、模板和历史对象视为当前地图生成清单。此补充模型未修改数据库，独立运行仍需要匹配来源；详见 [单位图鉴 Spec](../specs/unit-catalog.md)。
+
+## 地图坐标配置（2026-10-06）
+
+沿用上述固定6918基线，新增只读 `resource/overviews/dota.txt`。pos_x=-9472、pos_y=9472、scale=18.5；scale基于1024逻辑像素，不能按解码图片分辨率直接相乘。此仓库提供材质引用与坐标变换，没有可用地图贴图／地形／导航／实体二进制。`scripts/minimap_starting_positions.txt`是选路UI位置，不能冒充实际建筑、野怪和神符世界坐标。原生地图须另从匹配安装的pak01_dir.vpk和maps/dota.vpk提取；当前真实提取仍阻塞于缺少输入。详见[地图 Spec](../specs/map-explorer.md)。

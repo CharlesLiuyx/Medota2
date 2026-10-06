@@ -1,6 +1,6 @@
 # Medota2
 
-> 本地优先、来源可追溯、原子版本化的 Dota 2 Heroes / Abilities Catalog。
+> 本地优先、来源可追溯的 Dota 2 数据与图鉴平台，提供英雄、技能、单位及交互地图。
 
 Medota2 把锁定 commit 的 Dota 2 原始数据转换为可复现的 PostgreSQL 数据集，并提供本地 Web 查询、差异审阅、安全发布与回滚。它不把上游目录直接当作产品模型，也不以分支名、`latest` 或文件修改时间代表数据版本。
 
@@ -8,14 +8,14 @@ Medota2 把锁定 commit 的 Dota 2 原始数据转换为可复现的 PostgreSQL
 
 | 范围         | 当前状态                                                                                                                              |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 产品切片     | Hero Catalog v2 已完成：Heroes、Abilities、Facets、关系、本地化、图标资产与查询界面                                                   |
+| 产品切片     | Hero Catalog v2、英雄／技能／单位图鉴、独立单位资产与交互地图已实现；单位资料尚未持久化为独立 Dataset                                 |
 | 数据链路     | exact-commit source lock → 全量候选 → semantic diff → Green/Yellow/Red gate → 原子发布/回滚                                           |
 | 运行方式     | 本地开发与本地真实数据审阅；尚未定义远程 production 部署形态                                                                          |
 | 环境安全     | Environment Contract v1、独立数据库角色、共享开发连接验证缓存、显式独立 Test Harness 已实现                                           |
-| 最近完整验收 | 2026-08-31：186 个 Unit tests、19 个 Integration tests、34 个 E2E tests、production build/start smoke 全部通过                        |
+| 最近完整验收 | 2026-10-06：组合单测、数据库合同、真实数据关键流程、桌面／手机视觉与正式构建／启动通过；详细范围见当前进展                            |
 | 数据审计基线 | commit `991daaf6fc24b08445209d9ce8767e145bab107e`：127 Heroes、2,703 accepted Abilities、4,752 bindings、339 Facets、0 blocking error |
 
-开发工作台已于 2026-10-06 完成本机验收：199 个单元测试、19 个数据库集成测试、共享与固定数据关键流程、独立产物构建/启动均通过。具体范围与反馈延迟见 [当前进展](docs/current.md)。上表保留此前完整产品验收基线。
+开发工作台、语义化图鉴、浏览器离线目录、单位头像和地图均已完成本机验证。具体检查范围、数据来源、已知缺项与性能测量边界见 [当前进展](docs/current.md)。GitHub Actions 的远程执行结果另行记录。
 
 审计数字描述一次真实快照，不是业务常量。后续版本会从锁定来源重新发现文件并执行完整校验。
 
@@ -26,8 +26,13 @@ Medota2 把锁定 commit 的 Dota 2 原始数据转换为可复现的 PostgreSQL
 - 从 `dota_vpk_updates` 动态发现全部分 Hero 文件，导入正式 Heroes 与完整 Ability 定义集。
 - 保留 ordered KeyValues、重复定义、BaseClass 继承、AbilityValues、modifier、数值 ID 映射和结构化 exclusion reason。
 - 建模 `loadout`、`talent`、`draft`、`facet`、`linked`、`sub_ability`、`upgrade_granted` 与声明归属关系。
-- `/heroes` 按 Strength、Agility、Intelligence、Universal 分组；Hero 详情展示 Abilities、Talents & Upgrades、Raw 与 Provenance。
-- `/abilities` 默认展示 current，并可查询 indirect、defined/unbound、template 和 deprecated；详情展示逐级数值、关系、原始定义和来源。
+- `/heroes` 按力量、敏捷、智力、全才分组，以英雄肖像进入技能说明、天赋树、命石、基础属性与背景故事。
+- `/abilities` 使用紧凑技能条目与即时悬停卡，详情以玩家可读名称展示技能、各级效果、冷却、魔耗及神杖／魔晶升级；支持英雄、类型、升级与状态筛选。原始定义、ID 与来源记录保留在数据层，产品页面不再直接展示。
+- 展示层处理游戏文本占位符、枚举、等级数值与条件升级。完整数值标签、命石与机制说明会读取已锁定来源的本地化文件并校验 SHA-256；来源位置沿用 `DOTA_VPK_WORKTREE_ROOT` 或 `DOTA_VPK_UPDATES_PATH`。缺失或版本不符时仅显示可确认的资料，不猜测名称和效果。详见[语义化游戏图鉴](docs/specs/semantic-game-ui.md)。
+- 首页使用紧凑头像网格和即时悬停卡；收录的游戏性版本与客户端构建号分开显示。游戏性版本从同一 commit 的 `scripts/change_log.txt` 读取，需本机 Git 与匹配的可选来源仓库；来源缺失时显示待确认。
+- 英雄／技能列表输入即筛选，选项即时生效；支持中英文、完整拼音、拼音首字母及常见中英文别称。例：`敌法` / `Anti-Mage` / `difashi` / `dfs` / `AM`，技能可搜索 `闪烁` / `shanshuo` / `ss` 或 `am blink`。保留 URL 恢复与当前状态等筛选条件；技能模板、历史定义需切换对应状态或全部。
+- 悬停只更新当前与上一个卡片；正式构建预取图鉴和停留后的详情，近期页面复用 300 秒。开发模式不自动预取，首次编译仍需等待；刷新立即读取当前版本。详见[性能与缓存边界](docs/specs/semantic-game-ui.md#悬停与导航性能)。
+- 英雄／技能目录采用浏览器优先策略：IndexedDB 持久保存版本快照，搜索、筛选、排序与分块在本机完成；后台每60秒轻检版本，只同步变化的哈希块。同版本重载复用本机资料，已打开目录可断网查询。详见[缓存范围与边界](docs/specs/browser-catalog-cache.md)。
 - 首期支持 `zh-CN` 与 `en`；本地化使用行模型，增加 locale 不需要修改核心实体表。
 - 所有内容列表共享无限滚动、cursor continuation 和上方 7× / 下方 10× 视口预加载合同。
 - Hero 与 Ability 图标以内容寻址二进制和 `original`、`w64`、`w128`、`w256` LoD 存入 PostgreSQL。
@@ -244,7 +249,7 @@ Medota2 不用 `NODE_ENV`、数据库名后缀或缺省的 `main` 推断数据�
 - 非生产数据库 URL 由受管 lifecycle 写入私有 receipt，不写入 `.env`。
 - Web 每次 pool checkout 恢复只读状态。共享 development Web 对每个物理连接验证一次身份与权限；其他模式继续完整验证。迁移后重启开发 Web；Worker 无持久 DDL/control 写权限。
 - production contract v1 只签发 `Web/read`，Worker 与 Migration 默认拒绝。
-- identity、marker、peer role 或安全函数签名不一致时 fail closed，页面显示 `DATA ACCESS BLOCKED`。
+- identity、marker、peer role 或安全函数签名不一致时 fail closed，页面显示“数据连接未验证，暂不可用”。
 - 既有 `127.0.0.1:54321` legacy stack 不会被 provision 命令静默迁移、删除或重新解释。
 
 日常诊断：
@@ -345,3 +350,33 @@ Medota2/
 本项目尚未选择开源许可证。公开可见不等于授予复制、修改或再分发许可。完整 VPK、声音、模型、提取缓存和批量 Valve 资产不会提交到 Git 或纳入公开发行物；数据库中的 Valve 资产仅限当前批准的本地自用范围。
 
 Medota2 是非官方项目，与 Valve Corporation、Dota 2、SteamDatabase、OpenDota、Liquipedia 及其他上游项目没有隶属或背书关系。Dota 2 和相关商标、游戏内容归其各自权利人所有。
+
+### 单位图鉴
+
+顶栏「单位」进入 `/units`，支持中英文／拼音搜索、分类筛选、悬停基础属性及详情中的技能链接。运行 `pnpm dev` 后使用固定工作台访问。单位读取当前 Catalog 固定 commit 的可配置 VPK Git 来源，路径沿用 `DOTA_VPK_UPDATES_PATH` / `DOTA_VPK_WORKTREE_ROOT`；未配置匹配来源时显示未接入。单位定义当前是只读补充模型；单位头像已进入独立资产版本，提供原图和三级缩略图。活动／辅助／历史定义不等于当前对局可用单位。实现和检查见 [单位图鉴 Spec](docs/specs/unit-catalog.md)。
+
+单位头像导入（先运行对应环境的迁移）：
+
+```bash
+pnpm db:migrate
+pnpm data:import:unit-assets
+# 当前本机真实数据预览；额外从固定 ReDota 提交导入模型截图
+pnpm db:migrate:local
+pnpm data:import:unit-assets:local --portrait-commit f51e568e6ef45e32e1a7d21def805bdd7604568b
+```
+
+默认下载 Valve Steam CDN 单位头像；`--portrait-commit` 启用可选 ReDota 模型截图，必须给出完整 Git commit。`--reuse-portraits` 保留同一 Catalog 和补充来源提交已有的独立／共用头像，只重新处理其余条目；不加此参数会重新下载。下载失败不切换资产 head；所有单位都有独立头像、共用头像、关联技能图标或缺图的明确记录。页面 `/valve-assets/unit/[key]?v=...&width=64` 只读取数据库。图片版本与 Catalog 绑定，但 CDN / 社区截图的游戏构建号未经确认。原始图片保存在本机数据库，不写入仓库；外部发布前仍需审查 Valve 资产许可。详细来源见 [ReDota 审阅](docs/repositories/redota.md)。
+
+## 地图
+
+顶栏「地图」进入 `/map`，提供本地Canvas缩放／拖拽、图层、点位搜索、直线测距和范围圈。当前可通过下方公开来源导入7.41e游戏俯视图，也保留原生VPK离线提取与导入入口：`pnpm exec tsx src/workers/extract-map-vpk.ts`、`pnpm exec tsx src/workers/import-map.ts`。全部参数见[地图 Spec](docs/specs/map-explorer.md)。本轮没有安装提取器、修改数据库或公开发布资源。
+
+### 无游戏安装的地图预览
+
+当前本机地图已接入Sloppy固定快照的 **7.41e** 高清俯视图（4096px）、2585个静态点位及28个营地边界。版本为来源标注，保留地图VPK哈希和Steam manifest；没有把图鉴客户端6918当作地图的已验证构建号。公开导入命令：
+
+```sh
+pnpm exec tsx src/workers/import-public-map.ts --commit 38fb8ef1d16c99c141d0630e5227110fd082b364 --patch 7.41e --output .medota2/maps/7.41e-sloppy-38fb8ef
+```
+
+输出须为新目录，随后设置`DOTA_MAP_DATA_PATH`并运行`pnpm dev:restart`。浏览器入口`/map`；操作、版本边界及原生VPK途径见[地图Spec](docs/specs/map-explorer.md)，来源与许可见[Sloppy审阅](docs/repositories/sloppy-map.md)。尚未提供游戏内导航／碰撞／高低坡／视野模拟。

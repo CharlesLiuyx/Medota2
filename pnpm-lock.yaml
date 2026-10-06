@@ -25,6 +25,9 @@ importers:
       pg-copy-streams:
         specifier: 7.0.0
         version: 7.0.0
+      pinyin-pro:
+        specifier: 3.29.4
+        version: 3.29.4
       react:
         specifier: 19.2.8
         version: 19.2.8
@@ -4470,6 +4473,12 @@ packages:
       }
     engines: { node: ">=12" }
 
+  pinyin-pro@3.29.4:
+    resolution:
+      {
+        integrity: sha512-SPXpDT2cHEy+d26V1RXYMlVzXN42hotFAak1fzyWPi4o2dKXb61UqD4pzxDJHwk6gbv8vQ6EfErd+hYX0Qhzug==,
+      }
+
   playwright-core@1.62.1:
     resolution:
       {
@@ -7893,6 +7902,8 @@ snapshots:
   picomatch@2.3.2: {}
 
   picomatch@4.0.7: {}
+
+  pinyin-pro@3.29.4: {}
 
   playwright-core@1.62.1: {}
 

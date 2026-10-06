@@ -1,4 +1,5 @@
 "use client";
+import { memo } from "react";
 
 import type { AbilityCardRow } from "@/server/repositories/abilities";
 import type { VersionedListSlice } from "@/domain/infinite-list";
@@ -8,26 +9,42 @@ import { InfiniteList, type InfiniteListMessages } from "./infinite-list";
 export interface InfiniteAbilityCatalogProps {
   initialSlice: VersionedListSlice<AbilityCardRow>;
   endpoint: string;
+  local?: boolean;
+  paused?: boolean;
   lang: "en" | "zh-CN";
 }
 
-export function InfiniteAbilityCatalog({
+export const InfiniteAbilityCatalog = memo(function InfiniteAbilityCatalog({
   initialSlice,
   endpoint,
+  local = false,
+  paused = false,
   lang,
 }: InfiniteAbilityCatalogProps) {
   const messages = abilityMessages(lang);
   return (
     <InfiniteList
-      source={{ kind: "remote", endpoint, initialSlice }}
+      paused={paused}
+      source={
+        local
+          ? {
+              kind: "local",
+              items: initialSlice.items,
+              chunkSize: 48,
+              identity: `${endpoint}:local`,
+            }
+          : { kind: "remote", endpoint, initialSlice }
+      }
+      showComplete
       getKey={abilityKey}
       onStale={reloadCurrentCatalog}
       messages={messages}
       ariaLabel={lang === "en" ? "Ability results" : "技能结果"}
-      className="mt-6 space-y-px"
+      className="ability-catalog-flow mt-3"
+      chunkClassName="ability-catalog-chunk"
       emptyFallback={<CatalogEmpty entity="abilities" lang={lang} />}
       renderChunk={(abilities) => (
-        <div className="catalog-grid">
+        <div className="ability-catalog-grid">
           {abilities.map((ability) => (
             <div
               key={ability.internalName}
@@ -47,7 +64,7 @@ export function InfiniteAbilityCatalog({
       )}
     />
   );
-}
+});
 
 function reloadCurrentCatalog() {
   window.location.reload();
@@ -94,7 +111,7 @@ function CatalogEmpty({
   lang: "en" | "zh-CN";
 }) {
   return (
-    <div className="mt-6 border border-dashed border-[var(--border-default)] py-20 text-center">
+    <div className="mt-6 py-20 text-center">
       <p className="text-sm text-[var(--text-secondary)]">
         {lang === "en"
           ? `No matching ${entity}.`

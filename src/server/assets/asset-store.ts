@@ -477,3 +477,24 @@ function chunks<T>(values: readonly T[], size: number): T[][] {
   }
   return output;
 }
+
+/** Persist immutable objects without adding them to the hero/ability dataset. */
+export async function persistPreparedAssetObjects(
+  client: VerifiedSession,
+  assets: readonly PreparedEntityAsset[],
+) {
+  for (const asset of assets) {
+    if (new Set(asset.variants.map((v) => v.lodKey)).size !== 4)
+      throw new Error("Four asset LoDs are required.");
+    for (const variant of asset.variants) assertVariant(asset, variant);
+    if (
+      asset.variants.find((v) => v.lodKey === "original")?.contentSha256 !==
+      asset.sourceContentSha256
+    )
+      throw new Error("Original asset hash mismatch.");
+  }
+  await persistBlobs(client, assets);
+  await verifyStoredBlobs(client, assets);
+  await persistObjects(client, assets);
+  return loadObjectIds(client, assets);
+}

@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ entity: string; key: string }> },
 ): Promise<Response> {
   const { entity, key } = await params;
-  if (entity !== "hero" && entity !== "ability") {
+  if (entity !== "hero" && entity !== "ability" && entity !== "unit") {
     return new Response("Unknown asset entity.", { status: 404 });
   }
   if (!/^[a-z0-9_]+$/u.test(key)) {

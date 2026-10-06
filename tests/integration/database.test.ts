@@ -625,6 +625,81 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
     expect(roundTrip.rows[0].content).toEqual(promotedAsset!.bytes);
   });
 
+  it("keeps unit image versions complete, prevents downgrade and preserves hero asset heads", async () => {
+    const client = await worker.connect();
+    try {
+      await client.query("BEGIN");
+      const catalog = await insertVersion(client, "green");
+      const before = await client.query(
+        "SELECT asset_dataset_version_id FROM asset_dataset_heads WHERE catalog_dataset_version_id=$1",
+        [catalog],
+      );
+      const object = await insertAssetDataset(client, catalog, {
+        objectSourceType: "exact",
+      });
+      const create = async (label: string) =>
+        (
+          await client.query<{ id: string }>(
+            `INSERT INTO unit_asset_dataset_versions (catalog_dataset_version_id,manifest_sha256,expected_keys,provenance) VALUES ($1,$2,ARRAY['npc_dota_roshan'],'{}') RETURNING id`,
+            [catalog, sha256(label + catalog)],
+          )
+        ).rows[0].id;
+      const version = await create("unit-complete");
+      await client.query("SAVEPOINT missing_unit");
+      await expect(
+        client.query("SELECT promote_unit_asset_dataset($1)", [version]),
+      ).rejects.toThrow(/coverage/);
+      await client.query("ROLLBACK TO SAVEPOINT missing_unit");
+      await client.query(
+        "INSERT INTO unit_asset_bindings VALUES ($1,'npc_dota_roshan',$2,'portrait','{}')",
+        [version, object.objectId],
+      );
+      await client.query("SELECT promote_unit_asset_dataset($1)", [version]);
+      const lower = await create("unit-missing");
+      await client.query(
+        "INSERT INTO unit_asset_bindings VALUES ($1,'npc_dota_roshan',NULL,'unavailable','{}')",
+        [lower],
+      );
+      await client.query("SAVEPOINT downgrade_unit");
+      await expect(
+        client.query("SELECT promote_unit_asset_dataset($1)", [lower]),
+      ).rejects.toThrow(/downgrade/);
+      await client.query("ROLLBACK TO SAVEPOINT downgrade_unit");
+      const partial = await insertAssetDataset(client, catalog, {
+        lods: ["original", "w64", "w128"],
+      });
+      const partialVersion = await create("unit-partial");
+      await client.query(
+        "INSERT INTO unit_asset_bindings VALUES ($1,'npc_dota_roshan',$2,'portrait','{}')",
+        [partialVersion, partial.objectId],
+      );
+      await client.query("SAVEPOINT partial_unit");
+      await expect(
+        client.query("SELECT promote_unit_asset_dataset($1)", [partialVersion]),
+      ).rejects.toThrow(/LoDs/);
+      await client.query("ROLLBACK TO SAVEPOINT partial_unit");
+      expect(
+        (
+          await client.query(
+            "SELECT dataset_version_id FROM unit_asset_heads WHERE catalog_dataset_version_id=$1",
+            [catalog],
+          )
+        ).rows[0].dataset_version_id,
+      ).toBe(version);
+      expect(
+        (
+          await client.query(
+            "SELECT asset_dataset_version_id FROM asset_dataset_heads WHERE catalog_dataset_version_id=$1",
+            [catalog],
+          )
+        ).rows,
+      ).toEqual(before.rows);
+      await client.query("ROLLBACK");
+    } finally {
+      client.release();
+    }
+  });
+
   it("requires the asset lock while atomically checking a catalog promotion", async () => {
     const client = await worker.connect();
     try {

@@ -4,8 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const entities = [
-  { href: "/heroes", label: "Heroes", match: "/heroes" },
-  { href: "/abilities", label: "Abilities", match: "/abilities" },
+  { href: "/heroes", label: "英雄", match: "/heroes" },
+  { href: "/abilities", label: "技能", match: "/abilities" },
+  { href: "/units", label: "单位", match: "/units" },
+  { href: "/map", label: "地图", match: "/map" },
 ] as const;
 
 export function EntityTabs() {
@@ -18,13 +20,11 @@ export function EntityTabs() {
           <Link
             key={entity.href}
             href={entity.href}
+            prefetch={true}
             aria-current={active ? "page" : undefined}
-            className={`relative flex min-h-11 items-center px-4 text-xs font-semibold uppercase tracking-[0.14em] sm:px-5 ${active ? "text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
+            className={`relative flex min-h-10 items-center px-2.5 text-xs font-semibold uppercase tracking-[0.14em] sm:px-3 ${active ? "bg-white/5 text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
           >
             {entity.label}
-            {active && (
-              <span className="absolute inset-x-4 bottom-0 h-px bg-[var(--accent-primary)]" />
-            )}
           </Link>
         );
       })}

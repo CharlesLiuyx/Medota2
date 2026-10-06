@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR?.trim() || ".next",
   devIndicators: process.env.MEDOTA2_ENVIRONMENT === "test" ? false : undefined,
   output: "standalone",
+  // Reuse recently visited/prefetched catalog pages during quick navigation.
+  // Refresh still reads the current published dataset immediately.
+  experimental: { staleTimes: { dynamic: 300, static: 300 } },
   outputFileTracingExcludes: {
     "/*": [".env*", ".git/**/*", ...localStateExcludes()],
   },

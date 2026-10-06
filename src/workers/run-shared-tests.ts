@@ -105,8 +105,15 @@ async function main(): Promise<void> {
             suite === "journeys"
               ? "playwright.shared.config.ts"
               : "playwright.config.ts",
-            ...(suite === "e2e" ? ["--project", "desktop-chromium"] : []),
             ...forwarded,
+            // Playwright's --project accepts multiple values: place the default
+            // after positional test paths so they cannot be parsed as projects.
+            ...(suite === "e2e" &&
+            !forwarded.some(
+              (arg) => arg === "--project" || arg.startsWith("--project="),
+            )
+              ? ["--project", "desktop-chromium"]
+              : []),
           ],
           env,
           resolve(env.MEDOTA2_ARTIFACT_ROOT!, "runner.log"),

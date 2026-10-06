@@ -10,9 +10,7 @@ export function Panel({
   className?: string;
 }) {
   return (
-    <Component
-      className={`border border-[var(--border-default)] bg-[var(--surface-panel)] ${className}`}
-    >
+    <Component className={`bg-[var(--surface-panel)] ${className}`}>
       {children}
     </Component>
   );

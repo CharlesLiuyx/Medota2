@@ -8,11 +8,13 @@ export function HeroCrest({
   name,
   attribute,
   large = false,
+  portrait = false,
   src,
 }: {
   name: string;
   attribute: string;
   large?: boolean;
+  portrait?: boolean;
   src?: string;
 }) {
   const [failed, setFailed] = useState(false);
@@ -33,7 +35,7 @@ export function HeroCrest({
 
   return (
     <div
-      className={`relative grid shrink-0 place-items-center overflow-hidden border border-[var(--border-default)] ${large ? "size-28 sm:size-36" : "size-14"}`}
+      className={`relative grid shrink-0 place-items-center overflow-hidden ${portrait ? "aspect-[16/9] w-full" : large ? "size-12 sm:size-14" : "size-14"}`}
       style={{
         color,
         background: `linear-gradient(145deg, color-mix(in srgb, ${color} 58%, var(--surface-panel)), var(--surface-sunken))`,
@@ -47,7 +49,13 @@ export function HeroCrest({
           src={src}
           alt={`${name} icon`}
           fill
-          sizes={large ? "(min-width: 640px) 144px, 112px" : "56px"}
+          sizes={
+            portrait
+              ? "(min-width: 640px) 96px, (min-width: 360px) 25vw, 33vw"
+              : large
+                ? "(min-width: 640px) 56px, 48px"
+                : "56px"
+          }
           loading={large ? "eager" : "lazy"}
           className="z-10 object-cover"
           onError={() => setFailed(true)}
@@ -58,8 +66,6 @@ export function HeroCrest({
       >
         {initials}
       </span>
-      <span className="absolute inset-x-2 bottom-2 h-px bg-current opacity-35" />
-      <span className="absolute -right-5 -top-5 size-14 rotate-45 border border-current opacity-15" />
     </div>
   );
 }

@@ -76,3 +76,7 @@ d2vpkr + Dota 数据接口 + 手工 JSON ─> dotaconstants ─┘
 - [GameTracking-Dota2：客户端、引擎与协议快照](game-tracking-dota2.md)
 - [dota_vpk_updates：VPK 原始资源快照](dota-vpk-updates.md)
 - [dotaconstants：应用层常量包](dotaconstants.md)
+
+- [ReDota：可选单位模型截图及许可边界](redota.md)
+
+- 可选公开地图提取来源：[Sloppy](sloppy-map.md)，固定补丁／commit，独立适配、版本声明和许可边界。

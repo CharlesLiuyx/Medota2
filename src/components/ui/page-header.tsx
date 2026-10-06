@@ -47,7 +47,7 @@ export function SectionHeading({
 }) {
   const color = tone ? `var(--attribute-${tone})` : "var(--accent-primary)";
   return (
-    <div className="flex items-end justify-between gap-4 border-b border-[var(--border-default)] pb-3">
+    <div className="flex items-end justify-between gap-4 pb-3">
       <div className="flex items-center gap-3">
         <span
           aria-hidden="true"

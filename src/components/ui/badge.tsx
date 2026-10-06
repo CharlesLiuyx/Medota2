@@ -12,23 +12,15 @@ export type BadgeTone =
   | "universal";
 
 const tones: Record<BadgeTone, string> = {
-  neutral: "border-[var(--border-default)] text-[var(--text-secondary)]",
-  accent:
-    "border-[color-mix(in_srgb,var(--accent-primary)_45%,transparent)] bg-[var(--accent-soft)] text-[var(--accent-hover)]",
-  success:
-    "border-[color-mix(in_srgb,var(--status-success)_38%,transparent)] text-[var(--status-success)]",
-  warning:
-    "border-[color-mix(in_srgb,var(--status-warning)_38%,transparent)] text-[var(--status-warning)]",
-  danger:
-    "border-[color-mix(in_srgb,var(--status-danger)_38%,transparent)] text-[var(--status-danger)]",
-  strength:
-    "border-[color-mix(in_srgb,var(--attribute-strength)_42%,transparent)] text-[var(--attribute-strength)]",
-  agility:
-    "border-[color-mix(in_srgb,var(--attribute-agility)_42%,transparent)] text-[var(--attribute-agility)]",
-  intelligence:
-    "border-[color-mix(in_srgb,var(--attribute-intelligence)_42%,transparent)] text-[var(--attribute-intelligence)]",
-  universal:
-    "border-[color-mix(in_srgb,var(--attribute-universal)_42%,transparent)] text-[var(--attribute-universal)]",
+  neutral: "text-[var(--text-secondary)]",
+  accent: "bg-[var(--accent-soft)] text-[var(--accent-hover)]",
+  success: "text-[var(--status-success)]",
+  warning: "text-[var(--status-warning)]",
+  danger: "text-[var(--status-danger)]",
+  strength: "text-[var(--attribute-strength)]",
+  agility: "text-[var(--attribute-agility)]",
+  intelligence: "text-[var(--attribute-intelligence)]",
+  universal: "text-[var(--attribute-universal)]",
 };
 
 export function Badge({
@@ -42,7 +34,7 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] ${tones[tone]} ${className}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] ${tones[tone]} ${className}`}
     >
       {children}
     </span>

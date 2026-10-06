@@ -1,11 +1,10 @@
+import { getHeroChoices } from "@/server/repositories/heroes";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { AbilityFilterForm } from "@/components/ability-filter-form";
-import { InfiniteAbilityCatalog } from "@/components/infinite-ability-catalog";
+import { LiveAbilityCatalog } from "@/components/live-catalog";
 import { SetupState } from "@/components/system-state";
-import { ValidationErrorList } from "@/components/validation-error-list";
 import { DatasetBadge } from "@/components/ui/dataset-badge";
-import { PageHeader } from "@/components/ui/page-header";
+import { getGameplayVersion } from "@/server/services/gameplay-version";
 import { getAbilityOverview } from "@/server/repositories/abilities";
 import {
   canonicalAbilityQuery,
@@ -14,7 +13,7 @@ import {
 } from "@/server/services/ability-filters";
 import type { SearchParams } from "@/server/services/hero-filters";
 
-export const metadata: Metadata = { title: "Abilities" };
+export const metadata: Metadata = { title: "技能" };
 export const dynamic = "force-dynamic";
 
 export default async function AbilitiesPage({
@@ -53,46 +52,28 @@ export default async function AbilitiesPage({
     );
   }
   const meta = overview.meta;
-  const endpointParams = new URLSearchParams(
-    canonicalAbilityQuery(parsed.filters),
-  );
-  endpointParams.set("datasetVersionId", meta.datasetVersionId);
-  endpointParams.set("assetDatasetVersionId", meta.assetDatasetVersionId);
+  const [gameplayVersion, heroes] = await Promise.all([
+    getGameplayVersion(meta.datasetVersionId, meta.sourceCommit),
+    getHeroChoices(meta.datasetVersionId),
+  ]);
   return (
-    <main className="mx-auto max-w-[var(--content-max)] px-4 py-9 sm:px-7 lg:px-10 lg:py-12">
-      <PageHeader
-        eyebrow="Ability Registry · complete source set"
-        title="当前技能优先，全部定义可审计。"
-        description="默认显示 current；可切换到间接、未绑定、模板和废弃定义。数值 ID 只是非唯一映射，internal name 才是版本内身份。"
-        aside={
-          <DatasetBadge
-            clientVersion={meta.clientVersion}
-            sourceCommit={meta.sourceCommit}
-            gateStatus={meta.gateStatus}
-          />
-        }
-      />
-      <div className="mt-8 space-y-3">
-        {parsed.errors.length > 0 && (
-          <ValidationErrorList errors={parsed.errors} />
-        )}
-        <AbilityFilterForm filters={parsed.filters} />
+    <main className="mx-auto max-w-[var(--content-max)] px-4 py-4 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <h1 className="text-xl font-semibold tracking-wide">技能图鉴</h1>
+        <DatasetBadge
+          gameplayVersion={gameplayVersion}
+          clientVersion={meta.clientVersion}
+          sourceCommit={meta.sourceCommit}
+          gateStatus={meta.gateStatus}
+        />
       </div>
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--text-muted)]">
-        <p>
-          <span className="font-data text-[var(--text-primary)]">
-            {overview.total}
-          </span>{" "}
-          / {meta.totalAbilities} Abilities
-        </p>
-        <p className="font-data">
-          {meta.gateStatus.toUpperCase()} · continuous stream
-        </p>
-      </div>
-      <InfiniteAbilityCatalog
+      <LiveAbilityCatalog
+        key={`${meta.datasetVersionId}:${meta.assetDatasetVersionId}:${canonicalAbilityQuery(parsed.filters)}`}
         initialSlice={overview.slice}
-        endpoint={`/api/catalog/abilities?${endpointParams}`}
-        lang={parsed.filters.lang}
+        initialFilters={parsed.filters}
+        initialErrors={parsed.errors}
+        total={meta.totalAbilities}
+        heroes={heroes}
       />
     </main>
   );

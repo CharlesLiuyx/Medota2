@@ -7,15 +7,15 @@ import {
 import { DatasetBadge } from "@/components/ui/dataset-badge";
 import { PageHeader, SectionHeading } from "@/components/ui/page-header";
 
-export const metadata: Metadata = { title: "Design System" };
+export const metadata: Metadata = { title: "界面示例" };
 
 export default function DesignSystemPage() {
   return (
     <main className="mx-auto max-w-[var(--content-max)] px-4 py-9 sm:px-7 lg:px-10 lg:py-12">
       <PageHeader
-        eyebrow="System · v1"
-        title="Medota2 Design System"
-        description="Hero Catalog 的语义 token、目录组件、状态和数据表达画廊。此页面是开发基线，不读取产品数据库。"
+        eyebrow="DOTA 2 · 视觉样式"
+        title="Medota2 界面示例"
+        description="图鉴的属性颜色、状态标签和数值展示示例。以下为演示内容。"
         aside={
           <DatasetBadge
             clientVersion="6918"
@@ -27,17 +27,17 @@ export default function DesignSystemPage() {
 
       <div className="mt-12 grid gap-10">
         <section>
-          <SectionHeading eyebrow="Foundation" title="Semantic colors" />
+          <SectionHeading eyebrow="基础" title="语义配色" />
           <DesignSystemColorList />
         </section>
 
         <section>
-          <SectionHeading eyebrow="Primitive" title="Badges" />
+          <SectionHeading eyebrow="组件" title="标签" />
           <DesignSystemBadgeList />
         </section>
 
         <section>
-          <SectionHeading eyebrow="Data display" title="Panels & values" />
+          <SectionHeading eyebrow="信息展示" title="面板与数值" />
           <DesignSystemMetricList />
         </section>
       </div>

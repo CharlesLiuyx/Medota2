@@ -452,8 +452,8 @@ function extractionContentIdentity(
   };
 }
 
-async function buildVariants(
-  source: ResolvedSource,
+export async function buildVariants(
+  source: Pick<ResolvedSource, "bytes" | "mimeType" | "width" | "height">,
 ): Promise<PreparedAssetVariant[]> {
   const original: PreparedAssetVariant = {
     lodKey: "original",

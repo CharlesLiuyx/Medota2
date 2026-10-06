@@ -17,7 +17,7 @@
   --accent-primary: #d85d3f;
   --accent-hover: #ed7454;
   --accent-soft: rgba(216, 93, 63, 0.12);
-  --focus-ring: #f19a72;
+  --surface-focus: rgba(255, 255, 255, 0.025);
   --attribute-strength: #d55345;
   --attribute-agility: #56a973;
   --attribute-intelligence: #4b93ca;
@@ -51,6 +51,7 @@
   --border-subtle: rgba(0, 0, 0, 0.07);
   --border-default: rgba(0, 0, 0, 0.13);
   --border-strong: rgba(0, 0, 0, 0.24);
+  --surface-focus: rgba(0, 0, 0, 0.025);
 }
 
 * {
@@ -61,7 +62,7 @@ html {
   background: var(--surface-canvas);
   color: var(--text-primary);
   color-scheme: dark;
-  scroll-padding-top: 124px;
+  scroll-padding-top: 40px;
 }
 
 body {
@@ -83,19 +84,6 @@ body {
   font-family: var(--font-sans);
 }
 
-body::before {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background-image:
-    linear-gradient(var(--border-subtle) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
-  background-size: 48px 48px;
-  content: "";
-  mask-image: linear-gradient(to bottom, black, transparent 74%);
-  opacity: 0.28;
-}
-
 ::selection {
   background: color-mix(in srgb, var(--accent-primary) 48%, transparent);
 }
@@ -114,7 +102,7 @@ button,
 input,
 select,
 summary {
-  font: inherit;
+  font-family: inherit;
 }
 
 code,
@@ -122,9 +110,15 @@ code,
   font-family: var(--font-mono);
 }
 
-:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 3px;
+:focus {
+  outline: none;
+}
+
+:focus-visible,
+input:focus,
+select:focus,
+textarea:focus {
+  background-color: var(--surface-focus);
 }
 
 .text-balance {
@@ -136,7 +130,6 @@ code,
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
   gap: 1px;
   background: var(--border-subtle);
-  border: 1px solid var(--border-subtle);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -159,7 +152,6 @@ code,
   width: min(460px, calc(100vw - 24px));
   max-height: 45vh;
   overflow: auto;
-  border: 1px solid #587689;
   border-radius: 8px;
   background: #10202bf2;
   color: #e4edf1;
@@ -172,7 +164,7 @@ code,
   padding: 9px 12px;
 }
 .development-workbench[data-sample-state="error"] {
-  border-color: #e78e78;
+  background: #39201df2;
 }
 .development-workbench-body {
   padding: 0 12px 12px;
@@ -186,7 +178,7 @@ code,
   gap: 8px;
 }
 .development-workbench button {
-  border: 1px solid #587689;
+  background: #263c4b;
   padding: 3px 9px;
   cursor: pointer;
 }
@@ -197,4 +189,470 @@ code,
 .development-workbench table {
   width: 100%;
   text-align: left;
+}
+
+/* Dota's armory: portrait, attribute colours, dark tooltips and gold talents. */
+.dota-panel,
+.dota-tooltip,
+.facet-panel {
+  min-width: 0;
+  padding: 24px;
+  background: linear-gradient(135deg, #263039d9, #12191fed);
+  box-shadow: 0 12px 35px #0003;
+}
+.game-description {
+  color: #c9cfd2;
+  font-size: 14px;
+  line-height: 1.9;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.game-heading {
+  margin-bottom: 22px;
+  padding-bottom: 12px;
+  font-size: 23px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #e3d5b7;
+}
+.hero-stage {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+  background:
+    radial-gradient(ellipse at top left, #50617066, transparent 70%),
+    linear-gradient(130deg, #202931, #10161c);
+}
+.hero-intro-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.attribute-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-left: auto;
+  min-width: 0;
+}
+.attribute-stack > div {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.attribute-stack span {
+  color: #a8b0b6;
+  font-size: 10px;
+}
+.attribute-stack strong {
+  font-size: 14px;
+  line-height: 1.2;
+}
+.attribute-stack small {
+  color: #87958f;
+  font-size: 10px;
+}
+.game-tabs {
+  display: flex;
+  overflow-x: auto;
+  position: sticky;
+  top: 40px;
+  z-index: 30;
+  gap: 2px;
+  margin-top: 8px;
+  background: #0d141bf5;
+  backdrop-filter: blur(16px);
+}
+.game-tabs a {
+  padding: 10px 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  font-size: 12px;
+  color: #cbb27c;
+}
+.game-tabs a[aria-current="location"] {
+  background: #ffffff08;
+  color: #f5d797;
+  font-weight: 600;
+}
+.game-tabs a:hover {
+  background: #ffffff08;
+}
+.skill-values {
+  display: grid;
+  gap: 9px;
+  font-size: 13px;
+}
+.skill-values > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 7px;
+}
+.skill-values dt {
+  color: #9daab3;
+}
+.skill-values dd {
+  text-align: right;
+  color: #e5e9eb;
+  font-variant-numeric: tabular-nums;
+}
+.aghanim {
+  background: #35729819;
+  padding: 16px;
+}
+.aghanim h4 {
+  font-size: 14px;
+  color: #8ecded;
+}
+.talent-tree {
+  background: radial-gradient(ellipse, #70582a30, #11191f);
+  padding: 14px;
+}
+.talent-tier {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 62px;
+  align-items: stretch;
+  margin: 10px 0;
+}
+.talent-left,
+.talent-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 12px;
+  background: #0003;
+  color: #d5c7a9;
+  font-size: 13px;
+  text-align: center;
+  min-height: 74px;
+  overflow-wrap: anywhere;
+}
+.talent-level {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: #e4bb69;
+  background: #202019;
+  font-weight: 700;
+}
+@media (max-width: 767px) {
+  .hero-stage {
+    padding: 10px;
+    gap: 10px;
+  }
+  .hero-stage > :nth-child(2) {
+    min-width: 0;
+  }
+  .hero-stage h1 {
+    font-size: 18px;
+  }
+  .attribute-stack {
+    flex-basis: 100%;
+    margin-left: 0;
+    gap: 10px;
+  }
+  .dota-panel,
+  .dota-tooltip,
+  .facet-panel {
+    padding: 18px;
+  }
+  .talent-tier {
+    gap: 46px;
+  }
+  .talent-level {
+    width: 36px;
+    height: 36px;
+  }
+}
+.catalog-grid {
+  gap: 12px;
+  background: transparent;
+  border: 0;
+}
+
+/* Inline fragments share rows across fetch boundaries. Keep chunk boxes measurable
+   so the existing offscreen virtualization and scroll anchoring still work. */
+.hero-catalog-flow {
+  --hero-columns: 3;
+  font-size: 0;
+  line-height: 0;
+}
+.hero-catalog-chunk {
+  display: inline;
+}
+.hero-catalog-runs,
+.hero-catalog-run,
+.hero-catalog-grid {
+  display: contents;
+}
+.hero-catalog-grid > [data-infinite-list-item] {
+  display: inline-block;
+  vertical-align: top;
+  width: calc(100% / var(--hero-columns) - 4px);
+  margin: 0 4px 4px 0;
+}
+.hero-catalog-flow [data-hero-group-heading] {
+  margin: 16px 4px 8px 0;
+  line-height: 20px;
+}
+.hero-catalog-flow [data-infinite-list-spacer] {
+  display: block;
+}
+.game-hover-tooltip {
+  position: fixed;
+  z-index: 100;
+  visibility: hidden;
+  width: min(304px, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  padding: 12px;
+  border: 0;
+  background: linear-gradient(140deg, #29343c, #131b21);
+  box-shadow: 0 12px 32px #000a;
+  color: #edf1f3;
+  font-size: 12px;
+  line-height: 1.4;
+}
+@media (min-width: 360px) {
+  .hero-catalog-flow {
+    --hero-columns: 4;
+  }
+}
+@media (min-width: 640px) {
+  .hero-catalog-flow {
+    --hero-columns: 6;
+  }
+}
+@media (min-width: 768px) {
+  .hero-catalog-flow {
+    --hero-columns: 8;
+  }
+}
+@media (min-width: 1024px) {
+  .hero-catalog-flow {
+    --hero-columns: 10;
+  }
+}
+@media (min-width: 1180px) {
+  .hero-catalog-flow {
+    --hero-columns: 12;
+  }
+}
+@media (min-width: 1400px) {
+  .hero-catalog-flow {
+    --hero-columns: 15;
+  }
+}
+
+/* Dense hero detail preserves full text; fixed offsets clear both navigation bars. */
+.hero-detail [id] {
+  scroll-margin-top: 48px;
+}
+.hero-detail .game-heading {
+  margin-bottom: 10px;
+  padding-bottom: 0;
+  font-size: 17px;
+  letter-spacing: 0.03em;
+}
+:is(.hero-detail, .ability-detail) .dota-panel,
+:is(.hero-detail, .ability-detail) .dota-tooltip,
+.hero-detail .facet-panel {
+  padding: 14px;
+}
+:is(.hero-detail, .ability-detail) .game-description {
+  font-size: 13px;
+  line-height: 1.65;
+}
+.hero-detail .hero-stage .game-description {
+  font-size: 12px;
+  line-height: 1.5;
+}
+:is(.hero-detail, .ability-detail) .dota-tooltip > * + * {
+  margin-top: 10px;
+}
+:is(.hero-detail, .ability-detail) .dota-tooltip > div:first-child {
+  gap: 10px;
+  padding-bottom: 0;
+}
+:is(.hero-detail, .ability-detail) .dota-tooltip h3 {
+  font-size: 16px;
+  line-height: 1.3;
+}
+:is(.hero-detail, .ability-detail) .dota-tooltip > div:nth-of-type(2) {
+  gap: 12px;
+  padding-top: 0;
+  font-size: 12px;
+}
+:is(.hero-detail, .ability-detail) .skill-values {
+  gap: 5px;
+  font-size: 12px;
+}
+:is(.hero-detail, .ability-detail) .skill-values > div {
+  gap: 10px;
+  padding-bottom: 0;
+}
+:is(.hero-detail, .ability-detail) .skill-values dd {
+  overflow-wrap: anywhere;
+}
+:is(.hero-detail, .ability-detail) .aghanim {
+  padding: 10px;
+}
+.hero-detail .talent-tree {
+  padding: 8px;
+}
+.hero-detail .talent-tier {
+  gap: 40px;
+  margin: 6px 0;
+}
+.hero-detail .talent-left,
+.hero-detail .talent-right {
+  min-height: 46px;
+  padding: 8px;
+  font-size: 12px;
+}
+.hero-detail .talent-level {
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .hero-stage {
+    grid-template-columns: auto 1fr;
+  }
+  .attribute-stack {
+    grid-column: 1 / -1;
+  }
+}
+
+.ability-detail .dota-tooltip h1 {
+  font-size: 28px;
+  line-height: 1.25;
+}
+.ability-catalog-flow {
+  --ability-columns: 2;
+}
+.ability-catalog-chunk {
+  margin-bottom: 4px;
+}
+/* Every column count divides the 48-item fetch size, so chunks fill their rows
+   and retain ordinary measurable boxes for offscreen virtualization. */
+.ability-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--ability-columns), minmax(0, 1fr));
+  gap: 4px;
+}
+@media (min-width: 640px) {
+  .ability-catalog-flow {
+    --ability-columns: 3;
+  }
+}
+@media (min-width: 900px) {
+  .ability-catalog-flow {
+    --ability-columns: 4;
+  }
+}
+@media (min-width: 1180px) {
+  .ability-catalog-flow {
+    --ability-columns: 6;
+  }
+}
+@media (min-width: 1400px) {
+  .ability-catalog-flow {
+    --ability-columns: 8;
+  }
+}
+
+@media (min-width: 768px) {
+  .ability-detail .dota-tooltip > .skill-values {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+  }
+}
+
+/* One shared surface for single- and multi-select catalog filters. */
+.compact-menu {
+  position: relative;
+  min-width: 0;
+}
+.compact-menu-trigger {
+  display: flex;
+  height: 32px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  cursor: pointer;
+  list-style: none;
+  color: var(--text-secondary);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.compact-menu-trigger::-webkit-details-marker {
+  display: none;
+}
+.compact-menu-trigger:hover,
+.compact-menu[open] > .compact-menu-trigger {
+  background: var(--surface-focus);
+}
+.compact-menu-chevron {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+.compact-menu-popup {
+  position: absolute;
+  left: 0;
+  z-index: 50;
+  margin-top: 4px;
+  min-width: 112px;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  max-height: min(320px, 55dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #171e25;
+  padding: 4px;
+  box-shadow: 0 8px 24px #0009;
+}
+.compact-menu-option {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+.compact-menu-option:hover,
+.compact-menu-option:focus,
+.compact-menu-option:focus-within,
+.compact-menu-option[aria-selected="true"],
+.compact-menu-option[data-selected="true"] {
+  background: var(--surface-focus);
+  color: var(--text-primary);
+}
+.compact-menu-checkbox {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+}
+.compact-menu-checkbox:checked::after {
+  content: "✓";
+  font-size: 11px;
+  color: var(--text-primary);
 }

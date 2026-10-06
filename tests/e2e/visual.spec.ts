@@ -12,16 +12,20 @@ test.beforeEach(async ({ page }, testInfo) => {
 test("heroes catalog visual baseline", async ({ page }) => {
   await page.goto("/heroes");
   await expect(page.getByRole("main")).toBeVisible();
+  // The local replica takes over asynchronously; capture the completed catalog,
+  // not a transient first 48-card frame during source replacement.
+  await expect(
+    page.getByText("已显示全部英雄。", { exact: true }).last(),
+  ).toBeVisible();
   await expect(
     page.getByRole("img", { name: "Anti-Mage icon", exact: true }),
   ).toBeVisible();
   await waitForImages(page);
-  await stabilizeRunIdentity(page);
   await expect(page).toHaveScreenshot("heroes-catalog.png", {
     fullPage: false,
     animations: "disabled",
     caret: "initial",
-    mask: [page.locator("[data-environment-fingerprint]")],
+    mask: [page.locator("[data-catalog-updated-at]")],
     maskColor: "#2b2106",
   });
 });
@@ -35,12 +39,11 @@ test("ability detail visual baseline", async ({ page }) => {
     page.getByRole("img", { name: "Blink icon", exact: true }),
   ).toBeVisible();
   await waitForImages(page);
-  await stabilizeRunIdentity(page);
   await expect(page).toHaveScreenshot("ability-detail.png", {
     fullPage: false,
     animations: "disabled",
     caret: "initial",
-    mask: [page.locator("[data-environment-fingerprint]")],
+    mask: [page.locator("[data-catalog-updated-at]")],
     maskColor: "#2b2106",
   });
 });
@@ -59,11 +62,12 @@ test("landmarks and heading structure remain semantic", async ({ page }) => {
     name: "Runtime environment",
   });
   await expect(environmentStrip).toBeVisible();
-  await expect(environmentStrip).toContainText("TEST ENVIRONMENT");
-  await expect(environmentStrip).toContainText(
-    "SYNTHETIC-FIXTURE CLASS — NOT LIVE-PRODUCTION CLASS",
+  await expect(environmentStrip).toContainText("测试预览");
+  await expect(environmentStrip).toContainText("测试样例数据");
+  await expect(environmentStrip).toHaveAttribute(
+    "data-verification",
+    "verified",
   );
-  await expect(environmentStrip).toContainText("DATABASE VERIFIED");
   await expect(page.locator("html")).toHaveAttribute(
     "data-environment",
     "test",
@@ -80,7 +84,7 @@ test("landmarks and heading structure remain semantic", async ({ page }) => {
     "data-environment-run",
     /\S+/u,
   );
-  await expect(page).toHaveTitle(/^\[TEST\]/u);
+  await expect(page).toHaveTitle(/^\[测试预览\]/u);
 });
 
 async function waitForImages(page: Page): Promise<void> {
@@ -97,11 +101,5 @@ async function waitForImages(page: Page): Promise<void> {
         if (visible) await image.decode();
       }),
     );
-  });
-}
-
-async function stabilizeRunIdentity(page: Page): Promise<void> {
-  await page.locator("[data-environment-run-value]").evaluate((element) => {
-    element.textContent = "RUN · shared-e2e";
   });
 }

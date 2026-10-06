@@ -6,14 +6,14 @@ import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Panel } from "@/components/ui/panel";
 
 const COLORS = [
-  ["Strength", "var(--attribute-strength)"],
-  ["Agility", "var(--attribute-agility)"],
-  ["Intelligence", "var(--attribute-intelligence)"],
-  ["Universal", "var(--attribute-universal)"],
-  ["Success", "var(--status-success)"],
-  ["Warning", "var(--status-warning)"],
-  ["Danger", "var(--status-danger)"],
-  ["Accent", "var(--accent-primary)"],
+  ["力量", "var(--attribute-strength)"],
+  ["敏捷", "var(--attribute-agility)"],
+  ["智力", "var(--attribute-intelligence)"],
+  ["全才", "var(--attribute-universal)"],
+  ["可用", "var(--status-success)"],
+  ["待核对", "var(--status-warning)"],
+  ["不可用", "var(--status-danger)"],
+  ["强调", "var(--accent-primary)"],
 ] as const;
 
 const BADGES: Array<{
@@ -21,34 +21,34 @@ const BADGES: Array<{
   tone?: BadgeTone;
   icon?: "check" | "warning";
 }> = [
-  { label: "Neutral" },
-  { label: "Current", tone: "accent" },
+  { label: "普通" },
+  { label: "当前", tone: "accent" },
   { label: "力量", tone: "strength" },
   { label: "敏捷", tone: "agility" },
   { label: "智力", tone: "intelligence" },
   { label: "全才", tone: "universal" },
-  { label: "Green", tone: "success", icon: "check" },
-  { label: "Yellow", tone: "warning", icon: "warning" },
-  { label: "Red", tone: "danger" },
+  { label: "已核对", tone: "success", icon: "check" },
+  { label: "待核对", tone: "warning", icon: "warning" },
+  { label: "不可用", tone: "danger" },
 ];
 
 const METRICS = [
   {
     key: "dataset",
-    label: "Dataset",
-    value: "991daaf6",
+    label: "游戏资料",
+    value: "当前版本",
     icon: "database" as const,
   },
   {
     key: "bindings",
-    label: "Ability bindings",
+    label: "关联技能",
     value: "876",
     icon: "swords" as const,
   },
   {
     key: "review",
-    label: "Review state",
-    value: "Yellow · pending",
+    label: "资料状态",
+    value: "等待核对",
     icon: "warning" as const,
   },
 ];
@@ -71,10 +71,7 @@ export function DesignSystemColorList() {
             className="h-full"
           >
             <Panel className="flex h-full items-center gap-3 p-3">
-              <span
-                className="size-8 border border-[var(--border-default)]"
-                style={{ backgroundColor: color }}
-              />
+              <span className="size-8 " style={{ backgroundColor: color }} />
               <span className="font-data text-xs text-[var(--text-secondary)]">
                 {label}
               </span>

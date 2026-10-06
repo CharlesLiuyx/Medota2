@@ -205,6 +205,8 @@ export function createPlan(inputPaths) {
     journeys.add("heroes");
     journeys.add("abilities");
   }
+  if (wide || paths.some((path) => /(?:units|unit-)/.test(path)))
+    journeys.add("units");
   if (journeys.size)
     add(
       "journeys",

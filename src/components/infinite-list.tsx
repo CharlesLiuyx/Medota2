@@ -93,6 +93,7 @@ interface InFlightRequest {
 
 export interface UseInfiniteListOptions<T> {
   source: InfiniteListSource<T>;
+  paused?: boolean;
   getKey: (item: T) => StableKey;
   messages?: Partial<InfiniteListMessages>;
   onStale?: (problem: InfiniteListStaleProblem) => void;
@@ -157,6 +158,7 @@ const IDLE_DIRECTION: InfiniteListDirectionStatus = {
 
 export function useInfiniteList<T>({
   source,
+  paused = false,
   getKey,
   messages: messageOverrides,
   onStale,
@@ -311,7 +313,7 @@ export function useInfiniteList<T>({
 
   const loadDirection = useCallback(
     async (direction: ListLoadDirection) => {
-      if (inFlightRef.current[direction]) return;
+      if (paused || inFlightRef.current[direction]) return;
       const current = stateRef.current;
       const cursor =
         direction === "before" ? current.previousCursor : current.nextCursor;
@@ -437,7 +439,7 @@ export function useInfiniteList<T>({
         }
       }
     },
-    [captureAnchor, commit, makeChunk],
+    [captureAnchor, commit, makeChunk, paused],
   );
   useLayoutEffect(() => {
     loadDirectionRef.current = (direction) => {
@@ -581,7 +583,7 @@ export function useInfiniteList<T>({
       state.nextCursor === null);
 
   useEffect(() => {
-    if (isEmpty) return;
+    if (isEmpty || paused) return;
 
     if (typeof window.IntersectionObserver === "function") {
       let observer: IntersectionObserver | null = null;
@@ -637,7 +639,16 @@ export function useInfiniteList<T>({
         fallbackFrameRef.current = null;
       }
     };
-  }, [handleIntersectionEntries, isEmpty, scheduleGeometryCheck]);
+    // Filtering can keep both old and new boundaries inside the same viewport.
+    // Reobserve the new source so resetting its intersection flags cannot leave
+    // pagination idle waiting for a threshold crossing that will never happen.
+  }, [
+    handleIntersectionEntries,
+    isEmpty,
+    paused,
+    scheduleGeometryCheck,
+    sourceIdentity,
+  ]);
 
   useEffect(() => {
     const root = rootElementRef.current;
@@ -816,7 +827,14 @@ export function InfiniteList<T>({
           };
           return (
             <div
-              key={chunk.id}
+              // Retain the actual anchors when an online slice becomes a local
+              // replica. Replacing a link between pointerdown and pointerup
+              // drops the click even when both versions show the same card.
+              key={
+                chunk.items.length
+                  ? normalizeKey(options.getKey(chunk.items[0]))
+                  : chunk.id
+              }
               ref={(node) => stream.chunkRef(chunk.id, node)}
               className={chunkClassName}
               role={contentRole === "list" ? "presentation" : undefined}
@@ -896,7 +914,7 @@ function BoundaryStatus({
       <button
         type="button"
         onClick={retry}
-        className="border border-[var(--border-default)] px-3 py-1.5 text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
+        className="px-3 py-1.5 text-[var(--text-primary)] hover:bg-[var(--surface-hover)]"
       >
         {direction === "before" ? messages.retryBefore : messages.retryAfter}
       </button>

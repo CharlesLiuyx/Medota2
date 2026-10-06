@@ -969,3 +969,80 @@ export const schemaMigrations = pgTable("schema_migrations", {
     .defaultNow()
     .notNull(),
 });
+
+export const unitAssetDatasetVersions = pgTable(
+  "unit_asset_dataset_versions",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    catalogDatasetVersionId: uuid("catalog_dataset_version_id")
+      .notNull()
+      .references(() => heroCatalogDatasetVersions.id),
+    manifestSha256: text("manifest_sha256").notNull(),
+    expectedKeys: text("expected_keys").array().notNull(),
+    provenance: jsonb().notNull(),
+    importedAt: timestamp("imported_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    unique().on(table.catalogDatasetVersionId, table.manifestSha256),
+    unique().on(table.catalogDatasetVersionId, table.id),
+    check(
+      "unit_asset_dataset_versions_manifest_sha256_check",
+      sql`${table.manifestSha256} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      "unit_asset_dataset_versions_expected_keys_check",
+      sql`cardinality(${table.expectedKeys}) > 0`,
+    ),
+    check(
+      "unit_asset_dataset_versions_provenance_check",
+      sql`jsonb_typeof(${table.provenance}) = 'object'`,
+    ),
+  ],
+);
+export const unitAssetBindings = pgTable(
+  "unit_asset_bindings",
+  {
+    datasetVersionId: uuid("dataset_version_id")
+      .notNull()
+      .references(() => unitAssetDatasetVersions.id),
+    unitKey: text("unit_key").notNull(),
+    assetObjectId: uuid("asset_object_id").references(() => assetObjects.id),
+    resolution: text().notNull(),
+    provenance: jsonb().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.datasetVersionId, table.unitKey] }),
+    check(
+      "unit_asset_bindings_resolution_check",
+      sql`${table.resolution} IN ('portrait','shared_portrait','related_icon','unavailable')`,
+    ),
+    check(
+      "unit_asset_bindings_provenance_check",
+      sql`jsonb_typeof(${table.provenance}) = 'object'`,
+    ),
+    check(
+      "unit_asset_bindings_check",
+      sql`(${table.resolution} = 'unavailable') = (${table.assetObjectId} IS NULL)`,
+    ),
+  ],
+);
+export const unitAssetHeads = pgTable(
+  "unit_asset_heads",
+  {
+    catalogDatasetVersionId: uuid("catalog_dataset_version_id")
+      .primaryKey()
+      .references(() => heroCatalogDatasetVersions.id),
+    datasetVersionId: uuid("dataset_version_id").notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.catalogDatasetVersionId, table.datasetVersionId],
+      foreignColumns: [
+        unitAssetDatasetVersions.catalogDatasetVersionId,
+        unitAssetDatasetVersions.id,
+      ],
+    }),
+  ],
+);

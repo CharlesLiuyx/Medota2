@@ -1,4 +1,6 @@
 import "server-only";
+import { cache } from "react";
+import { searchCatalogHeroes } from "@/server/services/catalog-search";
 import {
   CATALOG_SLICE_LIMIT,
   type CatalogSlice,
@@ -202,13 +204,39 @@ export async function getHeroOverview(
   };
 }
 
-export async function getHeroCatalogSlice(
+export function getHeroCatalogSlice(
   filters: HeroFilters,
   request: ListSliceRequest = {},
+) {
+  return readHeroCatalogSlice(filters, request, CATALOG_SLICE_LIMIT);
+}
+
+/** Complete read for the versioned browser replica; the public cursor API stays bounded. */
+export async function getHeroReplicaRows(
+  filters: HeroFilters,
+  request: ListSliceRequest,
+) {
+  const slice = await readHeroCatalogSlice(filters, request, 20_000);
+  if (slice.nextCursor || slice.total !== slice.items.length)
+    throw new Error("Catalog exceeds the browser replica limit.");
+  return slice.items;
+}
+
+async function readHeroCatalogSlice(
+  filters: HeroFilters,
+  request: ListSliceRequest,
+  limit: number,
 ): Promise<CatalogSlice<HeroCardRow>> {
   const database = await ensureReady();
   const resolved = await resolveHeroSliceRequest(filters, request);
-  const query = buildHeroFilterQuery(filters, resolved.catalogDatasetVersionId);
+  const matches = filters.q
+    ? await searchCatalogHeroes(resolved.catalogDatasetVersionId, filters.q)
+    : [];
+  const query = buildHeroFilterQuery(
+    filters,
+    resolved.catalogDatasetVersionId,
+    matches,
+  );
   const countValues = [...query.values];
   const countConditions = [...query.conditions];
   if (resolved.cursor) {
@@ -219,7 +247,7 @@ export async function getHeroCatalogSlice(
       `(${HERO_ATTRIBUTE_RANK_SQL}, h.hero_id) ${resolved.direction === "after" ? ">" : "<"} ($${rankIndex}::integer, $${heroIdIndex}::integer)`,
     );
   }
-  query.values.push(CATALOG_SLICE_LIMIT + 1);
+  query.values.push(limit + 1);
   const limitIndex = query.values.length;
   const order = resolved.direction === "before" ? "DESC" : "ASC";
 
@@ -262,8 +290,8 @@ export async function getHeroCatalogSlice(
     rowsPromise,
     countsPromise,
   ]);
-  const hasMore = result.rows.length > CATALOG_SLICE_LIMIT;
-  let selectedRows = result.rows.slice(0, CATALOG_SLICE_LIMIT);
+  const hasMore = result.rows.length > limit;
+  let selectedRows = result.rows.slice(0, limit);
   if (resolved.direction === "before") selectedRows = selectedRows.reverse();
 
   const first = selectedRows[0];
@@ -364,15 +392,13 @@ interface ResolvedHeroSliceRequest {
 function buildHeroFilterQuery(
   filters: HeroFilters,
   catalogDatasetVersionId: string,
+  matches: number[],
 ): HeroFilterQuery {
   const values: unknown[] = [catalogDatasetVersionId];
   const conditions = ["h.dataset_version_id = $1"];
   if (filters.q) {
-    values.push(escapeLike(filters.q));
-    const index = values.length;
-    conditions.push(
-      `(zh.display_name ILIKE '%' || $${index} || '%' ESCAPE '\\' OR en.display_name ILIKE '%' || $${index} || '%' ESCAPE '\\' OR h.internal_name ILIKE '%' || $${index} || '%' ESCAPE '\\' OR h.hero_id::text = $${index})`,
-    );
+    values.push(matches);
+    conditions.push(`h.hero_id = ANY($${values.length}::int[])`);
   }
   if (filters.attributes.length) {
     values.push(filters.attributes);
@@ -505,6 +531,35 @@ function mapHeroCardRow(row: HeroCardQueryRow): HeroCardRow {
   };
 }
 
+type HeroProfile = Pick<
+  HeroDetail,
+  "meta" | "roles" | "localizations" | "facets"
+> & {
+  hero: Record<string, string | number | boolean | null> & { hero_id: number };
+};
+
+/** Player-facing profile: skip source dumps and reference comparisons. React's
+ * request cache shares this read between metadata and the page, never across requests. */
+export const getHeroProfile = cache(async function getHeroProfile(
+  slug: string,
+): Promise<HeroProfile | null> {
+  const database = await ensureReady();
+  const meta = await getActiveCatalogMeta();
+  if (!meta) return null;
+  const result = await database.query<Omit<HeroProfile, "meta">>(
+    `SELECT to_jsonb(h) AS hero,
+      COALESCE((SELECT jsonb_agg(r ORDER BY r.role_level DESC, r.role)
+        FROM hero_roles r WHERE r.dataset_version_id = h.dataset_version_id AND r.hero_id = h.hero_id), '[]'::jsonb) AS roles,
+      COALESCE((SELECT jsonb_agg(l ORDER BY l.locale)
+        FROM hero_localizations l WHERE l.dataset_version_id = h.dataset_version_id AND l.hero_id = h.hero_id), '[]'::jsonb) AS localizations,
+      COALESCE((SELECT jsonb_agg(f ORDER BY f.deprecated, f.facet_key)
+        FROM facets f WHERE f.dataset_version_id = h.dataset_version_id AND f.hero_id = h.hero_id), '[]'::jsonb) AS facets
+     FROM heroes h WHERE h.dataset_version_id = $1 AND h.slug = $2`,
+    [meta.datasetVersionId, slug],
+  );
+  return result.rows[0] ? { meta, ...result.rows[0] } : null;
+});
+
 export async function getHeroBySlug(slug: string): Promise<HeroDetail | null> {
   const pool = await ensureReady();
   const meta = await getActiveCatalogMeta();
@@ -602,27 +657,28 @@ export async function getHeroBySlug(slug: string): Promise<HeroDetail | null> {
   };
 }
 
-export async function getActiveCatalogMeta(): Promise<ActiveDatasetMeta | null> {
-  const database = await ensureReady();
-  const result = await database.query<{
-    dataset_version_id: string;
-    asset_dataset_version_id: string;
-    client_version: string;
-    source_revision: string;
-    source_commit: string;
-    imported_at: Date;
-    promoted_at: Date;
-    importer_version: string;
-    target_schema_version: string;
-    source_repository: string;
-    source_remote_url: string;
-    issues: Array<{ severity?: string }>;
-    total_heroes: number;
-    total_abilities: number;
-    gate_status: ActiveDatasetMeta["gateStatus"];
-    review_status: ActiveDatasetMeta["reviewStatus"];
-  }>(
-    `SELECT v.id AS dataset_version_id,
+export const getActiveCatalogMeta = cache(
+  async function getActiveCatalogMeta(): Promise<ActiveDatasetMeta | null> {
+    const database = await ensureReady();
+    const result = await database.query<{
+      dataset_version_id: string;
+      asset_dataset_version_id: string;
+      client_version: string;
+      source_revision: string;
+      source_commit: string;
+      imported_at: Date;
+      promoted_at: Date;
+      importer_version: string;
+      target_schema_version: string;
+      source_repository: string;
+      source_remote_url: string;
+      issues: Array<{ severity?: string }>;
+      total_heroes: number;
+      total_abilities: number;
+      gate_status: ActiveDatasetMeta["gateStatus"];
+      review_status: ActiveDatasetMeta["reviewStatus"];
+    }>(
+      `SELECT v.id AS dataset_version_id,
        asset_head.asset_dataset_version_id,
        s.client_version, s.source_revision, s.source_commit,
        s.imported_at, v.promoted_at, v.importer_version, v.target_schema_version,
@@ -637,29 +693,30 @@ export async function getActiveCatalogMeta(): Promise<ActiveDatasetMeta | null> 
      JOIN source_snapshots s ON s.id = v.source_snapshot_id
      JOIN import_runs r ON r.id = v.import_run_id
      WHERE h.dataset_key = 'hero_catalog'`,
-  );
-  if (!result.rowCount) return null;
-  const row = result.rows[0];
-  return {
-    datasetVersionId: row.dataset_version_id,
-    assetDatasetVersionId: row.asset_dataset_version_id,
-    clientVersion: row.client_version,
-    sourceRevision: row.source_revision,
-    sourceCommit: row.source_commit,
-    importedAt: row.imported_at,
-    promotedAt: row.promoted_at,
-    importerVersion: row.importer_version,
-    schemaVersion: row.target_schema_version,
-    sourceRepository: row.source_repository,
-    sourceRemoteUrl: row.source_remote_url,
-    warningCount: row.issues.filter((issue) => issue.severity === "warning")
-      .length,
-    totalHeroes: row.total_heroes,
-    totalAbilities: row.total_abilities,
-    gateStatus: row.gate_status,
-    reviewStatus: row.review_status,
-  };
-}
+    );
+    if (!result.rowCount) return null;
+    const row = result.rows[0];
+    return {
+      datasetVersionId: row.dataset_version_id,
+      assetDatasetVersionId: row.asset_dataset_version_id,
+      clientVersion: row.client_version,
+      sourceRevision: row.source_revision,
+      sourceCommit: row.source_commit,
+      importedAt: row.imported_at,
+      promotedAt: row.promoted_at,
+      importerVersion: row.importer_version,
+      schemaVersion: row.target_schema_version,
+      sourceRepository: row.source_repository,
+      sourceRemoteUrl: row.source_remote_url,
+      warningCount: row.issues.filter((issue) => issue.severity === "warning")
+        .length,
+      totalHeroes: row.total_heroes,
+      totalAbilities: row.total_abilities,
+      gateStatus: row.gate_status,
+      reviewStatus: row.review_status,
+    };
+  },
+);
 
 export async function assertCatalogDatasetPairAvailable(
   catalogDatasetVersionId: string,
@@ -705,6 +762,15 @@ async function getLatestFailure(
   };
 }
 
-function escapeLike(value: string): string {
-  return value.replace(/[\\%_]/gu, (character) => `\\${character}`);
+export async function getHeroChoices(dataset: string) {
+  const database = await ensureReady();
+  const result = await database.query<{
+    slug: string;
+    zhName: string;
+    enName: string;
+  }>(
+    `SELECT h.slug, zh.display_name AS "zhName", en.display_name AS "enName" FROM heroes h JOIN hero_localizations zh ON zh.dataset_version_id=h.dataset_version_id AND zh.hero_id=h.hero_id AND zh.locale='zh-CN' JOIN hero_localizations en ON en.dataset_version_id=h.dataset_version_id AND en.hero_id=h.hero_id AND en.locale='en' WHERE h.dataset_version_id=$1 ORDER BY zh.display_name`,
+    [dataset],
+  );
+  return result.rows;
 }

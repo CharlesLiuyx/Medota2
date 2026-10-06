@@ -1,4 +1,5 @@
 "use client";
+import { memo } from "react";
 
 import type { HeroCardRow } from "@/server/repositories/heroes";
 import type { PrimaryAttribute } from "@/domain/heroes";
@@ -9,11 +10,12 @@ import {
   type InfiniteChunkRenderContext,
   type InfiniteListMessages,
 } from "./infinite-list";
-import { SectionHeading } from "./ui/page-header";
 
 export interface InfiniteHeroCatalogProps {
   initialSlice: VersionedListSlice<HeroCardRow>;
   endpoint: string;
+  local?: boolean;
+  paused?: boolean;
   lang: "en" | "zh-CN";
 }
 
@@ -24,20 +26,34 @@ const ATTRIBUTE_NAMES: Record<PrimaryAttribute, { zh: string; en: string }> = {
   universal: { zh: "全才", en: "Universal" },
 };
 
-export function InfiniteHeroCatalog({
+export const InfiniteHeroCatalog = memo(function InfiniteHeroCatalog({
   initialSlice,
   endpoint,
+  local = false,
+  paused = false,
   lang,
 }: InfiniteHeroCatalogProps) {
   return (
     <InfiniteList
-      source={{ kind: "remote", endpoint, initialSlice }}
+      paused={paused}
+      source={
+        local
+          ? {
+              kind: "local",
+              items: initialSlice.items,
+              chunkSize: 48,
+              identity: `${endpoint}:local`,
+            }
+          : { kind: "remote", endpoint, initialSlice }
+      }
+      showComplete
       getKey={heroKey}
       onStale={reloadCurrentCatalog}
       messages={heroMessages(lang)}
       ariaLabel={lang === "en" ? "Hero results" : "英雄结果"}
       contentRole="group"
-      className="mt-9 space-y-px"
+      className="hero-catalog-flow mt-5"
+      chunkClassName="hero-catalog-chunk"
       emptyFallback={<HeroCatalogEmpty lang={lang} />}
       renderChunk={(heroes, context) => (
         <HeroChunk
@@ -50,7 +66,7 @@ export function InfiniteHeroCatalog({
       )}
     />
   );
-}
+});
 
 function reloadCurrentCatalog() {
   window.location.reload();
@@ -75,7 +91,7 @@ function HeroChunk({
   );
 
   return (
-    <div className="space-y-11">
+    <div className="hero-catalog-runs">
       {runs.map((run, runIndex) => {
         const showHeading = runIndex > 0 || run.attribute !== previousAttribute;
         const headingId = `${run.attribute}-heroes`;
@@ -83,6 +99,7 @@ function HeroChunk({
         return (
           <section
             key={`${run.attribute}-${runIndex}`}
+            className="hero-catalog-run"
             role="group"
             aria-labelledby={showHeading ? headingId : undefined}
             aria-label={
@@ -90,17 +107,24 @@ function HeroChunk({
             }
           >
             {showHeading && (
-              <div id={headingId} data-hero-group-heading={run.attribute}>
-                <SectionHeading
-                  eyebrow={names.en}
-                  title={lang === "en" ? names.en : names.zh}
-                  count={groupCounts?.[run.attribute]}
-                  tone={run.attribute}
-                />
+              <div
+                id={headingId}
+                data-hero-group-heading={run.attribute}
+                className="flex items-center gap-2 pb-2"
+              >
+                <h2
+                  className="text-sm font-semibold"
+                  style={{ color: `var(--attribute-${run.attribute})` }}
+                >
+                  {lang === "en" ? names.en : names.zh}
+                </h2>
+                <span className="font-data text-[11px] text-[var(--text-muted)]">
+                  {groupCounts?.[run.attribute]}
+                </span>
               </div>
             )}
             <div
-              className={`catalog-grid ${showHeading ? "mt-4" : ""}`}
+              className={`catalog-grid hero-catalog-grid ${showHeading ? "mt-2" : ""}`}
               role="list"
               aria-label={`${names[lang === "en" ? "en" : "zh"]} ${lang === "en" ? "heroes" : "英雄"}`}
             >
@@ -111,6 +135,7 @@ function HeroChunk({
                   data-infinite-list-item=""
                   data-infinite-list-key={hero.heroId}
                   className="min-w-0"
+                  data-hero-attribute={run.attribute}
                 >
                   <HeroCard
                     hero={hero}
@@ -191,7 +216,7 @@ function heroMessages(lang: "en" | "zh-CN"): InfiniteListMessages {
 
 function HeroCatalogEmpty({ lang }: { lang: "en" | "zh-CN" }) {
   return (
-    <div className="mt-5 border border-dashed border-[var(--border-default)] py-20 text-center">
+    <div className="mt-5 py-20 text-center">
       <p className="text-sm text-[var(--text-secondary)]">
         {lang === "en"
           ? "No matching heroes in this dataset."

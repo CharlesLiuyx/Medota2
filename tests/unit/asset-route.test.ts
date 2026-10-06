@@ -54,25 +54,28 @@ describe("database asset route", () => {
     );
   });
 
-  it("selects the immutable asset dataset requested by v", async () => {
-    const response = await GET(
-      new Request(
-        `http://localhost/valve-assets/ability/antimage_blink?v=${assetDatasetVersionId}&width=96`,
-      ),
-      routeParams("ability", "antimage_blink"),
-    );
+  it.each(["ability", "unit"])(
+    "selects the immutable %s asset dataset requested by v",
+    async (entity) => {
+      const response = await GET(
+        new Request(
+          `http://localhost/valve-assets/${entity}/antimage_blink?v=${assetDatasetVersionId}&width=96`,
+        ),
+        routeParams(entity, "antimage_blink"),
+      );
 
-    expect(mocks.getActiveEntityIcon).toHaveBeenCalledWith(
-      "ability",
-      "antimage_blink",
-      96,
-      assetDatasetVersionId,
-    );
-    expect(response.status).toBe(200);
-    expect(response.headers.get("cache-control")).toBe(
-      "private, max-age=31536000, immutable",
-    );
-  });
+      expect(mocks.getActiveEntityIcon).toHaveBeenCalledWith(
+        entity,
+        "antimage_blink",
+        96,
+        assetDatasetVersionId,
+      );
+      expect(response.status).toBe(200);
+      expect(response.headers.get("cache-control")).toBe(
+        "private, max-age=31536000, immutable",
+      );
+    },
+  );
 
   it("accepts the same UUIDv7 dataset identity as catalog cursors", async () => {
     const versionId = "01890f47-6e7a-7cc0-98f1-7c3a2bc91e13";

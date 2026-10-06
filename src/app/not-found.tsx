@@ -17,7 +17,7 @@ export default function NotFound() {
         </p>
         <Link
           href="/heroes"
-          className="mt-7 inline-block border border-white/12 px-5 py-3 text-xs text-zinc-300 hover:border-white/25 hover:text-white"
+          className="mt-7 inline-block px-5 py-3 text-xs text-zinc-300 hover:text-white"
         >
           返回英雄总览
         </Link>

@@ -1,57 +1,28 @@
-import { AlertTriangle, CheckCircle2, CircleX, Database } from "lucide-react";
 import type { CatalogGateStatus } from "@/domain/catalog";
-
-const gatePresentation = {
-  green: {
-    Icon: CheckCircle2,
-    color: "text-[var(--status-success)]",
-    label: "Green",
-  },
-  yellow: {
-    Icon: AlertTriangle,
-    color: "text-[var(--status-warning)]",
-    label: "Yellow",
-  },
-  red: {
-    Icon: CircleX,
-    color: "text-[var(--status-danger)]",
-    label: "Red",
-  },
-} as const satisfies Record<
-  CatalogGateStatus,
-  { Icon: typeof CheckCircle2; color: string; label: string }
->;
-
 export function DatasetBadge({
   clientVersion,
-  sourceCommit,
   gateStatus,
+  gameplayVersion,
 }: {
   clientVersion: string;
   sourceCommit: string;
   gateStatus: CatalogGateStatus;
+  gameplayVersion?: string | null;
 }) {
-  const { Icon, color, label } = gatePresentation[gateStatus];
-
   return (
-    <div className="grid min-w-64 grid-cols-[auto_1fr] border border-[var(--border-default)] bg-[var(--surface-panel)] text-xs">
-      <span className="grid w-11 place-items-center border-r border-[var(--border-subtle)] text-[var(--accent-hover)]">
-        <Database className="size-4" aria-hidden="true" />
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--text-muted)]">
+      <span className="text-[var(--text-secondary)]">
+        收录版本{" "}
+        <strong className="font-data font-medium text-[var(--accent-primary)]">
+          {gameplayVersion ?? "待确认"}
+        </strong>
       </span>
-      <span className="px-3 py-2.5">
-        <span className="flex items-center justify-between gap-4">
-          <span className="font-data text-[var(--text-secondary)]">
-            Client {clientVersion}
-          </span>
-          <Icon
-            className={`size-3.5 ${color}`}
-            aria-label={`Dataset gate ${label}`}
-          />
+      <span>客户端 {clientVersion}</span>
+      {gateStatus !== "green" && (
+        <span>
+          {gateStatus === "yellow" ? "部分资料仍待核对" : "资料暂不可用"}
         </span>
-        <span className="mt-1 block font-data text-[10px] text-[var(--text-muted)]">
-          {sourceCommit.slice(0, 10)} · {label.toUpperCase()}
-        </span>
-      </span>
+      )}
     </div>
   );
 }

@@ -1,18 +1,18 @@
-import Link from "next/link";
-import { ArrowUpRight, Clock3, Droplets, Gem } from "lucide-react";
+"use client";
+import { memo } from "react";
+
+import {
+  displayName,
+  numbers,
+  relationLabel,
+  enumText,
+  behaviorLabels,
+} from "@/presentation/dota";
 import type { AbilityCardRow } from "@/server/repositories/abilities";
 import { AbilityIcon } from "./ability-icon";
-import { Badge } from "./ui/badge";
+import { HoverTooltip } from "./ui/hover-tooltip";
 
-const statusTone = {
-  current: "success",
-  indirect: "accent",
-  defined_unbound: "neutral",
-  template: "warning",
-  deprecated: "danger",
-} as const;
-
-export function AbilityCard({
+export const AbilityCard = memo(function AbilityCard({
   ability,
   assetVersion,
   lang,
@@ -21,75 +21,115 @@ export function AbilityCard({
   assetVersion: string;
   lang: "en" | "zh-CN";
 }) {
+  const name = displayName(ability.displayName);
+  const talentLevels = [
+    ...new Set(
+      ability.owners.flatMap((owner) =>
+        owner.talentLevel == null ? [] : [owner.talentLevel],
+      ),
+    ),
+  ].sort((a, b) => a - b);
+  const type =
+    ability.definitionKind === "talent"
+      ? talentLevels.length
+        ? `${talentLevels.join(" / ")} 级天赋`
+        : "天赋 · 等级待确认"
+      : ability.isInnate
+        ? "先天"
+        : ability.isUltimate
+          ? "终极"
+          : ability.isPassive
+            ? "被动"
+            : "主动";
+  const owners =
+    ability.owners
+      .map((owner) => displayName(owner.displayName, "英雄名称待补充"))
+      .join(" · ") || "通用技能";
+  const costs = !ability.isPassive && ability.definitionKind !== "talent";
   return (
-    <Link
+    <HoverTooltip
       href={`/abilities/${ability.internalName}${lang === "en" ? "?lang=en" : ""}`}
-      className="group flex min-h-52 flex-col bg-[var(--surface-panel)] p-4 hover:z-10 hover:-translate-y-0.5 hover:bg-[var(--surface-hover)] hover:shadow-[var(--shadow-elevated)]"
-    >
-      <div className="flex gap-3">
-        <AbilityIcon
-          internalName={ability.internalName}
-          name={ability.displayName}
-          assetVersion={assetVersion}
-        />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <h2 className="line-clamp-2 font-semibold text-[var(--text-primary)]">
-              {ability.displayName}
-            </h2>
-            <ArrowUpRight className="size-3.5 shrink-0 text-[var(--text-muted)] group-hover:text-[var(--accent-hover)]" />
+      className="group flex h-[62px] items-center gap-2 overflow-hidden bg-[#182127]/65 p-1.5 hover:bg-[#25313a]"
+      content={
+        <>
+          <div className="flex items-center gap-2">
+            <AbilityIcon
+              internalName={ability.internalName}
+              name={name}
+              assetVersion={assetVersion}
+              compact
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-white">{name}</p>
+              <p className="mt-0.5 text-[10px] text-[#c4a16a]">
+                {type} · {relationLabel(ability.catalogStatus)}
+              </p>
+            </div>
           </div>
-          {ability.fallbackName && (
-            <p className="mt-1 text-[10px] text-[var(--status-warning)]">
-              English fallback
+          <p className="mt-2 text-[11px] text-[#aeb9c1]">{owners}</p>
+          {(ability.behavior.length > 0 || ability.damageType) && (
+            <p className="mt-2 text-[11px] text-[#cbd3d9]">
+              {[
+                behaviorLabels(ability.behavior).join("、"),
+                ability.damageType ? `${enumText(ability.damageType)}伤害` : "",
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
           )}
-          <div className="mt-2 flex flex-wrap gap-1">
-            <Badge
-              tone={
-                statusTone[ability.catalogStatus as keyof typeof statusTone] ??
-                "neutral"
-              }
-            >
-              {ability.catalogStatus}
-            </Badge>
-            {ability.isInnate && <Badge tone="accent">Innate</Badge>}
-            {ability.isUltimate && <Badge tone="danger">Ultimate</Badge>}
-            {ability.isPassive && <Badge>Passive</Badge>}
-          </div>
-        </div>
+          <p className="mt-2 whitespace-pre-line text-xs leading-relaxed text-[#d8dfe3]">
+            {ability.description ||
+              (ability.definitionKind === "talent" ? name : "效果说明待补充")}
+          </p>
+          {costs && (
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
+              {ability.cooldown != null && (
+                <span>
+                  ◷ 冷却 <strong>{numbers(ability.cooldown)}</strong> 秒
+                </span>
+              )}
+              {ability.manaCost != null && (
+                <span className="text-[#82bbf2]">
+                  ◆ 魔耗 <strong>{numbers(ability.manaCost)}</strong>
+                </span>
+              )}
+            </div>
+          )}
+          {(ability.hasScepterUpgrade || ability.hasShardUpgrade) && (
+            <p className="mt-2 text-[11px] text-[#c4a16a]">
+              {[
+                ability.hasScepterUpgrade ? "神杖升级" : "",
+                ability.hasShardUpgrade ? "魔晶升级" : "",
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          )}
+          {ability.fallbackName && (
+            <p className="mt-2 text-[10px] text-[var(--status-warning)]">
+              暂无中文名称
+            </p>
+          )}
+          <p className="mt-2 text-[10px] text-[#aeb9c1]">
+            点击查看完整数值与升级说明 →
+          </p>
+        </>
+      }
+    >
+      <AbilityIcon
+        internalName={ability.internalName}
+        name={name}
+        assetVersion={assetVersion}
+        compact
+      />
+      <div className="min-w-0 flex-1">
+        <h2 className="line-clamp-2 text-xs font-medium leading-[15px] text-[var(--text-primary)]">
+          {name}
+        </h2>
+        <p className="mt-0.5 truncate text-[10px] leading-[13px] text-[var(--text-muted)]">
+          <span className="text-[#b8a27e]">{type}</span> · {owners}
+        </p>
       </div>
-      <code className="mt-4 break-all text-[9px] text-[var(--text-muted)]">
-        {ability.internalName}
-      </code>
-      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[10px] text-[var(--text-secondary)]">
-        {ability.cooldown && (
-          <span className="inline-flex items-center gap-1">
-            <Clock3 className="size-3" /> {ability.cooldown}
-          </span>
-        )}
-        {ability.manaCost && (
-          <span className="inline-flex items-center gap-1">
-            <Droplets className="size-3" /> {ability.manaCost}
-          </span>
-        )}
-        {(ability.hasScepterUpgrade || ability.hasShardUpgrade) && (
-          <span className="inline-flex items-center gap-1">
-            <Gem className="size-3" />
-            {ability.hasScepterUpgrade && "Scepter"}
-            {ability.hasScepterUpgrade && ability.hasShardUpgrade && " + "}
-            {ability.hasShardUpgrade && "Shard"}
-          </span>
-        )}
-      </div>
-      <p className="mt-auto border-t border-[var(--border-subtle)] pt-3 text-[10px] text-[var(--text-muted)]">
-        {ability.owners.length
-          ? ability.owners
-              .slice(0, 3)
-              .map((owner) => owner.displayName)
-              .join(" · ")
-          : "No current Hero owner"}
-      </p>
-    </Link>
+    </HoverTooltip>
   );
-}
+});

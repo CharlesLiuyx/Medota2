@@ -8,7 +8,7 @@ export const ASSET_LODS = [
   { key: "w256", targetWidth: 256, quality: 82 },
 ] as const;
 
-export type AssetEntityType = "hero" | "ability";
+export type AssetEntityType = "hero" | "ability" | "unit";
 export type AssetLodKey = "original" | (typeof ASSET_LODS)[number]["key"];
 export type AssetResolutionKind = "exact" | "alias" | "generated_fallback";
 export type AssetSourceStatus = "available" | "fallback" | "mismatch" | "error";

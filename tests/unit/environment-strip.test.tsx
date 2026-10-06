@@ -12,24 +12,9 @@ afterEach(cleanup);
 
 describe("EnvironmentStrip", () => {
   it.each([
-    [
-      "test",
-      "synthetic-fixture",
-      "TEST ENVIRONMENT",
-      "SYNTHETIC-FIXTURE CLASS — NOT LIVE-PRODUCTION CLASS",
-    ],
-    [
-      "local-review",
-      "production-snapshot",
-      "LOCAL REVIEW ENVIRONMENT",
-      "PRODUCTION-SNAPSHOT CLASS — NOT LIVE-PRODUCTION CLASS",
-    ],
-    [
-      "production",
-      "live-production",
-      "PRODUCTION ENVIRONMENT",
-      "LIVE PRODUCTION DATA",
-    ],
+    ["test", "synthetic-fixture", "测试预览", "测试样例数据"],
+    ["local-review", "production-snapshot", "本地预览", "游戏版本资料"],
+    ["production", "live-production", "正式环境", "在线数据"],
   ] as const)(
     "names the %s environment and its data boundary in text",
     (environment, dataClass, heading, dataNotice) => {
@@ -47,7 +32,7 @@ describe("EnvironmentStrip", () => {
     },
   );
 
-  it("shows the attested database, safe fingerprint, and run identity", () => {
+  it("keeps verified identity in machine attributes without exposing database identifiers", () => {
     render(
       <EnvironmentStrip
         environment={identity({
@@ -60,9 +45,10 @@ describe("EnvironmentStrip", () => {
     const strip = screen.getByRole("status", { name: "Runtime environment" });
     expect(strip.getAttribute("data-verification")).toBe("verified");
     expect(strip.getAttribute("data-run")).toBe("e2e-42");
-    expect(screen.getByText(/DATABASE VERIFIED · medota2_test/u)).toBeTruthy();
-    expect(screen.getByText("12345678-abcdef12")).toBeTruthy();
-    expect(screen.getByText("RUN · e2e-42")).toBeTruthy();
+    expect(screen.getByText("测试样例数据")).toBeTruthy();
+    expect(
+      screen.queryByText(/medota2_test|12345678-abcdef12|e2e-42/u),
+    ).toBeNull();
   });
 
   it("makes failed attestation explicit without exposing a target", () => {
@@ -82,13 +68,8 @@ describe("EnvironmentStrip", () => {
     const strip = screen.getByRole("status", { name: "Runtime environment" });
     expect(strip.getAttribute("data-verification")).toBe("unverified");
     expect(strip.getAttribute("data-run")).toBe("none");
-    expect(
-      screen.getByText("DATABASE IDENTITY NOT VERIFIED — DATA ACCESS BLOCKED"),
-    ).toBeTruthy();
-    expect(
-      screen.getByText("DECLARED DATA CLASS · SANDBOX · NOT VERIFIED"),
-    ).toBeTruthy();
-    expect(screen.queryByText("SANDBOX DATA")).toBeNull();
+    expect(screen.getByText("数据连接未验证，暂不可用")).toBeTruthy();
+    expect(screen.queryByText("演示数据")).toBeNull();
     expect(screen.queryByText(/medota2_/iu)).toBeNull();
   });
 });
@@ -96,9 +77,9 @@ describe("EnvironmentStrip", () => {
 describe("getEnvironmentTitlePrefix", () => {
   it("keeps development quiet and prefixes every higher-risk environment", () => {
     expect(getEnvironmentTitlePrefix("development")).toBe("");
-    expect(getEnvironmentTitlePrefix("test")).toBe("[TEST] ");
-    expect(getEnvironmentTitlePrefix("local-review")).toBe("[LOCAL REVIEW] ");
-    expect(getEnvironmentTitlePrefix("production")).toBe("[PRODUCTION] ");
+    expect(getEnvironmentTitlePrefix("test")).toBe("[测试预览] ");
+    expect(getEnvironmentTitlePrefix("local-review")).toBe("[本地预览] ");
+    expect(getEnvironmentTitlePrefix("production")).toBe("[正式环境] ");
   });
 });
 

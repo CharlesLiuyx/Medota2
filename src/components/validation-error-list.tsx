@@ -17,7 +17,7 @@ export function ValidationErrorList({
 
   return (
     <div
-      className={`flex items-start gap-3 border border-[color-mix(in_srgb,var(--status-danger)_35%,transparent)] p-4 text-xs text-[var(--status-danger)] ${surface ? "bg-[color-mix(in_srgb,var(--status-danger)_7%,transparent)]" : ""}`}
+      className={`flex items-start gap-3 p-4 text-xs text-[var(--status-danger)] ${surface ? "bg-[color-mix(in_srgb,var(--status-danger)_7%,transparent)]" : ""}`}
     >
       <AlertCircle className="size-4 shrink-0" />
       <InfiniteList

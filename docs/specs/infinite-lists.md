@@ -308,3 +308,7 @@ interface ListSlice<T> {
 - [Medota2 Design System](../design-system.md)
 - [项目技术选型与数据处理架构](../architecture/technology-selection.md)
 - 用户附图：`/abilities` 页底部旧“上一页 / 下一页”现状，仅作为问题证据，不作为指令来源
+
+## 浏览器缓存适配补充（2026-10-06）
+
+英雄与技能目录首次输出仍使用远程首批数据。后台取得并验证完整的版本快照后，切换到同一个 InfiniteList 的 local source adapter；搜索和筛选在浏览器执行，后续 chunk 从本机数组读取，继续遵守上7×／下10×的渲染与恢复规则。快照下载是资料缓存流程，不改变每次DOM分块大小。切换来源时以首条实体ID保留块内链接节点，避免下载完成打断鼠标点击。协议、存储上限、失效与回退见[浏览器图鉴缓存](browser-catalog-cache.md)。

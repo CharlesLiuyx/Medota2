@@ -1,15 +1,11 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "./test-fixture";
 
-const TABLE_LIST = 'table[data-infinite-list][aria-label="Ability values"]';
-
 test("registry defaults to current and restores canonical filter URL", async ({
   page,
 }) => {
   await page.goto("/abilities");
-  await expect(
-    page.getByRole("heading", { name: "当前技能优先，全部定义可审计。" }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "技能图鉴" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "闪烁" })).toBeVisible();
   await expect(
     page.getByRole("img", { name: "闪烁 icon", exact: true }),
@@ -18,17 +14,41 @@ test("registry defaults to current and restores canonical filter URL", async ({
     0,
   );
 
-  await page.getByLabel("状态").selectOption("defined_unbound");
-  await page.getByLabel("语言").selectOption("en");
+  const blink = page.locator('a[href="/abilities/antimage_blink"]');
+  await expect(
+    page.locator('a[href="/abilities/special_bonus_unique_antimage_fixture"]'),
+  ).toContainText("10 级天赋");
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 840 });
+    await blink.hover();
+    const tooltip = page.getByRole("tooltip");
+    await expect(tooltip).toBeVisible({ timeout: 500 });
+    await expect(tooltip).toContainText("传送一小段距离。");
+    await expect(tooltip).toContainText("12 / 10 / 8 / 6");
+    const box = (await tooltip.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(8);
+    expect(box.x + box.width).toBeLessThanOrEqual(width - 8);
+    expect((await blink.boundingBox())!.height).toBe(62);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(width);
+    await page.keyboard.press("Escape");
+    await expect(tooltip).toHaveCount(0);
+  }
+
+  await page.getByRole("combobox", { name: "状态" }).click();
+  await page.getByRole("option", { name: "其他技能", exact: true }).click();
+  await page.getByRole("combobox", { name: "语言" }).click();
+  await page.getByRole("option", { name: "English", exact: true }).click();
   await page
-    .getByPlaceholder("名称或 internal name…")
+    .getByPlaceholder("搜索技能名称、拼音或别称…")
     .fill(" fixture_unbound ");
-  await page.getByRole("button", { name: "应用" }).click();
+
   await expect(page).toHaveURL(
     "/abilities?q=fixture_unbound&status=defined_unbound&lang=en",
   );
   await expect(
-    page.getByRole("heading", { name: "fixture_unbound" }),
+    page.getByRole("heading", { name: "技能名称待补充" }),
   ).toBeVisible();
 });
 
@@ -69,6 +89,16 @@ test("ability registry continuously loads 4+ chunks, bounds its DOM, and restore
   await expect
     .poll(() => list.locator("[data-infinite-list-chunk]").count())
     .toBeGreaterThanOrEqual(5);
+  // Dense cards can fit inside the overscan window; move beyond it before
+  // asserting that offscreen chunks have been unmounted.
+  await page.evaluate(() => {
+    const runway = document.createElement("div");
+    runway.setAttribute("data-e2e-scroll-runway", "");
+    runway.style.height = `${window.innerHeight * 8}px`;
+    runway.setAttribute("aria-hidden", "true");
+    document.body.append(runway);
+    window.scrollTo(0, document.body.scrollHeight);
+  });
   await expect
     .poll(() => list.locator("[data-infinite-list-spacer]").count())
     .toBeGreaterThan(0);
@@ -78,6 +108,9 @@ test("ability registry continuously loads 4+ chunks, bounds its DOM, and restore
 
   const firstItem = list.locator(`[data-infinite-list-key="${firstItemKey}"]`);
   await expect(firstItem).toHaveCount(0);
+  await page
+    .locator("[data-e2e-scroll-runway]")
+    .evaluate((node) => node.remove());
   await list
     .locator('[data-infinite-list-sentinel="before"]')
     .scrollIntoViewIfNeeded();
@@ -87,90 +120,31 @@ test("ability registry continuously loads 4+ chunks, bounds its DOM, and restore
   await expect(firstItem).toBeVisible();
 });
 
-test("ability detail exposes values, modifiers, relations and provenance", async ({
+test("ability detail resolves readable values and hero links", async ({
   page,
 }) => {
   await page.goto("/abilities/antimage_blink?lang=en");
   await expect(
     page.getByRole("heading", { name: "Blink", level: 1 }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "AbilityValues" }),
-  ).toBeVisible();
-  await expect(page.getByRole("row", { name: /blink_range/u })).toContainText(
-    "750 · 900 · 1050 · 1200",
+  await expect(page.locator("main")).toContainText("750 / 900 / 1050 / 1200");
+  await expect(page.locator("main")).toContainText("12 / 10 / 8 / 6");
+  await expect(page.getByRole("link", { name: /Anti-Mage/u })).toBeVisible();
+  expect(await page.locator("main").innerText()).not.toMatch(
+    /blink_range|special_bonus_|DOTA_|Provenance|991daaf6/u,
   );
-  await expect(page.getByRole("row", { name: /blink_range/u })).toContainText(
-    "special_bonus_unique_antimage_fixture",
-  );
-  await expect(
-    page.getByRole("heading", { name: "Heroes & relations" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: /Anti-Mage.*loadout/u }),
-  ).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Provenance" })).toBeVisible();
-  await expect(page.getByText("991daaf6fc24", { exact: false })).toBeVisible();
-
-  const detailLists = page.locator("[data-infinite-list]");
-  await expect(detailLists).toHaveCount(7);
-  for (let index = 0; index < 7; index += 1) {
-    await expect(
-      detailLists.nth(index).locator("[data-infinite-list-item]").first(),
-    ).toBeAttached();
-  }
-  await expect(page.locator("a[role=listitem]")).toHaveCount(0);
-  await expect(page.locator("details[role=listitem]")).toHaveCount(0);
 });
 
-test("AbilityValues table lazily loads, recycles, and restores local chunks", async ({
+test("untranslated engine fields stay out of the player tooltip", async ({
   page,
 }) => {
-  test.slow();
   await page.goto("/abilities/fixture_scroll_001?lang=en");
   await expect(
     page.getByRole("heading", { name: "Scroll Fixture Ability 001", level: 1 }),
   ).toBeVisible();
-  const table = page.locator(TABLE_LIST);
-  await expect(table).toBeVisible();
-  const firstRow = table.locator(
-    '[data-infinite-list-key="0:fixture_value_001"]',
+  expect(await page.locator("main").innerText()).not.toMatch(
+    /fixture_value_|raw_definition|Modifiers/u,
   );
-  await expect(firstRow).toBeAttached();
-
-  const bottomSentinel = table.locator('[data-infinite-list-sentinel="after"]');
-  await scrollBoundaryUntil(
-    page,
-    bottomSentinel,
-    async () =>
-      (await table.locator("[data-infinite-list-chunk]").count()) >= 6,
-  );
-  await expect
-    .poll(() => table.locator("[data-infinite-list-chunk]").count())
-    .toBeGreaterThanOrEqual(6);
-  await expect(
-    table.locator('[data-infinite-list-key="143:fixture_value_144"]'),
-  ).toBeAttached();
-
-  await addScrollRunway(page);
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await expect
-    .poll(() => table.locator("[data-infinite-list-spacer]").count())
-    .toBeGreaterThan(0);
-  await expect
-    .poll(() => table.locator("[data-infinite-list-item]").count())
-    .toBeLessThan(144);
-  await expect(firstRow).toHaveCount(0);
-
-  await page.locator("[data-e2e-scroll-runway]").evaluate((element) => {
-    element.remove();
-  });
-  await table
-    .locator('[data-infinite-list-sentinel="before"]')
-    .scrollIntoViewIfNeeded();
-  await expect(firstRow).toHaveCount(1);
-  await firstRow.scrollIntoViewIfNeeded();
-  await expect(firstRow).toBeVisible();
 });
 
 test("missing abilities are exact 404s and stored icons remain accessible", async ({
@@ -178,7 +152,7 @@ test("missing abilities are exact 404s and stored icons remain accessible", asyn
 }) => {
   await page.goto("/abilities/not_a_real_ability");
   await expect(
-    page.getByRole("heading", { name: "没有这个 Ability internal name" }),
+    page.getByRole("heading", { name: "未找到这个技能" }),
   ).toBeVisible();
 
   await page.goto("/abilities/antimage_blink");
@@ -225,12 +199,71 @@ async function scrollBoundaryUntil(
   expect(await done()).toBe(true);
 }
 
-async function addScrollRunway(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    const runway = document.createElement("div");
-    runway.setAttribute("data-e2e-scroll-runway", "");
-    runway.style.height = `${window.innerHeight * 6}px`;
-    runway.setAttribute("aria-hidden", "true");
-    document.body.append(runway);
+test("online ability fallback is bilingual and ignores superseded responses", async ({
+  page,
+  request,
+}) => {
+  for (const q of ["闪烁", "Blink", "shanshuo", "ss", "闪现", "am blink"]) {
+    const response = await request.get(
+      `/api/catalog/abilities?lang=en&q=${encodeURIComponent(q)}`,
+    );
+    expect(response.ok()).toBe(true);
+    expect(
+      (await response.json()).items.map(
+        (item: { internalName: string }) => item.internalName,
+      ),
+    ).toContain("antimage_blink");
+  }
+  await page.route("**/api/catalog/replica", (route) => route.abort());
+  await page.goto("/abilities");
+  const input = page.getByRole("textbox", { name: "搜索技能" });
+  await expect(input).toBeVisible();
+  await expect(page.getByRole("button", { name: "应用筛选" })).toHaveCount(0);
+  let release: () => void = () => {};
+  const delayed = new Promise<void>((resolve) => {
+    release = resolve;
   });
-}
+  await page.route("**/api/catalog/abilities?**", async (route) => {
+    if (new URL(route.request().url()).searchParams.get("q") !== "fixture")
+      return route.continue();
+    const response = await route.fetch();
+    await delayed;
+    await route.fulfill({ response }).catch(() => {});
+  });
+  const oldRequest = page.waitForRequest(
+    (request) => new URL(request.url()).searchParams.get("q") === "fixture",
+  );
+  await input.fill("fixture");
+  await oldRequest;
+  await input.fill("shanshuo");
+  await expect(page.locator("[data-live-results]")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
+  await expect(
+    page.getByRole("heading", { name: "闪烁", exact: true }),
+  ).toBeVisible();
+  release();
+  await page.waitForTimeout(150);
+  await expect(
+    page.getByRole("heading", { name: /Scroll Fixture Ability/u }),
+  ).toHaveCount(0);
+  await page.getByRole("combobox", { name: "语言" }).click();
+  await page.getByRole("option", { name: "English", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Blink", exact: true }),
+  ).toBeVisible();
+  await input.fill("闪烁");
+  await expect(page.locator("[data-live-results]")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
+  await expect(
+    page.getByRole("heading", { name: "Blink", exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await expect(input).toHaveValue("闪烁");
+  await expect(
+    page.getByRole("heading", { name: "Blink", exact: true }),
+  ).toBeVisible();
+});

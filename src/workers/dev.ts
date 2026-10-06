@@ -14,6 +14,7 @@ import {
   writeJson,
 } from "@/development/runtime";
 import { sampleInputs, type SampleResult } from "@/development/sample";
+import { warmCatalogRoutes } from "@/development/warm-catalog";
 import type { WorkbenchStatus } from "@/development/protocol";
 import {
   getPreviewDataSource,
@@ -224,6 +225,17 @@ async function serve(): Promise<void> {
           message: `Web 服务已退出（${code}）；查看开发日志后重新运行 pnpm dev。`,
         }).then(() => stop(1));
     });
+    await publish({ message: "正在预热图鉴、详情路由与本机缓存接口" });
+    try {
+      await warmCatalogRoutes(origin);
+    } catch (error) {
+      // Warmup is an optimization, not a substitute for the verified data/setup
+      // gates above. Keep a usable workbench if optional cache warmup fails.
+      console.warn(
+        "Catalog warmup incomplete:",
+        error instanceof Error ? error.message : String(error),
+      );
+    }
     await publish({
       phase: "ready",
       message: "界面热更新已启动，正在计算小样例",

@@ -119,5 +119,6 @@ function singleValue(
 }
 
 function byteSort(left: string, right: string): number {
-  return Buffer.from(left, "utf8").compare(Buffer.from(right, "utf8"));
+  // Filter enum values are ASCII; keep the parser usable in the browser.
+  return left < right ? -1 : left > right ? 1 : 0;
 }
