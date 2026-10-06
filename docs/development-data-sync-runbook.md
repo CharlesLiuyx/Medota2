@@ -14,7 +14,7 @@ pnpm install --frozen-lockfile
 git lfs version
 docker compose version
 pnpm data:workspace --name GofurWindowsLenovo --profile local
-pnpm data:fetch --repository <获准的私有数据仓库Git地址>
+pnpm data:fetch --repository https://github.com/CharlesLiuyx/Medota2-dev-data.git
 pnpm data:apply --plan
 pnpm dev:sync
 pnpm data:status

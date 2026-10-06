@@ -224,3 +224,5 @@ AGENTS.md、CONTEXT.md、README 和同步方案已接入登记册：开始任务
 实际数据库页验证了英雄筛选、分页、图片解码和390px无横向溢出；截图 `output/playwright/data-sync-database-desktop.png`、`data-sync-database-mobile.png`。完整数据核验记录 `.medota2/data-sync/acceptance.json`，重复应用记录 `.medota2/data-sync-noop.log`。本轮没有在Windows或云端运行，未模拟整机崩溃／中断恢复的全部阶段，不将这些列为已通过验收。
 
 **首次数据发布：**用户随后明确授权“推送到远端并合入”。已新建私有 `CharlesLiuyx/Medota2-dev-data` 并发布数据提交 `dfde0a8bbea1d611ffce530a94fd842f6e293a50`；快照 `e81588175b2d57aa4f82b74c88f3a8895a66b8b753820ba4befaa6007826d103` 包含业务表和对象共84,475,984字节，其中LFS二进制54,008,077字节。已从远端在独立缓存重新下载全部对象并校验，`dev-data.lock.json` 绑定该提交与manifest／schema／迁移摘要。公开代码仓库仅保存实现、文档及lock，原始资源保存在私有数据仓库。用户可在另一环境取得私有仓库读取权限后，按运行手册拉取代码、初始化工作区、同步并核对 `data:status`。Windows／云端验证仍待用户执行。
+
+首次PR远程检查复现了冷启动时英雄／技能详情跳转超时。Playwright trace显示请求正常发出，但首次详情编译及脚本加载耗尽了原有5秒断言时间；CI直接启动Next开发服务，未经过工作台已有的路由预热。两个浏览器测试配置现统一在服务启动后复用该预热，保留原有断言和超时。本机 `CI=true pnpm test:journeys --fixture` 的5条流程全部通过，证据 `.medota2/data-sync-ci-warmup.log`；远程复跑结果以PR检查为准。
