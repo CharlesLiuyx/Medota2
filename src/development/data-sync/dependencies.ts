@@ -22,6 +22,49 @@ const runtimePaths = [
   "resource/localization/abilities_schinese.txt",
 ];
 
+export async function gitFiles(
+  root: string,
+  commit: string,
+  paths: string[],
+): Promise<Map<string, Buffer>> {
+  paths.forEach(assertRelativeFile);
+  const stdout = await new Promise<Buffer>((accept, reject) => {
+    const child = execFile(
+      "git",
+      ["-C", root, "cat-file", "--batch"],
+      {
+        encoding: "buffer",
+        maxBuffer: 128 * 1024 * 1024,
+        timeout: 30_000,
+        windowsHide: true,
+      },
+      (error, output) => (error ? reject(error) : accept(output)),
+    );
+    child.stdin!.end(
+      paths.map((path) => `${commit}:${path}`).join("\n") + "\n",
+    );
+  });
+  const files = new Map<string, Buffer>();
+  let offset = 0;
+  for (const path of paths) {
+    const end = stdout.indexOf(10, offset);
+    if (end < 0) throw new Error("Incomplete source Git batch response.");
+    const header = stdout.subarray(offset, end).toString("utf8");
+    const match = /^[a-f0-9]{40} blob (\d+)$/.exec(header);
+    if (!match)
+      throw new Error(`Pinned source file is missing or not a blob: ${path}`);
+    const size = Number(match[1]);
+    offset = end + 1;
+    if (offset + size >= stdout.length || stdout[offset + size] !== 10)
+      throw new Error("Incomplete source Git blob.");
+    files.set(path, stdout.subarray(offset, offset + size));
+    offset += size + 1;
+  }
+  if (offset !== stdout.length)
+    throw new Error("Unexpected source Git batch output.");
+  return files;
+}
+
 export async function gitBytes(
   root: string,
   commit: string,
@@ -102,8 +145,9 @@ export async function collectSources(
       commit: row.source_commit,
       files: [],
     };
+    const contents = await gitFiles(root, row.source_commit, paths);
     for (const path of paths) {
-      const bytes = await gitBytes(root, row.source_commit, path);
+      const bytes = contents.get(path)!;
       const hash = sha256(bytes);
       const saved = expected.find((file) => file.source_path === path);
       if (
@@ -196,8 +240,13 @@ export async function prepareDependencies(
     ).stdout.trim();
     if (actual !== source.commit)
       throw new Error("Managed source checkout points to another commit.");
+    const contents = await gitFiles(
+      root,
+      source.commit,
+      source.files.map((file) => file.path),
+    );
     for (const file of source.files) {
-      const bytes = await gitBytes(root, source.commit, file.path);
+      const bytes = contents.get(file.path)!;
       if (sha256(bytes) !== file.sha256 || bytes.length !== file.bytes)
         throw new Error(`Pinned source changed: ${file.path}`);
       // Supplemental localization reads the working file; validate it too.
@@ -214,8 +263,13 @@ export async function verifyLiveDependencies(
   for (const source of manifest.sources) {
     try {
       const root = await findSourceRoot(source.commit);
+      const contents = await gitFiles(
+        root,
+        source.commit,
+        source.files.map((file) => file.path),
+      );
       for (const file of source.files) {
-        const data = await gitBytes(root, source.commit, file.path);
+        const data = contents.get(file.path)!;
         if (sha256(data) !== file.sha256 || data.length !== file.bytes)
           throw new Error(`Source mismatch: ${file.path}`);
         if (file.path.startsWith("resource/localization/abilities_"))

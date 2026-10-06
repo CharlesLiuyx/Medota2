@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 import { readdirSync } from "node:fs";
-import { relative, resolve } from "node:path";
+import { relative, resolve, sep } from "node:path";
 
 const nextTsconfigPath = process.env.MEDOTA2_NEXT_TSCONFIG?.trim();
 
@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR?.trim() || ".next",
   devIndicators: process.env.MEDOTA2_ENVIRONMENT === "test" ? false : undefined,
   output: "standalone",
+  adapterPath: resolve("scripts/development/build-output.mjs"),
   // Reuse recently visited/prefetched catalog pages during quick navigation.
   // Refresh still reads the current published dataset immediately.
   experimental: { staleTimes: { dynamic: 300, static: 300 } },
@@ -34,8 +35,8 @@ function localStateExcludes(): string[] {
       excluded.push(`${path}/cache/**/*`, `${path}/standalone/**/*`);
       return;
     }
-    if (!dist.startsWith(`${absolute}/`)) {
-      excluded.push(`${path}/**/*`);
+    if (!dist.startsWith(`${absolute}${sep}`)) {
+      excluded.push(`${path.replaceAll("\\", "/")}/**/*`);
       return;
     }
     for (const entry of readdirSync(absolute, { withFileTypes: true })) {

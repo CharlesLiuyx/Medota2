@@ -139,6 +139,7 @@ export async function readSnapshot(
 export async function verifySnapshotFiles(
   root: string,
   manifest: SnapshotManifest,
+  verifiedObjects?: ReadonlyMap<string, Buffer>,
 ): Promise<{ bytes: number; rows: number }> {
   let bytes = 0,
     total = 0;
@@ -185,11 +186,14 @@ export async function verifySnapshotFiles(
   )
     throw new Error("Snapshot objects differ from referenced content.");
   for (const file of manifest.objects) {
-    await verifiedFile(blobPath(root, file.sha256), file);
+    if (!verifiedObjects?.has(file.sha256))
+      await verifiedFile(blobPath(root, file.sha256), file);
     bytes += file.bytes;
   }
   await verifyMapManifest(manifest.map, (file) =>
-    verifiedFile(blobPath(root, file.sha256), file),
+    verifiedObjects?.has(file.sha256)
+      ? Promise.resolve(verifiedObjects.get(file.sha256)!)
+      : verifiedFile(blobPath(root, file.sha256), file),
   );
   return { bytes, rows: total };
 }

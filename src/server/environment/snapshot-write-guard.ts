@@ -42,11 +42,15 @@ export function assertSnapshotWritable(
   const journal = readSyncJson(resolve(syncRoot(), "switch.json")) as {
     phase?: string;
     next?: { lease?: { stateDirectory?: string; environment?: string } };
+    previous?: { lease?: { stateDirectory?: string } };
+    selectionCommitted?: boolean;
   } | null;
   if (
     journal?.phase === "switching" &&
     journal.next?.lease?.environment === environment &&
-    journal.next.lease.stateDirectory !== state
+    (journal.next.lease.stateDirectory !== state ||
+      (journal.previous?.lease?.stateDirectory === state &&
+        !journal.selectionCommitted))
   )
     throw new Error(
       "Snapshot cutover is in progress; retry the write after it finishes.",

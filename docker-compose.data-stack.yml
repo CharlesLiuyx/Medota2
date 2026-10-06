@@ -11,7 +11,8 @@ services:
       - medota2-postgres:/var/lib/postgresql
       - ./docker/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U medota2_owner -d medota2"]
+      # The image's initialization server is Unix-only; wait for the final TCP server.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U medota2_owner -d medota2"]
       interval: 2s
       timeout: 3s
       retries: 30

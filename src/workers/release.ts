@@ -13,6 +13,7 @@ import {
 } from "@/development/runtime";
 import { withTestEnvironment } from "@/development/test-environment";
 import { automaticStorageCleanup } from "@/development/storage";
+import { assertStandaloneBoundary } from "../../scripts/development/build-output.mjs";
 
 const retainedArtifacts: string[] = [];
 
@@ -35,6 +36,7 @@ async function main(): Promise<void> {
       "tsconfig.json",
       "tsconfig.check.json",
       "postcss.config.mjs",
+      "scripts/development/build-output.mjs",
       ".env",
       ".env.local",
       ".env.production",
@@ -104,8 +106,11 @@ async function main(): Promise<void> {
         await run("pnpm", ["exec", "next", "build", "--webpack"], buildEnv);
         // Standalone tracing can include dotenv files. The release artifact must
         // receive runtime configuration at deployment, never package local secrets.
+        const standalone = resolve(dist, "standalone");
+        await removeDotEnv(standalone);
+        await assertStandaloneBoundary(standalone, ".next-release");
         await rm(artifact, { recursive: true, force: true });
-        await cp(resolve(dist, "standalone"), artifact, { recursive: true });
+        await cp(standalone, artifact, { recursive: true, dereference: true });
         await cp(
           resolve(dist, "static"),
           resolve(artifact, ".next-release/static"),
@@ -130,7 +135,7 @@ async function main(): Promise<void> {
         const smokeRoot = resolve(root, "smoke");
         await rm(smokeRoot, { recursive: true, force: true });
         try {
-          await cp(artifact, smokeRoot, { recursive: true });
+          await cp(artifact, smokeRoot, { recursive: true, dereference: true });
           const smokeState = resolve(smokeRoot, ".medota2/runtime");
           await mkdir(smokeState, { recursive: true, mode: 0o700 });
           for (const file of [
@@ -252,7 +257,12 @@ async function main(): Promise<void> {
         );
       },
       { seed: true },
-    );
+    ).catch(async (error: unknown) => {
+      // A failed check must not leave another full copy of the build behind.
+      await rm(artifact, { recursive: true, force: true });
+      await rm(resolve(root, "smoke"), { recursive: true, force: true });
+      throw error;
+    });
     pendingManifest = undefined;
   } catch (error) {
     if (pendingManifest)

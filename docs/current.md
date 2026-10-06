@@ -478,3 +478,63 @@ pnpm data:status 核对活动快照与lock一致，34表46,238行的业务摘要
 用户授权将本机变更推送远端并合入main。发布前fetch确认本机main与origin/main均为6cc9753，无分叉；本次交接包含自动空间保留、日志轮转及此前Mac地图同步／空间审计文档，通过pnpm push提交代码并核验完整业务快照。
 
 本轮pnpm check的7项通过：格式重查，ESLint／类型／单测复用匹配输入的通过证据，4条真实页面流程及21项隔离数据库合同重跑通过，正式Web产物按相同输入复用；固定fixture数值1项按真实数据模式跳过。证据：.medota2/checks/1791296824235-7de2cf63/run.json。其他环境后续运行pnpm sync获取同一代码与共享数据；Windows日志轮转和既有发布权限限制仍需在对应环境验收。
+
+## 本地项目空间分析（2026-10-06）
+
+本轮只读扫描项目目录：178,718个普通文件共9,338,253,056字节（8.70 GiB），按卷／文件ID去重为8.68 GiB；跳过1,568个符号链接，无读取错误。口径为文件逻辑长度，未测NTFS实际分配空间，不包括项目外的Docker卷、WSL磁盘、pnpm全局store或游戏安装。证据为`.medota2/sessions/disk-usage-20261006.json`及同名Session记录。
+
+主要占用：`.medota2/releases`为3.42 GiB、`.next-release`为2.60 GiB、旧地图构建为419.39 MiB；这三项不重叠，共6.44 GiB（74.0%），可在确认无构建／发布使用后优先清理并重建。两个release目录均无通过验收的manifest。现有standalone包含2.24 GiB的`.medota2`，其中又包含旧release，形成重复嵌套。Next 16.3.3本机`collect-build-traces.js`将排除glob转为Windows路径后交给picomatch；只读最小复现中原反斜杠匹配失败，规则与目标统一正斜杠后成功。现有trace每个主要路由列入约32,514项本地状态文件，证明已有排除配置未在本机产物中生效。修复应先阻止追踪／复制本地状态，再在复制前校验产物边界；本轮未修改运行时代码或重新构建。
+
+数据同步目录1.02 GiB包含发布导出452.52 MiB、发布仓库174.53 MiB、受管缓存136.79 MiB、独立回取91.19 MiB等；发布回取仍有活动进程，不能将整目录视为可删缓存。保留active／候选身份、来源、活动地图及未完成发布材料。后续发布成功并完整回验后再按引用清理重复导出、bundle与过期回取；测试运行证据155.90 MiB可保留最近成功及尚未解决失败样本后轮换。node_modules为586.00 MiB，当前开发缓存158.19 MiB，源码1.51 MiB，依赖及源码不是本次优先优化目标。本轮未清理、停止服务、改数据库、提交或推送。
+
+## 同步链路性能审阅（2026-10-06，已审阅；实施结果见下文）
+
+本轮只读分析，未修改同步实现、业务数据、服务或提交。最终成功push与sync按日志文件生命周期估算分别约11分35秒、6分42秒；缺少完整阶段埋点，不将此估算当作纯网络时间。旧新快照数据库摘要与34表内容一致，实际仅新增83个对象约19.44MB，但sync仍创建整库候选并恢复46,238行，恢复任务区间约183秒。每次fetch固定串行48次LFS pull，正常应用路径至少4次文件全验、4次原库扫描及1次新库回验，且工作台启动两次。LFS会命中缓存，Downloaded计数不等于实际网络下载数。
+
+本机热缓存只读测量：完整文件校验4.59秒、数据库打开2.05秒、扫描11.85秒，asset_blobs查询/传输/解码占7.37秒；逐行恢复还重复读本地状态，1000次readActiveSnapshot为1.456秒。推荐优先按组件差异复用未变数据库、仅获取缺损对象并合并LFS调用、同次流程复用校验结果及只重启一次；其次批量INSERT、共享对象缓存和增量远端回验。保持完整数据一致性与两个日常入口，不增加门禁。无变化15–30秒、仅地图60–120秒为待测工程目标，未实现或承诺达成。证据及完整方案在.medota2/sessions/sync-performance-review-20261006.md和sync-performance-read.json；待用户Review后实施。
+
+## 同步完成后的空间复查（2026-10-06 21:32，Asia/Singapore）
+
+重新扫描181,656个普通文件共9,484,294,185字节（8.83 GiB），较21:00基线增加139.28 MiB／2,938文件；按卷／文件ID去重为8.82 GiB，跳过1,568个符号链接，无读取错误。文件逻辑大小及项目外存储的统计边界与上次一致。新报告保留四层目录汇总，避免完整深层路径清单继续占用过多空间；证据`.medota2/sessions/disk-usage-repeat-20261006.json`，旧报告保留作基线。
+
+主要增长为data-sync增加124.07 MiB，其中独立回取增加82.17 MiB、受管repository增加41.31 MiB；开发缓存增加6.04 MiB，Session材料增加8.98 MiB（主要是上一轮完整扫描报告自身8.92 MiB）。三类构建残留总计6.44 GiB完全未变，仍占当前项目72.86%；两个release仍无验收manifest，现有打包排除问题尚未修复。
+
+与首次分析不同，完整快照eef4400b现已发布并激活，lock与活动候选b2384f4d一致；日志确认push／sync完成，本次进程快照未见构建、同步或发布任务，锁目录仅workbench。publication-exports为452.52 MiB、remote-verification为173.36 MiB，共625.88 MiB，可在执行时再次核对引用／进程并保留回验记录后列为下一批清理候选。当前data-sync合计1.14 GiB，仍保留受管repository、活动身份、来源、共享地图及恢复所需材料，不整目录清空。继续优先修复打包后回收6.44 GiB构建残留。本轮仅分析及文档记录，未清理或修改运行时。
+
+## 项目空间清理执行（2026-10-06）
+
+用户授权按上述计划清理。持有release／data-sync锁并再次核对绝对路径、重解析点、进程及活动引用后，用原生PowerShell删除五个已审阅目录：旧.next-release、.medota2/releases、旧地图构建、成功发布的publication-exports与remote-verification，合计7,566,724,616逻辑字节（7.05 GiB）。发布／数据核验回执另存Session目录；活动候选b2384f4d、受管repository、来源、共享地图、历史数据包和研究工具保留。
+
+新增Next官方构建完成钩子，standalone复制前过滤本地状态、旧构建、缓存及测试输出的NFT引用；修正Windows目录包含判断。release复制前校验边界、解引用依赖链接为普通文件，失败时清理app／smoke副本；安装包未改动，未新增依赖。README及工作台Spec同步真实行为。首轮边界检查发现dev/database追踪文件遗漏，已限制跳过规则为dist顶层并补充回归；最终23份trace过滤356,327条引用，清理后审计剩余本地状态引用为0。
+
+最终空间扫描为2,240,779,167字节（2.09 GiB）、62,120文件，无读取错误；相对21:32基线净减少6.75 GiB（76.4%），已计入重建缓存及新增测试证据。新.next-release合计215.13 MiB，其中standalone47.51 MiB，不再包含.medota2；data-sync546.02 MiB、node_modules586.00 MiB。此为文件逻辑大小，不含项目外存储。证据：.medota2/sessions/disk-cleanup-{preflight,deleted,final,build-audit,web}-20261006.json及Session记录。
+
+验证：静态检查、类型和272单测通过，4个数据库用例通过；首轮4条真实浏览流程通过，后续组合及单项技能详情重跑复现既有5秒URL超时，完整pnpm check未通过。业务核验34表46,238行、数据库及地图摘要与清理前一致，problems为空；code-modified／退出2对应未提交代码。六个业务页面HTTP200，工作台ready／sample passed。正式构建、普通文件复制、独立Catalog API／静态资源／开发API关闭检查已执行完成，但同步优化Session在构建期间修改src，最终source fingerprint拒绝过期产物，app／smoke已清理，没有保存通过manifest。待该Session冻结代码后顺序运行pnpm release，不能把本次stale报告为已验收的组合发布版本。本轮未提交或推送，其他Session修改保持原样。
+
+## 同步链路性能优化实施（2026-10-06）
+
+用户已批准上述方案。本轮实现按实际数据库／地图／来源变化应用；数据库摘要、schema和环境相同时复用原lease，应用manifest按快照与原始manifest SHA独立保存，不覆盖数据库候选历史。只补取缺失／损坏对象，精确路径配置合并为一次LFS fetch（最多16路并发），同次校验复用已验证字节与准备结果；切换前仍在写入保护下再次确认当前数据。代码或资源变化仅启动一次，无变化复用运行中的工作台。真实数据库变化采用受参数／字节限制的多行INSERT，保留事务、外键、identity及循环结果引用处理；只读扫描在数据库内计算实际图片SHA和长度，导出仍读取完整图片。来源文件用Git批量读取，出版复用导出／单个工作区，远端验证缓存独立于本机出版LFS；保留显式空缓存full-verification审计和增量回验的保留策略边界。没有新增依赖或Git hooks。
+
+Windows单次实测：空闲无变化pnpm sync内部总时21.25秒、外部计时22.13秒，4705个对象全命中、LFS调用0次、工作台PID未变。默认地图切到7.41e及切回7.41f分别67.57／69.10秒，始终复用b2384f4d数据库身份3454f95e，已恢复共享快照eef4400b与默认7.41f。独立候选恢复34表46238行并回验约30.93秒（旧任务区间估算183秒），连同初始化43.80秒；原活动库保持不变。网络续传复用1429个已下载对象，一次fetch补3276个／50,189,035字节，总时146.61秒；该数字为续传样本，不冒充完整冷缓存或新推送端到端耗时。
+
+冻结运行源码后pnpm check完整通过：280单测、21数据库测试、4浏览流程通过／1固定fixture按设计跳过，生产编译、发布边界、普通文件复制与启动验收通过，组合修复的有效产物已保留。证据.medota2/checks/1791295727002-87f341e9/run.json及sync-opt-check-final.log。真实状态problems=[]、数据库／地图摘要与lock一致；code-modified表示工作区仍有未提交修改。5个主页面及两个地图版本的全部图片HTTP／SHA回验通过；复用manifest原始SHA也已单独核验。另根据初始化失败样本及官方镜像入口脚本，将开发／测试容器健康检查改为TCP，避免临时Unix初始化服务提前报ready；追加独立初始化及恢复43.25秒通过，对应范围pnpm check也通过（.medota2/checks/1791296588802-6893cc4e/run.json）。本轮未提交或推送，空间清理Session修改保留。
+
+完整记录及数据：.medota2/sessions/sync-performance-implementation-20261006.md、sync-opt-no-change-final.json、sync-opt-map-benchmark.json、sync-opt-restore-benchmark.json、sync-opt-cold-fetch.json、sync-opt-reuse-metadata.json、sync-opt-web-proof.json。Node24.19.0的既有jitless适配保留，Mac本轮未远程执行；本机耗时不当作所有设备的保证。
+
+## Windows 拉取远端并整合本地工作（2026-10-06）
+
+按用户要求，main从6cc9753快进到392cd3d，与获取到的origin/main一致，接入自动产物保留及工作台日志轮转。本机同步性能优化和构建边界修复原有未提交内容全部保留；README、当前进展与release的冲突已整合，同时保留远端完成状态记录、自动清理和本地失败副本清理。未提交或推送，原未暂存状态已恢复；拉取前完整备份保留在stash dd6163f4。
+
+固定依赖安装完成，活动数据快照仍为eef4400b；data:status核对34表46,238行业务摘要及地图摘要一致，problems=[]，code-modified表示本机保留的未提交修改。pnpm dev:restart已恢复固定3000工作台ready／sample passed／pendingSetup=[]，加载新的日志实现。整合后的范围检查结果继续补充于.medota2/sessions/pull-remote-20261006.md。
+
+本轮整合验证：格式、ESLint、类型及286单测通过。浏览流程首轮1通过／1跳过／3失败（技能详情5秒跳转超时、详情h1未就绪、页面崩溃）；重跑出现ECONNRESET。独立release的Next编译worker以3221225477退出，不能报告完整check或组合发布验收通过；未改断言、校验或Node配置。再次pnpm dev:restart成功恢复固定预览。pnpm sync的完整回执返回already-applied／退出0（21.79秒），全部4705对象本地命中、数据库及依赖核验完成。
+
+后续如需构建复验，登记的GofurMacM4Max128GB已有相同快照同步和发布能力证据；须先取得当前未提交的同步／构建补丁，在目标环境核对392cd3d与eef4400b后顺序pnpm sync、pnpm check／release。该建议不代表已授权或已执行远程任务。Windows异常仍需按环境登记复核，不能把本次构建退出归因为业务数据损坏。记录见pull-remote-{sync,check,check-retry,release,restart}-20261006.log与pull-remote-web-20261006.json。
+
+## Windows 本地变更交接 main（2026-10-06）
+
+用户明确授权将本机全部变更推送远端并合入main。发布前fetch核对main与origin/main均为392cd3d，无分叉；本次交接包括完整数据同步性能优化、Windows构建边界修复，以及与远端自动保留／日志功能整合后的运行说明和验收记录。使用pnpm push一起提交代码并核验完整业务快照；保持非强制推送，不新增框架、依赖或数据库迁移。
+
+当前稳定证据：286单测及类型通过，pnpm sync对eef4400b快照返回already-applied，34表46,238行与4705对象核验完成；最近Windows浏览、Next原生构建异常及建议Mac复验步骤沿用上节，推送并不表示组合发布验收通过。发布检查与远端确认回执保存在.medota2/sessions/push-main-20261006.md及同名前缀日志。其他环境后续使用pnpm sync获取main与完整业务数据。
+
+发布前pnpm check实测：格式与全部变更代码ESLint通过，类型和286单测复用相同输入的有效结果；浏览阶段4失败／1按设计跳过，流程停止，未执行后续数据库与build任务。保留失败trace及push-main-check-20261006.log，不更改测试断言或声称全量通过；按照用户明确推送授权继续代码与数据交接。原生构建异常仍沿用前一轮记录。

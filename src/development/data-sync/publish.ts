@@ -11,12 +11,30 @@ import {
   dataGit,
   fetchSnapshot,
   readDataLock,
+  hasManagedChanges,
 } from "./git";
 import { taskProcess, type exportDatabase } from "./tasks";
-import { bundleSnapshot } from "./bundle";
-import { dataLockSchema } from "./protocol";
+import { writePublicationMetadata } from "./bundle";
+import { dataLockSchema, type SnapshotManifest } from "./protocol";
+import { sha256 } from "./protocol";
+import { mapDigest } from "./maps";
+import type { inspectDatabase } from "./tasks";
+import { timed } from "./timing";
 
 const execute = promisify(execFile);
+
+async function confirmCurrentData(manifest: SnapshotManifest) {
+  const live = await timed("confirm current data after publication", () =>
+    taskProcess<Awaited<ReturnType<typeof inspectDatabase>>>("inspect"),
+  );
+  if (
+    live.databaseDigest !== manifest.databaseDigest ||
+    live.mapDigest !== mapDigest(manifest.map)
+  )
+    throw new Error(
+      "Local data changed during publication. Uploaded candidate is retained; retry before updating the code lock.",
+    );
+}
 export async function codeGit(args: string[]) {
   return (
     await execute("git", args, {
@@ -85,7 +103,9 @@ async function assertPrivateRemote(remote: string) {
     );
 }
 
-export async function publishData() {
+export async function publishData(
+  options: { fullVerification?: boolean } = {},
+) {
   const dirty = await codeGit(["status", "--porcelain"]);
   if (
     dirty
@@ -97,26 +117,28 @@ export async function publishData() {
     );
   const remote = await configureRepository();
   await assertPrivateRemote(remote);
-  const current = await exportCurrent(
-    resolve(syncRoot(), "publication-exports", randomUUID()),
-  );
+  const current = await timed("export current data", () => exportCurrent());
   const previous = await readDataLock();
-  if (previous?.snapshotId === current.snapshotId) {
+  if (
+    previous?.snapshotId === current.snapshotId &&
+    !options.fullVerification
+  ) {
     await fetchSnapshot(previous);
+    await confirmCurrentData(current.manifest);
     return { lock: previous, changed: false };
   }
-  const bundle = await bundleSnapshot(
-    current.root,
-    current.snapshotId,
-    resolve(current.root, "bundle"),
-  );
+  const bytes =
+    current.manifest.objects.reduce((sum, object) => sum + object.bytes, 0) +
+    current.manifest.tables
+      .flatMap((table) => table.chunks)
+      .reduce((sum, chunk) => sum + chunk.bytes, 0);
   console.log(
-    `Publishing ${bundle.bytes} bytes, ${current.manifest.objects.length} objects; snapshot ${current.snapshotId}.`,
+    `Publishing ${bytes} bytes, ${current.manifest.objects.length} objects; snapshot ${current.snapshotId}.`,
   );
-  const root = resolve(syncRoot(), "publish", current.snapshotId);
+  const root = resolve(syncRoot(), "publication-worktree");
   await mkdir(root, { recursive: true });
   const git = (args: string[]) => dataGit(args, root);
-  if (!existsSync(resolve(root, ".git"))) {
+  if (!existsSync(resolve(root, ".git/HEAD"))) {
     await codeGit(["init", root]);
     await git(["remote", "add", "origin", remote]);
   }
@@ -126,44 +148,65 @@ export async function publishData() {
   // Snapshot branches never move; retries recover the exact already-published commit.
   const ref = `refs/heads/snapshots/${current.snapshotId}`;
   const existing = await git(["ls-remote", "origin", ref]);
-  const localCandidate = await git(["rev-parse", "--verify", ref]).catch(() => null);
+  const localCandidate = await git(["rev-parse", "--verify", ref]).catch(
+    () => null,
+  );
   let commit: string;
   if (existing) {
     commit = existing.split(/\s/)[0];
   } else if (localCandidate) {
-    if (await git(["status", "--porcelain"])) throw new Error("Preserve pending changes in the publication checkout before retrying.");
+    if (await hasManagedChanges(git))
+      throw new Error(
+        "Preserve pending changes in the publication checkout before retrying.",
+      );
     await git(["checkout", ref]);
     commit = localCandidate;
     await git(["lfs", "push", "origin", ref]);
     await git(["push", "origin", `${ref}:${ref}`]);
   } else {
-    if (await git(["status", "--porcelain"]))
+    if (await hasManagedChanges(git))
       throw new Error(
         `Publication checkout has pending changes: ${root}. Inspect and preserve before retrying.`,
       );
     if (previous) {
       await git(["fetch", "--no-tags", "origin", previous.commit]);
-      await git(["lfs", "fetch", "origin", previous.commit]);
       await git(["checkout", "--detach", previous.commit]);
     }
     // Copy only the verified bundle, preserving all earlier content-addressed files.
     const paths = [
-      ".gitattributes",
-      "README.md",
       `snapshots/${current.snapshotId}/manifest.json`,
       ...current.manifest.tables.flatMap((table) =>
         table.chunks.map((c) => `tables/${c.sha256}.ndjson`),
       ),
       ...current.manifest.objects.map((o) => `objects/${o.sha256}`),
     ];
+    await writePublicationMetadata(root);
+    const objectsByPath = new Map(
+      current.manifest.objects.map((file) => [`objects/${file.sha256}`, file]),
+    );
+    const chunksByPath = new Map(
+      current.manifest.tables
+        .flatMap((table) => table.chunks)
+        .map((file) => [`tables/${file.sha256}.ndjson`, file]),
+    );
     const { writeFile } = await import("node:fs/promises");
     for (const path of new Set(paths)) {
       const target = resolve(root, path);
+      if (existsSync(target)) {
+        const existing = await readFile(target);
+        const object = objectsByPath.get(path);
+        if (
+          object &&
+          (sha256(existing) === object.sha256 ||
+            existing.toString("utf8") ===
+              `version https://git-lfs.github.com/spec/v1\noid sha256:${object.sha256}\nsize ${object.bytes}\n`)
+        )
+          continue;
+        const chunk = chunksByPath.get(path);
+        if (chunk && sha256(existing) === chunk.sha256) continue;
+      }
       await mkdir(resolve(target, ".."), { recursive: true });
-      await writeFile(
-        target,
-        await readFile(resolve(bundle.destination, path)),
-      );
+      await writeFile(target, await readFile(resolve(current.root, path)));
     }
     for (const key of ["user.name", "user.email"])
       await git([
@@ -192,20 +235,27 @@ export async function publishData() {
     await git(["lfs", "push", "origin", ref]);
     await git(["push", "origin", `${ref}:${ref}`]);
   }
-  // A fresh checkout/LFS store proves the server can supply every byte, not just our export cache.
-  const verificationRoot = resolve(
-    syncRoot(),
-    "remote-verification",
-    randomUUID(),
-  );
+  // This separate LFS store contains only remotely fetched bytes. A normal update reuses
+  // earlier verified remote content; an explicit audit starts with an empty store.
+  const verificationRoot = options.fullVerification
+    ? resolve(syncRoot(), "remote-verification", randomUUID())
+    : resolve(syncRoot(), "verified-remote");
   await mkdir(verificationRoot, { recursive: true });
-  await codeGit(["init", verificationRoot]);
-  await dataGit(["remote", "add", "origin", remote], verificationRoot);
+  if (!existsSync(resolve(verificationRoot, ".git/HEAD"))) {
+    await codeGit(["init", verificationRoot]);
+    await dataGit(["remote", "add", "origin", remote], verificationRoot, true);
+  }
+  if (
+    (await dataGit(["remote", "get-url", "origin"], verificationRoot, true)) !==
+    remote
+  )
+    throw new Error("Remote verification checkout has another remote.");
   await dataGit(
     ["fetch", "--no-tags", "--depth=1", "origin", commit],
     verificationRoot,
+    true,
   );
-  await dataGit(["checkout", "--detach", commit], verificationRoot);
+  await dataGit(["checkout", "--detach", commit], verificationRoot, true);
   const { readSnapshot } = await import("./snapshot");
   const saved = await readSnapshot(verificationRoot, current.snapshotId);
   const lock = dataLockSchema.parse({
@@ -217,16 +267,17 @@ export async function publishData() {
     schemaDigest: saved.manifest.schemaDigest,
     migrationsDigest: saved.manifest.migrationsDigest,
   });
-  await fetchSnapshot(lock, { root: verificationRoot });
-  if ((await exportCurrent()).snapshotId !== current.snapshotId)
-    throw new Error(
-      "Local data changed during publication. Uploaded candidate is retained; retry before updating the code lock.",
-    );
+  const verification = await timed("verify remote content", () =>
+    fetchSnapshot(lock, { root: verificationRoot, isolatedLfs: true }),
+  );
+  await confirmCurrentData(current.manifest);
   await atomicJson(resolve("dev-data.lock.json"), lock);
   await atomicJson(resolve(syncRoot(), "last-publication.json"), {
     lock,
     verificationRoot,
     verifiedAt: new Date().toISOString(),
+    mode: options.fullVerification ? "full" : "incremental",
+    transfer: verification.transfer,
   });
   return { lock, changed: true };
 }

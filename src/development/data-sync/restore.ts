@@ -22,16 +22,17 @@ import {
 } from "@/development/preview";
 import { readJson, run, processAlive } from "@/development/runtime";
 import { collectDatabase, restoreDatabase } from "./database";
-import { readSnapshot, verifySnapshotFiles } from "./snapshot";
+import { readSnapshot, verifySnapshotFiles, manifestPath } from "./snapshot";
 import { prepareDependencies } from "./dependencies";
 import {
   digest,
   hasUnexportedChanges,
   type SnapshotManifest,
 } from "./protocol";
-import { atomicJson } from "./files";
+import { atomicJson, putFile } from "./files";
 import { taskProcess, type inspectDatabase } from "./tasks";
 import { mapDigest } from "./maps";
+import { timed } from "./timing";
 
 type Inspection = Awaited<ReturnType<typeof inspectDatabase>>;
 export async function restoreCandidateTask(
@@ -108,8 +109,11 @@ export async function inspectCurrent(): Promise<Inspection | null> {
     return null;
   return taskProcess<Inspection>("inspect", [], environment);
 }
-export async function applicationPlan(manifest: SnapshotManifest) {
-  const actual = await inspectCurrent();
+export async function applicationPlan(
+  manifest: SnapshotManifest,
+  inspected?: Inspection | null,
+) {
+  const actual = inspected === undefined ? await inspectCurrent() : inspected;
   const active = readActiveSnapshot();
   const exported = await readJson<{
     manifest: SnapshotManifest;
@@ -133,7 +137,8 @@ export async function applicationPlan(manifest: SnapshotManifest) {
   });
   const baselineManifest = active
     ? (readSyncJson(
-        resolve(active.lease.stateDirectory, "../manifest.json"),
+        active.snapshotManifestPath ??
+          resolve(active.lease.stateDirectory, "../manifest.json"),
       ) as SnapshotManifest)
     : null;
   const mapsUnsaved = Boolean(
@@ -165,29 +170,70 @@ export async function applicationPlan(manifest: SnapshotManifest) {
 export async function prepareCandidate(
   root: string,
   id: string,
-  options: { offline?: boolean } = {},
+  options: {
+    offline?: boolean;
+    prepared?: Awaited<ReturnType<typeof readSnapshot>>;
+    plan?: Awaited<ReturnType<typeof applicationPlan>>;
+  } = {},
 ) {
-  const saved = await readSnapshot(root, id);
-  await verifySnapshotFiles(root, saved.manifest);
-  const plan = await applicationPlan(saved.manifest);
+  const saved = options.prepared ?? (await readSnapshot(root, id));
+  if (!options.prepared) await verifySnapshotFiles(root, saved.manifest);
+  const plan =
+    options.plan ??
+    (await timed("inspect current data", () =>
+      applicationPlan(saved.manifest),
+    ));
   if (plan.unsaved)
     throw new Error(
       "Current database or maps have unexported changes. Run pnpm data:export to preserve them before applying another snapshot.",
     );
-  const dependencies = await prepareDependencies(
-    saved.manifest,
-    root,
-    options.offline,
+  const dependencies = await timed("prepare source and map files", () =>
+    prepareDependencies(saved.manifest, root, options.offline),
   );
   const workspace = readSyncWorkspace();
   if (!workspace) throw new Error("Initialize the workspace first.");
+  const previous = readActiveSnapshot();
+  const snapshotManifestPath = resolve(
+    syncRoot(),
+    "applied",
+    id,
+    `${saved.manifestSha256}.json`,
+  );
+  await putFile(snapshotManifestPath, await readFile(manifestPath(root, id)));
+  if (canReuseDatabase(saved.manifest, plan.current, previous)) {
+    const active = activeSchema.parse({
+      ...previous,
+      snapshotId: id,
+      manifestSha256: saved.manifestSha256,
+      databaseDigest: saved.manifest.databaseDigest,
+      snapshotManifestPath,
+      appliedAt: new Date().toISOString(),
+      ...dependencies,
+      mapInputsAtApply: {
+        collectionPath: process.env.DOTA_MAP_COLLECTION_PATH ?? "",
+        dataPath: process.env.DOTA_MAP_DATA_PATH ?? "",
+      },
+    });
+    console.log("Database content is unchanged; reusing the current database.");
+    return {
+      active,
+      verification: {
+        ...plan.current!,
+        mapDigest: mapDigest(saved.manifest.map),
+      },
+      plan,
+      reusedDatabase: true,
+    };
+  }
   const candidateId = randomUUID();
   const lease = leaseSchema.parse(
-    await provisionDataStack({
-      environment: saved.manifest.environment,
-      candidateId,
-      onProgress: console.log,
-    }),
+    await timed("provision independent database", () =>
+      provisionDataStack({
+        environment: saved.manifest.environment,
+        candidateId,
+        onProgress: console.log,
+      }),
+    ),
   );
   const receipt = JSON.parse(
     await readFile(
@@ -208,10 +254,8 @@ export async function prepareCandidate(
     resolve(lease.stateDirectory, "../manifest.json"),
     saved.manifest,
   );
-  const verification = await taskProcess<Inspection>(
-    "restore",
-    ["--root", root, "--snapshot", id],
-    {
+  const verification = await timed("restore and verify database", () =>
+    taskProcess<Inspection>("restore", ["--root", root, "--snapshot", id], {
       ...process.env,
       MEDOTA2_STATE_DIRECTORY: lease.stateDirectory,
       MEDOTA2_ENVIRONMENT: saved.manifest.environment,
@@ -223,7 +267,7 @@ export async function prepareCandidate(
         saved.manifest.environment === "local-review"
           ? "medota2_local"
           : "medota2",
-    },
+    }),
   );
   const active = activeSchema.parse({
     version: 1,
@@ -232,6 +276,7 @@ export async function prepareCandidate(
     snapshotId: id,
     manifestSha256: saved.manifestSha256,
     databaseDigest: saved.manifest.databaseDigest,
+    snapshotManifestPath,
     appliedAt: new Date().toISOString(),
     lease,
     ...dependencies,
@@ -241,7 +286,21 @@ export async function prepareCandidate(
     },
   });
   await atomicJson(resolve(lease.stateDirectory, "../activation.json"), active);
-  return { active, verification, plan };
+  return { active, verification, plan, reusedDatabase: false };
+}
+
+export function canReuseDatabase(
+  manifest: SnapshotManifest,
+  current: Inspection | null,
+  active: ActiveSnapshot | null,
+): boolean {
+  return Boolean(
+    active &&
+    current &&
+    active.lease.environment === manifest.environment &&
+    current.identity.environment === manifest.environment &&
+    current.databaseDigest === manifest.databaseDigest,
+  );
 }
 
 interface SwitchJournal {
@@ -250,9 +309,10 @@ interface SwitchJournal {
   previous: ActiveSnapshot | null;
   next: ActiveSnapshot;
   wasRunning: boolean;
+  selectionCommitted?: boolean;
 }
 const journalPath = () => resolve(syncRoot(), "switch.json");
-async function workbenchRunning() {
+export async function workbenchRunning() {
   const owner = await readJson<{ pid: number; workspace: string }>(
     resolve(".medota2/development/owner.json"),
   );
@@ -265,8 +325,14 @@ export async function recoverInterruptedSwitch(): Promise<void> {
   if (!journal || journal.phase !== "switching") return;
   const current = readActiveSnapshot();
   if (
-    current?.candidateId !== journal.next.candidateId &&
-    current?.candidateId !== journal.previous?.candidateId &&
+    !(
+      current?.candidateId === journal.next.candidateId &&
+      current?.snapshotId === journal.next.snapshotId
+    ) &&
+    !(
+      current?.candidateId === journal.previous?.candidateId &&
+      current?.snapshotId === journal.previous?.snapshotId
+    ) &&
     !(current === null && journal.previous === null)
   )
     throw new Error(
@@ -291,15 +357,6 @@ export async function activateCandidate(
   expectedDigest: string | null,
   expectedMapDigest: string | null,
 ): Promise<void> {
-  const current = await inspectCurrent();
-  if ((current?.databaseDigest ?? null) !== expectedDigest)
-    throw new Error(
-      "Current database changed while preparing the candidate. Export those changes and retry activation.",
-    );
-  if ((current?.mapDigest ?? null) !== expectedMapDigest)
-    throw new Error(
-      "Current maps changed while preparing the candidate. Export and retry.",
-    );
   const previous = readActiveSnapshot();
   const journal: SwitchJournal = {
     version: 1,
@@ -318,13 +375,16 @@ export async function activateCandidate(
     ]);
     // The switch journal blocks existing/new writer handles, including COMMIT.
     // Recheck after stopping the UI before selecting the candidate.
-    const stopped = await inspectCurrent();
+    const stopped = await timed("confirm data before cutover", inspectCurrent);
     if ((stopped?.databaseDigest ?? null) !== expectedDigest)
       throw new Error("Source data changed before cutover.");
     if ((stopped?.mapDigest ?? null) !== expectedMapDigest)
       throw new Error("Maps changed before cutover.");
     await atomicJson(resolve(syncRoot(), "active.json"), next);
-    await run(process.execPath, ["--import", "tsx", "src/workers/dev.ts"]);
+    await atomicJson(journalPath(), { ...journal, selectionCommitted: true });
+    await timed("start shared workbench", () =>
+      run(process.execPath, ["--import", "tsx", "src/workers/dev.ts"]),
+    );
     await atomicJson(journalPath(), { ...journal, phase: "completed" });
   } catch (error) {
     await recoverInterruptedSwitch();

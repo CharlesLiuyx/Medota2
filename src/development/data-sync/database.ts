@@ -75,6 +75,7 @@ export async function collectDatabase(
   };
   const objects = new Map<string, FileIdentity>();
   for (const table of tables) {
+    const inspectAssets = table.name === "asset_blobs" && !root;
     const chunks: FileIdentity[] = [];
     let total = 0,
       lines: string[] = [],
@@ -90,21 +91,39 @@ export async function collectDatabase(
     }
     for (;;) {
       const page = await reader.query<TextRow>(
-        `SELECT ${selectTextColumns(table)} FROM public.${quote(table.name)} ORDER BY ${orderByKeys(table)} LIMIT 250 OFFSET $1`,
+        `SELECT ${
+          inspectAssets
+            ? table.columns
+                .map((column) =>
+                  column.name === "content"
+                    ? `encode(sha256(content), 'hex') AS content`
+                    : `${quote(column.name)}::text AS ${quote(column.name)}`,
+                )
+                .join(", ") +
+              ", octet_length(content)::text AS actual_byte_size"
+            : selectTextColumns(table)
+        } FROM public.${quote(table.name)} ORDER BY ${orderByKeys(table)} LIMIT 250 OFFSET $1`,
         [total],
       );
       if (!page.rows.length) break;
       for (const row of page.rows) {
+        const actualBytes = row.actual_byte_size;
+        if (inspectAssets) delete row.actual_byte_size;
         assertTextRow(table, row);
         if (table.name === "asset_blobs") {
-          const blob = Buffer.from(row.content!, "hex");
-          const file = { sha256: sha256(blob), bytes: blob.length };
+          // Inspection hashes the actual bytea on the server instead of moving hex payloads.
+          // Export still reads every byte. Both paths compare the declared hash and size.
+          const blob = inspectAssets ? null : Buffer.from(row.content!, "hex");
+          const file = {
+            sha256: inspectAssets ? row.content! : sha256(blob!),
+            bytes: inspectAssets ? Number(actualBytes) : blob!.length,
+          };
           if (
             file.sha256 !== row.content_sha256 ||
             String(file.bytes) !== row.byte_size
           )
             throw new Error("Database asset checksum mismatch.");
-          if (root) await putBlob(root, blob);
+          if (root) await putBlob(root, blob!);
           objects.set(file.sha256, file);
           row.content = `sha256:${file.sha256}`;
         }
@@ -161,9 +180,31 @@ export async function restoreDatabase(
         );
     }
     const delayed: TextRow[] = [];
+    const objects = new Map(
+      manifest.objects.map((object) => [object.sha256, object]),
+    );
     for (const table of restoreOrder()) {
       const saved = manifest.tables.find((entry) => entry.name === table.name)!;
       let count = 0;
+      const columns = table.columns.map((c) => quote(c.name)).join(",");
+      let batch: unknown[][] = [];
+      let batchBytes = 0;
+      const rowLimit = Math.min(500, Math.floor(60_000 / table.columns.length));
+      async function flush() {
+        if (!batch.length) return;
+        const placeholders = batch
+          .map(
+            (_, row) =>
+              `(${table.columns.map((c, column) => `$${row * table.columns.length + column + 1}::pg_catalog.${quote(c.type)}`).join(",")})`,
+          )
+          .join(",");
+        await session.query(
+          `INSERT INTO public.${quote(table.name)} (${columns}) OVERRIDING SYSTEM VALUE VALUES ${placeholders}`,
+          batch.flat(),
+        );
+        batch = [];
+        batchBytes = 0;
+      }
       for (const chunk of saved.chunks) {
         const text = (
           await verifiedFile(chunkPath(root, chunk.sha256), chunk)
@@ -182,26 +223,34 @@ export async function restoreDatabase(
               value = null;
             if (column.type === "bytea") {
               const hash = String(value).replace(/^sha256:/, "");
-              const file = manifest.objects.find(
-                (object) => object.sha256 === hash,
-              );
+              const file = objects.get(hash);
               if (!file || value !== `sha256:${hash}`)
                 throw new Error("Missing asset blob in manifest.");
               value = await verifiedFile(blobPath(root, hash), file);
             }
             values.push(value);
           }
-          const columns = table.columns.map((c) => quote(c.name)).join(",");
-          const placeholders = table.columns
-            .map((c, i) => `$${i + 1}::pg_catalog.${quote(c.type)}`)
-            .join(",");
-          await session.query(
-            `INSERT INTO public.${quote(table.name)} (${columns}) OVERRIDING SYSTEM VALUE VALUES (${placeholders})`,
-            values,
+          const size = values.reduce<number>(
+            (sum, value) =>
+              sum +
+              (Buffer.isBuffer(value)
+                ? value.length
+                : typeof value === "string"
+                  ? Buffer.byteLength(value)
+                  : 0),
+            0,
           );
+          if (
+            batch.length &&
+            (batch.length >= rowLimit || batchBytes + size > 2 * 1024 * 1024)
+          )
+            await flush();
+          batch.push(values);
+          batchBytes += size;
           count++;
         }
       }
+      await flush();
       if (count !== saved.rows)
         throw new Error(`Row count mismatch in ${table.name}.`);
     }

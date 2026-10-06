@@ -11,6 +11,7 @@ import {
   activateCandidate,
   recoverInterruptedSwitch,
   restoreCandidateTask,
+  workbenchRunning,
 } from "@/development/data-sync/restore";
 import {
   readSnapshot,
@@ -35,6 +36,7 @@ import {
 import { acquireLock } from "@/development/runtime";
 import { publishData } from "@/development/data-sync/publish";
 import { mapDigest } from "@/development/data-sync/maps";
+import { timed } from "@/development/data-sync/timing";
 
 async function main() {
   const { values, positionals } = parseArgs({
@@ -52,6 +54,8 @@ async function main() {
       offline: { type: "boolean" },
       "prepare-only": { type: "boolean" },
       "backup-local": { type: "boolean" },
+      "restart-workbench": { type: "boolean" },
+      "full-verification": { type: "boolean" },
     },
   });
   loadLocalEnv();
@@ -84,7 +88,12 @@ async function main() {
   if (command === "init") return output(workspace);
   const release = values.plan ? async () => {} : await acquireLock("data-sync");
   try {
-    if (command === "publish") return output(await publishData());
+    if (command === "publish")
+      return output(
+        await timed("publish complete data", () =>
+          publishData({ fullVerification: values["full-verification"] }),
+        ),
+      );
     if (command === "export") {
       const result = await taskProcess<
         Awaited<ReturnType<typeof exportDatabase>>
@@ -133,36 +142,56 @@ async function main() {
       if (!values.plan) await recoverInterruptedSwitch();
       let root = values.root ? resolve(values.root) : undefined;
       let id = values.snapshot;
+      let fetched: Awaited<ReturnType<typeof fetchSnapshot>> | undefined;
       const lock = await readDataLock();
       if (!root) {
         if (!lock)
           throw new Error(
             "No dev-data.lock.json. Publish/lock a snapshot first, or use --root and --snapshot for a local candidate.",
           );
-        const fetched = await fetchSnapshot(lock, {
-          repository: values.repository,
-          offline: values.offline || values.plan,
-        });
+        fetched = await timed("fetch and verify snapshot", () =>
+          fetchSnapshot(lock, {
+            repository: values.repository,
+            offline: values.offline || values.plan,
+          }),
+        );
         root = fetched.root;
         id = lock.snapshotId;
       }
       if (!id) throw new Error("Pass --snapshot with --root.");
-      const saved = await readSnapshot(
-        root,
-        id,
-        lock?.snapshotId === id ? lock.manifestSha256 : undefined,
+      const saved =
+        fetched ??
+        (await readSnapshot(
+          root,
+          id,
+          lock?.snapshotId === id ? lock.manifestSha256 : undefined,
+        ));
+      const files = fetched
+        ? { bytes: fetched.bytes, rows: fetched.rows }
+        : await timed("verify snapshot files", () =>
+            verifySnapshotFiles(root!, saved.manifest),
+          );
+      if (command === "fetch")
+        return output({
+          snapshotId: id,
+          ...files,
+          transfer: fetched?.transfer,
+        });
+      let plan = await timed("inspect current data", () =>
+        applicationPlan(saved.manifest),
       );
-      const files = await verifySnapshotFiles(root, saved.manifest);
-      if (command === "fetch") return output({ snapshotId: id, ...files });
-      const plan = await applicationPlan(saved.manifest);
       if (values.plan) return output({ snapshotId: id, ...plan, ...files });
       if (plan.unsaved && (values["backup-local"] || command === "sync")) {
-        const backup = await taskProcess<
-          Awaited<ReturnType<typeof exportDatabase>>
-        >("export", ["--root", resolve(syncRoot(), "export")]);
+        const backup = await timed("save local data", () =>
+          taskProcess<Awaited<ReturnType<typeof exportDatabase>>>("export", [
+            "--root",
+            resolve(syncRoot(), "export"),
+          ]),
+        );
         console.log(
           `Saved local data before applying the shared snapshot: ${backup.snapshotId}`,
         );
+        plan = await applicationPlan(saved.manifest, plan.current);
       }
       if (command === "sync")
         await run("pnpm", ["install", "--frozen-lockfile"]);
@@ -172,19 +201,21 @@ async function main() {
         plan.current?.databaseDigest === saved.manifest.databaseDigest &&
         plan.current?.mapDigest === mapDigest(saved.manifest.map)
       ) {
-        const problems = await taskProcess<string[]>("dependencies", [
-          "--root",
-          root,
-          "--snapshot",
-          id,
-        ]);
+        const problems = await timed("verify live dependencies", () =>
+          taskProcess<string[]>("dependencies", [
+            "--root",
+            root,
+            "--snapshot",
+            id,
+          ]),
+        );
         if (problems.length) throw new Error(problems.join("\n"));
-        if (command === "sync")
+        if (values["restart-workbench"] || !(await workbenchRunning()))
           await run(process.execPath, [
             "--import",
             "tsx",
             "src/workers/dev.ts",
-            "--restart",
+            ...(values["restart-workbench"] ? ["--restart"] : []),
           ]);
         return output({
           snapshotId: id,
@@ -194,6 +225,8 @@ async function main() {
       }
       const prepared = await prepareCandidate(root, id, {
         offline: values.offline,
+        prepared: saved,
+        plan,
       });
       if (values["prepare-only"]) return output(prepared);
       await activateCandidate(
@@ -205,6 +238,7 @@ async function main() {
         state: "applied",
         snapshotId: id,
         verification: prepared.verification,
+        reusedDatabase: prepared.reusedDatabase,
         origin: `http://127.0.0.1:${workspace?.webPort ?? 3000}`,
       });
     }

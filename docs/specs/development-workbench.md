@@ -89,6 +89,8 @@ CI 取消相同分支旧运行，按规划安装 Chromium，调用相同的 `pnp
 
 Web 产物放在 `.medota2/releases/<content-key>/`，同一输入复用构建与启动检查。正式产物是该目录下的 `app/`，使用 `.next-release` 缓存构建。产物排除本机缓存、状态目录和 dotenv 文件；启动验收使用单独副本注入测试配置，结束后清理。部署时需注入相应运行配置。当前尚无远程部署目标，命令不会发布到外部平台。未来计算组件能独立交付时再增加发布单元。
 
+`next.config.ts` 注册 `scripts/development/build-output.mjs` 的构建完成钩子，在 Next 复制 standalone 前过滤 `.nft.json` 中的本地状态、其他构建、缓存及测试输出引用，路径统一为正斜杠判断，保留当前 dist 的运行文件和正式依赖。此步骤兼容 Next 16.3.3 在 Windows 上排除 glob 与原生路径匹配失败的问题；不修改安装的 Next 包。`release` 在复制前移除 dotenv 并检查产物边界，复制时解引用已追踪的依赖链接为普通文件，避免 Windows 创建符号链接权限要求。失败时清理该次 `app/` 与 smoke 副本，保留构建缓存和小型配置以便诊断。运行及验收入口仍为 `pnpm release`；成功产物含 `manifest.json`，只有目录存在不能视为通过。
+
 AGENTS.md 保存工作规则；CONTEXT.md 保存概念与模块地图；docs/current.md 保存当前决定、问题与接手入口。Claude Code 用薄 `CLAUDE.md` 引用相同文件，OpenCode 用 AGENTS.md 与 `opencode.json` 加载其余入口。更换工具和模型时，用启动、一个小改动和对应检查验证能否接手。
 
 ## 自动保留与日志容量

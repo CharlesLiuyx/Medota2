@@ -8,7 +8,10 @@ export async function assertActiveSnapshotCompatible(): Promise<void> {
   const active = readActiveSnapshot();
   if (!active) return;
   const manifest = manifestSchema.parse(
-    readSyncJson(resolve(active.lease.stateDirectory, "../manifest.json")),
+    readSyncJson(
+      active.snapshotManifestPath ??
+        resolve(active.lease.stateDirectory, "../manifest.json"),
+    ),
   );
   if (
     manifest.schemaDigest !== schemaDigest ||

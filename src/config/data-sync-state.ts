@@ -33,6 +33,7 @@ export const activeSchema = z
     snapshotId: z.string().regex(/^[a-f0-9]{64}$/),
     manifestSha256: z.string().regex(/^[a-f0-9]{64}$/),
     databaseDigest: z.string().regex(/^[a-f0-9]{64}$/),
+    snapshotManifestPath: z.string().optional(),
     appliedAt: z.iso.datetime(),
     lease: leaseSchema,
     sourceRoot: z.string(),
@@ -94,6 +95,7 @@ export function readActiveSnapshot(): ActiveSnapshot | null {
   assertOwnedPath(active.sourceRoot);
   if (active.mapRoot) assertOwnedPath(active.mapRoot);
   if (active.mapCollectionPath) assertOwnedPath(active.mapCollectionPath);
+  if (active.snapshotManifestPath) assertOwnedPath(active.snapshotManifestPath);
   return active;
 }
 

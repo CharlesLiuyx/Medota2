@@ -184,4 +184,24 @@ describe("development snapshot handoff", () => {
     ).not.toThrow();
     expect(() => assertSnapshotWritable(old, "test", "fixture")).not.toThrow();
   });
+  it("blocks a reused database during resource cutover until the new selection is committed", () => {
+    const stateDirectory = resolve(
+      ".medota2/data-sync/candidates/reused/state",
+    );
+    const lease = { environment: "local-review", stateDirectory };
+    state.active = { lease };
+    state.journal = {
+      phase: "switching",
+      previous: { lease },
+      next: { lease },
+      selectionCommitted: false,
+    };
+    expect(() =>
+      assertSnapshotWritable(stateDirectory, "local-review", "import"),
+    ).toThrow("cutover");
+    state.journal = { ...(state.journal as object), selectionCommitted: true };
+    expect(() =>
+      assertSnapshotWritable(stateDirectory, "local-review", "import"),
+    ).not.toThrow();
+  });
 });

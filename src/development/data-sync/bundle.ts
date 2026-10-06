@@ -28,6 +28,17 @@ export async function bundleSnapshot(
       blobPath(destination, object.sha256),
       await readFile(blobPath(root, object.sha256)),
     );
+  await writePublicationMetadata(destination);
+  await verifySnapshotFiles(destination, saved.manifest);
+  return {
+    destination,
+    snapshotId: id,
+    manifestSha256: saved.manifestSha256,
+    ...verification,
+  };
+}
+
+export async function writePublicationMetadata(destination: string) {
   await putFile(
     resolve(destination, ".gitattributes"),
     "objects/* filter=lfs diff=lfs merge=lfs -text\ntables/* -text\nsnapshots/** -text\n",
@@ -36,11 +47,4 @@ export async function bundleSnapshot(
     resolve(destination, "README.md"),
     "# Medota2 development data\n\nPrivate development snapshots. Access is separate from the public code repository.\n\nImmutable manifests select NDJSON tables and SHA-256 addressed Git LFS objects. Database roles, credentials, machine identities and control schemas are excluded.\n\nGame assets remain the property of their respective owners; private storage does not grant redistribution rights. Preserve source provenance and included attribution. No public redistribution is authorized by this repository.\n\nRetain all data commits and LFS objects referenced by supported code versions. Never force-push or prune referenced snapshots.\n",
   );
-  await verifySnapshotFiles(destination, saved.manifest);
-  return {
-    destination,
-    snapshotId: id,
-    manifestSha256: saved.manifestSha256,
-    ...verification,
-  };
 }
