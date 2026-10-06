@@ -4,9 +4,9 @@
 
 ## 新环境接入
 
-需要 Node ≥22.12、仓库指定的 pnpm、Git、Git LFS、可用的 Docker Compose。Windows 首版在 **WSL2** 中执行以下命令，Docker Desktop 开启对应 WSL 集成；原生 PowerShell 未适配。云端需要同机 Docker 与持久磁盘，数据库保持 loopback。无需安装完整游戏，也无需手工复制 `.medota2`。
+需要 Node ≥22.12、仓库指定的 pnpm、Git、Git LFS、可用的 Docker Compose。目标支持 Windows 原生 PowerShell；**WSL2 可选，不是项目的强制依赖**。当前原生兼容适配尚未完成，以下完整流程尚不能标为已支持 Windows；WSL2 也尚未实机验收。Windows 待实施项与验收要求见[方案](specs/development-data-sync.md#windows-原生支持要求待实施)。Docker Desktop 的 Linux 容器后端独立选择，按机器条件使用可用后端，不要求项目进入 WSL2。云端需要同机 Docker 与持久磁盘，数据库保持 loopback。无需安装完整游戏，也无需手工复制 `.medota2`。
 
-拉取包含本功能的代码后，在干净 checkout 中执行：
+以下是现有命令接口；Mac 已验证，Windows 原生需在兼容适配完成后验证同一流程。拉取包含本功能的代码后，在干净 checkout 中执行：
 
 ```sh
 git pull --ff-only
