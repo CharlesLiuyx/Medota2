@@ -104,6 +104,37 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
     ]);
   });
 
+  it("keeps snapshot queries consistent and prevents writes or transaction escape", async () => {
+    let retained: { query: (sql: string) => Promise<unknown> } | undefined;
+    await web.readSnapshot(async (reader) => {
+      retained = reader;
+      const first = await reader.query(
+        "SELECT txid_current_snapshot()::text AS snapshot",
+      );
+      const second = await reader.query(
+        "SELECT txid_current_snapshot()::text AS snapshot",
+      );
+      expect(first.rows).toEqual(second.rows);
+      expect(() => reader.query("COMMIT")).toThrow("queries only");
+    });
+    expect(() => retained!.query("SELECT 1")).toThrow("ended");
+    await expect(
+      web.readSnapshot((reader) =>
+        reader.query(
+          "WITH removed AS (DELETE FROM public.heroes RETURNING id) SELECT * FROM removed",
+        ),
+      ),
+    ).rejects.toThrow();
+    await expect(
+      web.readSnapshot((reader) =>
+        reader.query("SELECT 1; COMMIT; DELETE FROM public.heroes"),
+      ),
+    ).rejects.toThrow();
+    await expect(web.query("SELECT 1 AS ok")).resolves.toMatchObject({
+      rows: [{ ok: 1 }],
+    });
+  });
+
   it("applies the checked migration ledger and creates the shared catalog schema", async () => {
     await expect(assertSchemaCurrent(owner)).resolves.toBe(
       await currentTargetSchemaVersion(),

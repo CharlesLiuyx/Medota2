@@ -191,6 +191,38 @@ About 已更新为当前数据与图鉴平台的中文简介，主题包含 `dot
 
 ## Windows 本地游戏资源来源
 
-2026-10-06，用户提供可用于后续必要资产提取的 Windows 工作站标识 `GofurWindowsLenovo`，游戏安装目录为 `C:\Software\Steam\steamapps\common\dota 2 beta`。本次在该路径核对到 `game/dota/pak01_dir.vpk`、`game/dota/maps/dota.vpk`、`game/dota/steam.inf`，以及 673 个 `pak01_*.vpk` 文件。安装内 `steam.inf` 声明 `ClientVersion=6944`、`SourceRevision=11085649`，时间为 2026-10-05；这些是本机安装声明，尚未完成 VPK 内容或来源 Git commit 的版本核验。
+2026-10-06，用户提供 Windows 工作站 `GofurWindowsLenovo`，并完成过客户端资源目录的核验。机器路径、已发现文件、安装版本、工具缺项和使用条件已集中迁移到[开发环境与能力登记册](development-environments.md)，后续在该处更新。本次登记不新增资源提取或导入。
 
-该目录是可选、只读的本地输入，不纳入仓库，也不作为默认路径。后续任务应通过现有 `DOTA_VPK_PATH` 或提取命令的 `--vpk`、`--map-vpk` 参数显式传入，产物放在游戏目录外的忽略目录。当前图鉴来源构建号为 6918，本机游戏为 6944；不能把本机资源直接标为现有 Catalog 或 7.41e 地图的同版本资产。地图原生提取仍需与安装匹配的固定来源 commit 和 Source 2 Viewer CLI；本次没有执行提取或导入，CLI 未在 `PATH` 中找到。公开发布任何 Valve 原始资产前仍需单独审查许可。
+## 多环境 Git 数据同步设计
+
+2026-10-06，按用户要求将本机 `main` 从 `011dc31` 快进更新到远端 `e5c8668`，并完成[多环境数据同步设计](specs/development-data-sync.md)。按用户补充，方案现已扩展为任意数量的本地、云端长期和临时工作区，共用代码／数据 Git 远端，每个工作区独立数据库与身份；代码分支的 lock 选择不可变快照，相同目标经核验后内容一致。不同分支和离线环境允许暂时不同，状态必须明确。
+
+设计补充了 workspace/profile、第三个及更多环境的加入、并行候选与过期发布拒绝、临时实例重建、只读 CI、带时间的状态报告、保留引用与存储清理。云端首版采用同机 loopback PostgreSQL，并通过经过认证的端口转发在本地浏览器查看工作区数据库。托管 PostgreSQL、多容器网络和团队 HTTPS 网关需要单独 ADR 与验证；不能绕过当前环境合同。
+
+本轮范围为设计修订，尚未实施同步命令、创建数据仓库、安装依赖或变更数据库。后续先确认资源可上传范围与存储位置，落实协议／只读可见性和受管恢复，再以 macOS、Windows/WSL2、Linux 云端至少三个工作区验收。私有仓库不能代替资源许可审查；现有批量资源不进入 Git 的约定需要在实施前明确调整。
+
+本轮 `pnpm check --plan` 确认仅涉及文档，`pnpm check` 格式检查通过，`git diff --check` 无空白错误；没有运行数据库或云端验收。方案和文档入口保持本地未提交。
+
+## 环境职责与任务推荐
+
+2026-10-06，按用户要求建立[开发环境与能力登记册](development-environments.md)，作为环境资源、职责、限制和任务推荐的集中入口。已在当前 Mac 只读核验父级三个来源仓库及 HEAD，并确认当前图鉴来源 commit 对象存在；Windows 条目引用此前核验和用户说明，明确本轮未远程复核。云端目前仅为待登记类型，不声明现成能力。
+
+AGENTS.md、CONTEXT.md、README 和同步方案已接入登记册：开始任务先查环境能力；遇到缺项时推荐具备对应资源的具体环境，说明版本条件、待核验项与交接产物，同时继续当前环境可独立完成的工作。环境标签与工作区／数据库身份分离。文档登记流程已落地，自动推荐、远程调度和数据同步运行时尚未实现。
+
+本轮 `pnpm check` 文档格式检查与 `git diff --check` 通过；不涉及数据库、资源提取或远程环境操作。修改保留本地未提交；下一步在新环境加入或资源／工具变化时更新登记册，并在执行具体任务前复核相关能力。
+
+用户随后确认本机 Mac 环境名称为 `GofurMacM4Max128GB`，登记册及任务推荐统一采用此名称，相关文档入口已同步。
+
+## 多环境数据同步首版实现
+
+2026-10-06，按用户批准实施工作区 UUID／profile／端口管理、Git/LFS 固定快照获取、34张受审业务表的只读一致性导出、独立数据库恢复、活动清单切换与中断恢复、完整内容核验，以及 `/dev/database` 只读查看页。运行命令、Windows WSL2／云端条件、发布步骤和限制见[运行手册](development-data-sync-runbook.md)，合同扩展见[ADR 0008](adr/0008-development-snapshot-restore.md)。不支持跨 schema 自动升级／降级；活动版本与代码不匹配会停止启动。
+
+本机 `GofurMacM4Max128GB` 已把真实内容恢复到独立 PostgreSQL 候选，并将3000工作台切换到该候选。34张表共46,238条，业务内容摘要 `6f97a4c7c23276015204fef211988aa12f08c8360847ac274cf0f109ac53efa5` 与原库一致，数据库／实例身份不同。全部来源与地图依赖通过核验；再次离线应用相同快照返回 `already-applied`。原库与候选均保留；原库和当前活动库不能取得 restore 能力。
+
+本轮8项组合检查通过：格式、ESLint、类型、235单测、4条真实图鉴流程、21个隔离数据库合同用例、解析基准、正式构建与独立启动。正式产物验证 `/api/development`、`/api/development/database`、`/dev/database` 均返回404。中间曾遇到一次图片测试超时及开发热更新后的两条跳转失败；未降低断言，最终在停止额外浏览器、顺序重启工作台后复跑通过。证据 `.medota2/checks/1791271386988-d1126336/run.json`。
+
+实际数据库页验证了英雄筛选、分页、图片解码和390px无横向溢出；截图 `output/playwright/data-sync-database-desktop.png`、`data-sync-database-mobile.png`。完整数据核验记录 `.medota2/data-sync/acceptance.json`，重复应用记录 `.medota2/data-sync-noop.log`。本轮没有在Windows或云端运行，未模拟整机崩溃／中断恢复的全部阶段，不将这些列为已通过验收。
+
+**首次数据发布：**用户随后明确授权“推送到远端并合入”。已新建私有 `CharlesLiuyx/Medota2-dev-data` 并发布数据提交 `dfde0a8bbea1d611ffce530a94fd842f6e293a50`；快照 `e81588175b2d57aa4f82b74c88f3a8895a66b8b753820ba4befaa6007826d103` 包含业务表和对象共84,475,984字节，其中LFS二进制54,008,077字节。已从远端在独立缓存重新下载全部对象并校验，`dev-data.lock.json` 绑定该提交与manifest／schema／迁移摘要。公开代码仓库仅保存实现、文档及lock，原始资源保存在私有数据仓库。用户可在另一环境取得私有仓库读取权限后，按运行手册拉取代码、初始化工作区、同步并核对 `data:status`。Windows／云端验证仍待用户执行。
+
+首次PR远程检查复现了冷启动时英雄／技能详情跳转超时。Playwright trace显示请求正常发出，但首次详情编译及脚本加载耗尽了原有5秒断言时间；CI直接启动Next开发服务，未经过工作台已有的路由预热。两个浏览器测试配置现统一在服务启动后复用该预热，保留原有断言和超时。本机 `CI=true pnpm test:journeys --fixture` 的5条流程全部通过，证据 `.medota2/data-sync-ci-warmup.log`；远程复跑结果以PR检查为准。

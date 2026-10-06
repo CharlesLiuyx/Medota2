@@ -81,6 +81,7 @@ export function DevelopmentWorkbench() {
             </p>
           ))}
           <div className="development-workbench-actions">
+            <a href="/dev/database">查看数据库与同步状态</a>
             <button type="button" onClick={() => void command("rerun")}>
               重算样例
             </button>

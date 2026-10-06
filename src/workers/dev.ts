@@ -1,3 +1,5 @@
+import { assertActiveSnapshotCompatible } from "@/development/data-sync/startup";
+import { getWorkbenchOrigin, getWorkbenchPort } from "@/config/data-sync-state";
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { closeSync, openSync, watch, type FSWatcher } from "node:fs";
@@ -21,7 +23,7 @@ import {
   previewEnvironment,
 } from "@/development/preview";
 
-const origin = "http://127.0.0.1:3000";
+const origin = getWorkbenchOrigin();
 const ownerPath = resolve(developmentRoot, "owner.json");
 const statusPath = resolve(developmentRoot, "status.json");
 const controlPath = resolve(developmentRoot, "command.json");
@@ -51,7 +53,11 @@ async function main(): Promise<void> {
   if (process.argv.includes("--stop")) {
     if (owner && owner.workspace === process.cwd() && processAlive(owner.pid)) {
       process.kill(owner.pid, "SIGTERM");
-      console.log("Shared workbench is stopping; database data is retained.");
+      const deadline = Date.now() + 15_000;
+      while (processAlive(owner.pid) && Date.now() < deadline) await delay(150);
+      if (processAlive(owner.pid))
+        throw new Error("Previous workbench is still stopping; see its log.");
+      console.log("Shared workbench stopped; database data is retained.");
     } else console.log("Shared workbench is not running.");
     return;
   }
@@ -168,10 +174,11 @@ async function serve(): Promise<void> {
       .catch(() => false);
     if (occupied)
       throw new Error(
-        "Port 3000 already belongs to a server. Stop or coordinate that server before starting the shared workbench.",
+        `Port ${getWorkbenchPort()} already belongs to a server. Stop or coordinate that server before starting the shared workbench.`,
       );
     const dataSource = getPreviewDataSource();
     const databaseEnv = previewEnvironment(dataSource);
+    await assertActiveSnapshotCompatible();
     await publish({
       dataSource,
       message:
@@ -195,7 +202,11 @@ async function serve(): Promise<void> {
         await releaseDatabase();
       }
     } else
-      await run("pnpm", ["exec", "tsx", "src/workers/prepare-development.ts"]);
+      await run(
+        "pnpm",
+        ["exec", "tsx", "src/workers/prepare-development.ts"],
+        databaseEnv,
+      );
     if (stopping) return;
     const env = {
       ...databaseEnv,
@@ -212,7 +223,7 @@ async function serve(): Promise<void> {
         "-H",
         "127.0.0.1",
         "-p",
-        "3000",
+        String(getWorkbenchPort()),
       ],
       { env, stdio: "inherit" },
     );

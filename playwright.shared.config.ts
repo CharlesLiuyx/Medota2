@@ -10,6 +10,7 @@ if (!artifacts || !Number.isInteger(port) || port < 1)
 const baseURL = `http://127.0.0.1:${port}`;
 export default defineConfig({
   testDir: "./tests/journeys",
+  globalSetup: "./tests/helpers/warm-browser-server.ts",
   fullyParallel: false,
   workers: 1,
   retries: 0,

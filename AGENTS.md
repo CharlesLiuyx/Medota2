@@ -29,6 +29,7 @@ Medota2 计划负责：
 ## 开发规则
 
 - 每次开始先读 `CONTEXT.md`、`docs/current.md`、当前 `git status` 和相关 diff；任务或接口变化后重新读相关上下文。
+- 开始任务时读取 `docs/development-environments.md`，核对当前环境职责、资源与限制；发现资源／工具／平台缺项时，推荐具备对应能力的已登记环境，说明依据、版本条件、待核验项与交接步骤，并继续完成当前环境可独立开展的工作。环境事实集中更新该登记册，不把机器路径写成代码默认值，不把推荐当作远程执行授权。
 - 默认共用当前目录、分支和 `pnpm dev` 的固定工作台（`http://127.0.0.1:3000`）。第二个 Session 复用服务；用 `pnpm dev:restart` 迁移/重启并恢复预览。
 - 每个 Session 在 `.medota2/sessions/<id>.md` 写目标、涉及文件/接口、检查结果和状态。改同一处代码前读取最新内容，冲突由一个 Session 整合；不得覆盖他人的未提交改动。
 - 暂存/提交/切换分支、安装依赖、共享数据库迁移和重置先协调并顺序执行。普通代码编辑继续并行；不自动提交、推送或发布。
@@ -45,6 +46,7 @@ Medota2 计划负责：
 ## 文档入口
 
 - `README.md`：项目定位、当前状态与路线图。
+- `docs/development-environments.md`：各环境职责、资源、限制、核验依据与任务推荐／交接规则。
 - `docs/repositories/README.md`：外部来源关系、选源和 provenance 要求。
 - `docs/repositories/*.md`：三个来源的结构与职责审阅。
 

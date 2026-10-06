@@ -78,7 +78,15 @@
     "test:journeys": "tsx src/workers/run-shared-tests.ts journeys",
     "test:clean": "tsx src/workers/run-shared-tests.ts clean",
     "data:import:unit-assets": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/development MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=development MEDOTA2_DATA_CLASS=sandbox tsx src/workers/import-unit-assets.ts",
-    "data:import:unit-assets:local": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/local-review MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=local-review MEDOTA2_DATA_CLASS=production-snapshot MEDOTA2_DATABASE_CONFIRMATION=medota2_local tsx src/workers/import-unit-assets.ts"
+    "data:import:unit-assets:local": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/local-review MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=local-review MEDOTA2_DATA_CLASS=production-snapshot MEDOTA2_DATABASE_CONFIRMATION=medota2_local tsx src/workers/import-unit-assets.ts",
+    "data:workspace": "tsx src/workers/data-sync.ts init",
+    "data:status": "tsx src/workers/data-sync.ts status",
+    "data:bundle": "tsx src/workers/data-sync.ts bundle",
+    "data:export": "tsx src/workers/data-sync.ts export",
+    "data:apply": "tsx src/workers/data-sync.ts apply",
+    "data:fetch": "tsx src/workers/data-sync.ts fetch",
+    "data:lock": "tsx src/workers/data-sync.ts lock",
+    "dev:sync": "tsx src/workers/data-sync.ts sync"
   },
   "dependencies": {
     "@tailwindcss/postcss": "4.3.3",
