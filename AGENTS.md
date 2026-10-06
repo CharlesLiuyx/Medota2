@@ -5,7 +5,7 @@ Medota2 是本地 Dota 2 数据与图鉴平台。能力和模块见 [CONTEXT.md]
 ## 开始任务与 Context 范围
 
 1. 读取 [CONTEXT.md](CONTEXT.md)、[当前工作](docs/current.md)、[环境登记](docs/development-environments.md)，核对 `git status`、相关 diff 和 `.medota2/sessions/` 中涉及相同文件的记录。已自动加载的相同内容无需重复读取。
-2. 按[文档导航](docs/README.md#按任务读取)追加本任务的 Spec、ADR、代码及测试。默认不展开 `docs/history/` 和大型 HTML Review；调查旧决定时按链接读取。
+2. 按[文档导航](docs/README.md#按任务读取)追加本任务的 Spec、ADR、代码及测试，并读[图谱](docs/architecture/project-atlas.html)相关图。默认不展开 `docs/history/` 和大型 HTML Review；调查旧决定时按链接读取。
 3. 在 `.medota2/sessions/<id>.md` 写范围卡：**目标与完成条件、可修改文件／接口、读取的合同、代码及未提交改动基线、数据／环境、验证范围、状态与下一步**。不涉及数据时注明；涉及时核对 lock、Catalog 或地图版本。跨 Session／机器的长任务另在 `docs/work/` 保留必要交接。
 4. 任务新增模块、迁移、来源版本或运行环境时，先更新范围并补读相关合同；不能将既有授权自动扩展到新的高风险操作。普通实现细节自行决定，不重复询问已明确的需求。
 
@@ -33,7 +33,7 @@ Medota2 是本地 Dota 2 数据与图鉴平台。能力和模块见 [CONTEXT.md]
 
 ## 结束任务与信息归属
 
-按[SSOT 表](docs/README.md#事实归属与更新流向)回写原维护位置：稳定概念回 CONTEXT，行为回 Spec，决定回 ADR，机器事实回环境登记，来源假设回来源审阅。README 只同步能力摘要与入口。
+按[SSOT 表](docs/README.md#事实归属与更新流向)回写原维护位置：稳定概念回 CONTEXT，行为回 Spec，决定回 ADR，机器事实回环境登记，来源假设回来源审阅。README 只同步能力摘要与入口。下层变更影响图谱时，同任务按[维护约定](docs/README.md#图谱维护约定)回写，否则任务未完成。
 
 `docs/current.md` **替换更新当前状态，不追加整段流水**；只保留活动任务、阻塞、下一步和关键交接链接。长任务细节在 `docs/work/`，完成过程及验收进入 `docs/history/`。本机日志／截图标明所属环境、代码／数据基线、验证范围及复现命令；忽略目录路径不视作跨机器可用附件。不能把准备完成、HTTP 可用或推送成功当作完整产品验收。
 

@@ -13,7 +13,10 @@
 
 文档、Context与检查范围整理已完成，用户已审阅并授权提交至main。48份文档已登记，61个旧章节完整归档；本机必要组合检查通过。范围、检查结果与接手演练见[迁移验收](history/2026-10-07-context-migration.md)。
 
-活动任务：Windows浏览及原生构建异常仍待专项复验，保留原断言，按[平台交接](work/windows-native-validation.md)定位。
+活动任务：
+
+- Windows浏览及原生构建异常仍待专项复验，保留原断言，按[平台交接](work/windows-native-validation.md)定位。
+- **待实施：实体版本化与语义 Diff**。先确定实体范围，再关联游戏／客户端等版本，支持前端按版本查询和结构化的实体、属性、关系、机制变化。下一步是实体盘点与概念模型；要求、现状差距和验收见[系统优化 Todo](work/entity-version-diff.md)。
 
 ## 产品缺项
 

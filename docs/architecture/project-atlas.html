@@ -1,0 +1,4200 @@
+<!doctype html>
+<!-- 维护源：直接编辑本文件；不得用 output/ 中的旧生成器覆盖。职责与回写规则见 ../README.md。 -->
+<html lang="zh-CN" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Medota2 · 项目现状与架构图谱</title>
+    <style>
+      :root {
+        --bg: #edece8;
+        --panel: #f7f6f2;
+        --ink: #17181b;
+        --muted: #55575b;
+        --line: #c9c7c0;
+        --accent: #b8442a;
+        --hover: #e7e5df;
+        --catalog: #245e81;
+        --asset: #776022;
+        --map: #316c48;
+        --derived: #645083;
+        --control: #a3432e;
+        --external: #64676d;
+        --tocW: 232px;
+        --width: 1160px;
+        --font: 15px;
+        --thTop: 24px;
+      }
+      [data-theme="dark"] {
+        --bg: #090a0d;
+        --panel: #111318;
+        --ink: #f1eee7;
+        --muted: #b5b4b2;
+        --line: #393b41;
+        --accent: #ed7454;
+        --hover: #1d2027;
+        --catalog: #79b9e0;
+        --asset: #d6b85d;
+        --map: #81c99b;
+        --derived: #b8a0e2;
+        --control: #ee937f;
+        --external: #b1b4bd;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+        border-radius: 0;
+      }
+      html {
+        scroll-behavior: auto;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          var(--font)/1.9 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          "PingFang SC",
+          sans-serif;
+      }
+      button,
+      a,
+      input,
+      select {
+        touch-action: manipulation;
+      }
+      button,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+      button {
+        cursor: pointer;
+        background: var(--panel);
+        border: 1px solid var(--line);
+      }
+      button:focus-visible,
+      a:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+      a {
+        color: var(--catalog);
+        text-underline-offset: 3px;
+      }
+      code {
+        font:
+          0.88em/1.6 ui-monospace,
+          SFMono-Regular,
+          Consolas,
+          monospace;
+        overflow-wrap: anywhere;
+      }
+      p {
+        margin: 10px 0 16px;
+      }
+      section > .section-body > p {
+        text-align: justify;
+      }
+      small,
+      .note {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .bar {
+        height: 24px;
+        position: fixed;
+        inset: 0 0 auto;
+        z-index: 20;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 0 14px;
+        font-size: 12px;
+      }
+      .bar .brand {
+        letter-spacing: 1.5px;
+        font-weight: 700;
+      }
+      .bar button {
+        font-size: 12px;
+        line-height: 20px;
+        padding: 0 8px;
+      }
+      .menu {
+        margin-left: auto;
+        position: relative;
+      }
+      .menu summary {
+        cursor: pointer;
+        line-height: 23px;
+      }
+      .options {
+        position: absolute;
+        right: 0;
+        top: 25px;
+        width: 235px;
+        padding: 14px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+      }
+      .options label {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 8px 0;
+      }
+      .options select {
+        max-width: 120px;
+        font-size: 13px;
+        background: var(--bg);
+        border: 1px solid var(--line);
+      }
+      .options button {
+        width: 100%;
+      }
+      aside {
+        position: fixed;
+        top: 24px;
+        left: 0;
+        bottom: 0;
+        width: var(--tocW);
+        border-right: 1px solid var(--line);
+        background: var(--panel);
+        z-index: 10;
+        padding: 24px 16px;
+        overflow-y: auto;
+      }
+      .navhead {
+        display: flex;
+        gap: 6px;
+      }
+      .navhead button {
+        font-size: 13px;
+        flex: 1;
+      }
+      .navhead button.active {
+        background: var(--ink);
+        color: var(--bg);
+      }
+      .navlist {
+        margin-top: 22px;
+      }
+      .navlist a {
+        display: block;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        color: var(--muted);
+        padding: 7px 10px;
+        font-size: 13px;
+        line-height: 1.7;
+        text-decoration: none;
+      }
+      .navlist a.act {
+        color: var(--accent);
+        background: var(--hover);
+        box-shadow: inset 3px 0 0 var(--accent);
+      }
+      .navlist a:hover {
+        background: var(--hover);
+      }
+      aside.wrap a {
+        white-space: normal;
+      }
+      .navfoot {
+        margin-top: 32px;
+        font-size: 12px;
+        color: var(--muted);
+        border-top: 1px solid var(--line);
+        padding-top: 15px;
+      }
+      #resize {
+        position: fixed;
+        top: 24px;
+        bottom: 0;
+        left: calc(var(--tocW) - 3px);
+        width: 6px;
+        z-index: 12;
+        cursor: col-resize;
+      }
+      #resize:hover {
+        background: var(--accent);
+      }
+      .dragging {
+        user-select: none;
+      }
+      .page {
+        margin-left: var(--tocW);
+        padding: 62px 32px 70px;
+      }
+      main {
+        max-width: var(--width);
+        margin: auto;
+        min-width: 0;
+      }
+      .hero {
+        border-top: 4px solid var(--accent);
+        padding: 23px 0 25px;
+      }
+      .eyebrow {
+        font-size: 12px;
+        letter-spacing: 2px;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      h1 {
+        font-size: 2.3em;
+        line-height: 1.35;
+        margin: 10px 0 18px;
+        letter-spacing: -1px;
+      }
+      h2 {
+        font-size: 1.7em;
+        line-height: 1.4;
+        margin: 0 0 22px;
+        border-left: 5px solid var(--accent);
+        padding-left: 13px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      h3 {
+        font-size: 1.24em;
+        margin: 0 0 10px;
+        line-height: 1.4;
+      }
+      .lead {
+        font-size: 1.18em;
+        max-width: 900px;
+      }
+      .baseline {
+        font-size: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+      }
+      section {
+        margin-top: 34px;
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+      }
+      .fold {
+        font-size: 18px;
+        line-height: 22px;
+        width: 25px;
+        flex: none;
+        border: 0;
+        background: transparent;
+      }
+      .collapsed .section-body {
+        display: none;
+      }
+      .collapsed h2:after {
+        content: "已收起";
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 400;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        border-top: 1px solid var(--line);
+        border-left: 1px solid var(--line);
+      }
+      .stats > div {
+        padding: 18px 20px;
+        background: var(--panel);
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+      .stats b {
+        display: block;
+        font-size: 2em;
+        line-height: 1.4;
+        font-variant-numeric: tabular-nums;
+      }
+      .stats span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .statusgrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 22px;
+        margin-top: 25px;
+      }
+      .statusgrid > div {
+        border-top: 3px solid var(--line);
+        padding-top: 14px;
+      }
+      .statusgrid > div:first-child {
+        border-color: var(--map);
+      }
+      .statusgrid > div:nth-child(2) {
+        border-color: var(--asset);
+      }
+      .statusgrid > div:nth-child(3) {
+        border-color: var(--control);
+      }
+      .statusgrid p {
+        font-size: 14px;
+      }
+      figure {
+        margin: 24px 0;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        padding: 20px;
+        min-width: 0;
+      }
+      figcaption {
+        font-weight: 700;
+        font-size: 1.12em;
+        margin-bottom: 12px;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 12px;
+        margin-bottom: 18px;
+        font-size: 12px;
+      }
+      .legend > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        cursor: help;
+        line-height: 1.6;
+      }
+      .legend i {
+        width: 10px;
+        height: 10px;
+        background: currentColor;
+        display: inline-block;
+      }
+      .legend [data-key="external"] i {
+        background: transparent;
+        border: 1px dashed currentColor;
+      }
+      .legend small {
+        font-size: 12px;
+      }
+      .lane-label {
+        font-size: 13px;
+        font-weight: 700;
+        margin: 22px 0 8px;
+      }
+      .chain {
+        display: flex;
+        align-items: stretch;
+        gap: 0;
+        margin: 10px 0 18px;
+        min-width: 0;
+      }
+      .node {
+        border: 1px solid currentColor;
+        border-top: 3px solid currentColor;
+        background: color-mix(in srgb, currentColor 5%, var(--panel));
+        padding: 13px 11px;
+        text-align: left;
+        flex: 1 1 0;
+        min-width: 0;
+        line-height: 1.6;
+        overflow-wrap: break-word;
+      }
+      .node strong {
+        display: block;
+        font-size: 14px;
+        color: var(--ink);
+      }
+      .node > span {
+        display: block;
+        font-size: 12px;
+        margin-top: 5px;
+        color: var(--muted);
+      }
+      .node:hover,
+      .node.selected {
+        outline: 2px solid currentColor;
+        outline-offset: 2px;
+      }
+      .edge {
+        flex: 0 0 53px;
+        align-self: center;
+        text-align: center;
+        color: var(--muted);
+        line-height: 1.2;
+        font-size: 11px;
+        padding: 2px;
+      }
+      .edge span {
+        display: block;
+        overflow-wrap: anywhere;
+      }
+      .edge b {
+        display: block;
+        font-size: 22px;
+        font-weight: 400;
+      }
+      .gateflow {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin: 14px 0;
+      }
+      .gateflow > .node:first-child {
+        grid-column: 1/-1;
+      }
+      .split-label {
+        grid-column: 1/-1;
+        text-align: center;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .inspector {
+        font-size: 13px;
+        border-left: 3px solid var(--control);
+        padding: 9px 12px;
+        background: var(--hover);
+        min-height: 46px;
+      }
+      .inspector b {
+        color: var(--control);
+      }
+      [data-key="catalog"] {
+        color: var(--catalog);
+      }
+      [data-key="asset"] {
+        color: var(--asset);
+      }
+      [data-key="map"] {
+        color: var(--map);
+      }
+      [data-key="derived"] {
+        color: var(--derived);
+      }
+      [data-key="control"] {
+        color: var(--control);
+      }
+      [data-key="external"] {
+        color: var(--external);
+      }
+      .node[data-key="external"] {
+        border-style: dashed;
+      }
+      .boundary {
+        border: 1px solid var(--catalog);
+        padding: 15px;
+        margin: 15px 0;
+      }
+      .boundary-title {
+        color: var(--catalog);
+        font-weight: 700;
+        font-size: 13px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 12px;
+      }
+      .supportgrid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 15px;
+        margin: 18px 0;
+      }
+      .supportgrid > div {
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+      }
+      .supportgrid b {
+        font-size: 14px;
+      }
+      .supportgrid p {
+        font-size: 13px;
+        color: var(--muted);
+        margin: 7px 0;
+      }
+      .callout {
+        padding: 16px 20px;
+        border-left: 4px solid var(--accent);
+        background: var(--panel);
+        font-size: 14px;
+      }
+      .jump-hl {
+        background: color-mix(
+          in srgb,
+          var(--accent) 12%,
+          var(--panel)
+        ) !important;
+      }
+      table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+        border-left: 1px solid var(--line);
+        font-size: 14px;
+      }
+      th,
+      td {
+        padding: 12px 14px;
+        text-align: left;
+        vertical-align: top;
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        overflow-wrap: break-word;
+      }
+      th {
+        position: sticky;
+        top: var(--thTop);
+        background: var(--panel);
+        z-index: 5;
+        border-top: 1px solid var(--line);
+      }
+      th:first-child {
+        width: 32%;
+      }
+      .term {
+        border-bottom: 1px dotted var(--muted);
+        cursor: help;
+      }
+      .terms-off .term {
+        border: 0;
+        cursor: inherit;
+      }
+      #tip {
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 50;
+        background: var(--ink);
+        color: var(--bg);
+        padding: 10px 13px;
+        max-width: min(370px, calc(100vw - 24px));
+        font-size: 13px;
+        line-height: 1.7;
+        pointer-events: none;
+        contain: content;
+        visibility: hidden;
+      }
+      #tip.peek {
+        font-size: 13px;
+        line-height: 1.7;
+        padding: 7px 10px;
+        white-space: nowrap;
+        background: var(--hover);
+        color: var(--ink);
+        border: 1px solid var(--line);
+        max-width: calc(100vw - 24px);
+      }
+      @media (max-width: 1150px) {
+        aside {
+          position: static;
+          width: auto;
+          margin-top: 24px;
+          padding: 12px 20px;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .navlist {
+          margin-top: 10px;
+          display: flex;
+          flex-wrap: wrap;
+        }
+        .navlist a {
+          padding: 5px 10px;
+        }
+        .navhead {
+          max-width: 280px;
+        }
+        .navfoot,
+        #resize {
+          display: none;
+        }
+        .page {
+          margin-left: 0;
+          padding: 30px 20px 60px;
+        }
+      }
+      @media (max-width: 720px) {
+        .stats {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .statusgrid,
+        .supportgrid,
+        .gateflow {
+          grid-template-columns: 1fr;
+        }
+        .chain {
+          flex-direction: column;
+          gap: 0;
+        }
+        .edge {
+          flex: auto;
+          padding: 4px;
+        }
+        .edge b {
+          transform: rotate(90deg);
+          line-height: 1;
+        }
+        .edge span {
+          display: inline;
+        }
+        .node {
+          flex: auto;
+          width: 100%;
+          padding: 12px;
+        }
+        .node strong {
+          font-size: 15px;
+        }
+        .node > span {
+          font-size: 13px;
+        }
+        .boundary {
+          padding: 10px;
+        }
+        figure {
+          padding: 14px;
+        }
+        h1 {
+          font-size: 2em;
+        }
+        h2 {
+          font-size: 1.45em;
+        }
+        .page {
+          padding: 25px 14px;
+        }
+        .bar .hint {
+          display: none;
+        }
+        th {
+          position: static;
+        }
+        .legend {
+          gap: 8px 12px;
+        }
+      }
+      @media print {
+        aside,
+        .bar,
+        #resize,
+        .fold,
+        .inspector {
+          display: none;
+        }
+        .page {
+          margin: 0;
+          padding: 0;
+        }
+        figure {
+          break-inside: avoid;
+        }
+        .term {
+          border: 0;
+        }
+        body {
+          font-size: 11px;
+        }
+        section {
+          break-before: auto;
+        }
+        .section-body {
+          display: block !important;
+        }
+      }
+
+      /* 场景化流程：顺序、分支、操作者和可见结果直接呈现 */
+      .story-title {
+        font-size: 1.45em;
+        font-weight: 700;
+        line-height: 1.5;
+        margin: 0 0 18px;
+        color: var(--ink);
+      }
+      .scene-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        padding: 16px 18px;
+        background: var(--hover);
+        margin: 0 0 18px;
+      }
+      .scene-grid p {
+        font-size: 14px;
+        line-height: 1.8;
+        margin: 5px 0 0;
+      }
+      .mini-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--accent);
+        letter-spacing: 0.5px;
+      }
+      .story-legend,
+      .handoff-legend {
+        display: flex;
+        gap: 10px 22px;
+        flex-wrap: wrap;
+        font-size: 12px;
+        color: var(--muted);
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 10px;
+        margin-bottom: 14px;
+      }
+      .storyfig .node {
+        width: 100%;
+        display: block;
+      }
+      .storyfig .node strong {
+        font-size: 14px;
+      }
+      .storyfig .node > span {
+        font-size: 12px;
+      }
+      .quiet-note {
+        font-size: 13px;
+        color: var(--muted);
+        padding: 8px 12px;
+        border-left: 2px solid var(--line);
+      }
+      .branch-entry {
+        text-align: center;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 20px 6px 12px;
+      }
+      .decision-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin: 0 0 20px;
+      }
+      .decision {
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-top: 4px solid var(--line);
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+      }
+      .decision.pass {
+        border-top-color: var(--map);
+      }
+      .decision.hold {
+        border-top-color: var(--asset);
+      }
+      .decision.stop {
+        border-top-color: var(--control);
+      }
+      .decision-tag {
+        font-weight: 700;
+        font-size: 15px;
+      }
+      .pass .decision-tag {
+        color: var(--map);
+      }
+      .hold .decision-tag {
+        color: var(--asset);
+      }
+      .stop .decision-tag {
+        color: var(--control);
+      }
+      .case {
+        font-size: 13px;
+        line-height: 1.8;
+        margin: 10px 0 14px;
+      }
+      .decision > .case:first-of-type {
+        min-height: 72px;
+      }
+      .decision .node {
+        flex: 0 0 auto;
+      }
+      .down-arrow {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+        padding: 8px 2px;
+      }
+      .visible-result {
+        padding: 12px;
+        border: 1px solid var(--line);
+        background: var(--hover);
+        font-size: 13px;
+      }
+      .visible-result b,
+      .visible-result span {
+        display: block;
+      }
+      .visible-result span {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .footnote {
+        font-size: 12px;
+        color: var(--muted);
+        margin: 12px 0 0;
+      }
+      .meaning {
+        display: grid;
+        grid-template-columns: 160px minmax(0, 1fr);
+        gap: 15px;
+        padding: 14px 16px;
+        border-left: 3px solid var(--accent);
+        background: var(--hover);
+        font-size: 14px;
+      }
+      .meaning p {
+        margin: 0;
+        line-height: 1.8;
+      }
+      .evidence-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        margin: 20px 0 12px;
+        font-size: 13px;
+      }
+      .evidence-grid > div {
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+      }
+      .evidence-grid p {
+        margin: 6px 0;
+        color: var(--muted);
+        line-height: 1.8;
+      }
+      .figure-sources {
+        font-size: 12px;
+        line-height: 2;
+        border-top: 1px solid var(--line);
+        padding: 12px 0;
+        margin-top: 12px;
+      }
+      .figure-sources b {
+        margin-right: 8px;
+      }
+      .handoff-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+      .handoff-col {
+        min-width: 0;
+        border: 1px solid var(--line);
+        padding: 14px;
+      }
+      .lane-title {
+        font-size: 16px;
+        font-weight: 700;
+        border-bottom: 2px solid var(--control);
+        padding-bottom: 10px;
+        margin-bottom: 14px;
+      }
+      .lane-title small {
+        font-size: 12px;
+        font-weight: 400;
+        display: block;
+      }
+      .remote {
+        background: color-mix(in srgb, var(--catalog) 4%, var(--panel));
+        border-style: dashed;
+      }
+      .remote .lane-title {
+        border-bottom-color: var(--catalog);
+      }
+      .command {
+        padding: 9px 11px;
+        background: var(--hover);
+        margin-bottom: 14px;
+      }
+      .command span {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .command code {
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .binding-arrow {
+        font-size: 12px;
+        text-align: center;
+        color: var(--catalog);
+        padding: 13px 2px;
+      }
+      .cargo {
+        font-size: 13px;
+        margin-top: 22px;
+        border-top: 1px solid var(--line);
+        padding-top: 12px;
+      }
+      .cargo ul {
+        padding-left: 18px;
+        margin: 7px 0;
+      }
+      .handoff-result {
+        padding: 16px 20px;
+        border: 1px solid var(--map);
+        font-size: 14px;
+      }
+      .handoff-result > b {
+        color: var(--map);
+      }
+      .handoff-result p {
+        margin: 8px 0 0;
+        font-size: 13px;
+      }
+      @media (max-width: 800px) {
+        .decision-grid,
+        .handoff-grid {
+          grid-template-columns: 1fr;
+        }
+        .decision > .case:first-of-type {
+          min-height: 0;
+        }
+        .meaning {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+        .handoff-col {
+          padding: 16px;
+        }
+        .scene-grid,
+        .evidence-grid {
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+        .story-title {
+          font-size: 1.3em;
+        }
+      }
+      /* 节点类型只说明“这个框是什么”，业务类别由泳道标题说明。 */
+      [data-key="source"] {
+        color: var(--external);
+      }
+      [data-key="task"] {
+        color: var(--control);
+      }
+      [data-key="dataset"] {
+        color: var(--catalog);
+      }
+      [data-key="choice"] {
+        color: var(--asset);
+      }
+      [data-key="cache"] {
+        color: var(--derived);
+      }
+      [data-key="page"] {
+        color: var(--map);
+      }
+      [data-key="person"] {
+        color: var(--control);
+      }
+      [data-key="approval"] {
+        color: var(--accent);
+      }
+      [data-key="entity"] {
+        color: var(--catalog);
+      }
+      [data-key="relation"] {
+        color: var(--derived);
+      }
+      [data-key="evidence"] {
+        color: var(--external);
+      }
+      [data-key="store"] {
+        color: var(--asset);
+      }
+      [data-key="module"] {
+        color: var(--catalog);
+      }
+      .node[data-key="source"] {
+        border-style: dashed;
+      }
+      .semantic-figure .node {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+        text-align: left;
+        padding: 13px 12px;
+        gap: 0;
+        appearance: none;
+        vertical-align: top;
+      }
+      .node > .node-type {
+        display: inline-flex;
+        align-self: flex-start;
+        font-size: 12px;
+        line-height: 1.5;
+        margin: 0 0 8px;
+        padding: 2px 5px;
+        background: var(--hover);
+        color: inherit;
+      }
+      .node > strong {
+        font-size: 1em;
+        line-height: 1.55;
+        color: var(--ink);
+        margin: 0;
+      }
+      .node > .node-summary {
+        font-size: max(12px, 0.9em);
+        line-height: 1.75;
+        margin: 7px 0 0;
+        color: var(--muted);
+      }
+      .node > .node-why {
+        font-size: max(12px, 0.85em);
+        line-height: 1.75;
+        margin: 10px 0 0;
+        border-top: 1px solid var(--line);
+        padding-top: 8px;
+        color: var(--muted);
+      }
+      .node-why > b {
+        font-size: 12px;
+        color: var(--ink);
+        margin-right: 4px;
+        font-weight: 700;
+      }
+      /* 术语标注是文本内部元素，不能继承节点描述行的块级排版。 */
+      .node .term {
+        display: inline;
+        margin: 0;
+        padding: 0;
+        color: inherit;
+        font-size: inherit;
+        line-height: inherit;
+      }
+      .figure-purpose {
+        font-size: 14px;
+        line-height: 1.85;
+        margin: 10px 0 14px;
+        color: var(--muted);
+      }
+      .reading-rule {
+        font-size: 13px;
+        line-height: 1.8;
+        padding: 10px 13px;
+        border-left: 3px solid var(--accent);
+        background: var(--hover);
+        margin: 12px 0 16px;
+      }
+      .graph-lane {
+        border-top: 1px solid var(--line);
+        margin-top: 20px;
+        padding-top: 4px;
+      }
+      .graph-lane:first-of-type {
+        border-top: 0;
+      }
+      .lane-desc {
+        font-size: 13px;
+        line-height: 1.8;
+        margin: 4px 0 12px;
+        color: var(--muted);
+      }
+      .semantic-figure .lane-label {
+        font-size: 14px;
+        margin: 12px 0 10px;
+      }
+      .semantic-figure .chain {
+        margin: 10px 0 16px;
+      }
+      .semantic-figure .edge {
+        font-size: 12px;
+        flex-basis: 60px;
+        line-height: 1.5;
+        padding: 3px;
+      }
+      .input-stack {
+        flex: 1 1 0;
+        min-width: 0;
+        display: grid;
+        gap: 10px;
+      }
+      .input-stack .node {
+        width: 100%;
+        min-width: 0;
+      }
+      .flow-connector {
+        font-size: 13px;
+        line-height: 1.9;
+        padding: 12px 15px;
+        border-left: 3px solid var(--control);
+        background: var(--hover);
+        margin: 14px 0;
+      }
+      .meaning-block {
+        font-size: 14px;
+        line-height: 1.9;
+        padding: 16px 18px;
+        border-left: 3px solid var(--accent);
+        background: var(--hover);
+        margin: 20px 0;
+      }
+      .semantic-figure .legend {
+        margin: 16px 0 18px;
+      }
+      .semantic-figure .legend i {
+        flex: none;
+      }
+      .semantic-figure .legend [data-key="source"] i {
+        background: transparent;
+        border: 1px dashed currentColor;
+      }
+      .semantic-figure .decision {
+        justify-content: flex-start;
+      }
+      .semantic-figure .decision .node {
+        flex: none;
+        width: 100%;
+      }
+      .semantic-figure .decision .visible-result {
+        margin-top: 10px;
+      }
+      .semantic-figure .handoff-col .node {
+        width: 100%;
+      }
+      .semantic-figure .inspector {
+        font-size: 13px;
+        line-height: 1.8;
+        margin: 20px 0 8px;
+      }
+      .inspect-title {
+        display: block;
+        font-size: 15px;
+        margin-bottom: 9px;
+      }
+      .inspect-row {
+        display: grid;
+        grid-template-columns: 88px minmax(0, 1fr);
+        gap: 12px;
+        margin: 7px 0;
+      }
+      .inspect-row > b {
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .inspect-files {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 14px;
+        min-width: 0;
+      }
+      .inspect-files a {
+        font:
+          12px/1.8 ui-monospace,
+          SFMono-Regular,
+          Consolas,
+          monospace;
+        overflow-wrap: anywhere;
+      }
+      .module-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 15px;
+        margin: 18px 0 24px;
+      }
+      .module-grid .node {
+        width: 100%;
+        min-width: 0;
+      }
+      .dependency-list {
+        border-left: 1px solid var(--line);
+        border-top: 1px solid var(--line);
+        margin: 12px 0 18px;
+      }
+      .dependency-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 100px minmax(0, 1.25fr);
+        gap: 9px;
+        padding: 13px 15px;
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+      .dependency-row > b {
+        font-weight: 600;
+      }
+      .dependency-verb {
+        color: var(--control);
+        font-size: 12px;
+        text-align: center;
+      }
+      .dependency-row small {
+        grid-column: 1/-1;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      @media (max-width: 850px) {
+        .module-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 720px) {
+        .semantic-figure .edge {
+          flex-basis: auto;
+        }
+        .semantic-figure .input-stack {
+          width: 100%;
+        }
+        .semantic-figure .node {
+          width: 100%;
+          padding: 14px;
+        }
+        .semantic-figure .node > strong {
+          font-size: 1em;
+        }
+        .semantic-figure .node > .node-summary {
+          font-size: max(13px, 0.9em);
+        }
+        .semantic-figure .node > .node-why {
+          font-size: max(12px, 0.85em);
+        }
+        .semantic-figure .node .term {
+          display: inline;
+          font-size: inherit;
+          margin: 0;
+        }
+        .module-grid {
+          grid-template-columns: 1fr;
+        }
+        .dependency-row {
+          grid-template-columns: minmax(0, 1fr) 60px minmax(0, 1fr);
+          gap: 6px;
+          padding: 12px;
+        }
+        .inspect-row {
+          grid-template-columns: 1fr;
+          gap: 2px;
+        }
+        .figure-purpose {
+          font-size: 14px;
+        }
+        .reading-rule {
+          font-size: 13px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bar">
+      <span class="brand">MEDOTA2</span
+      ><span class="hint">项目现状与架构图谱</span
+      ><button id="back" hidden>返回</button>
+      <details class="menu">
+        <summary>更多</summary>
+        <div class="options">
+          <label
+            >主题<select id="theme">
+              <option value="light">浅色</option>
+              <option value="dark">深色</option>
+            </select></label
+          ><label
+            >正文宽度<select id="width">
+              <option value="880px">常规</option>
+              <option value="1160px" selected>加宽</option>
+              <option value="100%">填满</option>
+            </select></label
+          ><label
+            >字号<select id="font">
+              <option value="14px">小</option>
+              <option value="15px" selected>中</option>
+              <option value="17px">大</option>
+            </select></label
+          ><label>术语释义<input type="checkbox" id="terms" checked /></label>
+        </div>
+      </details>
+    </div>
+    <aside>
+      <div class="navhead">
+        <button data-tab="nav" class="active">章节</button
+        ><button data-tab="assets">图表</button
+        ><button id="all" aria-label="展开或收起全部章节">±</button>
+      </div>
+      <nav class="navlist" id="nav"></nav>
+      <nav class="navlist" id="assets"></nav>
+      <div class="navfoot">
+        读图方式<br />先读图的问题与读法<br />悬停图例 → 聚焦同类<br />点击节点
+        → 理由与文件<br />悬停术语 → 解释概念<br /><br />持续维护的架构总览<br />最近复核：2026-10-07
+      </div>
+    </aside>
+    <div id="resize" data-tip="拖动调整目录宽度；双击适配文字"></div>
+    <div class="page">
+      <main>
+        <header class="hero">
+          <div class="eyebrow">MEDOTA2 / PROJECT ATLAS / 2026.10.07</div>
+          <h1>项目现在如何运转</h1>
+          <p class="lead">
+            一个以可追溯数据为基础的本地图鉴平台：<b
+              >来源被锁定，数据按版本保存，页面读取已选版本，完整业务快照负责跨机器交接。</b
+            >
+          </p>
+          <div class="baseline">
+            历史核验基线：2026-10-07 02:17:48（新加坡） · 代码
+            <code>a735968</code> · 快照 <code>eef4400bab94…</code> ·
+            <b>in-sync</b>
+          </div>
+          <p class="note">
+            本页是项目现状与跨模块架构的可视化 SSOT。配合
+            <a href="../../CONTEXT.md">CONTEXT</a>
+            的稳定术语与模块入口阅读；图下链接通往详细合同和实现。下层变更影响本页时，必须在同一任务中回写对应图、节点、关系与依据，规则见
+            <a href="../README.md#图谱维护约定">图谱维护约定</a>。
+          </p>
+        </header>
+        <section id="now">
+          <h2>
+            <button class="fold" aria-expanded="true" aria-label="收放本节">
+              −</button
+            >01 当前情况
+          </h2>
+          <div class="section-body">
+            <div class="stats">
+              <div><b>127</b><span>英雄定义〔高〕</span></div>
+              <div><b>2,703</b><span>技能定义〔高〕</span></div>
+              <div><b>339</b><span>命石定义〔高〕</span></div>
+              <div><b>一致</b><span>目标与实际业务快照〔高〕</span></div>
+            </div>
+            <p class="note">
+              数量来自页首所标时间的
+              <code>pnpm data:status</code> 核验。库中只有一个 Catalog
+              版本；技能定义包含天赋、辅助、隐藏及历史定义，不能解读为当前英雄可用技能数。
+            </p>
+            <p class="quiet-note">
+              <b>待实施：实体版本化与语义 Diff。</b
+              >先盘点全部实体，再将实体状态关联游戏／客户端等版本，让前端按版本筛选，并表达实体、属性、关系与机制的渐进变化。下面的
+              head 与发布流程描述现有实现；目标模型和验收见
+              <a href="../work/entity-version-diff.md">系统优化 Todo</a
+              >，尚未实施。
+            </p>
+            <div class="statusgrid">
+              <div>
+                <h3>已形成产品闭环</h3>
+                <p>
+                  英雄、技能、单位图鉴；版本化地图与静态寻路；图片入库；英雄／技能目录浏览器缓存；共享开发工作台；完整业务快照同步。
+                </p>
+              </div>
+              <div>
+                <h3>正在补齐的边界</h3>
+                <p>
+                  单位定义与部分文本仍依赖匹配的 Git
+                  来源；单位缺图、目录分块和持久缓存待补。地图导航、碰撞、湍流与经济语义仍待同版本引擎抽样。
+                </p>
+              </div>
+              <div>
+                <h3>平台与后续方向</h3>
+                <p>
+                  Mac 已有 10 月 7 日组合验收记录；Windows
+                  浏览崩溃与原生构建异常待复验。比赛、玩家、实时对局、replay、远程
+                  production 尚未落地。
+                </p>
+              </div>
+            </div>
+            <p class="note">
+              数据状态引用页首所标时间的核验，图示按当前代码复核；产品验收引用仓库现有记录。2026-10-07
+              的图谱整理仅验证文档与交互结构，未重跑产品全套测试；实时状态需重新核验。
+            </p>
+          </div>
+        </section>
+        <section id="data">
+          <h2>
+            <button class="fold" aria-expanded="true" aria-label="收放本节">
+              −</button
+            >02 数据如何流动
+          </h2>
+          <div class="section-body">
+            <p>
+              先看资料从哪里来，再看浏览器怎样复用它。节点直接标明“是什么”和“作用”；箭头的文字解释两端的关系。
+            </p>
+            <figure
+              class="semantic-figure"
+              id="data-graph"
+              data-toc="图 2-1 · 不同资料如何变成页面"
+              data-diagram-kind="semantic"
+            >
+              <figcaption>图 2-1 · 不同资料如何变成页面</figcaption>
+              <div class="story-title">
+                我在图鉴和地图上看到的资料，从哪里来？
+              </div>
+              <p class="figure-purpose">
+                这些路径分别保留来源与版本，既能查清内容来历，也能避免将不同版本的资料拼在一起。
+              </p>
+              <div class="reading-rule">
+                数据流图：沿箭头读“什么输入，经什么处理，保存在哪里，最后给谁使用”。五行代表五条不同资料路径。
+              </div>
+              <div class="legend">
+                <small>节点类型 · 悬停高亮</small
+                ><span
+                  tabindex="0"
+                  data-key="source"
+                  data-tip="固定版本的上游文件或资源；项目从这里取得原始资料。"
+                  ><i></i>外部输入</span
+                ><span
+                  tabindex="0"
+                  data-key="task"
+                  data-tip="由代码完成的读取、转换、校验或写入动作。"
+                  ><i></i>程序处理</span
+                ><span
+                  tabindex="0"
+                  data-key="dataset"
+                  data-tip="具有明确版本身份的一份业务内容。"
+                  ><i></i>版本化数据</span
+                ><span
+                  tabindex="0"
+                  data-key="cache"
+                  data-tip="为加速读取而保留的副本，可从已验证的来源重新生成。"
+                  ><i></i>可重建副本</span
+                ><span
+                  tabindex="0"
+                  data-key="page"
+                  data-tip="用户能够阅读或操作的结果。"
+                  ><i></i>页面／报告</span
+                >
+              </div>
+              <div class="graph-lane">
+                <div class="lane-label">A · 英雄、技能、命石和目录内本地化</div>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="source"
+                    data-name="固定的游戏定义文件"
+                    data-definition="dota_vpk_updates 的精确提交及文件校验值。"
+                    data-why="保证导入可重复，更新时知道究竟变了什么。"
+                    data-detail=""
+                    data-files='["src/importers/catalog-source-lock.ts", "src/importers/dota-vpk/hero-adapter.ts"]'
+                    data-node-id="data-graph-vpk"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">外部输入</span
+                    ><strong>固定的游戏定义文件</strong
+                    ><span class="node-summary"
+                      >dota_vpk_updates 的精确提交及文件校验值。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      保证导入可重复，更新时知道究竟变了什么。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="读取并解析">
+                    <span>读取并解析</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="解析并检查候选"
+                    data-definition="提取字段、关系和文本，检查完整性与差异。"
+                    data-why="阻止解析错误或不完整内容成为当前图鉴。"
+                    data-detail="导入过程还准备绑定的图片资产。是否提升当前版本由图 3-2 的门禁及数据库约束决定。"
+                    data-files='["src/workers/import-catalog.ts", "src/domain/catalog-diff.ts"]'
+                    data-node-id="data-graph-import"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>解析并检查候选</strong
+                    ><span class="node-summary"
+                      >提取字段、关系和文本，检查完整性与差异。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 阻止解析错误或不完整内容成为当前图鉴。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="校验后保存">
+                    <span>校验后保存</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="dataset"
+                    data-name="Hero Catalog"
+                    data-definition="数据库内的一份不可变英雄／技能目录。"
+                    data-why="英雄、技能与关系使用同一版本，保持相互一致。"
+                    data-detail="current head 决定当前查询的 Catalog。候选、历史与当前版本不能混为一谈。"
+                    data-files='["src/server/db/schema.ts", "src/server/repositories/heroes.ts"]'
+                    data-node-id="data-graph-catalog"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">版本化数据</span
+                    ><strong>Hero Catalog</strong
+                    ><span class="node-summary"
+                      >数据库内的一份不可变英雄／技能目录。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      英雄、技能与关系使用同一版本，保持相互一致。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="选择版本后读取">
+                    <span>选择版本后读取</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="page"
+                    data-name="英雄／技能页面"
+                    data-definition="读取所选版本，组织为可搜索、可浏览的资料。"
+                    data-why="把数据定义变成用户能读懂的属性与关系。"
+                    data-detail=""
+                    data-files='["src/app/heroes/page.tsx", "src/app/abilities/page.tsx", "src/server/services/game-localization.ts"]'
+                    data-node-id="data-graph-pages"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">页面／报告</span
+                    ><strong>英雄／技能页面</strong
+                    ><span class="node-summary"
+                      >读取所选版本，组织为可搜索、可浏览的资料。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 把数据定义变成用户能读懂的属性与关系。</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="graph-lane">
+                <div class="lane-label">B · 图片资产</div>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="source"
+                    data-name="图片来源"
+                    data-definition="Valve 图片及已声明、固定版本的补充来源。"
+                    data-why="为实体找到可追溯的真实图像。"
+                    data-detail="图片来源的客户端版本可能未知，不能借用英雄目录的构建号。"
+                    data-files='["src/importers/valve-assets/catalog-assets.ts", "src/importers/valve-assets/unit-assets.ts"]'
+                    data-node-id="data-graph-images"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">外部输入</span
+                    ><strong>图片来源</strong
+                    ><span class="node-summary"
+                      >Valve 图片及已声明、固定版本的补充来源。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 为实体找到可追溯的真实图像。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="导入">
+                    <span>导入</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="转换、绑定与检查"
+                    data-definition="生成多尺寸图片，绑定实体并检查覆盖情况。"
+                    data-why="让列表和详情取到合适尺寸，也暴露缺图问题。"
+                    data-detail=""
+                    data-files='["src/importers/valve-assets/catalog-assets.ts", "src/server/assets/asset-store.ts"]'
+                    data-node-id="data-graph-imagebuild"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>转换、绑定与检查</strong
+                    ><span class="node-summary"
+                      >生成多尺寸图片，绑定实体并检查覆盖情况。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      让列表和详情取到合适尺寸，也暴露缺图问题。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="入库">
+                    <span>入库</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="dataset"
+                    data-name="资产版本与图片内容"
+                    data-definition="数据库保存图片对象、变体、字节及实体绑定。"
+                    data-why="图片可单独迭代，页面读取稳定的已入库版本。"
+                    data-detail="英雄／技能资产与单位资产各有版本和 head，均绑定对应 Catalog。单位缺图保持明确缺失状态。"
+                    data-files='["src/server/db/schema.ts", "src/server/assets/asset-store.ts"]'
+                    data-node-id="data-graph-assets"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">版本化数据</span
+                    ><strong>资产版本与图片内容</strong
+                    ><span class="node-summary"
+                      >数据库保存图片对象、变体、字节及实体绑定。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      图片可单独迭代，页面读取稳定的已入库版本。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="按版本提供">
+                    <span>按版本提供</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="page"
+                    data-name="页面中的图片"
+                    data-definition="资源路由读取数据库，页面按版本显示图像。"
+                    data-why="浏览图鉴时不必临时依赖外部图片站点。"
+                    data-detail=""
+                    data-files='["src/server/repositories/assets.ts", "src/server/repositories/units.ts"]'
+                    data-node-id="data-graph-imageview"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">页面／报告</span
+                    ><strong>页面中的图片</strong
+                    ><span class="node-summary"
+                      >资源路由读取数据库，页面按版本显示图像。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 浏览图鉴时不必临时依赖外部图片站点。</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="graph-lane">
+                <div class="lane-label">C · 单位定义和补充文本</div>
+                <p class="lane-desc">
+                  当前 Catalog 的 source commit
+                  决定读哪份文件；单位定义尚未独立持久化。
+                </p>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="source"
+                    data-name="与 Catalog 匹配的文件"
+                    data-definition="同一来源提交中的单位定义与本地化文件。"
+                    data-why="防止单位属性和关联技能来自不同版本。"
+                    data-detail=""
+                    data-files='["src/importers/dota-vpk/unit-snapshot.ts", "src/server/repositories/units.ts"]'
+                    data-node-id="data-graph-unitinput"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">外部输入</span
+                    ><strong>与 Catalog 匹配的文件</strong
+                    ><span class="node-summary"
+                      >同一来源提交中的单位定义与本地化文件。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 防止单位属性和关联技能来自不同版本。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="核对后解析">
+                    <span>核对后解析</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="解析单位与补充文本"
+                    data-definition="校验来源并构建只读模型，保留无法解释的字段。"
+                    data-why="把原始文件转换成页面能够查询的定义。"
+                    data-detail=""
+                    data-files='["src/importers/dota-vpk/unit-adapter.ts", "src/server/services/game-localization.ts"]'
+                    data-node-id="data-graph-unitparse"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>解析单位与补充文本</strong
+                    ><span class="node-summary"
+                      >校验来源并构建只读模型，保留无法解释的字段。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 把原始文件转换成页面能够查询的定义。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="缓存结果">
+                    <span>缓存结果</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="cache"
+                    data-name="进程内只读副本"
+                    data-definition="服务器在内存保留已解析结果。"
+                    data-why="避免每次浏览都重复读取、解析相同文件。"
+                    data-detail="单位定义尚未成为独立数据库 Dataset；进程结束后缓存消失，重新读取仍需要匹配的来源文件。"
+                    data-files='["src/importers/dota-vpk/unit-snapshot.ts"]'
+                    data-node-id="data-graph-unitcache"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">可重建副本</span
+                    ><strong>进程内只读副本</strong
+                    ><span class="node-summary"
+                      >服务器在内存保留已解析结果。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 避免每次浏览都重复读取、解析相同文件。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="查询并展示">
+                    <span>查询并展示</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="page"
+                    data-name="单位页面与补充说明"
+                    data-definition="展示基础定义、缺项提示及同目录技能链接。"
+                    data-why="让用户知道哪些内容已确认、哪些资料还缺失。"
+                    data-detail=""
+                    data-files='["src/app/units/page.tsx", "src/server/repositories/units.ts"]'
+                    data-node-id="data-graph-unitview"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">页面／报告</span
+                    ><strong>单位页面与补充说明</strong
+                    ><span class="node-summary"
+                      >展示基础定义、缺项提示及同目录技能链接。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      让用户知道哪些内容已确认、哪些资料还缺失。</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="graph-lane">
+                <div class="lane-label">D · 版本化地图</div>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="source"
+                    data-name="公开来源／原生地图资源"
+                    data-definition="固定公开快照，或已核对版本与哈希的客户端资源。"
+                    data-why="让底图、实体、地形的版本依据能够被检查。"
+                    data-detail=""
+                    data-files='["src/importers/dota-map/sloppy.ts", "src/importers/dota-map/native.ts"]'
+                    data-node-id="data-graph-mapinput"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">外部输入</span
+                    ><strong>公开来源／原生地图资源</strong
+                    ><span class="node-summary"
+                      >固定公开快照，或已核对版本与哈希的客户端资源。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      让底图、实体、地形的版本依据能够被检查。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="提取或导入">
+                    <span>提取或导入</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="提取、转换和校验"
+                    data-definition="整理底图、点位、区域、地形及来源记录。"
+                    data-why="把不同来源格式转成统一的可读取地图包。"
+                    data-detail=""
+                    data-files='["src/workers/import-local-map.ts", "src/workers/import-public-map.ts"]'
+                    data-node-id="data-graph-mapimport"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>提取、转换和校验</strong
+                    ><span class="node-summary"
+                      >整理底图、点位、区域、地形及来源记录。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 把不同来源格式转成统一的可读取地图包。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="保存为新包">
+                    <span>保存为新包</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="dataset"
+                    data-name="Map Dataset 文件包"
+                    data-definition="磁盘上的一份不可变地图版本。"
+                    data-why="多个地图版本可并存，逐文件验证完整性。"
+                    data-detail="Collection 登记可用地图和默认项；页面显式 version 选择未知版本时拒绝，不替换成其他地图。"
+                    data-files='["src/domain/map/schema.ts", "src/server/map/packages.ts"]'
+                    data-node-id="data-graph-mapdata"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">版本化数据</span
+                    ><strong>Map Dataset 文件包</strong
+                    ><span class="node-summary"
+                      >磁盘上的一份不可变地图版本。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 多个地图版本可并存，逐文件验证完整性。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="选择版本后加载">
+                    <span>选择版本后加载</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="page"
+                    data-name="地图浏览与静态寻路"
+                    data-definition="加载所选地图，在浏览器绘制并估算路线。"
+                    data-why="支持查看空间关系、测距和比较路线。"
+                    data-detail="当前是静态网格估算。动态碰撞、战争迷雾以及与游戏引擎一致的语义仍有限制。"
+                    data-files='["src/components/map/map-viewer.tsx", "src/components/map/route-client.ts", "src/domain/map/routing.ts"]'
+                    data-node-id="data-graph-mapview"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">页面／报告</span
+                    ><strong>地图浏览与静态寻路</strong
+                    ><span class="node-summary"
+                      >加载所选地图，在浏览器绘制并估算路线。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 支持查看空间关系、测距和比较路线。</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="graph-lane">
+                <div class="lane-label">E · 参考核对</div>
+                <div class="chain">
+                  <div class="input-stack">
+                    <button
+                      class="node"
+                      data-key="source"
+                      data-name="dotaconstants 参考快照"
+                      data-definition="另一个来源保存的英雄资料。"
+                      data-why="提供独立对照，帮助发现差异。"
+                      data-detail=""
+                      data-files='["src/workers/import-dotaconstants.ts"]'
+                      data-node-id="data-graph-ref"
+                      aria-pressed="false"
+                    >
+                      <span class="node-type">外部输入</span
+                      ><strong>dotaconstants 参考快照</strong
+                      ><span class="node-summary"
+                        >另一个来源保存的英雄资料。</span
+                      ><span class="node-why"
+                        ><b>作用</b> 提供独立对照，帮助发现差异。</span
+                      ></button
+                    ><button
+                      class="node"
+                      data-key="dataset"
+                      data-name="所选 Catalog 数据"
+                      data-definition="同一比较任务中要核对的规范数据。"
+                      data-why="让对比结果明确归属于某个业务版本。"
+                      data-detail=""
+                      data-files='["src/workers/compare-heroes.ts"]'
+                      data-node-id="data-graph-comparecatalog"
+                      aria-pressed="false"
+                    >
+                      <span class="node-type">版本化数据</span
+                      ><strong>所选 Catalog 数据</strong
+                      ><span class="node-summary"
+                        >同一比较任务中要核对的规范数据。</span
+                      ><span class="node-why"
+                        ><b>作用</b> 让对比结果明确归属于某个业务版本。</span
+                      >
+                    </button>
+                  </div>
+                  <div class="edge" data-relation="两份输入一起对照">
+                    <span>两份输入一起对照</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="比较差异"
+                    data-definition="读取两边的数据，记录不一致项目。"
+                    data-why="为审阅提供证据，保留来源间的分歧。"
+                    data-detail=""
+                    data-files='["src/workers/compare-heroes.ts"]'
+                    data-node-id="data-graph-compare"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>比较差异</strong
+                    ><span class="node-summary"
+                      >读取两边的数据，记录不一致项目。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 为审阅提供证据，保留来源间的分歧。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="生成报告">
+                    <span>生成报告</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="page"
+                    data-name="差异报告"
+                    data-definition="可追溯到版本与字段的核对结果。"
+                    data-why="帮助定位问题，规范字段不会被参考值自动覆盖。"
+                    data-detail=""
+                    data-files='["src/server/db/schema.ts", "src/workers/compare-heroes.ts"]'
+                    data-node-id="data-graph-report"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">页面／报告</span
+                    ><strong>差异报告</strong
+                    ><span class="node-summary"
+                      >可追溯到版本与字段的核对结果。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      帮助定位问题，规范字段不会被参考值自动覆盖。</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="quiet-note">
+                本图展示已实现的处理与读取路径，不表示后台任务此刻正在运行。页首数据核验时，参考快照和比较结果表尚无记录；E
+                行是可运行的核对能力。
+              </div>
+              <div class="inspector" aria-live="polite">
+                点击节点查看具体实现文件及边界。图例只突出同类节点，不筛选代码或执行命令。
+              </div>
+              <div class="figure-sources">
+                <b>核对依据</b>
+                <a href="../../docs/architecture/data-flow.md">数据流合同</a> ·
+                <a href="../../docs/specs/unit-catalog.md">单位边界</a> ·
+                <a href="../../docs/specs/map-explorer.md">地图边界</a>
+              </div>
+            </figure>
+            <figure
+              class="semantic-figure"
+              id="cache-graph"
+              data-toc="图 2-2 · 浏览器如何复用和更新目录"
+              data-diagram-kind="semantic"
+            >
+              <figcaption>图 2-2 · 浏览器如何复用和更新目录</figcaption>
+              <div class="story-title">
+                为什么搜索和筛选可以很快，新版本又如何进来？
+              </div>
+              <p class="figure-purpose">
+                缓存让重复浏览和筛选留在本机完成；完整性校验保证半份新资料不会替换掉可用旧版。当前范围为英雄与技能目录。
+              </p>
+              <div class="reading-rule">
+                状态流程图：先看已有页面和副本；缺少完整副本时才补数据。下方单独说明版本变化和失败时的去向。
+              </div>
+              <div class="legend">
+                <small>节点类型 · 悬停高亮</small
+                ><span
+                  tabindex="0"
+                  data-key="task"
+                  data-tip="由代码完成的读取、转换、校验或写入动作。"
+                  ><i></i>程序处理</span
+                ><span
+                  tabindex="0"
+                  data-key="cache"
+                  data-tip="为加速读取而保留的副本，可从已验证的来源重新生成。"
+                  ><i></i>可重建副本</span
+                ><span
+                  tabindex="0"
+                  data-key="page"
+                  data-tip="用户能够阅读或操作的结果。"
+                  ><i></i>页面／报告</span
+                >
+              </div>
+              <div class="graph-lane">
+                <div class="lane-label">
+                  A · 打开目录：先可读，再复用本机资料
+                </div>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="page"
+                    data-name="服务端首屏"
+                    data-definition="服务器先返回当前版本的可读目录。"
+                    data-why="让用户不必等待整份本机缓存下载完成。"
+                    data-detail=""
+                    data-files='["src/app/heroes/page.tsx", "src/app/abilities/page.tsx"]'
+                    data-node-id="cache-graph-first"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">页面／报告</span
+                    ><strong>服务端首屏</strong
+                    ><span class="node-summary"
+                      >服务器先返回当前版本的可读目录。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 让用户不必等待整份本机缓存下载完成。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="页面启动浏览器逻辑">
+                    <span>页面启动浏览器逻辑</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="恢复匹配版本的副本"
+                    data-definition="查内存和 IndexedDB，核对实体、语言及版本。"
+                    data-why="只有完整且身份一致的缓存才能继续使用。"
+                    data-detail=""
+                    data-files='["src/browser/catalog-replica.ts"]'
+                    data-node-id="cache-graph-restore"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>恢复匹配版本的副本</strong
+                    ><span class="node-summary"
+                      >查内存和 IndexedDB，核对实体、语言及版本。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 只有完整且身份一致的缓存才能继续使用。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="已有完整副本时">
+                    <span>已有完整副本时</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="page"
+                    data-name="本机搜索与筛选"
+                    data-definition="完整目录就绪后，本地匹配、排序并分块显示。"
+                    data-why="每次输入不必重新请求列表或翻页数据。"
+                    data-detail=""
+                    data-files='["src/components/use-live-catalog.ts", "src/components/live-catalog.tsx"]'
+                    data-node-id="cache-graph-ready"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">页面／报告</span
+                    ><strong>本机搜索与筛选</strong
+                    ><span class="node-summary"
+                      >完整目录就绪后，本地匹配、排序并分块显示。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 每次输入不必重新请求列表或翻页数据。</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="graph-lane">
+                <div class="lane-label">
+                  B · 缺少完整副本：下载 → 验证 → 一次性设为可用
+                </div>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="请求缺少的内容块"
+                    data-definition="固定 Catalog／资产版本对，只取缺失块。"
+                    data-why="减少重复传输，同时避免混入其他版本。"
+                    data-detail=""
+                    data-files='["src/app/api/catalog/replica/route.ts", "src/server/services/catalog-replica.ts"]'
+                    data-node-id="cache-graph-fetch"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>请求缺少的内容块</strong
+                    ><span class="node-summary"
+                      >固定 Catalog／资产版本对，只取缺失块。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 减少重复传输，同时避免混入其他版本。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="接收缺块">
+                    <span>接收缺块</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="合并并校验完整性"
+                    data-definition="检查块摘要、总数、语言与版本身份。"
+                    data-why="发现损坏或中断时，拒绝把半份目录设为可用。"
+                    data-detail=""
+                    data-files='["src/browser/catalog-replica.ts", "src/domain/catalog-replica.ts"]'
+                    data-node-id="cache-graph-validate"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>合并并校验完整性</strong
+                    ><span class="node-summary"
+                      >检查块摘要、总数、语言与版本身份。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      发现损坏或中断时，拒绝把半份目录设为可用。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="全部验证通过后保存">
+                    <span>全部验证通过后保存</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="cache"
+                    data-name="完整本机副本"
+                    data-definition="内存保留结果，可用时在 IndexedDB 中持久化。"
+                    data-why="刷新后继续复用；写入失败仍可使用内存。"
+                    data-detail=""
+                    data-files='["src/browser/catalog-replica.ts"]'
+                    data-node-id="cache-graph-snapshot"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">可重建副本</span
+                    ><strong>完整本机副本</strong
+                    ><span class="node-summary"
+                      >内存保留结果，可用时在 IndexedDB 中持久化。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 刷新后继续复用；写入失败仍可使用内存。</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="quiet-note">B 完成后进入 A 的“本机搜索与筛选”。</div>
+              <div class="graph-lane">
+                <div class="lane-label">C · 新版本和失败分别怎样处理</div>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="检查当前版本指针"
+                    data-definition="可见目录定期、恢复焦点或恢复网络时核对 head。"
+                    data-why="及时发现版本变化，普通搜索不反复查版本。"
+                    data-detail=""
+                    data-files='["src/app/api/catalog/head/route.ts", "src/components/use-live-catalog.ts"]'
+                    data-node-id="cache-graph-headcheck"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>检查当前版本指针</strong
+                    ><span class="node-summary"
+                      >可见目录定期、恢复焦点或恢复网络时核对 head。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      及时发现版本变化，普通搜索不反复查版本。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="发现版本变化才执行">
+                    <span>发现版本变化才执行</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="准备新版后一起切换"
+                    data-definition="有变化时走 B，准备完整副本后刷新页面资料。"
+                    data-why="页面显示和版本标识一起更新，避免新旧混用。"
+                    data-detail=""
+                    data-files='["src/components/use-live-catalog.ts", "src/browser/catalog-replica.ts"]'
+                    data-node-id="cache-graph-switch"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>准备新版后一起切换</strong
+                    ><span class="node-summary"
+                      >有变化时走 B，准备完整副本后刷新页面资料。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      页面显示和版本标识一起更新，避免新旧混用。</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="quiet-note">
+                版本未变：继续用当前副本。<br />同步失败：有已验证副本时继续使用；在线时可走既有分页接口。没有缓存又离线时，无法补齐缺失内容。<br />已存目录可断网查询；页面壳、未获取的详情和图片仍可能需要网络。
+              </div>
+              <div class="inspector" aria-live="polite">
+                点击节点查看具体实现文件及边界。图例只突出同类节点，不筛选代码或执行命令。
+              </div>
+              <div class="figure-sources">
+                <b>核对依据</b>
+                <a href="../../docs/specs/browser-catalog-cache.md"
+                  >浏览器缓存合同</a
+                >
+                ·
+                <a href="../../src/browser/catalog-replica.ts">浏览器实现</a> ·
+                <a href="../../src/components/use-live-catalog.ts">目录组件</a>
+              </div>
+            </figure>
+          </div>
+        </section>
+        <section id="workflow">
+          <h2>
+            <button class="fold" aria-expanded="true" aria-label="收放本节">
+              −</button
+            >03 开发、更新与交接
+          </h2>
+          <div class="section-body">
+            <p>
+              这三张图分别回答：怎样完成开发任务、怎样采用上游新数据、怎样让另一工作区接手。它们有不同的触发场景。
+            </p>
+            <figure
+              class="semantic-figure"
+              id="work-graph"
+              data-toc="图 3-1 · 一次日常开发怎样完成"
+              data-diagram-kind="semantic"
+            >
+              <figcaption>图 3-1 · 一次日常开发怎样完成</figcaption>
+              <div class="story-title">
+                从收到一个需求，到交付可审阅的结果，具体经过什么？
+              </div>
+              <p class="figure-purpose">
+                每一步都服务于一个结果：改对范围、及时看到变化、证明行为正确，并给后续接手留下可靠依据。
+              </p>
+              <div class="reading-rule">
+                步骤图：从左向右，先完成 A，再进入
+                B。检查失败返回编辑；只有确需跨工作区交接时才进入图 3-3。
+              </div>
+              <div class="legend">
+                <small>节点类型 · 悬停高亮</small
+                ><span
+                  tabindex="0"
+                  data-key="task"
+                  data-tip="由代码完成的读取、转换、校验或写入动作。"
+                  ><i></i>程序处理</span
+                ><span
+                  tabindex="0"
+                  data-key="person"
+                  data-tip="需要结合任务目标执行的协作步骤；可由开发者或受委托的 Agent 完成。"
+                  ><i></i>开发者／Agent 操作</span
+                ><span
+                  tabindex="0"
+                  data-key="approval"
+                  data-tip="由用户作出的审阅或授权决定，程序检查不能代替。"
+                  ><i></i>用户决定</span
+                >
+              </div>
+              <div class="graph-lane">
+                <div class="lane-label">A · 明确任务并获得反馈</div>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="person"
+                    data-name="1 · 明确目标和改动范围"
+                    data-definition="读 Context、相关图谱、合同、当前改动与 Session。"
+                    data-why="避免误改其他任务内容，明确怎样才算完成。"
+                    data-detail="在 .medota2/sessions/ 记录本任务范围。相同文件改动前重新读取最新内容。"
+                    data-files='["AGENTS.md", "CONTEXT.md", "docs/current.md"]'
+                    data-node-id="work-graph-scope"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">开发者／Agent 操作</span
+                    ><strong>1 · 明确目标和改动范围</strong
+                    ><span class="node-summary"
+                      >读 Context、相关图谱、合同、当前改动与 Session。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      避免误改其他任务内容，明确怎样才算完成。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="按范围修改">
+                    <span>按范围修改</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="person"
+                    data-name="2 · 在共享工作台修改"
+                    data-definition="共用当前目录、分支和 pnpm dev 预览。"
+                    data-why="让开发者和多个 Session 看到同一工作状态。"
+                    data-detail=""
+                    data-files='["src/workers/dev.ts", "docs/specs/development-workbench.md"]'
+                    data-node-id="work-graph-edit"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">开发者／Agent 操作</span
+                    ><strong>2 · 在共享工作台修改</strong
+                    ><span class="node-summary"
+                      >共用当前目录、分支和 pnpm dev 预览。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 让开发者和多个 Session
+                      看到同一工作状态。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="保存触发">
+                    <span>保存触发</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="3 · 页面和小样例更新"
+                    data-definition="页面热更新；相关计算在独立子进程重算。"
+                    data-why="尽早看见错误，旧任务不能覆盖新输入的结果。"
+                    data-detail="运行配置、迁移或脚手架变化需要 pnpm dev:restart，日常数据不会因重启清空。"
+                    data-files='["src/development/sample.ts", "src/components/development-workbench.tsx"]'
+                    data-node-id="work-graph-feedback"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>3 · 页面和小样例更新</strong
+                    ><span class="node-summary"
+                      >页面热更新；相关计算在独立子进程重算。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      尽早看见错误，旧任务不能覆盖新输入的结果。</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="flow-connector">
+                ↓ 反馈满足预期后，运行检查；发现问题就返回第 2 步修复。
+              </div>
+              <div class="graph-lane">
+                <div class="lane-label">B · 验证、记录与审阅</div>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="4 · 按改动范围检查"
+                    data-definition="pnpm check --plan 展示范围，pnpm check 执行。"
+                    data-why="用相关检查验证结果；输入变动会使旧结果过期。"
+                    data-detail="规划器匹配实际改动路径；图中的颜色与图例不参与选检查。"
+                    data-files='["scripts/development/check-plan.mjs", "src/workers/run-check.ts"]'
+                    data-node-id="work-graph-check"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>4 · 按改动范围检查</strong
+                    ><span class="node-summary"
+                      >pnpm check --plan 展示范围，pnpm check 执行。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      用相关检查验证结果；输入变动会使旧结果过期。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="通过后交付证据">
+                    <span>通过后交付证据</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="person"
+                    data-name="5 · 回写图谱与事实"
+                    data-definition="更新事实权威页，并同步受影响图的节点、关系与依据。"
+                    data-why="让图谱与实现一致，接手者能找到当前规则和验证边界。"
+                    data-detail="行为回 Spec，决定回 ADR，机器事实回环境登记；同步图谱后重跑相关文档检查。Session记录受影响图ID与结果，无影响时说明理由；漏改图谱则任务未完成。"
+                    data-files='["docs/README.md", "AGENTS.md", "docs/architecture/project-atlas.html"]'
+                    data-node-id="work-graph-document"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">开发者／Agent 操作</span
+                    ><strong>5 · 回写图谱与事实</strong
+                    ><span class="node-summary"
+                      >更新事实权威页，并同步受影响图的节点、关系与依据。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      让图谱与实现一致，接手者能找到当前规则和验证边界。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="形成可审阅结果">
+                    <span>形成可审阅结果</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="approval"
+                    data-name="6 · 用户审阅结果"
+                    data-definition="查看可运行结果、改动范围和必要验证。"
+                    data-why="确认任务是否达到预期，并决定需要的后续操作。"
+                    data-detail="提交、推送或部署的明确授权要求按任务执行；已有有效授权可复用，不能把机器检查通过当用户验收。"
+                    data-files='["AGENTS.md"]'
+                    data-node-id="work-graph-review"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">用户决定</span
+                    ><strong>6 · 用户审阅结果</strong
+                    ><span class="node-summary"
+                      >查看可运行结果、改动范围和必要验证。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      确认任务是否达到预期，并决定需要的后续操作。</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="flow-connector">
+                检查失败或验收发现问题 → 返回第 2 步。<br />任务在本机完成 →
+                交付结果。需要另一工作区接手 → 在相应授权下进入图 3-3。
+              </div>
+              <div class="inspector" aria-live="polite">
+                点击节点查看具体实现文件及边界。图例只突出同类节点，不筛选代码或执行命令。
+              </div>
+              <div class="figure-sources">
+                <b>核对依据</b> <a href="../../AGENTS.md">执行规则</a> ·
+                <a href="../../docs/specs/development-workbench.md"
+                  >共享工作台</a
+                >
+                ·
+                <a href="../../scripts/development/check-plan.mjs"
+                  >实际检查规划</a
+                >
+              </div>
+            </figure>
+            <figure
+              class="semantic-figure"
+              id="gates-graph"
+              data-toc="图 3-2 · 游戏数据更新后如何采用新版"
+              data-diagram-kind="semantic"
+            >
+              <figcaption>图 3-2 · 游戏数据更新后如何采用新版</figcaption>
+              <div class="story-title">
+                上游定义变了，什么时候让图鉴显示新数据？
+              </div>
+              <p class="figure-purpose">
+                普通数值变化应能快速跟进；来源、解析或关系出现异常时，保住当前可用的图鉴。下方例子用于解释场景，不是本轮实际发生的数据变更。
+              </p>
+              <div class="reading-rule">
+                分支流程图：运行刷新、准备新版、按检查结果进入一条分支。每个分支最下方写明用户实际看到什么。
+              </div>
+              <div class="legend">
+                <small>节点类型 · 悬停高亮</small
+                ><span
+                  tabindex="0"
+                  data-key="source"
+                  data-tip="固定版本的上游文件或资源；项目从这里取得原始资料。"
+                  ><i></i>外部输入</span
+                ><span
+                  tabindex="0"
+                  data-key="task"
+                  data-tip="由代码完成的读取、转换、校验或写入动作。"
+                  ><i></i>程序处理</span
+                ><span
+                  tabindex="0"
+                  data-key="person"
+                  data-tip="需要结合任务目标执行的协作步骤；可由开发者或受委托的 Agent 完成。"
+                  ><i></i>开发者／Agent 操作</span
+                ><span
+                  tabindex="0"
+                  data-key="approval"
+                  data-tip="由用户作出的审阅或授权决定，程序检查不能代替。"
+                  ><i></i>用户决定</span
+                >
+              </div>
+              <div class="chain">
+                <button
+                  class="node"
+                  data-key="source"
+                  data-name="上游定义可能已更新"
+                  data-definition="dota_vpk_updates 发布新的游戏定义提交。"
+                  data-why="作为项目获取新版玩法资料的来源。"
+                  data-detail="项目跟随上游仓库可见提交，不能保证 Valve 到第三方仓库发布之间的时延。"
+                  data-files='["src/importers/catalog-source-lock.ts"]'
+                  data-node-id="gates-graph-upstream"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">外部输入</span
+                  ><strong>上游定义可能已更新</strong
+                  ><span class="node-summary"
+                    >dota_vpk_updates 发布新的游戏定义提交。</span
+                  ><span class="node-why"
+                    ><b>作用</b> 作为项目获取新版玩法资料的来源。</span
+                  >
+                </button>
+                <div class="edge" data-relation="需要跟进时">
+                  <span>需要跟进时</span><b aria-hidden="true">→</b>
+                </div>
+                <button
+                  class="node"
+                  data-key="person"
+                  data-name="开发者运行刷新入口"
+                  data-definition="开发环境命令：pnpm data:refresh:catalog:development。"
+                  data-why="明确启动一次发现、固定来源和导入流程。"
+                  data-detail="本次只核对实现，没有运行刷新或改变业务版本；没有确认定时刷新任务正在运行。"
+                  data-files='["src/workers/refresh-catalog.ts", "package.json"]'
+                  data-node-id="gates-graph-trigger"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">开发者／Agent 操作</span
+                  ><strong>开发者运行刷新入口</strong
+                  ><span class="node-summary"
+                    >开发环境命令：pnpm data:refresh:catalog:development。</span
+                  ><span class="node-why"
+                    ><b>作用</b> 明确启动一次发现、固定来源和导入流程。</span
+                  >
+                </button>
+                <div class="edge" data-relation="发现新提交后">
+                  <span>发现新提交后</span><b aria-hidden="true">→</b>
+                </div>
+                <button
+                  class="node"
+                  data-key="task"
+                  data-name="准备并检查候选版本"
+                  data-definition="解析定义与关系、准备图片，并比较当前目录。"
+                  data-why="识别未知变化与完整性问题，再决定能否采用。"
+                  data-detail="准备过程可能提前失败，不保证每次失败都有完整持久化候选。"
+                  data-files='["src/workers/import-catalog.ts", "src/domain/catalog-diff.ts"]'
+                  data-node-id="gates-graph-candidate"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">程序处理</span
+                  ><strong>准备并检查候选版本</strong
+                  ><span class="node-summary"
+                    >解析定义与关系、准备图片，并比较当前目录。</span
+                  ><span class="node-why"
+                    ><b>作用</b>
+                    识别未知变化与完整性问题，再决定能否采用。</span
+                  >
+                </button>
+              </div>
+              <div class="quiet-note">
+                来源提交未变 → 刷新结束。出现变化 →
+                准备候选；过程提前失败也进入“阻止更新”。
+              </div>
+              <div class="branch-entry">↓ 以下三种处理结果互斥</div>
+              <div class="decision-grid">
+                <div class="decision pass" data-outcome="green">
+                  <div class="decision-tag">通过 · Green</div>
+                  <p class="case">例：已识别的伤害数值变化，且无其他异常。</p>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="程序尝试提升当前版本"
+                    data-definition="绿色且未指定 --no-promote 时调用提升函数。"
+                    data-why="允许已识别的正常变化自动进入图鉴。"
+                    data-detail="数据库仍检查完整图片绑定、覆盖率和其他约束；绿色结论本身不保证提升成功。"
+                    data-files='["src/workers/import-catalog.ts", "drizzle/0006_cross_catalog_asset_coverage_guard.sql"]'
+                    data-node-id="gates-graph-green"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>程序尝试提升当前版本</strong
+                    ><span class="node-summary"
+                      >绿色且未指定 --no-promote 时调用提升函数。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 允许已识别的正常变化自动进入图鉴。</span
+                    >
+                  </button>
+                  <div class="down-arrow">↓ 图片完整性等约束也通过</div>
+                  <div class="visible-result">
+                    <b>用户看到新版图鉴</b
+                    ><span>英雄、技能和关系一起切换。</span>
+                  </div>
+                  <p class="footnote">显式使用 --no-promote 则只准备候选。</p>
+                </div>
+                <div class="decision hold" data-outcome="yellow">
+                  <div class="decision-tag">待审阅 · Yellow</div>
+                  <p class="case">例：未知字段、删除定义或翻译覆盖下降。</p>
+                  <button
+                    class="node"
+                    data-key="approval"
+                    data-name="人工判断并记录决定"
+                    data-definition="开发者提供差异，用户决定批准或拒绝。"
+                    data-why="未知字段、删除等变化需要结合实际语义判断。"
+                    data-detail="审阅命令记录决定和原因，不自动改变当前版本；不能直接改写候选规范值来掩盖问题。"
+                    data-files='["src/workers/review-catalog.ts", "docs/adr/0003-catalog-refresh-gates.md"]'
+                    data-node-id="gates-graph-review"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">用户决定</span
+                    ><strong>人工判断并记录决定</strong
+                    ><span class="node-summary"
+                      >开发者提供差异，用户决定批准或拒绝。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      未知字段、删除等变化需要结合实际语义判断。</span
+                    >
+                  </button>
+                  <div class="down-arrow">↓ 批准才继续；拒绝则保留旧版</div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="批准后执行提升"
+                    data-definition="通过提升入口再次检查候选与资产约束。"
+                    data-why="让审阅决定经过数据库保护后才影响页面。"
+                    data-detail="data:review:catalog 记录审阅；data:promote:catalog 执行提升。两者是独立动作，均需按命令合同提供参数。"
+                    data-files='["src/workers/promote-catalog.ts"]'
+                    data-node-id="gates-graph-promote"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>批准后执行提升</strong
+                    ><span class="node-summary"
+                      >通过提升入口再次检查候选与资产约束。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 让审阅决定经过数据库保护后才影响页面。</span
+                    >
+                  </button>
+                  <div class="visible-result">
+                    <b>提升成功后显示新版</b
+                    ><span>等待、拒绝或提升失败时继续旧版。</span>
+                  </div>
+                </div>
+                <div class="decision stop" data-outcome="blocked">
+                  <div class="decision-tag">阻止更新 · Red／执行失败</div>
+                  <p class="case">例：解析失败、来源不符或数据库约束失败。</p>
+                  <button
+                    class="node"
+                    data-key="person"
+                    data-name="停止更新，定位并修复"
+                    data-definition="查看来源、失败阶段或程序错误，再重建／重试。"
+                    data-why="防止不完整或无法解释的数据成为当前版。"
+                    data-detail="红色候选不能提升；解析、来源或数据库异常也可能在候选保存前中断。"
+                    data-files='["src/workers/import-catalog.ts", "src/domain/catalog-diff.ts"]'
+                    data-node-id="gates-graph-repair"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">开发者／Agent 操作</span
+                    ><strong>停止更新，定位并修复</strong
+                    ><span class="node-summary"
+                      >查看来源、失败阶段或程序错误，再重建／重试。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 防止不完整或无法解释的数据成为当前版。</span
+                    >
+                  </button>
+                  <div class="down-arrow">↓ 修复后回到候选准备与检查</div>
+                  <div class="visible-result">
+                    <b>用户继续看到旧版</b
+                    ><span>若尚无有效旧版，则仍没有当前可用数据。</span>
+                  </div>
+                </div>
+              </div>
+              <div class="meaning-block">
+                <b>本图的“发布”：</b
+                >切换本工作区所选数据库的当前目录版本。要交给另一台电脑，再走图
+                3-3。<br /><b>现状：</b
+                >相关代码和命令已实现；未确认定时任务运行。此前核验库内只有一个
+                Catalog 版本。
+              </div>
+              <div class="inspector" aria-live="polite">
+                点击节点查看具体实现文件及边界。图例只突出同类节点，不筛选代码或执行命令。
+              </div>
+              <div class="figure-sources">
+                <b>核对依据</b>
+                <a href="../../docs/adr/0003-catalog-refresh-gates.md"
+                  >门禁决策</a
+                >
+                ·
+                <a href="../../docs/specs/hero-catalog-v2.md"
+                  >Catalog 更新合同</a
+                >
+                · <a href="../../src/workers/import-catalog.ts">导入实现</a>
+              </div>
+            </figure>
+            <figure
+              class="semantic-figure"
+              id="sync-graph"
+              data-toc="图 3-3 · 代码与完整业务数据的交接"
+              data-diagram-kind="semantic"
+            >
+              <figcaption>图 3-3 · 代码与完整业务数据的交接</figcaption>
+              <div class="story-title">一台电脑做完，另一台怎样接着开发？</div>
+              <p class="figure-purpose">
+                例如在 Windows 导入地图、补图并修改代码后，到 Mac
+                继续工作。接收端需要同一份代码与完整业务数据，才能复现相同产品状态；两个方向均适用。
+              </p>
+              <div class="reading-rule">
+                交接图：先读 A 的步骤，再看 B 保存什么，最后读
+                C。每栏内部从上往下；远端中的代码 lock 指向对应业务快照。
+              </div>
+              <div class="legend">
+                <small>节点类型 · 悬停高亮</small
+                ><span
+                  tabindex="0"
+                  data-key="task"
+                  data-tip="由代码完成的读取、转换、校验或写入动作。"
+                  ><i></i>程序处理</span
+                ><span
+                  tabindex="0"
+                  data-key="store"
+                  data-tip="长期保存业务内容或代码的数据库、文件包或仓库。"
+                  ><i></i>持久存储</span
+                >
+              </div>
+              <div class="handoff-legend">
+                <b>A 发送方</b><span>→ 保存交接版本 →</span><b>B 共同远端</b
+                ><span>→ 获取目标内容 →</span><b>C 接收方</b>
+              </div>
+              <div class="handoff-grid">
+                <div class="handoff-col">
+                  <div class="lane-title">
+                    A · 发送工作区<small>例如 Windows</small>
+                  </div>
+                  <div class="command">
+                    <span>获得相应授权后执行</span><code>pnpm push</code>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="1 · 提交本地代码"
+                    data-definition="pnpm push 首先提交可跟踪的本地代码改动。"
+                    data-why="保存这次交接所用的代码基线。"
+                    data-detail="该命令会 git add --all 并提交，执行前需要相应范围的用户授权。"
+                    data-files='["src/workers/push.ts"]'
+                    data-node-id="sync-graph-commit"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>1 · 提交本地代码</strong
+                    ><span class="node-summary"
+                      >pnpm push 首先提交可跟踪的本地代码改动。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 保存这次交接所用的代码基线。</span
+                    >
+                  </button>
+                  <div class="down-arrow">↓</div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="2 · 发布完整业务快照"
+                    data-definition="一致性导出、上传私有仓库、独立回取核验。"
+                    data-why="让另一机器能拿到同一份业务内容。"
+                    data-detail="包含数据库、图片、固定来源、完整地图集合；相同内容可复用，增量回验复用已从远端验证的对象。"
+                    data-files='["src/development/data-sync/publish.ts", "src/development/data-sync/snapshot.ts"]'
+                    data-node-id="sync-graph-publish"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>2 · 发布完整业务快照</strong
+                    ><span class="node-summary"
+                      >一致性导出、上传私有仓库、独立回取核验。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 让另一机器能拿到同一份业务内容。</span
+                    >
+                  </button>
+                  <div class="down-arrow">↓</div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="3 · 绑定数据并推送代码"
+                    data-definition="更新并提交 dev-data.lock.json，再普通推送代码。"
+                    data-why="让代码明确指向已核验、可获取的数据快照。"
+                    data-detail=""
+                    data-files='["src/workers/push.ts", "dev-data.lock.json"]'
+                    data-node-id="sync-graph-lockpush"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>3 · 绑定数据并推送代码</strong
+                    ><span class="node-summary"
+                      >更新并提交 dev-data.lock.json，再普通推送代码。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      让代码明确指向已核验、可获取的数据快照。</span
+                    >
+                  </button>
+                </div>
+                <div class="handoff-col remote">
+                  <div class="lane-title">
+                    B · 共同远端<small>代码与数据分别保存，由 lock 绑定</small>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="store"
+                    data-name="代码仓库"
+                    data-definition="保存应用代码和 dev-data.lock.json。"
+                    data-why="决定接收端使用什么代码及哪份数据。"
+                    data-detail=""
+                    data-files='["src/workers/push.ts", "dev-data.lock.json"]'
+                    data-node-id="sync-graph-code"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">持久存储</span
+                    ><strong>代码仓库</strong
+                    ><span class="node-summary"
+                      >保存应用代码和 dev-data.lock.json。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 决定接收端使用什么代码及哪份数据。</span
+                    >
+                  </button>
+                  <div class="binding-arrow">↓ lock 指定精确数据提交与快照</div>
+                  <button
+                    class="node"
+                    data-key="store"
+                    data-name="私有数据仓库"
+                    data-definition="保存不可变业务快照、清单和内容对象。"
+                    data-why="承载代码仓库之外的数据库内容和大文件。"
+                    data-detail=""
+                    data-files='["src/development/data-sync/publish.ts", "src/development/data-sync/bundle.ts"]'
+                    data-node-id="sync-graph-data"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">持久存储</span
+                    ><strong>私有数据仓库</strong
+                    ><span class="node-summary"
+                      >保存不可变业务快照、清单和内容对象。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 承载代码仓库之外的数据库内容和大文件。</span
+                    >
+                  </button>
+                  <div class="cargo">
+                    <b>业务包包括</b>
+                    <ul>
+                      <li>业务记录与历史版本</li>
+                      <li>已入库图片及尺寸变体</li>
+                      <li>固定来源和校验清单</li>
+                      <li>全部地图版本与默认选择</li>
+                    </ul>
+                    <p>
+                      各机器自己维护身份、凭据、端口和路径。完整游戏安装与数据库卷不在交接包内。
+                    </p>
+                  </div>
+                </div>
+                <div class="handoff-col">
+                  <div class="lane-title">
+                    C · 接收工作区<small>例如 Mac</small>
+                  </div>
+                  <div class="command">
+                    <span>开发者发起消费</span><code>pnpm sync</code>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="4 · 拉代码与固定依赖"
+                    data-definition="pnpm sync 快进拉取代码，再安装锁定依赖。"
+                    data-why="让接收端的代码与工具依赖匹配目标基线。"
+                    data-detail="执行 git pull --ff-only 和 pnpm install --frozen-lockfile；代码分叉等问题会停止流程。"
+                    data-files='["scripts/development/sync.mjs"]'
+                    data-node-id="sync-graph-pull"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>4 · 拉代码与固定依赖</strong
+                    ><span class="node-summary"
+                      >pnpm sync 快进拉取代码，再安装锁定依赖。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 让接收端的代码与工具依赖匹配目标基线。</span
+                    >
+                  </button>
+                  <div class="down-arrow">↓</div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="5 · 保护本地改动并核验目标"
+                    data-definition="保存未导出的业务改动，获取并核对目标快照。"
+                    data-why="避免丢失本地数据或应用缺损、不兼容内容。"
+                    data-detail="不同快照的业务记录不自动合并。文件、摘要或结构不兼容须先解决。"
+                    data-files='["src/workers/data-sync.ts", "src/development/data-sync/restore.ts"]'
+                    data-node-id="sync-graph-verify"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>5 · 保护本地改动并核验目标</strong
+                    ><span class="node-summary"
+                      >保存未导出的业务改动，获取并核对目标快照。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      避免丢失本地数据或应用缺损、不兼容内容。</span
+                    >
+                  </button>
+                  <div class="down-arrow">↓</div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="6 · 准备并切换活动版本"
+                    data-definition="按组件变化复用数据库或恢复独立候选，再切换依赖。"
+                    data-why="完整核验后才让本机服务使用目标数据。"
+                    data-detail="数据库摘要、schema和环境一致可复用已验证库；地图及来源仍分别校验。按代码／数据变化和服务状态启动或重启；旧库保留。"
+                    data-files='["src/workers/data-sync.ts", "src/development/data-sync/restore.ts", "src/development/data-sync/startup.ts"]'
+                    data-node-id="sync-graph-apply"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>6 · 准备并切换活动版本</strong
+                    ><span class="node-summary"
+                      >按组件变化复用数据库或恢复独立候选，再切换依赖。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 完整核验后才让本机服务使用目标数据。</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="branch-entry">
+                ↓ 应用成功后，还要核对接收端的实际结果
+              </div>
+              <div class="handoff-result">
+                <b>目标：同一代码与数据版本下，图鉴、图片和地图一致</b>
+                <p>
+                  用 pnpm data:status
+                  核验目标与实际内容，再浏览关键页面。可以自行选择何时同步，离线工作区可以落后。
+                </p>
+              </div>
+              <div class="evidence-grid">
+                <div>
+                  <b>失败时的边界</b>
+                  <p>
+                    缺文件、哈希不符或结构不兼容会停止应用；切换有恢复保护，旧库保留。整个交接跨越
+                    Git 与数据库，失败后须按阶段核对，不能假设所有动作整体回滚。
+                  </p>
+                </div>
+                <div>
+                  <b>已有证据</b>
+                  <p>
+                    Mac 在本页标注时间核验为 in-sync。Windows
+                    已有恢复与导出回验记录，浏览崩溃及原生构建异常仍待复验；云端完整验收待完成。
+                  </p>
+                </div>
+              </div>
+              <div class="inspector" aria-live="polite">
+                点击节点查看具体实现文件及边界。图例只突出同类节点，不筛选代码或执行命令。
+              </div>
+              <div class="figure-sources">
+                <b>核对依据</b>
+                <a href="../../docs/specs/development-data-sync.md">同步方案</a>
+                ·
+                <a href="../../docs/development-data-sync-runbook.md"
+                  >操作与副作用</a
+                >
+                · <a href="../../docs/development-environments.md">环境证据</a>
+              </div>
+            </figure>
+          </div>
+        </section>
+        <section id="entities">
+          <h2>
+            <button class="fold" aria-expanded="true" aria-label="收放本节">
+              −</button
+            >04 实体、版本与代码职责
+          </h2>
+          <div class="section-body">
+            <p>
+              先认识业务对象及关系，再区分内容与版本选择，最后定位到实现文件。这里的箭头表示关系或依赖，按各图注明的读法阅读。
+            </p>
+            <figure
+              class="semantic-figure"
+              id="entity-graph"
+              data-toc="图 4-1 · 英雄、技能与命石的关系"
+              data-diagram-kind="semantic"
+            >
+              <figcaption>图 4-1 · 英雄、技能与命石的关系</figcaption>
+              <div class="story-title">
+                为什么技能要有独立身份，还需要单独保存“关系”？
+              </div>
+              <p class="figure-purpose">
+                技能有自身定义，也可以因技能槽、天赋、命石或升级等不同原因关联英雄。把对象与关联分开，才能完整表达这些情况。
+              </p>
+              <div class="reading-rule">
+                实体关系图：箭头读作线上文字，不表示程序执行顺序。“一条关系指向一个实体”，一个实体可以关联多条关系。重复出现的英雄／技能框表示相同概念。
+              </div>
+              <div class="legend">
+                <small>节点类型 · 悬停高亮</small
+                ><span
+                  tabindex="0"
+                  data-key="entity"
+                  data-tip="需要独立身份、属性和关联的业务对象。"
+                  ><i></i>领域实体</span
+                ><span
+                  tabindex="0"
+                  data-key="relation"
+                  data-tip="连接业务实体，并记录连接本身的类型、槽位、顺序等信息。"
+                  ><i></i>关系记录</span
+                >
+              </div>
+              <div class="boundary">
+                <div class="boundary-title">
+                  共同边界：以下实体与关系都属于同一个 Hero Catalog 版本
+                </div>
+                <div class="graph-lane">
+                  <div class="lane-label">A · 英雄通过带语义的关系关联技能</div>
+                  <div class="chain">
+                    <button
+                      class="node"
+                      data-key="entity"
+                      data-name="Hero · 英雄"
+                      data-definition="身份：目录版本 + hero_id。"
+                      data-why="保存英雄自身属性，不依赖某一套技能槽。"
+                      data-detail=""
+                      data-files='["src/domain/heroes.ts", "src/server/db/schema.ts"]'
+                      data-node-id="entity-graph-hero"
+                      aria-pressed="false"
+                    >
+                      <span class="node-type">领域实体</span
+                      ><strong>Hero · 英雄</strong
+                      ><span class="node-summary"
+                        >身份：目录版本 + hero_id。</span
+                      ><span class="node-why"
+                        ><b>作用</b>
+                        保存英雄自身属性，不依赖某一套技能槽。</span
+                      >
+                    </button>
+                    <div class="edge" data-relation="可关联 0 到多条">
+                      <span>可关联 0 到多条</span><b aria-hidden="true">→</b>
+                    </div>
+                    <button
+                      class="node"
+                      data-key="relation"
+                      data-name="英雄—技能关系"
+                      data-definition="记录槽位、类型、顺序和是否当前使用。"
+                      data-why="区分“当前装备”与“天赋／关联／升级授予”等不同关系。"
+                      data-detail="对应 hero_ability_bindings；同一英雄与技能之间可以存在不同类型或槽位的多条关系。"
+                      data-files='["src/server/db/schema.ts", "src/domain/abilities.ts"]'
+                      data-node-id="entity-graph-binding"
+                      aria-pressed="false"
+                    >
+                      <span class="node-type">关系记录</span
+                      ><strong>英雄—技能关系</strong
+                      ><span class="node-summary"
+                        >记录槽位、类型、顺序和是否当前使用。</span
+                      ><span class="node-why"
+                        ><b>作用</b>
+                        区分“当前装备”与“天赋／关联／升级授予”等不同关系。</span
+                      >
+                    </button>
+                    <div class="edge" data-relation="每条指向 1 个">
+                      <span>每条指向 1 个</span><b aria-hidden="true">→</b>
+                    </div>
+                    <button
+                      class="node"
+                      data-key="entity"
+                      data-name="Ability · 技能"
+                      data-definition="身份：目录版本 + internal_name。"
+                      data-why="无当前英雄绑定的技能也能保留和查询。"
+                      data-detail="数值技能 ID 可空且不唯一，不能当技能主键；定义还包括天赋、隐藏辅助和历史记录。"
+                      data-files='["src/domain/abilities.ts", "src/server/db/schema.ts"]'
+                      data-node-id="entity-graph-ability"
+                      aria-pressed="false"
+                    >
+                      <span class="node-type">领域实体</span
+                      ><strong>Ability · 技能</strong
+                      ><span class="node-summary"
+                        >身份：目录版本 + internal_name。</span
+                      ><span class="node-why"
+                        ><b>作用</b> 无当前英雄绑定的技能也能保留和查询。</span
+                      >
+                    </button>
+                  </div>
+                </div>
+                <div class="graph-lane">
+                  <div class="lane-label">
+                    B · 命石属于英雄，并能显式关联技能
+                  </div>
+                  <div class="chain">
+                    <button
+                      class="node"
+                      data-key="entity"
+                      data-name="Hero · 英雄"
+                      data-definition="身份：目录版本 + hero_id。"
+                      data-why="保存英雄自身属性，不依赖某一套技能槽。"
+                      data-detail=""
+                      data-files='["src/domain/heroes.ts", "src/server/db/schema.ts"]'
+                      data-node-id="entity-graph-facetowner"
+                      aria-pressed="false"
+                    >
+                      <span class="node-type">领域实体</span
+                      ><strong>Hero · 英雄</strong
+                      ><span class="node-summary"
+                        >身份：目录版本 + hero_id。</span
+                      ><span class="node-why"
+                        ><b>作用</b>
+                        保存英雄自身属性，不依赖某一套技能槽。</span
+                      >
+                    </button>
+                    <div class="edge" data-relation="拥有 0 到多个">
+                      <span>拥有 0 到多个</span><b aria-hidden="true">→</b>
+                    </div>
+                    <button
+                      class="node"
+                      data-key="entity"
+                      data-name="Facet · 命石"
+                      data-definition="身份：版本 + hero_id + facet_key。"
+                      data-why="表达属于某英雄的一项命石定义及状态。"
+                      data-detail=""
+                      data-files='["src/domain/abilities.ts", "src/server/db/schema.ts"]'
+                      data-node-id="entity-graph-facet"
+                      aria-pressed="false"
+                    >
+                      <span class="node-type">领域实体</span
+                      ><strong>Facet · 命石</strong
+                      ><span class="node-summary"
+                        >身份：版本 + hero_id + facet_key。</span
+                      ><span class="node-why"
+                        ><b>作用</b> 表达属于某英雄的一项命石定义及状态。</span
+                      >
+                    </button>
+                    <div class="edge" data-relation="可有 0 到多条">
+                      <span>可有 0 到多条</span><b aria-hidden="true">→</b>
+                    </div>
+                    <button
+                      class="node"
+                      data-key="relation"
+                      data-name="命石—技能关系"
+                      data-definition="记录某命石与某技能的显式连接。"
+                      data-why="保留命石对技能的关联，并约束双方版本一致。"
+                      data-detail=""
+                      data-files='["src/server/db/schema.ts"]'
+                      data-node-id="entity-graph-facetbinding"
+                      aria-pressed="false"
+                    >
+                      <span class="node-type">关系记录</span
+                      ><strong>命石—技能关系</strong
+                      ><span class="node-summary"
+                        >记录某命石与某技能的显式连接。</span
+                      ><span class="node-why"
+                        ><b>作用</b>
+                        保留命石对技能的关联，并约束双方版本一致。</span
+                      >
+                    </button>
+                    <div class="edge" data-relation="每条指向 1 个">
+                      <span>每条指向 1 个</span><b aria-hidden="true">→</b>
+                    </div>
+                    <button
+                      class="node"
+                      data-key="entity"
+                      data-name="Ability · 技能"
+                      data-definition="身份：目录版本 + internal_name。"
+                      data-why="无当前英雄绑定的技能也能保留和查询。"
+                      data-detail="数值技能 ID 可空且不唯一，不能当技能主键；定义还包括天赋、隐藏辅助和历史记录。"
+                      data-files='["src/domain/abilities.ts", "src/server/db/schema.ts"]'
+                      data-node-id="entity-graph-facetability"
+                      aria-pressed="false"
+                    >
+                      <span class="node-type">领域实体</span
+                      ><strong>Ability · 技能</strong
+                      ><span class="node-summary"
+                        >身份：目录版本 + internal_name。</span
+                      ><span class="node-why"
+                        ><b>作用</b> 无当前英雄绑定的技能也能保留和查询。</span
+                      >
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="supportgrid">
+                <div>
+                  <b>属性与关系各自保存</b>
+                  <p>
+                    英雄关联角色与本地化；技能关联数值、条件、本地化及数值 ID
+                    映射。关系记录还保存自身的来源位置。
+                  </p>
+                </div>
+                <div>
+                  <b>为什么保留原始定义</b>
+                  <p>
+                    结构化字段服务查询；原始字段与未知内容保证暂时无法解释的语义仍可追溯。普通列表不必展示这些内部证据。
+                  </p>
+                </div>
+              </div>
+              <div class="inspector" aria-live="polite">
+                点击节点查看具体实现文件及边界。图例只突出同类节点，不筛选代码或执行命令。
+              </div>
+              <div class="figure-sources">
+                <b>核对依据</b>
+                <a href="../../docs/specs/hero-catalog-v2.md">实体及关系合同</a>
+                · <a href="../../src/server/db/schema.ts">实际表与外键</a> ·
+                <a href="../../src/domain/abilities.ts">领域类型</a>
+              </div>
+            </figure>
+            <p class="quiet-note">
+              <b>待实施：实体版本化与语义 Diff。</b
+              >先盘点全部实体，再将实体状态关联游戏／客户端等版本，让前端按版本筛选，并表达实体、属性、关系与机制的渐进变化。下面的
+              head 与发布流程描述现有实现；目标模型和验收见
+              <a href="../work/entity-version-diff.md">系统优化 Todo</a
+              >，尚未实施。
+            </p>
+            <figure
+              class="semantic-figure"
+              id="versions-graph"
+              data-toc="图 4-2 · 数据内容、来源证据和版本选择"
+              data-diagram-kind="semantic"
+            >
+              <figcaption>图 4-2 · 数据内容、来源证据和版本选择</figcaption>
+              <div class="story-title">
+                “内容是什么”“从哪来”“现在用哪版”，为什么分开记录？
+              </div>
+              <p class="figure-purpose">
+                来源和执行记录帮助追责与复现；不可变内容保留历史；可变选择指针让更新、回滚和多版本并存成为可能。
+              </p>
+              <div class="reading-rule">
+                版本关系图：A 表达产生数据的依据；B
+                的箭头全部表示“选择／指向”。同名 Catalog
+                表示同一类版本对象，不是额外复制一份。
+              </div>
+              <div class="legend">
+                <small>节点类型 · 悬停高亮</small
+                ><span
+                  tabindex="0"
+                  data-key="dataset"
+                  data-tip="具有明确版本身份的一份业务内容。"
+                  ><i></i>版本化数据</span
+                ><span
+                  tabindex="0"
+                  data-key="choice"
+                  data-tip="指出本次或当前要使用哪个版本，不等于数据内容本身。"
+                  ><i></i>版本选择</span
+                ><span
+                  tabindex="0"
+                  data-key="evidence"
+                  data-tip="帮助解释某份数据从哪里来、如何得到和是否通过检查。"
+                  ><i></i>来源／执行证据</span
+                >
+              </div>
+              <div class="graph-lane">
+                <div class="lane-label">
+                  A · 来源与导入证据：解释一份数据是怎么得到的
+                </div>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="evidence"
+                    data-name="Source Snapshot · 来源快照"
+                    data-definition="精确仓库提交、文件清单、校验值及来源版本。"
+                    data-why="确定实际读取了哪份输入，能追溯和复现。"
+                    data-detail=""
+                    data-files='["src/server/db/schema.ts", "src/importers/catalog-source-lock.ts"]'
+                    data-node-id="versions-graph-source"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">来源／执行证据</span
+                    ><strong>Source Snapshot · 来源快照</strong
+                    ><span class="node-summary"
+                      >精确仓库提交、文件清单、校验值及来源版本。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 确定实际读取了哪份输入，能追溯和复现。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="被导入记录引用">
+                    <span>被导入记录引用</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="evidence"
+                    data-name="Import Run · 导入记录"
+                    data-definition="一次执行的代码／转换器版本、阶段和校验结果。"
+                    data-why="说明是谁用什么实现处理数据，以及在哪里失败。"
+                    data-detail=""
+                    data-files='["src/workers/worker-utils.ts", "src/server/db/schema.ts"]'
+                    data-node-id="versions-graph-run"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">来源／执行证据</span
+                    ><strong>Import Run · 导入记录</strong
+                    ><span class="node-summary"
+                      >一次执行的代码／转换器版本、阶段和校验结果。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      说明是谁用什么实现处理数据，以及在哪里失败。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="生成或复用版本">
+                    <span>生成或复用版本</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="dataset"
+                    data-name="Catalog Dataset · 目录版本"
+                    data-definition="英雄、技能、命石、关系与目录内本地化的不可变内容。"
+                    data-why="保存可重用的完整业务版本，避免覆盖旧结果。"
+                    data-detail=""
+                    data-files='["src/server/db/schema.ts", "src/workers/import-catalog.ts"]'
+                    data-node-id="versions-graph-catalog"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">版本化数据</span
+                    ><strong>Catalog Dataset · 目录版本</strong
+                    ><span class="node-summary"
+                      >英雄、技能、命石、关系与目录内本地化的不可变内容。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      保存可重用的完整业务版本，避免覆盖旧结果。</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="graph-lane">
+                <div class="lane-label">
+                  B · 版本选择：每一类指针都有自己的目标
+                </div>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="choice"
+                    data-name="Catalog current head"
+                    data-definition="当前英雄／技能目录的数据库指针。"
+                    data-why="整体切换目录版本，支持受约束的提升与回滚。"
+                    data-detail=""
+                    data-files='["src/server/db/schema.ts", "src/workers/promote-catalog.ts", "src/workers/rollback-catalog.ts"]'
+                    data-node-id="versions-graph-head"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">版本选择</span
+                    ><strong>Catalog current head</strong
+                    ><span class="node-summary"
+                      >当前英雄／技能目录的数据库指针。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      整体切换目录版本，支持受约束的提升与回滚。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="指向 1 个目录版本">
+                    <span>指向 1 个目录版本</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="dataset"
+                    data-name="被选中的 Catalog"
+                    data-definition="已经保存、可以被页面读取的目录版本。"
+                    data-why="为同一页面及关系提供一致的数据基线。"
+                    data-detail=""
+                    data-files='["src/server/repositories/heroes.ts"]'
+                    data-node-id="versions-graph-chosen"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">版本化数据</span
+                    ><strong>被选中的 Catalog</strong
+                    ><span class="node-summary"
+                      >已经保存、可以被页面读取的目录版本。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 为同一页面及关系提供一致的数据基线。</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="chain">
+                <button
+                  class="node"
+                  data-key="choice"
+                  data-name="按 Catalog 保存的资产 head"
+                  data-definition="英雄／技能与单位图片各有独立选择指针。"
+                  data-why="更新图片时保留明确的 Catalog 绑定。"
+                  data-detail=""
+                  data-files='["src/server/db/schema.ts"]'
+                  data-node-id="versions-graph-assetheads"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">版本选择</span
+                  ><strong>按 Catalog 保存的资产 head</strong
+                  ><span class="node-summary"
+                    >英雄／技能与单位图片各有独立选择指针。</span
+                  ><span class="node-why"
+                    ><b>作用</b> 更新图片时保留明确的 Catalog 绑定。</span
+                  >
+                </button>
+                <div class="edge" data-relation="各自指向对应资产版本">
+                  <span>各自指向对应资产版本</span><b aria-hidden="true">→</b>
+                </div>
+                <button
+                  class="node"
+                  data-key="dataset"
+                  data-name="对应的 Asset Dataset"
+                  data-definition="一份图片绑定清单及其引用的对象和变体。"
+                  data-why="独立迭代图片，同时复用已保存图片内容。"
+                  data-detail=""
+                  data-files='["src/server/assets/asset-store.ts", "src/server/repositories/assets.ts"]'
+                  data-node-id="versions-graph-assetversion"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">版本化数据</span
+                  ><strong>对应的 Asset Dataset</strong
+                  ><span class="node-summary"
+                    >一份图片绑定清单及其引用的对象和变体。</span
+                  ><span class="node-why"
+                    ><b>作用</b> 独立迭代图片，同时复用已保存图片内容。</span
+                  >
+                </button>
+              </div>
+              <div class="chain">
+                <button
+                  class="node"
+                  data-key="choice"
+                  data-name="Map Collection + 页面 version"
+                  data-definition="集合列出可用地图与默认项，页面参数可选明确版本。"
+                  data-why="多版地图同时可访问，未知版本明确拒绝。"
+                  data-detail=""
+                  data-files='["src/server/map/packages.ts", "src/server/map/store.ts"]'
+                  data-node-id="versions-graph-collection"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">版本选择</span
+                  ><strong>Map Collection + 页面 version</strong
+                  ><span class="node-summary"
+                    >集合列出可用地图与默认项，页面参数可选明确版本。</span
+                  ><span class="node-why"
+                    ><b>作用</b> 多版地图同时可访问，未知版本明确拒绝。</span
+                  >
+                </button>
+                <div class="edge" data-relation="选出本次使用的地图">
+                  <span>选出本次使用的地图</span><b aria-hidden="true">→</b>
+                </div>
+                <button
+                  class="node"
+                  data-key="dataset"
+                  data-name="所选 Map Dataset"
+                  data-definition="版本独立的地图文件包。"
+                  data-why="把底图、实体、地形和来源作为同一地图整体读取。"
+                  data-detail=""
+                  data-files='["src/domain/map/schema.ts", "src/server/map/packages.ts"]'
+                  data-node-id="versions-graph-map"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">版本化数据</span
+                  ><strong>所选 Map Dataset</strong
+                  ><span class="node-summary">版本独立的地图文件包。</span
+                  ><span class="node-why"
+                    ><b>作用</b>
+                    把底图、实体、地形和来源作为同一地图整体读取。</span
+                  >
+                </button>
+              </div>
+              <div class="chain">
+                <button
+                  class="node"
+                  data-key="choice"
+                  data-name="dev-data.lock.json"
+                  data-definition="代码中固定目标数据提交、快照及结构摘要。"
+                  data-why="让别的工作区知道要复现哪份业务状态。"
+                  data-detail=""
+                  data-files='["dev-data.lock.json", "src/development/data-sync/protocol.ts"]'
+                  data-node-id="versions-graph-lock"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">版本选择</span
+                  ><strong>dev-data.lock.json</strong
+                  ><span class="node-summary"
+                    >代码中固定目标数据提交、快照及结构摘要。</span
+                  ><span class="node-why"
+                    ><b>作用</b> 让别的工作区知道要复现哪份业务状态。</span
+                  >
+                </button>
+                <div class="edge" data-relation="固定目标交接快照">
+                  <span>固定目标交接快照</span><b aria-hidden="true">→</b>
+                </div>
+                <button
+                  class="node"
+                  data-key="dataset"
+                  data-name="Development Snapshot"
+                  data-definition="数据库、图片、固定来源和全部地图的交接快照。"
+                  data-why="把完整业务状态带到另一工作区。"
+                  data-detail=""
+                  data-files='["src/development/data-sync/snapshot.ts", "src/development/data-sync/bundle.ts"]'
+                  data-node-id="versions-graph-snapshot"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">版本化数据</span
+                  ><strong>Development Snapshot</strong
+                  ><span class="node-summary"
+                    >数据库、图片、固定来源和全部地图的交接快照。</span
+                  ><span class="node-why"
+                    ><b>作用</b> 把完整业务状态带到另一工作区。</span
+                  >
+                </button>
+              </div>
+              <div class="quiet-note">
+                Catalog、图片、地图拥有各自的版本证据。开发快照把它们打包交接；工作区身份和凭据由每台机器独立维护。
+              </div>
+              <div class="inspector" aria-live="polite">
+                点击节点查看具体实现文件及边界。图例只突出同类节点，不筛选代码或执行命令。
+              </div>
+              <div class="figure-sources">
+                <b>核对依据</b> <a href="../../CONTEXT.md">稳定概念</a> ·
+                <a href="../../docs/architecture/data-flow.md"
+                  >权威存储与版本关系</a
+                >
+                · <a href="../../src/server/db/schema.ts">数据库结构</a>
+              </div>
+            </figure>
+            <figure
+              class="semantic-figure"
+              id="layers-graph"
+              data-toc="图 4-3 · 代码按什么职责组织"
+              data-diagram-kind="semantic"
+            >
+              <figcaption>图 4-3 · 代码按什么职责组织</figcaption>
+              <div class="story-title">
+                要修改一种行为，应该从哪些文件入手？
+              </div>
+              <p class="figure-purpose">
+                相同业务概念横跨导入、存储和页面。按职责组织文件，能复用规则，并把来源差异、数据访问与界面变化分开处理。
+              </p>
+              <div class="reading-rule">
+                模块职责图：卡片是代码的职责边界；下面单独列主要依赖关系。卡片排列不表示一条从左到右必经的执行管线。
+              </div>
+              <div class="module-grid">
+                <button
+                  class="node"
+                  data-key="module"
+                  data-name="任务入口 · workers"
+                  data-definition="组织导入、刷新、检查、同步等明确任务。"
+                  data-why="把耗时处理和写入流程放在可追踪的独立入口。"
+                  data-detail="src/development/ 提供开发与同步能力；src/workers/ 提供命令入口。两者职责不同，不能把整个 workers 目录视为同一种业务。"
+                  data-files='["src/workers/import-catalog.ts", "src/workers/dev.ts", "src/workers/data-sync.ts", "src/development/data-sync/restore.ts"]'
+                  data-node-id="layers-graph-workers"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">代码模块</span
+                  ><strong>任务入口 · workers</strong
+                  ><span class="node-summary"
+                    >组织导入、刷新、检查、同步等明确任务。</span
+                  ><span class="node-why"
+                    ><b>作用</b>
+                    把耗时处理和写入流程放在可追踪的独立入口。</span
+                  ></button
+                ><button
+                  class="node"
+                  data-key="module"
+                  data-name="来源适配 · importers"
+                  data-definition="按来源读取、解析和转换原始定义或资源。"
+                  data-why="把不同来源格式映射到项目能够使用的结构。"
+                  data-detail=""
+                  data-files='["src/importers/dota-vpk/hero-adapter.ts", "src/importers/dota-vpk/unit-adapter.ts", "src/importers/valve-assets/catalog-assets.ts", "src/importers/dota-map/native.ts"]'
+                  data-node-id="layers-graph-importers"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">代码模块</span
+                  ><strong>来源适配 · importers</strong
+                  ><span class="node-summary"
+                    >按来源读取、解析和转换原始定义或资源。</span
+                  ><span class="node-why"
+                    ><b>作用</b> 把不同来源格式映射到项目能够使用的结构。</span
+                  ></button
+                ><button
+                  class="node"
+                  data-key="module"
+                  data-name="领域规则 · domain"
+                  data-definition="定义实体、关系、数据协议和计算规则。"
+                  data-why="让导入、查询与交互复用同一业务语义。"
+                  data-detail=""
+                  data-files='["src/domain/heroes.ts", "src/domain/abilities.ts", "src/domain/units.ts", "src/domain/map/routing.ts"]'
+                  data-node-id="layers-graph-domain"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">代码模块</span
+                  ><strong>领域规则 · domain</strong
+                  ><span class="node-summary"
+                    >定义实体、关系、数据协议和计算规则。</span
+                  ><span class="node-why"
+                    ><b>作用</b> 让导入、查询与交互复用同一业务语义。</span
+                  ></button
+                ><button
+                  class="node"
+                  data-key="module"
+                  data-name="数据访问与展示服务 · server"
+                  data-definition="读取数据库或文件，并组织过滤、搜索和语义资料。"
+                  data-why="页面不必自己理解数据库表与每一种来源格式。"
+                  data-detail="repositories 主要承担读取；services 组织搜索、过滤与展示投影。地图服务读取文件包，单位读取仍需匹配固定来源。"
+                  data-files='["src/server/repositories/heroes.ts", "src/server/repositories/units.ts", "src/server/services/catalog-replica.ts", "src/server/map/store.ts"]'
+                  data-node-id="layers-graph-query"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">代码模块</span
+                  ><strong>数据访问与展示服务 · server</strong
+                  ><span class="node-summary"
+                    >读取数据库或文件，并组织过滤、搜索和语义资料。</span
+                  ><span class="node-why"
+                    ><b>作用</b>
+                    页面不必自己理解数据库表与每一种来源格式。</span
+                  ></button
+                ><button
+                  class="node"
+                  data-key="module"
+                  data-name="存储合同 · db／文件 schema"
+                  data-definition="定义数据库表与约束，以及地图、快照文件格式。"
+                  data-why="让内容保存与读取遵循同一结构和版本规则。"
+                  data-detail="数据库承载 Catalog 和图片；地图是文件包。实际数据位于运行环境，代码目录保存结构与存取实现。"
+                  data-files='["src/server/db/schema.ts", "drizzle", "src/domain/map/schema.ts", "src/development/data-sync/protocol.ts"]'
+                  data-node-id="layers-graph-storage"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">代码模块</span
+                  ><strong>存储合同 · db／文件 schema</strong
+                  ><span class="node-summary"
+                    >定义数据库表与约束，以及地图、快照文件格式。</span
+                  ><span class="node-why"
+                    ><b>作用</b> 让内容保存与读取遵循同一结构和版本规则。</span
+                  ></button
+                ><button
+                  class="node"
+                  data-key="module"
+                  data-name="页面与浏览器交互 · app／components"
+                  data-definition="处理页面路由、展示、筛选和地图交互。"
+                  data-why="将领域资料转成用户能够理解和操作的界面。"
+                  data-detail="浏览器目录缓存位于 src/browser/；地图寻路可在浏览器 Worker 中运行，并按需使用领域算法。"
+                  data-files='["src/app/heroes/page.tsx", "src/components/live-catalog.tsx", "src/browser/catalog-replica.ts", "src/components/map/route-client.ts"]'
+                  data-node-id="layers-graph-web"
+                  aria-pressed="false"
+                >
+                  <span class="node-type">代码模块</span
+                  ><strong>页面与浏览器交互 · app／components</strong
+                  ><span class="node-summary"
+                    >处理页面路由、展示、筛选和地图交互。</span
+                  ><span class="node-why"
+                    ><b>作用</b> 将领域资料转成用户能够理解和操作的界面。</span
+                  >
+                </button>
+              </div>
+              <div class="lane-label">主要依赖关系 · 箭头表示调用或使用</div>
+              <div class="dependency-list">
+                <div class="dependency-row">
+                  <b>任务入口</b><span class="dependency-verb">调用 →</span
+                  ><b>来源适配</b><small>导入任务组织输入读取和解析。</small>
+                </div>
+                <div class="dependency-row">
+                  <b>任务入口</b
+                  ><span class="dependency-verb">组织持久化 →</span
+                  ><b>存储合同与写入实现</b
+                  ><small>经过校验后写入数据库或新文件包。</small>
+                </div>
+                <div class="dependency-row">
+                  <b>页面／接口入口</b
+                  ><span class="dependency-verb">读取 →</span
+                  ><b>数据访问与展示服务</b
+                  ><small>获取所选版本的目录、图片或地图资料。</small>
+                </div>
+                <div class="dependency-row">
+                  <b>数据访问与展示服务</b
+                  ><span class="dependency-verb">按合同读取 →</span
+                  ><b>数据库／固定来源／地图文件包</b
+                  ><small>不同资料目前有不同权威存储。</small>
+                </div>
+                <div class="dependency-row">
+                  <b>来源适配／服务／浏览器组件</b
+                  ><span class="dependency-verb">按需使用 →</span
+                  ><b>领域类型与规则</b
+                  ><small>复用身份、关系、过滤或地图计算等定义。</small>
+                </div>
+              </div>
+              <div class="quiet-note">
+                定位改动时，先按节点职责找实现入口，再沿依赖核对影响。实际验证范围由
+                scripts/development/check-plan.mjs
+                匹配改动文件生成；本页图例不会改变检查任务。
+              </div>
+              <div class="inspector" aria-live="polite">
+                点击节点查看具体实现文件及边界。本图按模块职责组织，具体文件入口列在节点详情中。
+              </div>
+              <div class="figure-sources">
+                <b>核对依据</b> <a href="../../CONTEXT.md">模块入口</a> ·
+                <a href="../../docs/architecture/data-flow.md">数据流入口</a> ·
+                <a href="../../scripts/development/check-plan.mjs"
+                  >检查规划实现</a
+                >
+              </div>
+            </figure>
+          </div>
+        </section>
+        <section id="sources">
+          <h2>
+            <button class="fold" aria-expanded="true" aria-label="收放本节">
+              −</button
+            >05 依据与验证范围
+          </h2>
+          <div class="section-body">
+            <p>
+              最近内容复核：2026-10-07（Asia/Singapore）。业务数量与机器状态是带日期的核验记录，核验时间见页首；架构图随实现持续维护。节点类型是阅读辅助，图例只高亮同类节点。〔高〕表示页首时间的命令直接核对，文档记录注明其时间与限制。
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th>要核对什么</th>
+                  <th>权威入口</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>当前能力与待办</td>
+                  <td>
+                    <a href="../../CONTEXT.md">CONTEXT</a> ·
+                    <a href="../../docs/current.md">current</a> ·
+                    <a href="../../docs/development-environments.md"
+                      >环境登记</a
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>数据流与版本边界</td>
+                  <td>
+                    <a href="../../docs/architecture/data-flow.md">数据流</a> ·
+                    <a href="../../dev-data.lock.json">目标快照 lock</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>实体与真实表结构</td>
+                  <td>
+                    <a href="../../docs/specs/hero-catalog-v2.md"
+                      >Catalog Spec</a
+                    >
+                    ·
+                    <a href="../../src/server/db/schema.ts">数据库 schema</a> ·
+                    <a href="../../docs/specs/unit-catalog.md">单位 Spec</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>地图与缓存</td>
+                  <td>
+                    <a href="../../docs/specs/map-explorer.md">地图 Spec</a> ·
+                    <a href="../../src/domain/map/schema.ts">地图 schema</a> ·
+                    <a href="../../docs/specs/browser-catalog-cache.md"
+                      >目录缓存</a
+                    >
+                  </td>
+                </tr>
+                <tr>
+                  <td>工作台与同步</td>
+                  <td>
+                    <a href="../../docs/specs/development-workbench.md"
+                      >工作台</a
+                    >
+                    ·
+                    <a href="../../docs/development-data-sync-runbook.md"
+                      >同步手册</a
+                    >
+                    · <a href="../../package.json">命令入口</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="note">
+              复现本轮状态核对：<code>git status --short</code>、<code
+                >git log -1</code
+              >、<code>pnpm data:status</code>。该核验属于
+              GofurMacM4Max128GB，不代表其他机器或此刻状态。本文件随代码仓库交接，来源链接相对于仓库目录；直接维护本文件，output/
+              中的旧附件与生成器不再作为维护源。
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div id="tip" role="tooltip"></div>
+    <script>
+      const $ = (s) => document.querySelector(s),
+        $$ = (s) => [...document.querySelectorAll(s)];
+      const root = document.documentElement,
+        sections = $$("main section"),
+        figs = $$("figure"),
+        nav = $("#nav"),
+        assets = $("#assets");
+      sections.forEach((s) => {
+        let a = document.createElement("a");
+        a.href = "#" + s.id;
+        a.textContent = s.querySelector("h2").textContent.replace("−", "");
+        nav.append(a);
+      });
+      figs.forEach((f) => {
+        let a = document.createElement("a");
+        a.href = "#" + f.id;
+        a.textContent = f.dataset.toc;
+        assets.append(a);
+      });
+      const keys = [...new Set($$("figure .node").map((n) => n.dataset.key))];
+      let st = document.createElement("style");
+      st.textContent = keys
+        .map(
+          (k) =>
+            `figure[data-hl="${k}"] [data-key]:not([data-key="${k}"]){opacity:.28}figure[data-hl="${k}"] .legend [data-key="${k}"]{outline:1px solid currentColor;outline-offset:3px}`,
+        )
+        .join("");
+      document.head.append(st);
+      figs.forEach((f) => {
+        for (const ev of ["pointerover", "focusin"])
+          f.addEventListener(ev, (e) => {
+            let t = e.target.closest("[data-key]");
+            if (t && f.dataset.hl !== t.dataset.key)
+              f.dataset.hl = t.dataset.key;
+            else if (!t) delete f.dataset.hl;
+          });
+        f.addEventListener("pointerleave", () => delete f.dataset.hl);
+        f.addEventListener("focusout", (e) => {
+          if (!f.contains(e.relatedTarget)) delete f.dataset.hl;
+        });
+        f.addEventListener("click", (e) => {
+          let n = e.target.closest(".node");
+          if (!n) return;
+          f.querySelectorAll(".selected").forEach((x) => {
+            x.classList.remove("selected");
+            x.setAttribute("aria-pressed", "false");
+          });
+          n.classList.add("selected");
+          n.setAttribute("aria-pressed", "true");
+          let box = f.querySelector(".inspector");
+          box.replaceChildren();
+          let heading = document.createElement("b");
+          heading.className = "inspect-title";
+          heading.textContent = n.dataset.name;
+          box.append(heading);
+          for (const [label, value] of [
+            ["是什么", n.dataset.definition],
+            ["为什么需要", n.dataset.why],
+            ["实现边界", n.dataset.detail],
+          ]) {
+            if (!value) continue;
+            let row = document.createElement("div");
+            row.className = "inspect-row";
+            let name = document.createElement("b");
+            name.textContent = label;
+            let text = document.createElement("span");
+            text.textContent = value;
+            row.append(name, text);
+            box.append(row);
+          }
+          let row = document.createElement("div");
+          row.className = "inspect-row";
+          let name = document.createElement("b");
+          name.textContent = "相关文件";
+          let links = document.createElement("span");
+          links.className = "inspect-files";
+          for (const path of JSON.parse(n.dataset.files)) {
+            let a = document.createElement("a");
+            a.href = "../../" + path;
+            a.textContent = path;
+            links.append(a);
+          }
+          row.append(name, links);
+          box.append(row);
+          rebuild();
+        });
+      });
+      let cached = [],
+        lastScroll = 0,
+        frame = 0,
+        active = "";
+      function rebuild() {
+        let top = $(".bar").getBoundingClientRect().height;
+        root.style.setProperty("--thTop", top + "px");
+        cached = $$("main section,figure")
+          .filter((x) => x.getClientRects().length)
+          .map((x) => ({
+            id: x.id,
+            y: x.getBoundingClientRect().top + scrollY,
+            kind: x.tagName,
+          }));
+        spy();
+      }
+      function spy() {
+        for (const [container, kind] of [
+          [nav, "SECTION"],
+          [assets, "FIGURE"],
+        ]) {
+          let match =
+            cached
+              .filter(
+                (x) => x.kind === kind && x.y <= scrollY + innerHeight * 0.22,
+              )
+              .at(-1) || cached.find((x) => x.kind === kind);
+          container.querySelectorAll("a").forEach((a) => {
+            let yes = a.hash === "#" + match?.id;
+            if (a.classList.contains("act") !== yes)
+              a.classList.toggle("act", yes);
+          });
+        }
+      }
+      window.addEventListener(
+        "scroll",
+        () => {
+          lastScroll = performance.now();
+          hideTip(false);
+          if (!frame)
+            frame = requestAnimationFrame(() => {
+              frame = 0;
+              spy();
+            });
+        },
+        { passive: true },
+      );
+      let rf = 0;
+      window.addEventListener(
+        "resize",
+        () => {
+          hideTip();
+          cancelAnimationFrame(rf);
+          rf = requestAnimationFrame(rebuild);
+        },
+        { passive: true },
+      );
+      new ResizeObserver(() => requestAnimationFrame(rebuild)).observe(
+        $(".bar"),
+      );
+      function setCollapsed(s, value) {
+        s.classList.toggle("collapsed", value);
+        let b = s.querySelector(".fold");
+        b.textContent = value ? "+" : "−";
+        b.setAttribute("aria-expanded", String(!value));
+      }
+      $$(".fold").forEach(
+        (b) =>
+          (b.onclick = (e) => {
+            let s = b.closest("section");
+            if (e.ctrlKey) {
+              let close = sections.every(
+                (x) => !x.classList.contains("collapsed"),
+              );
+              sections.forEach((x) => setCollapsed(x, close));
+            } else setCollapsed(s, !s.classList.contains("collapsed"));
+            hideTip();
+            rebuild();
+          }),
+      );
+      $("#all").onclick = () => {
+        let close = sections.every((x) => !x.classList.contains("collapsed"));
+        sections.forEach((s) => setCollapsed(s, close));
+        rebuild();
+      };
+      $$("[data-tab]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            $$("[data-tab]").forEach((x) =>
+              x.classList.toggle("active", x === b),
+            );
+            nav.hidden = b.dataset.tab !== "nav";
+            assets.hidden = b.dataset.tab !== "assets";
+            nav.style.display = nav.hidden ? "none" : "";
+            assets.style.display = assets.hidden ? "none" : "";
+          }),
+      );
+      let stack = [],
+        jumpTimer = 0,
+        jumped = null;
+      function backUpdate() {
+        $("#back").hidden = !stack.length;
+        $("#back").textContent = "返回 ×" + stack.length;
+      }
+      $("#back").onclick = () => {
+        window.scrollTo(0, stack.pop() || 0);
+        backUpdate();
+      };
+      document.addEventListener("click", (e) => {
+        let a = e.target.closest('a[href^="#"]');
+        if (!a) return;
+        let t = document.getElementById(a.hash.slice(1));
+        if (!t) return;
+        e.preventDefault();
+        if (a.closest("main")) {
+          stack.push(scrollY);
+          if (stack.length > 5) stack.shift();
+          backUpdate();
+        }
+        let s = t.closest("section");
+        if (s) setCollapsed(s, false);
+        hideTip();
+        rebuild();
+        window.scrollTo(
+          0,
+          t.getBoundingClientRect().top +
+            scrollY -
+            Math.max(
+              innerHeight * 0.05,
+              $(".bar").getBoundingClientRect().height + 8,
+            ),
+        );
+        if (jumped) jumped.classList.remove("jump-hl");
+        clearTimeout(jumpTimer);
+        t.classList.add("jump-hl");
+        jumped = t;
+        jumpTimer = setTimeout(() => t.classList.remove("jump-hl"), 2000);
+      });
+      $("#theme").onchange = (e) => (root.dataset.theme = e.target.value);
+      $("#width").onchange = (e) => {
+        root.style.setProperty("--width", e.target.value);
+        rebuild();
+      };
+      $("#font").onchange = (e) => {
+        root.style.setProperty("--font", e.target.value);
+        rebuild();
+      };
+      $("#terms").onchange = (e) => {
+        root.classList.toggle("terms-off", !e.target.checked);
+        hideTip();
+      };
+      const terms = {
+        命石: "Facet，英雄可选的玩法定义。它属于某个版本的某英雄，可以关联技能；这里保存定义和关联，不模拟一场对局中的选择。",
+        技能槽:
+          "英雄定义中记录技能位置的字段。保留原始槽位有助于区分当前技能配置、天赋及其他关联，不能单凭位置猜测技能类型。",
+        事务: "把一组数据库操作作为一个整体提交。任一步失败时撤回这一组修改，避免页面读到只更新了一半的数据。",
+        主键: "在规定范围内唯一识别一条记录的字段组合。这里常包含版本，避免把不同游戏版本的同名对象误当成同一条记录。",
+        版本指针:
+          "记录当前要使用哪一份已保存的数据。更新和回滚改变选择，历史内容仍可保留。",
+        候选版本:
+          "已准备出来、等待校验或审阅的新数据。候选存在不代表用户页面已经采用它。",
+        独立候选:
+          "接收快照时单独恢复并核验的数据库。核验成功后再切换本机服务的选择，旧数据库保留用于恢复。",
+        快照: "一份被固定并可校验的内容记录。它用于复现明确版本，实际涵盖什么资料需看该类快照的清单。",
+        LFS: "Git Large File Storage，大文件存储扩展。代码仓库保存指针，大文件内容由独立对象存储保存；获取快照时需要核对两者均可用。",
+        pnpm: "项目使用的包管理和命令入口。pnpm 后面的名称对应 package.json 中定义的工作流程。",
+        schema:
+          "数据结构合同。规定表、字段与约束；不同结构版本不能未经核对直接恢复到同一数据库。",
+        哈希: "由内容计算出的校验摘要。相同算法下内容改变会导致摘要变化，用来判断文件或数据是否与指定版本一致。",
+        Catalog:
+          "目录数据集。英雄、技能、命石及其关系共用的一份有版本业务数据，避免页面混用不同补丁的定义。",
+        HeroAbilityBinding:
+          "英雄与技能的显式关联记录。记录槽位、关系类型、顺序和是否当前使用；一个技能可以有多种归属关系。",
+        FacetAbilityBinding:
+          "命石与技能的关联记录。它把同一目录版本内的命石和技能连在一起。",
+        Hero: "英雄定义。这里描述某版本中的基础资料，不代表一场对局中的英雄实例。",
+        Ability:
+          "技能定义。包含普通技能、天赋、隐藏辅助定义和历史记录，身份由版本与内部名称确定。",
+        Facet:
+          "命石。属于某英雄的可选玩法定义，身份同时包含目录版本、英雄和命石键。",
+        Dataset:
+          "数据集。一次完整、可定位的业务版本；已保存的内容不原地覆盖，通过选择指针切换使用版本。",
+        Collection:
+          "地图集合。列出可用地图版本及默认项，不把不同地图的数据合并。",
+        head: "当前版本指针。内容保持不变，指针决定用户此刻读哪一版；回滚就是指向已验证的旧版。",
+        commit:
+          "Git 提交标识。精确指向一份代码或来源内容；分支名和“最新”不能代替它。",
+        Git: "记录文件历史的版本管理系统。项目用固定提交锁定代码与来源，便于追溯和复现。",
+        VPK: "Valve Pak，Valve 游戏资源包。这里也指从游戏包提取并在固定仓库提交中保存的定义来源。",
+        PostgreSQL:
+          "关系数据库。持久保存目录、关系、图片以及版本指针，并用事务和约束保护一致性。",
+        Worker:
+          "专门执行任务的工作进程或线程。导入任务在独立进程运行，地图寻路则放在浏览器后台线程。",
+        LoD: "Level of Detail，多尺寸细节版本。图片按使用尺寸生成变体，减少列表加载开销。",
+        CDN: "Content Delivery Network，内容分发网络。图片可以从其下载，但下载地址本身不能证明所属游戏版本。",
+        QA: "Quality Assurance，质量核对。参考来源只产生差异证据，不能自动取代规范来源的数值。",
+        IndexedDB:
+          "浏览器里的本地数据库。保存已验证的目录快照，让重载后的搜索与筛选可以复用资料。",
+        API: "Application Programming Interface，程序访问接口。页面通过它请求数据或检查当前版本。",
+        UI: "User Interface，用户界面。指用户看到并操作的页面、按钮、目录与图形。",
+        "Fast Refresh":
+          "开发时的页面快速刷新。保存组件代码后更新页面，并尽可能保留当前交互状态。",
+        Session:
+          "一次协作任务。记录目标、改动范围和验证证据，不代表代码版本或数据库身份。",
+        Context:
+          "任务上下文。项目的稳定概念、当前工作、环境能力和相关合同，帮助接手者理解边界。",
+        Spec: "Specification，行为合同。规定模块应当如何工作，需结合代码和验证证据判断是否实现。",
+        ADR: "Architecture Decision Record，架构决定记录。保存某个方案为何被采用，以及当时接受的代价。",
+        CI: "Continuous Integration，持续集成。代码变化后在独立环境自动执行检查，本地通过不代表其他平台通过。",
+        lock: "目标锁文件。代码中的 dev-data.lock.json 固定要消费哪份业务快照，不直接证明本机已经应用。",
+        manifest:
+          "内容清单。列出快照的组成与校验摘要，接收端可以核对是否完整和一致。",
+        "Source Snapshot":
+          "来源快照。记录实际读取的仓库、提交、文件和校验值，让数据能回溯到原始输入。",
+        "Import Run":
+          "一次导入执行。记录实现版本、输入、校验和错误等证据，可生成或复用一个业务版本。",
+        "Current head":
+          "当前版本选择指针。它与不可变内容分开保存，负责安全提升和回滚。",
+        Green: "绿色门禁。变化符合已识别规则，允许既有数据流程原子提升候选。",
+        Yellow:
+          "黄色门禁。数据可能有效，但存在需要人工判断的变化，保留候选等待审阅。",
+        Red: "红色门禁。完整性或结构校验失败，阻止发布并保留正在服务的版本。",
+        replay: "比赛录像数据。用于还原或分析对局，当前项目尚未实现此模块。",
+        production:
+          "正式生产运行用途。远程生产环境尚未落地，本机真实数据审阅不能视为远程部署完成。",
+        "A*": "A-star，启发式最短路径算法。当前用它在静态导航网格上寻找路径，结果精度受输入网格和碰撞近似限制。",
+      };
+      function markTerms() {
+        let names = Object.keys(terms).sort((a, b) => b.length - a.length),
+          re = new RegExp(
+            names
+              .map((x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+              .join("|"),
+            "g",
+          ),
+          walker = document.createTreeWalker($("main"), NodeFilter.SHOW_TEXT),
+          arr = [];
+        while (walker.nextNode()) {
+          let n = walker.currentNode;
+          if (
+            !n.parentElement.closest("h1,h2,h3,h4,a,code,pre,.term,[data-tip]")
+          )
+            arr.push(n);
+        }
+        for (const n of arr) {
+          let s = n.nodeValue,
+            matches = [...s.matchAll(re)].filter(
+              (m) =>
+                !(
+                  /[A-Za-z0-9]/.test(m[0][0]) &&
+                  m.index > 0 &&
+                  /[A-Za-z0-9]/.test(s[m.index - 1])
+                ) &&
+                !(
+                  /[A-Za-z0-9]/.test(m[0].at(-1)) &&
+                  /[A-Za-z0-9]/.test(s[m.index + m[0].length] || "")
+                ),
+            );
+          if (!matches.length) continue;
+          let frag = document.createDocumentFragment(),
+            end = 0;
+          for (const m of matches) {
+            frag.append(document.createTextNode(s.slice(end, m.index)));
+            let sp = document.createElement("span");
+            sp.className = "term";
+            sp.dataset.term = m[0];
+            sp.textContent = m[0];
+            frag.append(sp);
+            end = m.index + m[0].length;
+          }
+          frag.append(document.createTextNode(s.slice(end)));
+          n.replaceWith(frag);
+        }
+        rebuild();
+      }
+      const tip = $("#tip");
+      let lastTarget = null,
+        tipTimer = 0,
+        hiddenAt = 0,
+        px = 0,
+        py = 0;
+      function hideTip(clear = true) {
+        if (tip.style.visibility === "visible") {
+          tip.style.visibility = "hidden";
+          hiddenAt = performance.now();
+        }
+        if (clear) {
+          clearTimeout(tipTimer);
+          lastTarget = null;
+        }
+      }
+      function showTip(t) {
+        if (!t.isConnected) return;
+        let peek = t.matches("aside a"),
+          text = peek ? t.textContent : t.dataset.tip || terms[t.dataset.term];
+        if (!text) return;
+        tip.classList.toggle("peek", peek);
+        tip.textContent = text;
+        tip.style.visibility = "hidden";
+        let rects = t.getClientRects(),
+          r = rects[rects.length - 1];
+        if (!r) return;
+        let w = tip.offsetWidth,
+          h = tip.offsetHeight,
+          x = r.left,
+          y = r.bottom + 4;
+        if (peek) {
+          x = r.left - 1;
+          y = r.top - 1;
+        } else if (
+          r.width > Math.max(w, 300) &&
+          py >= r.top - 2 &&
+          py <= r.bottom + 2
+        )
+          x = px - 14;
+        x = Math.max(8, Math.min(x, innerWidth - w - 8));
+        if (y + h > innerHeight - 8) y = Math.max(8, r.top - h - 4);
+        tip.style.transform = `translate(${x}px,${y}px)`;
+        tip.style.visibility = "visible";
+      }
+      document.addEventListener("pointerover", (e) => {
+        px = e.clientX;
+        py = e.clientY;
+        let t = e.target.closest("[data-tip],.term,aside a");
+        if (
+          t?.classList.contains("term") &&
+          root.classList.contains("terms-off")
+        )
+          t = null;
+        if (t?.matches("aside a") && t.scrollWidth <= t.clientWidth) t = null;
+        if (lastTarget === t) return;
+        clearTimeout(tipTimer);
+        let warm =
+          tip.style.visibility === "visible" ||
+          performance.now() - hiddenAt < 250;
+        hideTip(false);
+        lastTarget = t;
+        if (t) {
+          if (warm && performance.now() - lastScroll >= 140) showTip(t);
+          else tipTimer = setTimeout(() => showTip(t), 90);
+        }
+      });
+      document.addEventListener("pointerdown", () => hideTip());
+      document.addEventListener("pointerleave", () => hideTip());
+      document.addEventListener(
+        "scroll",
+        () => {
+          lastScroll = performance.now();
+          hideTip(false);
+        },
+        { capture: true, passive: true },
+      );
+      let drag = null,
+        dragFrame = 0;
+      const handle = $("#resize");
+      handle.onpointerdown = (e) => {
+        if (innerWidth <= 1150) return;
+        drag = {
+          x: e.clientX,
+          w: $("aside").getBoundingClientRect().width,
+          moved: false,
+        };
+        handle.setPointerCapture(e.pointerId);
+      };
+      handle.onpointermove = (e) => {
+        if (!drag || (Math.abs(e.clientX - drag.x) <= 3 && !drag.moved)) return;
+        drag.moved = true;
+        document.body.classList.add("dragging");
+        $("aside").classList.remove("wrap");
+        cancelAnimationFrame(dragFrame);
+        let w = Math.max(
+          180,
+          Math.min(420, innerWidth - 800, drag.w + e.clientX - drag.x),
+        );
+        dragFrame = requestAnimationFrame(() =>
+          root.style.setProperty("--tocW", w + "px"),
+        );
+      };
+      handle.onpointerup = () => {
+        if (!drag) return;
+        drag = null;
+        document.body.classList.remove("dragging");
+        requestAnimationFrame(rebuild);
+      };
+      handle.ondblclick = () => {
+        $("aside").classList.remove("wrap");
+        let links = [
+          ...($("[data-tab=nav]").classList.contains("active")
+            ? nav
+            : assets
+          ).querySelectorAll("a"),
+        ];
+        let natural = Math.max(...links.map((a) => a.scrollWidth)) + 34,
+          max = Math.min(420, innerWidth - 800);
+        root.style.setProperty(
+          "--tocW",
+          Math.max(180, Math.min(max, natural)) + "px",
+        );
+        $("aside").classList.toggle("wrap", natural > max);
+        rebuild();
+      };
+      assets.hidden = true;
+      assets.style.display = "none";
+      rebuild();
+      requestAnimationFrame(() => requestAnimationFrame(markTerms));
+      window.addEventListener("load", rebuild);
+      document.fonts.ready.then(rebuild);
+    </script>
+  </body>
+</html>

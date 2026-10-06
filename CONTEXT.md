@@ -6,6 +6,8 @@
 
 单位定义仍从匹配 Catalog 的固定 Git 文件构建只读模型，未持久化为独立 Unit Dataset；地图是独立版本的文件数据包。完整流向、写入者及版本关系由[数据流与权威存储](docs/architecture/data-flow.md)维护。当前任务见 [current](docs/current.md)，按任务选择[专项合同](docs/README.md#按任务读取)。
 
+[项目图谱](docs/architecture/project-atlas.html)可视化本页概念的关系、流程与现状；下层变化同步回写。
+
 ## 稳定概念
 
 | 概念                       | 含义                                                                                                                       |

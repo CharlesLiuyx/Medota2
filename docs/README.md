@@ -8,6 +8,7 @@
 | ---------------------- | --------------------------------------------- | ---------------------------------------------- |
 | Agent规则与范围声明    | [AGENTS](../AGENTS.md)                        | 协作、授权、接手或验收流程变化                 |
 | 领域术语与模块地图     | [CONTEXT](../CONTEXT.md)                      | 新增概念或职责变化                             |
+| 现状与跨模块可视化总览 | [项目图谱](architecture/project-atlas.html)   | 图中现状、流程、实体、版本或模块关系变化       |
 | 数据流与权威存储       | [数据流](architecture/data-flow.md)           | 来源、存储、消费者或版本关系变化               |
 | 行为与不变量           | 下表对应现行Spec                              | 可见行为或数据合同变化                         |
 | 决策理由与替代范围     | 对应ADR                                       | 架构决定被接受、扩展或取代                     |
@@ -20,7 +21,16 @@
 | 实际状态与检查结果     | 本机active／manifest、数据库身份合同及run记录 | 执行核验；仓库只保存有基线的结论               |
 | 历史过程及原始审阅     | `history/`、`reviews/`                        | 完成任务／归档旧状态；不冒充当前规则           |
 
-更新流向：**实现或核验 → 更新对应权威页 → current调整任务状态与链接 → 受影响任务按路由重读**。README只维护能力摘要和使用入口，不重复完整合同。用户任务决定授权范围；Spec描述应有行为，代码及检查描述已实现／已验证状态，发现偏差时明确记录并修正。
+更新流向：**实现或核验 → 更新对应权威页及受影响图谱 → current调整任务状态与链接 → 受影响任务按路由重读**。README只维护能力摘要和使用入口，不重复完整合同。用户任务决定授权范围；Spec描述应有行为，代码及检查描述已实现／已验证状态，发现偏差时明确记录并修正。
+
+## 图谱维护约定
+
+[项目现状与架构图谱](architecture/project-atlas.html)是现行可视化总览的唯一维护源，直接编辑此HTML；`output/`中的旧附件和生成器不再作为维护源。CONTEXT维护稳定术语与模块入口，图谱解释它们如何关联、运转以及当前能力边界；具体行为、字段和不变量仍由对应Spec、数据流文档及ADR负责。冲突必须在同一任务中核对实现与合同并修正，不能保留两套解释。
+
+- **开始时**：配合CONTEXT按任务读取相关图：[资料与缓存](architecture/project-atlas.html#data)、[开发／门禁／交接](architecture/project-atlas.html#workflow)、[实体／版本／模块](architecture/project-atlas.html#entities)。涉及能力或平台状态时读[当前情况](architecture/project-atlas.html#now)及其依据，无需每次展开整份HTML。
+- **变更时**：下层代码、数据模型、Spec、ADR、命令或环境结论改变了图中的能力边界、输入输出、权威存储、缓存、流程门禁、实体关系、版本语义、模块职责或实现入口，必须在同一任务中回写图谱。更新受影响节点的定义、作用、详情、来源文件，相关箭头、图例、正文及核对依据；只改日期或链接不算完成。
+- **交付时**：Session记录受影响图的ID与回写结果；判定无影响时写明理由。按图下依据核对语义，运行`pnpm docs:check`、`pnpm check`；修改HTML时另做格式、文件链接及相关交互检查。文档静态检查不自动证明图意与实现一致。受影响图未同步，任务不得标为完成。
+- **证据与计划**：数量、机器状态和验证结果保留时间、代码／数据基线及适用范围；只有重新核验才能刷新。待实施设计明确标为计划并链接任务；实施后同时更新现状图和任务状态。当前[实体版本与Diff优化](work/entity-version-diff.md)仍待实施。
 
 ## 按任务读取
 
@@ -47,6 +57,7 @@
 | [环境登记](development-environments.md)                                     | active     | 机器能力、限制与推荐                        |
 | [同步运行手册](development-data-sync-runbook.md)                            | active     | 获取、发布、恢复操作                        |
 | [设计系统](design-system.md)                                                | active     | 共用视觉规则                                |
+| [项目现状与架构图谱](architecture/project-atlas.html)                       | active     | 跨模块可视化总览、现状及实现入口            |
 | [数据流](architecture/data-flow.md)                                         | active     | 来源、存储与版本关系                        |
 | [技术选型](architecture/technology-selection.md)                            | active     | 技术理由与演进条件                          |
 | [环境合同细节](architecture/environment-contract-details.md)                | active     | 身份、用途和权限概念                        |
@@ -90,6 +101,7 @@
 | [旧环境登记快照](history/2026-10-06-development-environments.md)            | historical | 环境观察历史                                |
 | [Context迁移与验收](history/2026-10-07-context-migration.md)                | reference  | 原章节去向、此次范围与验收                  |
 | [Windows复验任务](work/windows-native-validation.md)                        | active     | 平台失败的接手步骤与解除条件                |
+| [实体版本与 Diff 优化](work/entity-version-diff.md)                         | active     | 待实施需求、范围、差异语义及验收条件        |
 
 ## 维护与自动检查
 
