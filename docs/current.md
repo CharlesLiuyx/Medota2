@@ -188,3 +188,9 @@ About 已更新为当前数据与图鉴平台的中文简介，主题包含 `dot
 上传前 `pnpm check` 的9项检查全部通过：230个单测、4条真实数据流程（固定fixture数值用例在真实数据模式按设计跳过）、24个桌面E2E、20个隔离数据库合同用例、解析基准、正式构建与独立启动；类型检查复用输入匹配的已通过结果。证据 `.medota2/checks/1791261664534-884475c4/run.json`。待上传文件与两个未推送提交的凭据模式检查未发现真实凭据；本地配置、数据库、原始VPK、地图／单位原始图片及缓存继续由 `.gitignore` 排除。
 
 后续远程验证以 [GitHub Actions](https://github.com/CharlesLiuyx/Medota2/actions) 的实际运行结果为准；当前本机通过结果不能代替该环境的检查。
+
+## Windows 本地游戏资源来源
+
+2026-10-06，用户提供可用于后续必要资产提取的 Windows 工作站标识 `GofurWindowsLenovo`，游戏安装目录为 `C:\Software\Steam\steamapps\common\dota 2 beta`。本次在该路径核对到 `game/dota/pak01_dir.vpk`、`game/dota/maps/dota.vpk`、`game/dota/steam.inf`，以及 673 个 `pak01_*.vpk` 文件。安装内 `steam.inf` 声明 `ClientVersion=6944`、`SourceRevision=11085649`，时间为 2026-10-05；这些是本机安装声明，尚未完成 VPK 内容或来源 Git commit 的版本核验。
+
+该目录是可选、只读的本地输入，不纳入仓库，也不作为默认路径。后续任务应通过现有 `DOTA_VPK_PATH` 或提取命令的 `--vpk`、`--map-vpk` 参数显式传入，产物放在游戏目录外的忽略目录。当前图鉴来源构建号为 6918，本机游戏为 6944；不能把本机资源直接标为现有 Catalog 或 7.41e 地图的同版本资产。地图原生提取仍需与安装匹配的固定来源 commit 和 Source 2 Viewer CLI；本次没有执行提取或导入，CLI 未在 `PATH` 中找到。公开发布任何 Valve 原始资产前仍需单独审查许可。
