@@ -1,8 +1,8 @@
 # Hero Catalog v2：英雄、技能、资产与更新管线 Spec
 
-> 状态：已实现并通过 Phase 0–6 验收
+> 状态：Catalog 数据合同已实现；Phase 0–6为2026-08-31历史验收。当前页面由语义UI、列表与缓存Spec维护。
 >
-> 最后更新：2026-08-31
+> 合同整理：2026-10-07；历史审计基线保持原日期。
 >
 > 目标版本：Medota2 Hero Catalog v2
 >
@@ -75,84 +75,9 @@
 
 ## 5. Design System
 
-### 5.1 设计参考与边界
+共用视觉规则由[Design System](../design-system.md)维护；玩家页面及展示语义由[语义UI](semantic-game-ui.md)维护，连续加载与DOM分块由[列表合同](infinite-lists.md)维护，浏览器派生快照由[缓存合同](browser-catalog-cache.md)维护。
 
-整体信息架构参考 [Liquipedia Dota 2 Heroes Portal](https://liquipedia.net/dota2/Portal%3AHeroes)：按 Strength、Agility、Intelligence、Universal 分组的高密度英雄入口，以及百科式的页面导航和信息扫描体验。
-
-Medota2 只借鉴布局原则和信息层级，不逐像素复制页面、品牌资产或实现。目标是形成适合数据产品的独立视觉语言：深色优先、信息密度高、来源透明、筛选可恢复、桌面和移动端都能完成核心任务。
-
-### 5.2 设计原则
-
-1. **Scan first**：列表首先帮助用户快速定位实体，再提供详情深挖。
-2. **Provenance visible**：数据版本、更新时间和异常状态是一级信息，不藏在后台。
-3. **Dense but calm**：使用紧凑网格和表格，但通过一致间距、边框和层级降低噪声。
-4. **URL is state**：搜索、筛选、排序和视图状态写入 URL，可复制、刷新和返回。
-5. **No hover dependency**：重要信息和操作不能只在 hover 时出现；触摸和键盘完整可用。
-6. **Semantic styling**：组件消费语义 token，不直接散落十六进制颜色和一次性尺寸。
-7. **Locale resilient**：组件允许文本变长、换行和 fallback，不以中英文固定宽度设计。
-
-### 5.3 信息架构
-
-```text
-AppShell
-├── GlobalHeader
-│   ├── ProductIdentity
-│   ├── EntityTabs: Heroes | Abilities
-│   └── DatasetBadge
-├── PageHeader
-│   ├── Title / Summary
-│   └── PageTabs / Actions
-├── FilterBar
-└── PageContent
-    ├── CatalogGrid / DataTable
-    ├── DetailSections
-    └── ProvenancePanel
-```
-
-首期页面：
-
-- `/heroes`：按四种主属性分组的英雄目录，支持搜索和组合筛选；
-- `/heroes/[slug]`：`Overview`、`Abilities`、`Talents & Upgrades`、`Raw`、`Provenance`；
-- `/abilities`：按英雄、关系类型、行为、伤害、升级条件和状态筛选；
-- `/abilities/[internal-name]`：定义、逐级数值、升级、所属英雄、原始结构和 provenance。
-
-### 5.4 语义 token
-
-初始 token 分为以下层级；具体色值在实现阶段通过组件画廊和视觉回归固定：
-
-| 类别       | Token 示例                                                                                         | 用途                               |
-| ---------- | -------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| Surface    | `--surface-canvas`、`--surface-panel`、`--surface-elevated`、`--surface-hover`                     | 页面、面板、浮层和交互态           |
-| Text       | `--text-primary`、`--text-secondary`、`--text-muted`、`--text-inverse`                             | 主信息、辅助信息、弱提示和反色文本 |
-| Border     | `--border-subtle`、`--border-default`、`--border-strong`                                           | 结构分隔和聚焦层级                 |
-| Accent     | `--accent-primary`、`--accent-hover`、`--focus-ring`                                               | Dota ember 风格主强调与键盘焦点    |
-| Attribute  | `--attribute-strength`、`--attribute-agility`、`--attribute-intelligence`、`--attribute-universal` | 英雄主属性语义                     |
-| Status     | `--status-success`、`--status-warning`、`--status-danger`、`--status-info`                         | Green、Yellow、Red 和普通状态      |
-| Typography | `--font-sans`、`--font-mono`、`--text-*`、`--leading-*`                                            | 正文、标识符、数值和层级           |
-| Layout     | `--space-*`、`--radius-*`、`--content-max`、`--control-height-*`                                   | 间距、圆角、内容宽度和控件尺寸     |
-
-默认采用深色主题；token 结构必须允许后续增加浅色主题。正文使用 sans-serif，内部名称、ID、checksum、版本号和表格数值使用 monospace 或 tabular numerals。
-
-### 5.5 可复用组件
-
-- `AppShell`、`GlobalHeader`、`EntityTabs`、`PageTabs`；
-- `DatasetBadge`、`StatusBadge`、`AttributeBadge`、`RelationBadge`；
-- `FilterBar`、`SearchInput`、`FilterGroup`、`ActiveFilterList`；
-- `HeroTile`、`AbilityCard`、`CatalogSection`；
-- `DataTable`、`StatCell`、`KeyValueList`、`LevelValues`；
-- `EntityHeader`、`DetailSection`、`ProvenancePanel`、`RawDefinitionViewer`；
-- `EmptyState`、`FailureBanner`、`LoadingSkeleton`、`AssetFallback`。
-
-组件必须有明确的默认、hover、focus-visible、selected、disabled、loading、empty 和 error 状态。实现时提供开发用组件画廊，并以 Playwright 覆盖桌面、移动端、键盘导航和主要视觉状态。
-
-### 5.6 响应式与无障碍
-
-- 移动端保持实体搜索、主属性分组和详情导航可用，不依赖横向大表完成核心任务。
-- 宽表格在小屏幕转换为分组 key-value 或受控横向滚动，并保留行/列语义。
-- 所有交互控件有可见 `focus-visible`，点击区域不小于实现阶段规定的触摸目标。
-- 属性和状态不只依赖颜色表达；同时提供文本、图标或形状。
-- 图片必须有与上下文匹配的 `alt`；纯装饰图使用空 `alt`。
-- 页面标题、区域标题、表格表头、tab 和错误提示使用正确语义及 ARIA 关系。
+本节早期Raw／Provenance页面、内部名称常显及装饰边框方案已被上述合同替代。原始定义和provenance继续完整保存于数据层，不能据此在玩家页面恢复原始JSON或内部身份。
 
 ## 6. 规范数据来源
 
@@ -535,43 +460,15 @@ pnpm data:refresh:catalog:development
 
 ## 13. 查询与页面合同
 
-### 13.1 Heroes `/heroes`
+Hero与Ability查询按同一Catalog版本读取实体、关系及本地化，图片读取其匹配的独立资产版本。来源身份与原始定义在数据层保留；未知slug或internal name返回404，不做模糊fallback。
 
-- 页面顶部显示当前 catalog 的 ClientVersion、SourceRevision、commit、更新时间和健康状态。
-- Hero 按 Strength、Agility、Intelligence、Universal 分组；组内使用稳定排序。
-- 支持名称、内部名称、HeroID 搜索，以及主属性、角色、攻击类型、CM 状态组合筛选。
-- Hero tile 使用当前 asset head 中的数据库 icon 和适合显示宽度的 LoD；Valve 源缺失时使用已经入库、不会改变布局的实体 fallback。
-- 筛选状态保存在 URL，并在 locale 切换后保留。
-
-### 13.2 Hero detail `/heroes/[slug]`
-
-- `Overview`：名称、图像、简介、背景、属性、角色和状态；
-- `Abilities`：当前普通、终极、innate 和间接能力，清楚标记 relation；
-- `Talents & Upgrades`：talents、Facet、Scepter、Shard 及其他升级关系；
-- `Raw`：经过安全展示的 ordered source definition/typed projection；
-- `Provenance`：catalog、文件、source key、checksum、mapper/schema 版本和最新差异。
-
-### 13.3 Abilities `/abilities`
-
-- 默认只显示 `current`，允许切换到 `indirect`、`defined_unbound`、`template` 和 `deprecated`；
-- 支持名称/internal name、Hero、relation、behavior、damage type、upgrade condition 和状态筛选；
-- 列表显示图标、双语名称、internal name、所属 Hero 摘要、核心标签和逐级 cost/cooldown 摘要；
-- 搜索、筛选、排序和 locale 写入 URL；分页、页码 URL 和一次性 DOM 全量渲染条款已由[全局 List Spec](infinite-lists.md)取代，cursor 与滚动位置不作为公开查询状态。
-
-### 13.4 Ability detail `/abilities/[internal-name]`
-
-- 当前 asset head 中的数据库 icon、适合显示宽度的 LoD、本地化名称和描述；
-- behavior、target、damage、cast、cooldown、mana 和逐级 values；
-- modifier/condition、Scepter/Shard/Facet 等升级差异；
-- 所属 Heroes、relation kind、source slot 和当前状态；
-- raw ordered definition、未知字段和 provenance；
-- internal name 不存在时返回 404，不做模糊 fallback。
+页面入口仍为 `/heroes`、`/heroes/[slug]`、`/abilities`、`/abilities/[internal-name]`。可见字段、筛选、语言、天赋与升级内容以[语义UI](semantic-game-ui.md)为准；cursor与稳定排序以[列表合同](infinite-lists.md)为准；本机快照与在线回退以[缓存协议](browser-catalog-cache.md)为准。本文不再维护第二份页面清单。
 
 ## 14. 安全与内容处理
 
 - 上游本地化默认作为转义文本渲染；若支持少量格式标记，使用显式 allowlist parser/sanitizer。
 - 不把来源字符串直接交给 `dangerouslySetInnerHTML`。
-- Raw viewer 限制单节点和整页输出大小，防止异常输入拖垮页面。
+- 开发审阅接口若展示原始定义，应限制输出大小；玩家页面不包含Raw viewer。
 - Git remote、source path 和错误内容在日志/UI 中按不可信数据处理。
 - Web 账号继续只读；Worker 无 DDL 和直接修改 head 的权限，只能调用受约束 promotion/rollback 函数。
 - 资产提取器只处理明确配置的 Dota 2 VPK 与 allowlist 路径，不扫描无关目录或修改 VPK 内容；提取结果只写入配置的 Git 忽略目录。
@@ -608,9 +505,9 @@ pnpm data:refresh:catalog:development
 ### 15.3 UI/E2E
 
 - `/heroes` 四属性分组、搜索、筛选、URL 恢复和 locale 切换；
-- Hero 详情的 Abilities、Talents & Upgrades、Raw 和 Provenance；
+- Hero 详情的技能、天赋、命石和升级效果按[语义UI合同](semantic-game-ui.md)呈现；
 - `/abilities` 默认 current、状态切换和组合筛选；
-- Ability 详情 values、modifier、归属关系和 provenance；
+- Ability 详情的描述、数值、modifier与归属关系按[语义UI合同](semantic-game-ui.md)呈现；来源和原始定义由数据层与审计检查；
 - exact Valve、alias、无源/版本不匹配 generated fallback 都能从数据库返回可解码图片；
 - Hero/Ability 列表与详情按显示宽度请求 LoD，响应尺寸、MIME、ETag 和 cache header 正确；
 - 未导入、最近更新失败、Yellow 等待 Review、404 和空结果；
@@ -634,6 +531,8 @@ pnpm data:refresh:catalog:development
 - 三个上游 Git 仓库和本地 Dota 2 VPK 内容始终只读；Medota2 不提交完整快照、提取缓存、数据库 dump 或批量 Valve 资产。
 
 ## 16. 实施阶段
+
+以下阶段和验收描述2026-08-31实现基线，不是当前任务清单；现行状态见[当前工作](../current.md)。
 
 ### Phase 0：合同与架构基线
 

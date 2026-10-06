@@ -1,8 +1,8 @@
 # 全局 List 无限滚动与上 7× / 下 10× 预加载 Spec
 
-> 状态：已实现并通过验收
+> 状态：列表基座已实现；早期验收记录限定其基线，当前消费者和缺口见§6。
 >
-> 最后更新：2026-09-01
+> 合同整理：2026-10-07；原v1验收日期2026-09-01。
 >
 > 目标版本：Medota2 Global Infinite List v1
 >
@@ -16,9 +16,9 @@
 
 ## 1. 文档目的
 
-Medota2 的所有 List——无论是远程查询结果、本地已有数组、卡片网格、关系记录、审计记录还是表格行——统一使用无限滚动与惰性渲染，不再用“上一页 / 下一页”、页码或 `page x / y` 切断浏览，也不因集合当前较小就绕开共享行为。用户沿页面文档流持续滚动；接近已加载或已渲染范围任一端时，系统在可见区上方提前七个 viewport、下方提前十个 viewport 加载或恢复内容。
+Medota2 可独立浏览的集合（远程查询结果、大型本地数组、卡片网格、关系记录、审计记录和表格行）统一使用无限滚动与惰性渲染；有限详情字段按§6的语义UI合同直接展开。集合浏览不再用“上一页 / 下一页”、页码或 `page x / y` 切断浏览，也不因集合当前较小就绕开共享行为。用户沿页面文档流持续滚动；接近已加载或已渲染范围任一端时，系统在可见区上方提前七个 viewport、下方提前十个 viewport 加载或恢复内容。
 
-本需求属于全局集合浏览的执行切面。它不改变 Hero、Ability、Facet 或来源记录的领域定义，也不改变 VPK SSOT、Catalog 原子版本和 provenance 边界。目标是把同一套持续浏览语法沉淀为 Design System 级『InfiniteList』：Catalog 只是远程 cursor 适配器之一，详情页的本地有界集合和表格行同样消费该基座。不能只删除 `/abilities` 截图中的分页按钮。
+本需求属于全局集合浏览的执行切面。它不改变 Hero、Ability、Facet 或来源记录的领域定义，也不改变 VPK SSOT、Catalog 原子版本和 provenance 边界。目标是把同一套持续浏览语法沉淀为 Design System 级『InfiniteList』：Catalog 只是远程 cursor 适配器之一，大集合可复用本地／表格adapter；玩家详情中的有限语义字段已由语义UI合同改为直接展开。不能只删除 `/abilities` 截图中的分页按钮。
 
 最可能的后续演化方向：更多 List 呈现形态、更多远程实体、可切换排序、从搜索/详情返回时精确恢复锚点。本文在 source adapter、cursor、快照身份、行语义和滚动锚点上预留这些扩展点。
 
@@ -40,7 +40,7 @@ Medota2 的所有 List——无论是远程查询结果、本地已有数组、�
 
 - 不改变 Hero/Ability 业务字段、导入器、数据库 schema 或发布门禁。
 - 不引入 Redux、Zustand、TanStack Query 或第三方虚拟列表依赖。
-- 不强迫天然有界且已随详情取得的集合新建网络 API；它们使用 local adapter，但仍必须惰性分块渲染。
+- 不强迫天然有界且已随详情取得的集合新建网络 API；大型可独立浏览集合使用local adapter；玩家技能、天赋等有限语义字段按语义UI合同直接展开。
 - 不支持任意跳页、页码输入或“最后一页”捷径。
 - 本期不承诺跨浏览器会话保存滚动位置；同一浏览历史中的详情往返必须可恢复。
 
@@ -109,21 +109,20 @@ graph LR
 
 ## 6. 全局适用范围清单
 
-| 页面 / 集合                                                        | 分类                       | v1 行为                                                                                                                  |
-| ------------------------------------------------------------------ | -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `/heroes` Hero 结果                                                | 远程卡片 List              | 必须迁移到共享『InfiniteList』remote adapter；服务端按属性 rank + HeroID 稳定排序，跨 chunk 保持四属性分组与完整组计数。 |
-| `/abilities` Ability 结果                                          | 远程卡片 List              | 必须迁移到同一 remote adapter；删除分页 UI、页码文案和 `page` URL 输出。                                                 |
-| Hero detail 的普通 Abilities、Talents & Upgrades                   | 本地关系卡片 List          | 使用 local adapter 分块惰性渲染；保持 section 与 link 语义。                                                             |
-| Hero detail 的 Facets                                              | 本地卡片 List              | 使用 local adapter；数量很小时可能因完整落入预取带而立即渲染，这是空间合同的正常结果。                                   |
-| Hero detail 的 roles、source files、localizations、reference diffs | 本地审计 / 定义 List       | 全部接入 local adapter；`dl`、row 与 disclosure 语义不变。                                                               |
-| Hero detail 的 StatGroup rows                                      | 本地 definition List       | 使用 headless/local adapter，继续输出合法 `dl > div > dt/dd` 结构。                                                      |
-| Ability detail 的 AbilityValues                                    | 本地 table row List        | 使用 table adapter；继续输出原生 `table/thead/tbody/tr/th/td`，sentinel 与 spacer 使用合法跨列表格行。                   |
-| Ability detail 的 Hero bindings、raw occurrences                   | 本地关系 / disclosure List | 使用 local adapter；完整数据仍随详情 SSR，不另建 API。                                                                   |
-| Ability detail 的 numeric IDs、unknown fields、行为或状态枚举      | 本地紧凑 List              | 接入 local/headless adapter；可保持 inline/wrap 呈现，不把每个 badge误报为独立流。                                       |
-| Design System 中用于展示 List 组件的动态样例                       | 本地示例 List              | 使用同一 local adapter，以便画廊覆盖 loading、error、empty、end 和 spacer 状态。                                         |
-| 导航 tabs、筛选 options、语言选择项、单卡内部固定 badge/role 摘要  | 控件选项或单实体属性       | 不属于内容 List，不创建滚动状态机。                                                                                      |
+本表区分当前接入、后续缺口与其他专项合同，避免把v1旧界面清单当作当前全部实现。
 
-任何新的内容集合默认属于『InfiniteList』，不以“当前只有几项”为例外。若结构不能使用包装组件（例如严格 table/dl 内容模型），必须使用同一 headless controller / source adapter，而不是绕开状态机。唯一例外是导航、表单选项和单实体内部不可独立浏览的属性摘要；例外必须在对应 Spec 中说明。
+| 集合                             | 当前实现与合同                                                                                      |
+| -------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Heroes／Abilities目录            | 同一InfiniteList；首批SSR／在线cursor，验证完整快照后使用local adapter；上7×／下10×分块挂载         |
+| 玩家详情的技能、天赋、命石、属性 | 按[语义UI](semantic-game-ui.md)直接展开有限语义内容；该决定取代旧详情全量接入adapter的要求          |
+| 原始定义／provenance审计列表     | 已从玩家页面移除；数据层保留，不为本合同重新添加UI                                                  |
+| 单位目录                         | 当前浏览器内筛选并直接渲染有界数组，尚未接入分块adapter；作为已知实现缺口保留，后续单独确定验收范围 |
+| 地图点位面板                     | 按[地图Spec](map-explorer.md)显示搜索后前80项的工具面板；不冒充全量目录流                           |
+| 开发数据库查看页                 | 按[同步Spec](development-data-sync.md)的受限分页读取，属于开发工具接口                              |
+| Design System列表样例            | 保留local／table adapter状态展示与测试                                                              |
+| 导航、表单选项、单卡固定摘要     | 控件或单实体属性，不创建无限滚动状态机                                                              |
+
+新增大型可独立浏览集合优先复用本基座。确需其他展示方式时在专项Spec明确规模、加载和可用性边界；不能仅因使用 `.map()` 就自动添加滚动状态机。
 
 ## 7. L4 状态与属性层
 
@@ -216,7 +215,7 @@ interface ListSlice<T> {
 
 ## 10. L6 跨对象规则
 
-1. 全站任何 List 都不得出现上一页、下一页、页码、`page x / y` 或生成 `page` URL。
+1. 采用本合同的内容目录不出现上一页、下一页、页码或 `page` URL；专项接口及当前接入范围见§6。
 2. URL 只保存可分享的查询意图：搜索、筛选、排序和 locale；像素位置与 cursor 属于浏览历史状态。
 3. 旧 `/abilities?page=N` 规范化到移除 `page` 的同筛选 URL，从列表顶部开始；无错误空页。
 4. 一个 List 只接受同一 `sourceIdentity` 的 slice；Remote Catalog 还必须满足同一 `datasetVersionId + assetDatasetVersionId`。
@@ -227,12 +226,12 @@ interface ListSlice<T> {
 9. footer 在真正到达结果末尾后可达；达到 end 后不再发送请求。
 10. 图片保留尺寸占位、按显示宽度选择 LoD 并 lazy decode，避免无限流引入 CLS。
 11. 不创建嵌套主滚动容器；键盘、触摸、滚轮和浏览器文档滚动共享同一行为。
-12. 详情页有界集合、表格行和审计记录同样通过 local/table adapter 分块惰性渲染且不分页；数据可随详情一次取得，但 DOM 不得绕开 InfiniteList。
+12. 大型本地集合可用local/table adapter；玩家详情有限字段、开发表格及地图工具面板的范围见§6，不能按旧审计UI要求恢复已移除内容。
 13. 包装组件必须保持合法 HTML 内容模型；`table`/`tbody`/`tr`、`dl`/`dt`/`dd`、`ul`/`li` 不得为了通用性被无语义 `div` 破坏。必要时使用 headless hook。
 
 ## 11. 性能、可用性与观测
 
-- Remote 首屏只查询一个 slice；Heroes 不再一次返回全部，Abilities 不再用高位 OFFSET。本地详情数据可一次取得，但只渲染预取带需要的 slices。
+- Remote 首屏只查询一个 slice；Heroes 不再一次返回全部，Abilities 不再用高位 OFFSET。接入本合同的大型本地集合只渲染预取带需要的slices。
 - repository 先用 keyset 选出 `limit + 1` 个实体 key，再聚合卡片需要的 owner/role 信息，避免对全结果聚合后才 LIMIT。
 - DOM 只保留预取带附近 chunk；已取数据在当前 mounted List 内缓存。v1 数据规模下允许缓存完整本地集合及 127 Heroes / 2,703 Abilities，DOM 仍必须有界。
 - ResizeObserver 只测 chunk 容器；scroll 降级检查按 animation frame 节流，不在每个 scroll event 同步遍历全部卡片。
@@ -260,13 +259,15 @@ interface ListSlice<T> {
 ### 12.3 Playwright / Visual
 
 - 使用至少跨 4 个 chunk 的合成 fixture；Desktop Chrome 与 Pixel 7 都连续下滚、向上恢复并到达 footer。
-- Hero detail 与 Ability detail 的每一种内容 List 都能读取完整 items；在强制小 chunk 测试模式下可观察 local/table adapter 的向下展开与向上恢复。
+- Hero／Ability详情的有限字段按语义UI合同完整展开；已接入的独立集合在强制小chunk测试中核对local/table adapter的向下展开与向上恢复。§6标注的未接入消费者不以旧用例冒充通过。
 - 页面没有分页 nav、页码文案或 `page` URL；加载触发点落在上方 7 屏、下方 10 屏预取带。
 - 快速切换筛选时旧响应不污染；网络失败保留卡片并可重试；end 后不再请求。
 - 详情→后退恢复合理锚点；键盘可进入所有已渲染卡片，新增内容不抢焦点。
 - 长距离滚动后卡片 DOM 数保持有界；视觉基线固定初始窗口、loading/error/end 状态，避免 full-page 截图触发不确定的无限加载。
 
 ## 13. 验收标准
+
+以下为2026-09-01 v1基线记录；详情展示已由§6更新，不能把旧勾选视为所有当前消费者已接入。
 
 - [x] `/heroes`、`/abilities` 以及所有 Hero/Ability detail 内容 List 均使用同一『InfiniteList』controller；没有分页控件、页码或公开 page 状态。
 - [x] Remote、local 与 table List 都在距可见区上方 7 个 / 下方 10 个 viewport 时加载、展开或恢复，且 resize 后仍正确。
@@ -281,6 +282,8 @@ interface ListSlice<T> {
 - [x] Unit、integration、Desktop/Pixel 7 E2E、typecheck、lint 与格式检查通过。
 
 ## 14. 实施阶段
+
+以下保留v1历史实施顺序。
 
 1. **Spec 与合同**：固化本文；更新 Hero Catalog v2、历史 MVP、Design System 与 README 的冲突条款。
 2. **查询基座**：共享 remote cursor codec / ListSlice contract；Heroes、Abilities 双向 keyset；按 dataset 固定资产查询。

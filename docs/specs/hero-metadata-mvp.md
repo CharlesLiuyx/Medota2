@@ -1,5 +1,7 @@
 # 英雄元数据显示 MVP 功能 Spec
 
+<!-- superseded-by: hero-catalog-v2.md -->
+
 > 状态：MVP 已实现；Catalog 范围已由 [Hero Catalog v2](hero-catalog-v2.md) 取代，本文保留为历史兼容合同
 >
 > 最后更新：2026-08-31
@@ -12,7 +14,7 @@
 
 本文只定义 Medota2 第一个版本的英雄元数据接入、存储和前端显示范围。全项目技术选型、PostgreSQL 边界、Data Worker 和 Rust 演进理由见[项目技术选型与数据处理架构](../architecture/technology-selection.md)。
 
-本文中的页面、表、命令和测试已经由当前 MVP 实现，并继续作为后续回归与兼容合同。
+本文记录首版实现与兼容历史。现行实体、来源、导入和查询合同由[Catalog v2](hero-catalog-v2.md)承接；页面、列表与缓存使用其链接的当前专项Spec。保留本文便于追溯旧fixture和迁移，不能按历史页面或命令恢复旧行为。
 
 ## 2. MVP 结果
 

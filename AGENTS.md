@@ -1,55 +1,41 @@
 # Medota2 开发指引
 
-## 当前状态
+Medota2 是本地 Dota 2 数据与图鉴平台。能力和模块见 [CONTEXT.md](CONTEXT.md)，本文件只维护 Agent 的执行规则。
 
-Medota2 已实现首个英雄元数据 MVP。仓库包含 Next.js Web、PostgreSQL migration、VPK 导入器、dotaconstants 参考比较、测试 fixture，以及单元、集成和 E2E 测试。
+## 开始任务与 Context 范围
 
-文档、Issue 和代码仍必须区分“当前已有”和“后续计划”。README 中列出的命令是当前真实接口；修改脚本、目录或运行要求时同步更新 README 和 Spec。
+1. 读取 [CONTEXT.md](CONTEXT.md)、[当前工作](docs/current.md)、[环境登记](docs/development-environments.md)，核对 `git status`、相关 diff 和 `.medota2/sessions/` 中涉及相同文件的记录。已自动加载的相同内容无需重复读取。
+2. 按[文档导航](docs/README.md#按任务读取)追加本任务的 Spec、ADR、代码及测试。默认不展开 `docs/history/` 和大型 HTML Review；调查旧决定时按链接读取。
+3. 在 `.medota2/sessions/<id>.md` 写范围卡：**目标与完成条件、可修改文件／接口、读取的合同、代码及未提交改动基线、数据／环境、验证范围、状态与下一步**。不涉及数据时注明；涉及时核对 lock、Catalog 或地图版本。跨 Session／机器的长任务另在 `docs/work/` 保留必要交接。
+4. 任务新增模块、迁移、来源版本或运行环境时，先更新范围并补读相关合同；不能将既有授权自动扩展到新的高风险操作。普通实现细节自行决定，不重复询问已明确的需求。
 
-## 项目职责
+缺少 Context 或证据时明确缺项，按索引、Git 历史、来源与复现命令恢复；不能凭旧日志或私人聊天补造当前事实。当前环境缺能力时，按登记册推荐具体环境、版本条件、待核验项与交接步骤，并继续独立工作；推荐不等于远程执行授权。
 
-Medota2 计划负责：
+## 共享工作台与协作
 
-- 外部数据的适配、校验、标准化与版本兼容；
-- 比赛/API/回放数据接入；
-- 稳定的产品领域模型、存储和查询；
-- 分析逻辑、本地服务、界面与测试。
+- 默认共用当前目录、分支和 `pnpm dev` 工作台（本工作区通常为 `http://127.0.0.1:3000`；已初始化工作区以命令报告的 origin 为准）。第二个 Session 复用服务；配置、迁移或脚手架变化后用 `pnpm dev:restart` 恢复预览。
+- 改同一处代码前重读最新内容；冲突由一个 Session 整合，不覆盖别人的未提交改动。暂存、提交、切换分支、安装依赖、共享数据库迁移／重置与性能基准先协调，短时顺序执行。
+- 不自动提交、推送或发布。用户授权推送时用 `pnpm push` 交接代码和完整业务数据；另一环境用 `pnpm sync` 消费同一基线。两者的副作用见[同步手册](docs/development-data-sync-runbook.md)。机器差异只留在兼容配置中。
 
-`GameTracking-Dota2`、`dota_vpk_updates` 和 `dotaconstants` 是独立的可选上游来源，不属于本仓库，也不是当前已安装的依赖。不要把它们 vendor 或批量复制进本仓库。
+## 实施与验证
 
-## 数据接入规则
+- 先用 `pnpm check --plan` 看范围，修改后运行 `pnpm check`；指定范围用 `--files`，持续编辑用 `--watch`。过期结果补跑有关检查，`pnpm verify` 用于显式全量诊断。
+- 测试覆盖少量有效使用流程；计算检查已知答案，测量对应实现。复用已有专项测试，不为每个函数新增测试，不把覆盖率当默认门槛。检查失败先诊断，不降低标准或把局部通过说成全部通过。
+- 修改命令、运行时或环境要求时，同步对应运行手册；修改行为同步负责该规则的 Spec。新增大型框架、服务或 Rust 前提交 ADR，技术理由见[技术选型](docs/architecture/technology-selection.md)。
+- 纯文档由 `pnpm docs:check` 检查可达性、命令和入口，再由 `pnpm check` 检查格式；不为文档启动产品数据库或浏览器。
 
-- 每个来源保留独立适配边界，再映射到 Medota2 领域模型。
-- 输入位置必须可配置；不能依赖某个用户机器上的相邻目录或绝对路径。
-- 派生数据至少记录 `source_repository`、`source_commit`、`source_path`、`client_version`、`imported_at`、导入器版本和目标 schema 版本。
-- 对缺失字段、未知键、重复 ID、补丁切换和来源冲突建立显式校验与测试。
-- 不通过文件修改时间推断数据版本，也不把某个 checkout 自动视作最新上游。
-- 外部游戏资源在再分发前必须单独审查许可；公开 Git 仓库不等于资源可以自由复制。
+## 数据与来源
 
-## 开发规则
+- 各来源独立适配，再映射领域模型。外部仓库为可选只读输入，不 vendor 或批量复制进代码仓库；输入位置可配置，不使用机器绝对路径作为默认值。
+- 派生数据保留 `source_repository`、`source_commit`（非 Git 来源明确为空并保留 URL／哈希）、`source_path`、`client_version`、`imported_at`、导入器与 schema 版本；未知版本不猜测。
+- 对缺失字段、未知键、重复身份、补丁切换和来源冲突显式校验。数据版本不用文件修改时间、分支名或 checkout 的“最新”状态推断。Catalog、资产、地图、同步快照与数据库身份按[数据流](docs/architecture/data-flow.md)分别处理。
+- 已应用的旧 migration 不改写。凭据、`.env`、数据库卷、大型原始快照和缓存不进入代码 Git；批准的业务包按私有数据同步协议交接。外部资源再分发仍需许可审查。
 
-- 每次开始先读 `CONTEXT.md`、`docs/current.md`、当前 `git status` 和相关 diff；任务或接口变化后重新读相关上下文。
-- 开始任务时读取 `docs/development-environments.md`，核对当前环境职责、资源与限制；发现资源／工具／平台缺项时，推荐具备对应能力的已登记环境，说明依据、版本条件、待核验项与交接步骤，并继续完成当前环境可独立开展的工作。环境事实集中更新该登记册，不把机器路径写成代码默认值，不把推荐当作远程执行授权。
-- 默认共用当前目录、分支和 `pnpm dev` 的固定工作台（`http://127.0.0.1:3000`）。第二个 Session 复用服务；用 `pnpm dev:restart` 迁移/重启并恢复预览。
-- 每个 Session 在 `.medota2/sessions/<id>.md` 写目标、涉及文件/接口、检查结果和状态。改同一处代码前读取最新内容，冲突由一个 Session 整合；不得覆盖他人的未提交改动。
-- 暂存/提交/切换分支、安装依赖、共享数据库迁移和重置先协调并顺序执行。普通代码编辑继续并行；不自动提交、推送或发布。
-- 用户授权推送时使用 `pnpm push` 一起交接代码和完整本地业务数据；另一环境使用 `pnpm sync` 拉取同一代码与数据快照。机器差异仅留在兼容配置中，不为各机器维持不同业务数据版本。
-- 日常用 `pnpm check --plan` 查看范围，用 `pnpm check` 运行或复用必要检查。指定范围可用 `--files`，持续编辑可用 `--watch`。结果过期时补跑有关检查；`pnpm verify` 仅作显式全量诊断。
-- 测试以少量有效使用流程为主；计算改动检查已知答案，需要时运行 `pnpm bench`。不为每个函数新增测试，不把覆盖率作为默认门槛。
-- 结束或交接时，把稳定结论、尚未解决的问题和下一步写入 `docs/current.md`。工具私有聊天记录不作为唯一上下文。
+## 结束任务与信息归属
 
-- 当前 MVP 技术栈已由 `docs/architecture/technology-selection.md` 落地；新增大型框架、服务或 Rust 前先提交 ADR。
-- 修改运行时组件时，同步补充真实可执行的安装、运行和测试说明。
-- 大型原始快照、凭据、`.env`、数据库文件和缓存不提交到 Git。
-- 变更外部来源假设时，同步更新 `docs/repositories/` 的说明与审阅基线。
-- 保持 README 的状态、仓库结构和路线图与实际内容一致。
+按[SSOT 表](docs/README.md#事实归属与更新流向)回写原维护位置：稳定概念回 CONTEXT，行为回 Spec，决定回 ADR，机器事实回环境登记，来源假设回来源审阅。README 只同步能力摘要与入口。
 
-## 文档入口
-
-- `README.md`：项目定位、当前状态与路线图。
-- `docs/development-environments.md`：各环境职责、资源、限制、核验依据与任务推荐／交接规则。
-- `docs/repositories/README.md`：外部来源关系、选源和 provenance 要求。
-- `docs/repositories/*.md`：三个来源的结构与职责审阅。
+`docs/current.md` **替换更新当前状态，不追加整段流水**；只保留活动任务、阻塞、下一步和关键交接链接。长任务细节在 `docs/work/`，完成过程及验收进入 `docs/history/`。本机日志／截图标明所属环境、代码／数据基线、验证范围及复现命令；忽略目录路径不视作跨机器可用附件。不能把准备完成、HTTP 可用或推送成功当作完整产品验收。
 
 <!-- BEGIN:nextjs-agent-rules -->
 

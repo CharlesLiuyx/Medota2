@@ -2,12 +2,14 @@
 
 > 2026-10-06 更新：日常共享开发、可复用测试环境、按需 CI 和 development Web 连接验证方式由 [ADR 0007](../adr/0007-shared-development-workbench.md) 与[开发工作台规范](../specs/development-workbench.md)替代。本文保留完整隔离验证与数据库合同的详细依据；其中每次独占资源、CI 默认全量 verify 的表述仅适用于历史方案或显式独立验证。
 
-- 状态：Implemented locally；legacy stack rollout 待单独授权
+- 状态：显式隔离验证合同已实现；legacy stack rollout仍需单独精确授权。日常检查由工作台Spec负责。
 - 日期：2026-08-31
 - 关联：[Medota2 Domain Context](../../CONTEXT.md)、[ADR 0005：使用可证明的 Environment Contract 隔离运行环境](../adr/0005-environment-contract.md)、[ADR 0004：Hero 与 Ability 图标使用数据库资产数据集](../adr/0004-database-icon-asset-datasets.md)
 - 历史输入：`architecture-review-20260831-051314.html` 的 A–E 架构候选；该报告只作为审查证据，本 Spec 是后续实现与验收基线
 
 ## 1. 文档目的
+
+适用范围：§3–10的独占资源、禁网和cleanup规则只用于 `test:integration:isolated`、`test:e2e:isolated` 及显式 `verify`；数据库身份和DB Gate约束对所有入口有效。§2、§11–13为2026-08-31设计／验收历史，不能覆盖当前共享工作台或CI。
 
 本 Spec 把 Medota2 的环境隔离、测试运行隔离、数据库栈生命周期、验证证据和数据库发布门禁定义成一套可执行合同。它回答五个问题：
 
@@ -38,7 +40,7 @@
 ### 3.1 目标
 
 - 所有 Web、Worker、migration、seed 和 test 数据库访问继续只经过 Environment Contract seam。
-- 每次 Integration、E2E 或全量 verify 都生成唯一、不可复用的 Run Identity。
+- 每次显式isolated Integration、E2E或全量verify都生成唯一、不可复用的Run Identity。
 - 每个 Test Run 的 PostgreSQL project、host port、receipt root、Next dist、Web port、Playwright output 和日志目录都由 Harness 分配。
 - Test Run cleanup 只能命中本 run 创建并记录的精确资源；不按前缀、时间或进程名猜测。
 - development 和 local-review 的持久 volume、Compose project、credential receipt 与默认浏览器 origin 分离。
@@ -130,11 +132,11 @@ Database Identity marker、receipt、configured/observed endpoint、PostgreSQL s
 
 Harness 对 package scripts 提供三个稳定 Interface：
 
-| Interface               | 行为                                                                                                     |
-| ----------------------- | -------------------------------------------------------------------------------------------------------- |
-| `pnpm test:integration` | 创建 disposable Test Run，执行 migration 与 Integration adapter，写证据并精确 cleanup                    |
-| `pnpm test:e2e`         | 创建 disposable Test Run，migration + synthetic seed，启动唯一 origin，执行 Playwright adapter并 cleanup |
-| `pnpm verify`           | 编排静态检查、Unit、production build/start smoke、Integration 与 E2E，并生成一份总 manifest/index        |
+| Interface                        | 行为                                                                                                     |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `pnpm test:integration:isolated` | 创建 disposable Test Run，执行 migration 与 Integration adapter，写证据并精确 cleanup                    |
+| `pnpm test:e2e:isolated`         | 创建 disposable Test Run，migration + synthetic seed，启动唯一 origin，执行 Playwright adapter并 cleanup |
+| `pnpm verify`                    | 编排静态检查、Unit、production build/start smoke、Integration 与 E2E，并生成一份总 manifest/index        |
 
 Harness implementation 负责：Run Identity、目录、端口、Compose 生命周期、bootstrap secret、local-stack adoption、子进程环境、日志、证据和 cleanup。Vitest/Playwright config 只读取 Run Context，不再含固定 run、port、dist 或报告目录。
 
@@ -298,11 +300,11 @@ public schema canonical fingerprint
 - `pnpm verify` 成功时 manifest 的每个 required step 都是 `passed`，cleanup 为 `cleaned`。
 - 任一步失败时命令退出非零，manifest/index 仍存在，失败日志可定位。
 - Unit coverage 低于仓库阈值时失败；阈值只能通过代码与测试提高，不在失败后动态降低。
-- CI 与本地使用同一 verify Interface，不维护第二套命令顺序。
+- 本地与CI日常调用同一 `pnpm check` 规划；本节 `verify` 是显式诊断，不再是CI默认入口。
 
 ## 11. Definition of Done
 
-以下条件必须全部满足，才能把整体方案标记为 implemented：
+以下勾选记录2026-08-31方案验收；其中日常test命令、CI默认verify及固定独占资源已由ADR0007取代，不能作为当前检查状态。
 
 - [x] 正常数据库 caller 全部通过 opaque verified capability；architecture lint 不发现 raw `pg.Pool`/URL 绕过。
 - [x] Environment Contract 的 Unit、红队 Integration、UI/API projection 和 fresh-stack E2E 通过。
@@ -319,6 +321,8 @@ public schema canonical fingerprint
 - [x] 现有 `54321` 栈若未获得精确破坏性授权，明确记录为“代码就绪、尚未 cutover”，没有伪装为已激活。
 
 ## 12. 实施阶段
+
+历史实施顺序；新的活动任务见[当前工作](../current.md)。
 
 ### Phase 0：Spec 与完成账本
 

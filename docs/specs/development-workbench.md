@@ -6,7 +6,7 @@
 
 ## 使用体验
 
-一个开发者可以同时使用多个 AI Session，共用当前工作目录、分支、开发服务和开发数据。固定地址为 `http://127.0.0.1:3000/heroes`，可以在同一站点内浏览其他页面。任何 Session 保存页面代码，Next.js 自动更新当前页面，尽量保留查看位置、URL 参数和组件状态。框架需要完全重新加载或组件重挂载时，临时组件状态可能重置。
+一个开发者可以同时使用多个 AI Session，共用当前工作目录、分支、开发服务和开发数据。本工作区默认地址为 `http://127.0.0.1:3000/heroes`（已初始化workspace以其origin为准），可以在同一站点内浏览其他页面。任何 Session 保存页面代码，Next.js 自动更新当前页面，尽量保留查看位置、URL 参数和组件状态。框架需要完全重新加载或组件重挂载时，临时组件状态可能重置。
 
 启动时先顺序预热英雄／技能目录、各一条详情路由与浏览器快照接口，再报告共享服务就绪；仅执行只读请求。这样避免第一次点击遇到并发编译／整页热更新而丢失导航。预热失败记录到开发日志，页面仍可使用既有在线路径。
 
@@ -16,30 +16,7 @@
 
 ## 命令
 
-| 命令                                                   | 当前行为                                                                                |
-| ------------------------------------------------------ | --------------------------------------------------------------------------------------- |
-| `pnpm dev`                                             | 启动或连接后台共享服务；优先复用已有真实数据和资产，无真实环境时才准备 development 样例 |
-| `pnpm dev:stop`                                        | 结束该工作台的 Web 与计算子进程，保留数据库                                             |
-| `pnpm dev:restart`                                     | 重新准备数据库并启动共享 Web；用于迁移、配置及脚手架变更                                |
-| `pnpm dev:sample`                                      | 直接运行默认解析样例并输出 JSON                                                         |
-| `pnpm check --plan`                                    | 只显示范围、原因和所需环境                                                              |
-| `pnpm check`                                           | 运行缺失检查或复用条件一致的静态结果                                                    |
-| `pnpm check --base REF`                                | 对比 REF 与当前目录，包含未提交、删除、重命名及新增文件                                 |
-| `pnpm check --files PATH...`                           | 明确指定本次检查范围，仍扩展该范围的关联流程                                            |
-| `pnpm check --watch`                                   | 等待相关内容改变后重查；失败等待修复，过期结果合并重跑                                  |
-| `pnpm check --force`                                   | 不使用既有检查通过记录                                                                  |
-| `pnpm test:journeys [--grep PATTERN]`                  | 复用共享 Web，只读浏览当前数据                                                          |
-| `pnpm test:journeys --fixture`                         | 使用受管测试库，包含已知数值验收                                                        |
-| `pnpm test:integration [Vitest 参数]`                  | 排队使用可复用测试库，转发文件与用例筛选                                                |
-| `pnpm test:e2e [Playwright 参数]`                      | 可复用测试库，默认 desktop 项目，转发筛选参数                                           |
-| `pnpm test:integration:isolated` / `test:e2e:isolated` | 每次独立环境，用于合同诊断及完整回归                                                    |
-| `pnpm test:clean`                                      | 清理工具自己记录的测试栈，保留测试证据                                                  |
-| `pnpm bench [--input PATH] [--iterations N]`           | 独立进程串行测量解析；默认小样例，可用配置化 VPK 输入                                   |
-| `pnpm storage:clean [--scope releases\|tests]`         | 预览生成产物保留规则与清理候选                                                          |
-| `pnpm storage:clean --apply`                           | 持锁清理可再生发布产物及已完成测试附件                                                  |
-| `pnpm release [--build-only]`                          | 构建 Web、执行数据库查询启动检查，保留可复用产物                                        |
-
-命令是仓库的共同接口，Codex、Claude Code、OpenCode 和普通终端都可调用。新运行时或远程部署没有隐式安装过程。
+命令、参数、副作用和配置示例统一由[开发运行手册](../operations/development.md)维护；可执行入口以[package.json](../../package.json)和脚本为准。Codex、Claude Code、OpenCode及普通终端使用同一接口。
 
 ## 页面数据与计算样例
 
@@ -63,13 +40,13 @@
 
 `scripts/development/check-plan.mjs` 是唯一范围规则，同时供本地和 CI 使用。它只使用 Node 内置能力，CI 可以在安装浏览器和准备数据库前规划。
 
-初版规则按少量路径和功能维护：文档只检查格式；单个英雄/技能页面只运行对应流程；共享组件扩大到两个目录；解析和数据变化加入已知答案、相关持久化检查与基准；数据库合同/迁移变化执行专项完整合同验证；工具链变化扩大到已有单测与 Web 构建。日常 UI 更改不构建完整 Web。
+规则按模块维护：文档检查格式、链接／锚点、命令与入口；地图文件／算法／组件选已有地图专项；单位选单位专项及使用流程。Hero／Ability解析继续核对已知答案，持久化变化加入数据库检查；共享基础和未知影响范围保守扩大，数据库合同／迁移执行完整隔离合同，工具链扩大到单测与构建。纯文件地图不默认启动产品数据库，涉及Catalog读取的地图服务仍检查数据库依赖。日常UI更改不构建完整Web。
 
 每项结果保留输入摘要、所用命令、触发理由、状态和耗时。输入包括相关源文件、测试、fixture、配置、工具版本和操作系统；内容删除和重命名也改变身份。配置秘密只参与摘要，不写入证据。执行途中或后续任务期间输入改变，结果标为 `stale`，不能作为当前组合的通过结果。
 
 TypeScript 源码检查使用 `tsconfig.check.json`，其增量文件单独存放在 `.medota2/typecheck/`。它不依赖开发 Web 正在重建的 `.next` 类型；Next.js 生成的路由约束由正式构建验证。
 
-静态检查与构建通过记录可跨调用复用。浏览器、数据库检查每次重新确认当前状态；共享页面测试记录 Catalog/Asset 版本，前后版本变化时作废。这里优先用简单、可解释的规则，暂不为动态数据库结果建立复杂缓存。
+静态检查通过记录可跨调用复用；release自行管理构建产物身份。浏览器、数据库检查每次重新确认当前状态；共享页面测试记录 Catalog/Asset 版本，前后版本变化时作废。这里优先用简单、可解释的规则，暂不为动态数据库结果建立复杂缓存。
 
 CI 取消相同分支旧运行，按规划安装 Chromium，调用相同的 `pnpm check --base REF`。操作系统和 CI 身份参与摘要，不把本机通过记录当作 Linux CI 的通过记录。覆盖率只在显式 `pnpm verify` 或 `pnpm test:coverage` 中启用。
 
@@ -91,7 +68,7 @@ Web 产物放在 `.medota2/releases/<content-key>/`，同一输入复用构建�
 
 `next.config.ts` 注册 `scripts/development/build-output.mjs` 的构建完成钩子，在 Next 复制 standalone 前过滤 `.nft.json` 中的本地状态、其他构建、缓存及测试输出引用，路径统一为正斜杠判断，保留当前 dist 的运行文件和正式依赖。此步骤兼容 Next 16.3.3 在 Windows 上排除 glob 与原生路径匹配失败的问题；不修改安装的 Next 包。`release` 在复制前移除 dotenv 并检查产物边界，复制时解引用已追踪的依赖链接为普通文件，避免 Windows 创建符号链接权限要求。失败时清理该次 `app/` 与 smoke 副本，保留构建缓存和小型配置以便诊断。运行及验收入口仍为 `pnpm release`；成功产物含 `manifest.json`，只有目录存在不能视为通过。
 
-AGENTS.md 保存工作规则；CONTEXT.md 保存概念与模块地图；docs/current.md 保存当前决定、问题与接手入口。Claude Code 用薄 `CLAUDE.md` 引用相同文件，OpenCode 用 AGENTS.md 与 `opencode.json` 加载其余入口。更换工具和模型时，用启动、一个小改动和对应检查验证能否接手。
+文档的职责和更新流向由[文档索引](../README.md#事实归属与更新流向)维护，current只保存活动状态与链接。Claude Code 用薄 `CLAUDE.md` 引用相同文件，OpenCode 用 AGENTS.md 与 `opencode.json` 加载其余入口。更换工具和模型时，用启动、一个小改动和对应检查验证能否接手。
 
 ## 自动保留与日志容量
 
@@ -103,7 +80,7 @@ AGENTS.md 保存工作规则；CONTEXT.md 保存概念与模块地图；docs/cur
 
 应用清理按release→test-database→storage的固定顺序获取所需范围锁，避免与构建及数据库复用竞争。候选路径不能越出工作区或穿过符号链接／Windows junction；产物内部的依赖链接计量和删除时只操作链接本身。清理不会选择来源、同步数据、候选、地图、凭据、数据库备份或正在使用的通用编译缓存。
 
-本机可在.medota2/storage-policy.json覆盖保留数量和日志容量，字段详见README；配置值有范围校验，数量至少1、失败保护期至少1天。MEDOTA2_AUTO_CLEANUP=0禁用自动产物清理，手动清理及日志轮转继续可用。
+本机可在.medota2/storage-policy.json覆盖保留数量和日志容量，字段详见[开发运行手册](../operations/development.md#空间保留与日志)；配置值有范围校验，数量至少1、失败保护期至少1天。MEDOTA2_AUTO_CLEANUP=0禁用自动产物清理，手动清理及日志轮转继续可用。
 
 工作台supervisor拥有唯一日志写入流，准备命令、Next Web、样例和控制台输出统一通过RotatingLog写入；按默认10 MiB切换，保留当前文件及3份归档。写入时关闭并重开由supervisor持有的文件句柄，子进程不持有日志文件句柄，可在Windows轮转。旧追加日志首次启动按相同容量导入；中断导入留下server.log.import时明确报错保留原文，需先核对该文件后重启。修改日志配置须重启工作台。
 

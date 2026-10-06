@@ -155,6 +155,6 @@ pnpm exec vitest run tests/unit/map.test.ts tests/unit/map-import.test.ts tests/
 pnpm exec vitest run tests/unit/map-economy.test.ts tests/unit/map-viewer.test.tsx
 ```
 
-测试覆盖坐标已知答案、版本独立选择、错误版本不回退、资源哈希／revision隔离、路径越界、身份冲突、重复字段、活动世界层、多行实体、营地几何及导航／高度二进制截断。Windows检查调度器若出现`spawn pnpm ENOENT`，须记录未运行项并直接运行对应命令，不将调度器失败写成全量通过。实际浏览器检查及本机数据审计见[当前进展](../current.md)。
+测试覆盖坐标已知答案、版本独立选择、错误版本不回退、资源哈希／revision隔离、路径越界、身份冲突、重复字段、活动世界层、多行实体、营地几何及导航／高度二进制截断。检查调度器的Windows原生启动适配已实现；当前平台失败项及复验步骤见[Windows任务](../work/windows-native-validation.md)。算法／组件测试不代替真实地图或引擎验收，历史数据审计见[本机来源](../repositories/local-dota-map.md)。
 
 后续需在同版本引擎抽样核对导航／高度／树木状态，再扩展动态阻挡和视野；更高分辨率可使用同版本Workshop Tools场景渲染，记录相机、地形皮肤、光照与像素变换。静态地图与圈线不替代游戏规则。

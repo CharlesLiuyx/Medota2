@@ -90,7 +90,8 @@
     "data:fetch": "tsx src/workers/data-sync.ts fetch",
     "data:lock": "tsx src/workers/data-sync.ts lock",
     "dev:sync": "tsx src/workers/data-sync.ts sync",
-    "storage:clean": "tsx src/workers/storage-clean.ts"
+    "storage:clean": "tsx src/workers/storage-clean.ts",
+    "docs:check": "node scripts/documentation/check.mjs"
   },
   "dependencies": {
     "@tailwindcss/postcss": "4.3.3",

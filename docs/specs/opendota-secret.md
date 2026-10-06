@@ -6,8 +6,8 @@
 ## 输入与读取
 
 - 变量名为 `OPENDOTA_API_KEY`，可选，不影响现有 Catalog 功能启动。
-- 本地输入位置为项目根目录的 `.env`；该文件由 `.gitignore` 排除，权限应为 `0600`。这是本地明文 Secret 文件，不是加密凭据库。
-- `.env.example` 仅保留空值占位。首次复制模板后执行 `chmod 600 .env`，再使用编辑器填写。
+- 本地输入位置为项目根目录的 `.env`；该文件由 `.gitignore` 排除，Unix权限应为 `0600`，Windows使用当前用户私有ACL。这是本地明文 Secret 文件，不是加密凭据库。
+- `.env.example` 仅保留空值占位。Unix首次复制模板后执行 `chmod 600 .env`，Windows通过文件ACL限制访问；再使用编辑器填写。该入口读取环境变量，不替用户自动验证全部文件ACL。
 - Node.js 服务端和 Worker 使用 `src/config/env.ts` 的 `getOpenDotaApiKey()`；沿用现有 `loadLocalEnv()`，不需要数据库或 provision receipt。
 - 已设置的进程环境变量优先于 `.env`，包括显式空字符串；读取时去除首尾空白，空值和缺失值返回 `null`。
 - 本地配置按进程加载一次；修改后重启相应进程。为保持 Web 与 Worker 一致，本功能的本地配置统一写入 `.env`。

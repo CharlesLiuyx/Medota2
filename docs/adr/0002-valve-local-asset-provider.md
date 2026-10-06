@@ -1,5 +1,7 @@
 # ADR 0002：Valve 资产使用本地只读 Provider
 
+<!-- superseded-by: 0004-database-icon-asset-datasets.md -->
+
 - 状态：Accepted for private use；运行时本地 Provider/缓存部分已由 [ADR 0004](0004-database-icon-asset-datasets.md) 取代
 - 日期：2026-08-30
 - 关联：[Hero Catalog v2 Spec](../specs/hero-catalog-v2.md)

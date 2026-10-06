@@ -238,50 +238,13 @@ TypeScript 协调进程继续拥有任务状态、数据库校验和 active snap
 
 ## 13. 当前代码结构
 
-```text
-Medota2/
-├── src/
-│   ├── app/                 # Next.js 页面和 Route Handlers
-│   ├── components/          # UI 组件
-│   ├── domain/              # 稳定领域模型
-│   ├── server/
-│   │   ├── db/              # Drizzle schema 与连接池
-│   │   ├── repositories/    # PostgreSQL 边界
-│   │   └── services/        # 用例编排
-│   ├── importers/           # 来源专属适配器
-│   └── workers/             # 独立 TypeScript Worker
-├── drizzle/                 # SQL migrations
-├── tests/fixtures/          # 最小、可审阅 fixture
-├── docs/
-└── docker-compose.yml
-```
-
-只有 Rust ADR 通过后，才增加 `crates/medota-engine/` 和 Cargo workspace。
+代码职责和入口由根[CONTEXT](../../CONTEXT.md#模块入口)维护；跨模块存储和版本关系见[数据流](data-flow.md)。只有Rust ADR通过后才增加Rust运行单元，不为未发生需求预建框架。
 
 ## 14. 配置与命令
 
-项目使用 `.env` 提供非敏感本地配置，提交 `.env.example` 而不提交凭据。非 production 数据库连接由受管 stack 在环境专属 `0600` receipt 中按 migration/Worker/Web 职责生成；production 才显式注入三条 `DATABASE_URL_*_PRODUCTION`。外部来源路径使用来源专属变量，不写死相邻仓库。当前提供：
+安装、开发、测试和构建操作统一见[开发手册](../operations/development.md)，来源／资产导入见[导入手册](../operations/catalog-import.md)，跨机器交接见[同步手册](../development-data-sync-runbook.md)。命令和依赖版本以[package.json](../../package.json)及锁文件为准。环境身份与私有receipt规则由[环境合同](environment-contract-details.md)维护。
 
-```bash
-pnpm db:generate
-pnpm db:development:provision
-pnpm db:local-review:provision
-pnpm db:migrate
-pnpm db:environment:doctor
-pnpm dev
-pnpm local
-pnpm dev:local
-pnpm typecheck
-pnpm lint
-pnpm test
-pnpm test:integration
-pnpm test:e2e
-pnpm test:e2e:concurrent
-pnpm verify
-pnpm build
-```
-
-共享工作台固定监听 `127.0.0.1:3000`，优先读取已有 local-review 真实数据和资产，也可显式选择 development；独立 local-review 入口监听 `127.0.0.1:3001`。只读日常 E2E 复用开发 origin 并使用独立浏览器上下文；需要写入的固定数据测试串行复用一个测试栈与 Web 编译缓存，每次保留独立报告。显式 isolated/verify 仍由 Test Run Harness 每 run 分配独立 origin。`pnpm local` 是 local-review 的幂等一键入口：按需 provision、migration、首次 Catalog/Asset 导入后启动 Web；已有 active Catalog 时不刷新数据。首次导入只允许对“纯 asset provider 临时错误且重试后完整 native coverage”执行受约束的自动 Review，其他 Yellow 保留人工门禁。端口不隔离 Cookie，也不是环境身份；页面表示仍来自 fresh attestation。Drizzle config 只用于离线 schema generation，contract v1 不提供会绕过 verified capability seam 的 `db:studio`。英雄导入、development-only Catalog 刷新与参考比较命令见 MVP Spec 和 README。修改命令时必须同步更新 README。
+修改运行接口时更新对应手册与README入口，不在选型文档复制命令列表。
 
 ## 15. 安全与运维约束
 

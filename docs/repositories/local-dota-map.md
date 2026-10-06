@@ -4,7 +4,9 @@
 
 ## 结论
 
-本机具备提取静态点位、导航栅格、高度网格、触发区域和场景模型的资源。已经用 Source 2 Viewer CLI 20.0 成功提取实体、overview 和导航／高度原文件，并验证地图 VPK 内部校验。现有 Medota2 原生导入链路仍不能直接处理这批真实数据：版本文件换行差异、多行实体属性、地图分层和 512px 原生 overview 都需要适配。
+以下结论为首次取证时点。后续已完成多层导入和版本集合，见[后续实现](#后续实现2026-10-06)；当前使用合同见[地图Spec](../specs/map-explorer.md)。
+
+本机具备提取静态点位、导航栅格、高度网格、触发区域和场景模型的资源。已经用 Source 2 Viewer CLI 20.0 成功提取实体、overview 和导航／高度原文件，并验证地图 VPK 内部校验。首次审阅时的Medota2原生导入链路不能直接处理这批数据：版本文件换行差异、多行实体属性、地图分层和 512px 原生 overview 都需要适配。
 
 建议以本机地图建立独立版本的数据包，先解决结构化数据质量，再用同版本场景生成高清底图。不要把低清小地图放大后当作高清地图，也不要把当前本机文件标为现有 7.41e 数据。
 
@@ -88,6 +90,8 @@ Get-Content "$out\overview\materials\overviews\dota.vmat"
 
 ## 现有导入器的实际障碍
 
+历史复现，已由后述多层流程解决的项目不再列为当前待办；旧单层入口的质量门槛仍见地图Spec。
+
 1. `extract-map-vpk.ts` 使用 `Buffer.equals` 比较上游和安装的 `steam.inf`。本机字段完全相同、只有 CRLF/LF 差异，也会被拒绝。后续应明确、严格地比较规范化字段，同时记录双方原始哈希，不应取消版本校验。
 2. `parseEntityDump` 实际返回 `Invalid quoted entity field: pathnodes`：真实 dump 包含三引号多行数组。需要保留多行值和未知属性的解析，不应删除报错实体以“通过导入”。
 3. 当前入口只接受单一实体文件。主层之外还有 169 棵基地树；主层 `info_world_layer` 的 base 层 spawnflags 为 1、destruction 为 0。应根据层关系核对坐标语义及状态，再合并初始层；保留动态层和 2 个 `point_prefab` 的引用。
@@ -123,7 +127,7 @@ Valve 提供 Dota 集成的 Source 2 Filmmaker；工具通过 Dota 2 的 Worksho
 
 `.medota2/map-research-20261006/` 保存工具 release 元数据、CLI help、地图清单、5 个实体 dump、原生贴图、GNV／VHCG／TRM、world dump、一个营地 PHYS 样本、实体统计、二进制布局检查、提取前后哈希及调研 manifest。原始资产和便携工具均被 Git 忽略；仓库仅保存调研说明。
 
-下一步实施顺序：修复真实输入适配 → 生成独立的本机静态地图 Dataset → 接入经验证的导航／高度层 → 同版本高清渲染 → 游戏内抽样验证。每一步分别记录覆盖率和未验证项。公开再分发 Valve 资源仍需独立许可审阅。
+首次调研建议顺序为：输入适配 → 独立Dataset → 导航／高度 → 高清渲染 → 游戏内验证。前三项的后续落地见下节；同版本引擎抽样与更高清场景渲染仍待完成。每一步分别记录覆盖率和未验证项。公开再分发 Valve 资源仍需独立许可审阅。
 
 ## 后续实现（2026-10-06）
 
@@ -133,7 +137,7 @@ Valve 提供 Dota 集成的 Source 2 Filmmaker；工具通过 Dota 2 的 Worksho
 
 版本证据继续区分：本机Steam客户端6944／SourceRevision11085649、已校验地图SHA-1、社区补丁名称与render来源commit。未将社区manifest当成本机安装manifest。7.41e仍是来源声明级别，客户端未知。
 
-# 同版本野区与兵线数据补充（2026-10-06）
+## 同版本野区与兵线数据补充（2026-10-06）
 
 本机6944中额外读取`scripts/npc/npc_units.txt`（基础悬赏及中立升级技能）、`scripts/npc/npc_abilities.txt`（neutral_upgrade：450秒、每次1金、上限30）、`scripts/creep_pull_timings.txt`（各营地叠野／双方拉野窗口）、`resource/localization/abilities_schinese.txt`（69个单位中文名，无缺失）和`dota.fgd`（生成类型枚举）。原始单位表含退役／活动单位，不能直接把同等级单位任意组合成营地。营地实际min/max spawn type、forced subtype和maxupgradecount取自同一地图原生实体；组合数量由独立版本规则表保存，未声明随机概率。
 

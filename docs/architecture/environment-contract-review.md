@@ -1,5 +1,7 @@
 # Medota2 测试、环境与依赖架构 Review
 
+<!-- superseded-by: ../specs/environment-isolation-and-verification.md -->
+
 > Review 基线：2026-08-31 · 方案 A（Environment Contract）
 
 > 状态：历史审查快照。本文中的“当前”“待补”和方案 B 未完成结论只描述方案 A 完成时的基线，不再代表仓库目标态；后续实现与验收以 [Environment Isolation、Test Run Harness 与 Verification Evidence Spec](../specs/environment-isolation-and-verification.md) 和 [ADR 0006](../adr/0006-run-scoped-verification.md) 为准。现有 legacy `127.0.0.1:54321` 栈仍未获得或执行破坏性 cutover 授权。

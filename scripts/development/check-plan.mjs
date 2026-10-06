@@ -60,6 +60,41 @@ const parserTests = [
   "tests/unit/ability-adapter.test.ts",
   "tests/unit/keyvalues-parser.test.ts",
 ];
+const rootsForDocs = () => [
+  "AGENTS.md",
+  "CONTEXT.md",
+  "README.md",
+  "CLAUDE.md",
+  "opencode.json",
+  "package.json",
+];
+
+// File-backed map computation does not read the product database. store.ts and
+// app/map still read Catalog metadata and retain the normal database checks.
+const mapOnly =
+  /^(?:src\/(?:domain\/map\/|importers\/dota-map\/|components\/map\/|server\/map\/(?:packages|navigation)\.ts)|src\/workers\/(?:index-maps|extract-map-vpk|extract-local-map|import-public-map|import-local-map|import-map|enrich-map-economy)\.ts|tests\/unit\/map(?:[.-]))/;
+const mapScope =
+  /^(?:src\/(?:domain\/map\/|importers\/dota-map\/|components\/map\/|server\/map\/|app\/(?:api\/)?map)|src\/workers\/[^/]*map|tests\/unit\/map(?:[.-]))/;
+const unitScope =
+  /(?:^src\/(?:domain\/units\.ts|importers\/dota-vpk\/unit-(?:adapter|snapshot)\.ts|server\/repositories\/units\.ts|workers\/import-unit-assets\.ts|app\/units\/|components\/unit)|unit-(?:assets|ability-icons)|tests\/unit\/unit-)/;
+const mapTests = [
+  "map",
+  "map-currents",
+  "map-economy",
+  "map-import",
+  "map-native",
+  "map-navigation-source",
+  "map-public",
+  "map-route-client",
+  "map-routing",
+  "map-sync",
+  "map-versions",
+]
+  .map((name) => `tests/unit/${name}.test.ts`)
+  .concat("tests/unit/map-viewer.test.tsx");
+const unitTests = ["unit-adapter", "unit-source", "unit-assets"].map(
+  (name) => `tests/unit/${name}.test.ts`,
+);
 
 export function createPlan(inputPaths) {
   const paths = [
@@ -106,10 +141,32 @@ export function createPlan(inputPaths) {
       ["exec", "eslint", ...lintFiles],
       [...lintFiles, "eslint.config.mjs"],
     );
-  const runtimePaths = paths.filter((path) =>
-    /^(src\/|tests\/|scripts\/|drizzle\/|docker|.*config\.|package\.json|pnpm-(?:lock|workspace)\.yaml|\.github\/)/.test(
-      path,
-    ),
+  if (paths.length)
+    add(
+      "docs",
+      "文档索引、链接、命令和客户端入口；代码删除也可能使引用失效",
+      ["docs:check"],
+      [
+        "docs",
+        ...rootsForDocs(),
+        ...allRuntime,
+        "public",
+        "scripts/documentation",
+      ],
+    );
+  if (paths.some((path) => path.startsWith("scripts/documentation/")))
+    add(
+      "docs-tests",
+      "文档门禁的缺失引用、替代环和预算回归",
+      ["exec", "node", "--test", "scripts/documentation/check.test.mjs"],
+      ["scripts/documentation", "docs", ...rootsForDocs(), ...allRuntime],
+    );
+  const runtimePaths = paths.filter(
+    (path) =>
+      !path.startsWith("scripts/documentation/") &&
+      /^(src\/|tests\/|scripts\/|drizzle\/|docker|.*config\.|package\.json|pnpm-(?:lock|workspace)\.yaml|\.github\/)/.test(
+        path,
+      ),
   );
   if (!runtimePaths.length)
     return {
@@ -121,11 +178,20 @@ export function createPlan(inputPaths) {
       summary: "文档或说明变更，无需产品数据库和浏览器",
     };
   const wide = runtimePaths.some((path) => toolchain.test(path));
-  const hasData =
+  const nonMap = runtimePaths.filter((path) => !mapOnly.test(path));
+  const hasMap = runtimePaths.some((path) => mapScope.test(path));
+  const hasUnits = runtimePaths.some((path) => unitScope.test(path));
+  const catalogData =
     wide ||
-    runtimePaths.some((path) => data.test(path) || foundation.test(path));
-  const hasUi = wide || runtimePaths.some((path) => ui.test(path));
-  const hasEngine = runtimePaths.some((path) => engine.test(path));
+    nonMap.some(
+      (path) =>
+        !unitScope.test(path) && (data.test(path) || foundation.test(path)),
+    );
+  const hasData =
+    wide || nonMap.some((path) => data.test(path) || foundation.test(path));
+  const hasUi =
+    wide || nonMap.some((path) => !unitScope.test(path) && ui.test(path));
+  const hasEngine = nonMap.some((path) => engine.test(path));
   const dbContract = runtimePaths.some((path) => environment.test(path));
   if (
     runtimePaths.some(
@@ -148,15 +214,29 @@ export function createPlan(inputPaths) {
   const explicitUnit = existing.filter((path) =>
     /^tests\/unit\/.*\.test\.[jt]sx?$/.test(path),
   );
-  if (wide)
+  const unknownSource = nonMap.some(
+    (path) =>
+      path.startsWith("src/") &&
+      !ui.test(path) &&
+      !unitScope.test(path) &&
+      !/^src\/importers\/dota-vpk\//.test(path),
+  );
+  const removedUnit = paths.some(
+    (path) =>
+      /^tests\/unit\/.*\.test\.[jt]sx?$/.test(path) && !existsSync(path),
+  );
+  if (wide || unknownSource || removedUnit)
     add(
       "unit",
-      "工具链或检查入口变化会影响既有单元测试",
+      "工具链、共享依赖、未知影响范围或删除用例，检查全部既有单元测试",
       ["test"],
       [...allRuntime, "tests/unit", "vitest.config.ts"],
     );
   else {
     const unitFiles = new Set(explicitUnit);
+    if (hasMap || paths.some((path) => sharedUi.test(path)))
+      mapTests.forEach((path) => unitFiles.add(path));
+    if (hasUnits) unitTests.forEach((path) => unitFiles.add(path));
     if (hasEngine) parserTests.forEach((path) => unitFiles.add(path));
     if (
       paths.some((path) => /filters|catalog-cursor|catalog-stream/.test(path))
@@ -188,7 +268,7 @@ export function createPlan(inputPaths) {
   }
   const journeys = new Set();
   if (
-    hasData ||
+    catalogData ||
     (hasUi && (wide || paths.some((path) => sharedUi.test(path))))
   ) {
     journeys.add("heroes");
@@ -205,7 +285,11 @@ export function createPlan(inputPaths) {
     journeys.add("heroes");
     journeys.add("abilities");
   }
-  if (wide || paths.some((path) => /(?:units|unit-)/.test(path)))
+  if (
+    wide ||
+    hasUnits ||
+    paths.some((path) => sharedUi.test(path) || /(?:units|unit-)/.test(path))
+  )
     journeys.add("units");
   if (journeys.size)
     add(

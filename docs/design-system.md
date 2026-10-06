@@ -2,7 +2,7 @@
 
 > 状态：v1 已实现；随 Hero Catalog 继续演进
 >
-> 来源合同：[Hero Catalog v2 Spec](specs/hero-catalog-v2.md#5-design-system)、[全局 List 无限滚动与上 7× / 下 10× 预加载 Spec](specs/infinite-lists.md)
+> 数据合同：[Hero Catalog v2 Spec](specs/hero-catalog-v2.md#5-design-system)、[全局 List 无限滚动与上 7× / 下 10× 预加载 Spec](specs/infinite-lists.md)
 
 ## 目标
 
@@ -10,12 +10,13 @@ Medota2 使用深色优先、百科式、高信息密度的目录界面。设计
 
 ## 原则
 
-- 列表先帮助定位，详情再承载完整数据和 provenance。
+- 列表帮助定位，详情承载玩家可读资料；技术provenance保留在数据层，地图来源按其专项合同展示。
 - 所有内容 List 共用『InfiniteList』的连续滚动与惰性渲染合同；旧分页和一次性 DOM 全量渲染约定不再适用。
-- 数据版本、异常和来源始终可见。
+- 可确认的数据版本与异常有可读提示；内部哈希不作为玩家页面正文。
 - URL 保存查询状态；重要功能不依赖 hover。
 - 属性、状态同时使用颜色与文字表达。
-- 内部名称、ID、版本和 checksum 使用等宽/表格数字。
+- 数值使用表格数字；开发审阅视图中的内部身份可用等宽字体。玩家页面不常显内部名称、ID或checksum。
+- 产品页面以底色、间距与字重组织层级，焦点使用浅色背景；具体密度和交互见[语义UI](specs/semantic-game-ui.md)。
 - 组件允许本地化文本增长，不使用依赖中英文固定长度的布局。
 
 ## Token
@@ -37,11 +38,11 @@ Token 定义在 `src/app/globals.css`，组件只消费语义变量：
 | 组件                           | 职责                                   |
 | ------------------------------ | -------------------------------------- |
 | `AppShell`                     | 全局 header、实体导航、内容和 footer   |
-| `EntityTabs`                   | Heroes / Abilities 一级入口与当前状态  |
+| `EntityTabs`                   | 英雄／技能／单位／地图入口与当前状态   |
 | `PageHeader`                   | eyebrow、标题、摘要和右侧版本/统计区域 |
-| `DatasetBadge`                 | ClientVersion、commit 与健康状态       |
+| `DatasetBadge`                 | 可读版本信息与健康状态                 |
 | `Badge`                        | 属性、关系、状态和普通标签             |
-| `Panel`                        | 标准 surface/border 容器               |
+| `Panel`                        | 标准surface与间距容器                  |
 | `SectionHeading`               | 属性分组和详情 section 标题            |
 | `HeroCard`                     | 高密度 Hero 入口与资产 fallback        |
 | `AbilityCard`                  | Ability 状态、关系、cost 与 owner 摘要 |

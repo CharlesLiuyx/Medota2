@@ -1,8 +1,10 @@
 # ADR 0006：使用 Run-scoped Harness 隔离自动验证
 
+<!-- superseded-by: 0007-shared-development-workbench.md -->
+
 > 2026-10-06 更新：日常共享开发、可复用测试环境、按需 CI 和 development Web 连接验证方式由 [ADR 0007](0007-shared-development-workbench.md) 与[开发工作台规范](../specs/development-workbench.md)替代。本文保留完整隔离验证与数据库合同的详细依据；其中每次独占资源、CI 默认全量 verify 的表述仅适用于历史方案或显式独立验证。
 
-- 状态：Accepted
+- 状态：Accepted，日常工作流部分被ADR0007替代；显式isolated模式继续适用
 - 日期：2026-08-31
 - 关联：[Environment Isolation、Test Run Harness 与 Verification Evidence Spec](../specs/environment-isolation-and-verification.md)、[ADR 0005](0005-environment-contract.md)
 
@@ -15,6 +17,8 @@ ADR 0005 已经把 Runtime Environment、Data Class、Database Identity、role �
 ## Decision
 
 ### 1. Test Run Harness 是唯一自动化编排入口
+
+此标题是原决定：当前只对显式isolated／verify成立。普通 `test:integration`、`test:e2e` 已由共享runner承接，日常检查和CI由 `pnpm check` 编排。
 
 `pnpm test:integration`、`pnpm test:e2e` 与 `pnpm verify` 都由 Test Run Harness 编排。每次运行生成带时间和随机熵的 Run Identity，并签发一个不可变 Run Context。Vitest、Playwright、Next 和数据库 fixture 只消费该 context，不自行选择共享资源。
 

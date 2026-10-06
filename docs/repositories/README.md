@@ -1,26 +1,19 @@
 # 外部仓库总览与选源指南
 
-## 为什么调研这些仓库
+## 来源角色
 
-Medota2 调研了三个处于不同抽象层次的独立上游仓库：
+来源各自独立、可选且只读，不属于项目安装依赖。下表维护选源职责；来源到业务存储的流向由[数据流](../architecture/data-flow.md)维护，机器上有哪些资源由[环境登记](../development-environments.md)维护。
 
-```text
-Dota 2 客户端 depot ──> GameTracking-Dota2 ──┐
-pak01_dir.vpk ─────────> dota_vpk_updates ─────┼──> Medota2 的导入/标准化层 ──> 分析产品
-d2vpkr + Dota 数据接口 + 手工 JSON ─> dotaconstants ─┘
-```
+| 来源                       | 职责                                            | 不能推断的内容                            |
+| -------------------------- | ----------------------------------------------- | ----------------------------------------- |
+| `dota_vpk_updates`         | 固定Hero／Ability玩法及本地化规范来源、单位定义 | checkout HEAD不代表产品当前来源或最新上游 |
+| `dotaconstants`            | QA/reference及有溯源的图片路径映射              | 不覆盖或回填VPK规范值                     |
+| `GameTracking-Dota2`       | Protobuf、Source 2类型、非VPK文件参考           | 文件索引不等于拥有资源二进制              |
+| Valve本机客户端／Steam图片 | 原生VPK、地图取证；官方图片导入                 | CDN图片不能自动获得Catalog客户端版本      |
+| ReDota固定提交             | 可选单位模型截图及明确映射                      | Git commit不证明图片原始游戏构建号        |
+| Sloppy固定提交             | 公开地图渲染、点位与版本索引                    | 社区版本声明不等于本机Steam manifest验证  |
 
-这是职责关系图，不是已经实现的数据管线。三个仓库分别由不同上游维护，也不会随 Medota2 一起发布；`dotaconstants` 的当前构建脚本也不会自动读取另外两个来源的本地 checkout。
-
-## 三个仓库的职责
-
-| 仓库                 | 抽象层次        | 最适合回答的问题                                                                 | 代表内容                                              |
-| -------------------- | --------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `GameTracking-Dota2` | 客户端/引擎快照 | 某条网络消息、GC 消息或 Source 2 类型如何定义？客户端非 VPK 文件发生了什么变化？ | `.proto`、schema 头文件、模块元数据、客户端脚本和配置 |
-| `dota_vpk_updates`   | 游戏资源原始层  | Valve 在 VPK 中怎样定义某英雄、技能、物品、单位、文本或 UI？                     | VDF/KV、KV3、XML、CSS、JS、本地化和资源清单           |
-| `dotaconstants`      | 应用常量层      | 应用怎样获得可直接查询的英雄、物品、技能、模式、地区或补丁常量？                 | 已构建 JSON、ESM exports、生成任务和少量手工 JSON     |
-
-`Medota2` 是第四层：由它拥有产品 schema、导入策略、PostgreSQL 和用户界面；比赛分析等后续能力仍在规划。不要把上游文件布局直接变成产品领域模型。
+Medota2拥有领域模型、校验、版本选择和查询。比赛／replay分析仍需另选输入，不能从上述来源推断已经接入。
 
 ## 按需求选择来源
 
@@ -44,7 +37,7 @@ d2vpkr + Dota 数据接口 + 手工 JSON ─> dotaconstants ─┘
 
 ### 英雄元数据专项决策
 
-首期英雄元数据采用比本通用指南更严格的规则：`dota_vpk_updates` 是唯一 SSOT，`dotaconstants` 只作可选参考，不能覆盖或回填规范英雄字段。完整字段范围、继承规则、存储和展示方案见[英雄元数据显示 MVP 功能 Spec](../specs/hero-metadata-mvp.md)。其他数据域仍需逐项选源，不能自动沿用这项决定。
+首期英雄元数据采用比本通用指南更严格的规则：`dota_vpk_updates` 是唯一 SSOT，`dotaconstants` 只作可选参考，不能覆盖或回填规范英雄字段。当前合同见[Hero Catalog v2](../specs/hero-catalog-v2.md)；[MVP Spec](../specs/hero-metadata-mvp.md)仅保留兼容历史。其他数据域仍需逐项选源，不能自动沿用这项决定。
 
 ### Hero Catalog v2 专项决策
 
@@ -80,4 +73,4 @@ d2vpkr + Dota 数据接口 + 手工 JSON ─> dotaconstants ─┘
 - [ReDota：可选单位模型截图及许可边界](redota.md)
 
 - 可选公开地图提取来源：[Sloppy](sloppy-map.md)，固定补丁／commit，独立适配、版本声明和许可边界。
-- [本机 Dota 2 地图](local-dota-map.md)：6944 安装的真实提取、地图哈希核对、导航／高度数据及高清渲染路线；原生产品导入仍有待修复项。
+- [本机 Dota 2 地图](local-dota-map.md)：6944 安装的真实提取、地图哈希核对、导航／高度数据及高清渲染路线；多层原生导入已落地，导航／碰撞／收益仍需同版本引擎抽样。

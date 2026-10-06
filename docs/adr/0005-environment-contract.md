@@ -1,8 +1,12 @@
 # ADR 0005：使用可证明的 Environment Contract 隔离运行环境
 
+<!-- superseded-by: 0007-shared-development-workbench.md -->
+
 - 状态：Accepted
 - 日期：2026-08-31
 - 关联：[Medota2 Domain Context](../../CONTEXT.md)、[项目技术选型与数据处理架构](../architecture/technology-selection.md)、[ADR 0001：Hero Catalog 使用单一原子版本边界](0001-hero-catalog-version-boundary.md)、[ADR 0004：Hero 与 Ability 图标使用数据库资产数据集](0004-database-icon-asset-datasets.md)、[ADR 0006：使用 Run-scoped Harness 隔离自动验证](0006-run-scoped-verification.md)
+
+2026-10-07范围说明：本ADR的数据库身份、权限与操作门禁仍有效；本地development Web物理连接身份复用由[ADR0007](0007-shared-development-workbench.md)部分替代，每次session baseline仍恢复，其他环境与写入仍完整验证。现行说明见[环境合同](../architecture/environment-contract-details.md)。
 
 本 ADR 定义环境身份信任根；测试运行与持久数据栈的后续物理隔离由 ADR 0006 扩展，不改变这里的 attestation 与 capability 决策。
 
@@ -101,6 +105,8 @@ openVerifiedDatabase(
 每个 PostgreSQL pool checkout 都先完成 attestation，不能只验证 pool 的第一条连接。contract v1 不跨 checkout 缓存“该连接已经安全”的结论，因此上一次借用遗留的 transaction、temporary object、`SET ROLE`、GUC、marker 变化或 ACL drift 会在复用前被清除、拒绝或销毁连接。已经签发且尚未 release 的 mutation session 不会在每条 SQL 前重新读取 marker；本地 cutover 通过关闭数据库入口、终止全部旧 session 和撤销 login 来收敛该窗口。通用 revocation epoch/lease 留待后续设计。
 
 ### 5. 任何 DDL/DML 前执行只读 attestation
+
+本节写入门禁持续有效；其中Web每次借用连接都重复完整审计的历史要求，按ADR0007的受限development复用规则修订。
 
 本文的“任何 DDL/DML 前”指：除严格 allowlist 的 control-plane attestation SQL 与安全 session setup 外，任何应用查询、DDL、DCL 或 DML 都必须在验证成功后执行。attestation 只能读取身份和只读状态，不能访问产品数据、创建 schema、写 ledger 或自动修复 marker。
 
