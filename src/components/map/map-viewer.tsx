@@ -10,6 +10,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 import { TerrainLegend } from "./terrain-legend";
 import { MapEconomyPanel } from "./economy-panel";
@@ -84,12 +85,22 @@ const watcherLabel = (p: MapPoint) =>
     ? `${p.label} · ${{ neutral: "中立", radiant: "天辉", dire: "夜魇", unknown: "归属未知" }[p.team]}`
     : p.label;
 const MemoEconomyPanel = memo(MapEconomyPanel);
-export function MapViewer({ data }: { data: MapViewData }) {
+export function MapViewer({
+  data,
+  versionControls,
+}: {
+  data: MapViewData;
+  versionControls?: ReactNode;
+}) {
   const planner = useRoutePlanner(data);
   const routeFrame = useRef(planner);
   const [campLayerHover, setCampLayerHover] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
+  const cornerRef = useRef<HTMLDivElement>(null);
+  const pickHintRef = useRef<HTMLDivElement>(null);
+  const rulerRef = useRef<HTMLDivElement>(null);
+  const rulerLabelRef = useRef<HTMLSpanElement>(null);
   const controls = useRef<MapControls | null>(null);
   const camera = useRef<Camera>({
     x: (data.bounds.minX + data.bounds.maxX) / 2,
@@ -421,11 +432,18 @@ export function MapViewer({ data }: { data: MapViewData }) {
       } = live.current;
       const zoneLabels: { x: number; y: number; text: string }[] = [];
       const hoverPoint = byId.get(hoverId ?? "");
-      const hoveredCamp = hoverPoint?.kind === "camp" ? hoverPoint : undefined;
-      const activeVolume = (
-        hoveredCamp?.properties.volumename ??
-        hoveredCamp?.properties.triggerName
-      )?.replace(/^\[PR#\]/, "");
+      const activeCamps = new Set(
+        [byId.get(selected?.id ?? ""), hoverPoint].filter(
+          (p): p is MapPoint => p?.kind === "camp",
+        ),
+      );
+      const activeCampIds = new Set([...activeCamps].map((camp) => camp.id));
+      const activeCampVolumes = new Map<string, MapPoint>();
+      for (const camp of activeCamps) {
+        const volume =
+          camp.properties.volumename ?? camp.properties.triggerName;
+        if (volume) activeCampVolumes.set(volume.replace(/^\[PR#\]/, ""), camp);
+      }
       const activeZones: NonNullable<MapViewData["zones"]> = [];
       const drawZone = (
         zone: NonNullable<MapViewData["zones"]>[number],
@@ -827,16 +845,15 @@ export function MapViewer({ data }: { data: MapViewData }) {
       ctx.textBaseline = "middle";
       if (layers.has("camp")) {
         for (const zone of data.zones ?? []) {
-          const active =
-            campLayerHover ||
-            (!!activeVolume &&
-              zone.label.replace(/^\[PR#\]/, "") === activeVolume);
+          const activeCamp = activeCampVolumes.get(
+            zone.label.replace(/^\[PR#\]/, ""),
+          );
+          const active = campLayerHover || !!activeCamp;
           if (query.trim() && !active) continue;
           if (active) activeZones.push(zone);
 
           if (
-            active &&
-            !campLayerHover &&
+            activeCamp &&
             zone.zMin !== undefined &&
             zone.zMax !== undefined
           ) {
@@ -848,10 +865,7 @@ export function MapViewer({ data }: { data: MapViewData }) {
             });
             zoneLabels.push({
               x: anchor.x,
-              y: Math.max(
-                anchor.y + 12,
-                hoveredCamp ? screen(hoveredCamp).y + 42 : anchor.y + 12,
-              ),
+              y: Math.max(anchor.y + 12, screen(activeCamp).y + 42),
               text: `Z 轴范围：${Math.round(zone.zMin)}～${Math.round(zone.zMax)}`,
             });
           }
@@ -901,7 +915,7 @@ export function MapViewer({ data }: { data: MapViewData }) {
         ...(campLayerHover ? markers.filter((p) => p.kind === "camp") : []),
       ]);
       for (const p of activePoints) if (p) drawMarker(p, true);
-      // Raise only the hovered camp boundary above trees and point markers.
+      // Selected and hovered camps share the same foreground emphasis.
       if (showLanes) {
         ctx.save();
         ctx.setLineDash([]);
@@ -926,7 +940,11 @@ export function MapViewer({ data }: { data: MapViewData }) {
       for (const zone of activeZones) drawZone(zone, true);
       if (!showExperience)
         for (const [id, labels] of campLabels)
-          if (campLayerHover || id === hoverId) drawCampLabel(id, labels, true);
+          if (
+            campLayerHover ||
+            (byId.has(id) && activeCamps.has(byId.get(id)!))
+          )
+            drawCampLabel(id, labels, true);
       for (const label of zoneLabels) {
         ctx.font = "10px system-ui";
         ctx.textAlign = "center";
@@ -1015,19 +1033,35 @@ export function MapViewer({ data }: { data: MapViewData }) {
           ctx.fill();
         }
       }
-      // A 1/2/5 ruler in actual world units, independent of texture resolution.
-      const rawUnits = 100 / (scale * camera.current.zoom),
+      const imageLeft = screen({ x: data.bounds.minX, y: data.bounds.minY }),
+        imageRight = screen({ x: data.bounds.maxX, y: data.bounds.minY }),
+        imageTop = screen({ x: data.bounds.minX, y: data.bounds.maxY });
+      const cornerWidth = (imageRight.x - imageLeft.x) * 0.28,
+        cornerHeight = (imageLeft.y - imageTop.y) * 0.09;
+      if (cornerRef.current) {
+        Object.assign(cornerRef.current.style, {
+          left: `${imageLeft.x + 6}px`,
+          top: `${imageLeft.y - cornerHeight}px`,
+          width: `${Math.max(0, cornerWidth - 12)}px`,
+          height: `${Math.max(0, cornerHeight - 6)}px`,
+        });
+      }
+      // A 1/2/5 ruler in actual world units, clipped to the same empty corner.
+      const rawUnits =
+          Math.min(80, Math.max(1, cornerWidth - 16)) /
+          (scale * camera.current.zoom),
         power = 10 ** Math.floor(Math.log10(rawUnits));
       const units =
         [5, 2, 1].map((n) => n * power).find((n) => n <= rawUnits) ?? power;
-      const length = units * scale * camera.current.zoom;
-      ctx.fillStyle = "#c6d2dc";
-      ctx.fillRect(18, height - 23, length, 2);
-      ctx.textAlign = "left";
-      ctx.font = "10px system-ui";
-      ctx.fillText(`${units} 单位`, 18, height - 35);
+      if (rulerLabelRef.current)
+        rulerLabelRef.current.textContent = `${units} 单位`;
+      if (rulerRef.current)
+        rulerRef.current.style.width = `${units * scale * camera.current.zoom}px`;
       // Active labels are the final canvas pass: no later marker or overlay may cover them.
-      for (const p of [byId.get(selected?.id ?? ""), byId.get(hoverId ?? "")]) {
+      for (const p of new Set([
+        byId.get(selected?.id ?? ""),
+        byId.get(hoverId ?? ""),
+      ])) {
         if (!p) continue;
         const at = screen(p);
         ctx.font = "12px system-ui";
@@ -1081,16 +1115,14 @@ export function MapViewer({ data }: { data: MapViewData }) {
         const label = allowed
           ? `${routing.points.length ? "B 终点" : "A 起点"} · ${Math.round(worldPoint.x)}, ${Math.round(worldPoint.y)}`
           : "不可通行";
-        const w = textWidth(label),
-          x = Math.max(4, Math.min(width - w - 4, pointerHint.x + 18)),
-          y = Math.max(9, Math.min(height - 9, pointerHint.y - 18));
-        ctx.shadowColor = "#000";
-        ctx.shadowBlur = 3;
-        ctx.fillStyle = color;
-        ctx.fillText(label, x, y);
+        if (pickHintRef.current) {
+          pickHintRef.current.textContent = label;
+          pickHintRef.current.style.color = color;
+        }
         ctx.restore();
         canvas.dataset.pickHint = hint;
       } else {
+        if (pickHintRef.current) pickHintRef.current.textContent = "";
         delete canvas.dataset.pickHint;
         delete canvas.dataset.pickCell;
       }
@@ -1499,150 +1531,111 @@ export function MapViewer({ data }: { data: MapViewData }) {
       : [];
   return (
     <div>
-      {data.economy && (
-        <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-2 rounded bg-white/[0.025] px-3 py-2 text-[11px]">
-          <label className="flex min-w-0 flex-1 items-center gap-3">
-            游戏时间{" "}
-            <strong className="w-12 tabular-nums">{clockText(time)}</strong>
-            <input
-              className="min-w-20 flex-1 accent-[#a4c5bc]"
-              type="range"
-              aria-label="游戏时间"
-              min={0}
-              max={7200}
-              step={30}
+      <div className="map-time-controls mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded bg-white/[0.025] px-2 py-1 text-[11px]">
+        {data.economy && (
+          <>
+            <label className="flex min-w-0 flex-[1_1_200px] items-center gap-2">
+              游戏时间{" "}
+              <strong className="w-12 tabular-nums">{clockText(time)}</strong>
+              <input
+                className="min-w-20 flex-1 accent-[#a4c5bc]"
+                type="range"
+                aria-label="游戏时间"
+                min={0}
+                max={7200}
+                step={30}
+                value={time}
+                onChange={(e) => setTime(Number(e.target.value))}
+              />
+            </label>
+            <CompactSelect
+              hideLabel
+              label="跳转游戏时间"
+              className="map-select"
               value={time}
-              onChange={(e) => setTime(Number(e.target.value))}
-            />
-          </label>
-          <CompactSelect
-            hideLabel
-            label="跳转游戏时间"
-            className="map-select"
-            value={time}
-            onValueChange={(value) => setTime(Number(value))}
-          >
-            {![0, 120, 300, 450, 900, 1800, 2400, 2700, 3600, 7200].includes(
-              time,
-            ) && <option value={time}>{clockText(time)}</option>}
-            {[0, 120, 300, 450, 900, 1800, 2400, 2700, 3600, 7200].map((t) => (
-              <option key={t} value={t}>
-                {clockText(t)}
-              </option>
-            ))}
-          </CompactSelect>
-          <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
-            <input
-              type="checkbox"
-              className="m-0 size-3.5 shrink-0"
-              checked={showGold}
-              onChange={(e) => setShowGold(e.target.checked)}
-            />
-            野区金币
-          </label>
-          <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
-            <input
-              type="checkbox"
-              className="m-0 size-3.5 shrink-0"
-              checked={showExperience}
-              onChange={(e) => setShowExperience(e.target.checked)}
-            />
-            野区经验
-          </label>
-          <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
-            <input
-              type="checkbox"
-              className="m-0 size-3.5 shrink-0"
-              checked={showTimings}
-              onChange={(e) => setShowTimings(e.target.checked)}
-            />
-            拉野/叠野秒数
-          </label>
-          <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
-            <input
-              type="checkbox"
-              className="m-0 size-3.5 shrink-0"
-              checked={showLanes}
-              onChange={(e) => setShowLanes(e.target.checked)}
-            />
-            兵线路径
-          </label>
-          <CompactSelect
-            hideLabel
-            label="地图兵营情景"
-            className="map-select"
-            value={barracks}
-            onValueChange={(value) => setBarracks(value as BarracksState)}
-          >
-            {Object.entries(BARRACKS_LABELS).map(([v, label]) => (
-              <option key={v} value={v}>
-                {label}
-              </option>
-            ))}
-          </CompactSelect>
-        </div>
-      )}
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_230px]">
+              onValueChange={(value) => setTime(Number(value))}
+            >
+              {![0, 120, 300, 450, 900, 1800, 2400, 2700, 3600, 7200].includes(
+                time,
+              ) && <option value={time}>{clockText(time)}</option>}
+              {[0, 120, 300, 450, 900, 1800, 2400, 2700, 3600, 7200].map(
+                (t) => (
+                  <option key={t} value={t}>
+                    {clockText(t)}
+                  </option>
+                ),
+              )}
+            </CompactSelect>
+            <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
+              <input
+                type="checkbox"
+                className="m-0 size-3.5 shrink-0"
+                checked={showGold}
+                onChange={(e) => setShowGold(e.target.checked)}
+              />
+              野区金币
+            </label>
+            <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
+              <input
+                type="checkbox"
+                className="m-0 size-3.5 shrink-0"
+                checked={showExperience}
+                onChange={(e) => setShowExperience(e.target.checked)}
+              />
+              野区经验
+            </label>
+            <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
+              <input
+                type="checkbox"
+                className="m-0 size-3.5 shrink-0"
+                checked={showTimings}
+                onChange={(e) => setShowTimings(e.target.checked)}
+              />
+              拉野/叠野秒数
+            </label>
+            <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
+              <input
+                type="checkbox"
+                className="m-0 size-3.5 shrink-0"
+                checked={showLanes}
+                onChange={(e) => setShowLanes(e.target.checked)}
+              />
+              兵线路径
+            </label>
+            <CompactSelect
+              hideLabel
+              label="地图兵营情景"
+              className="map-select"
+              value={barracks}
+              onValueChange={(value) => setBarracks(value as BarracksState)}
+            >
+              {Object.entries(BARRACKS_LABELS).map(([v, label]) => (
+                <option key={v} value={v}>
+                  {label}
+                </option>
+              ))}
+            </CompactSelect>
+          </>
+        )}
+        {versionControls}
+      </div>
+      <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_200px]">
         <div className="min-w-0">
-          <div
-            className="mb-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1"
-            aria-label="地图视图工具栏"
-          >
-            {!!data.rasterLayers?.length && (
-              <section
-                aria-label="地形数据"
-                className="flex shrink-0 items-center gap-2 whitespace-nowrap text-xs"
-              >
-                <h2 className="shrink-0 font-semibold">地形数据</h2>
-                <div className="flex shrink-0 gap-1">
-                  {[
-                    { id: "", label: "底图" },
-                    ...data.rasterLayers,
-                    ...(data.routing?.currents?.length
-                      ? [{ id: "currents", label: "湍流" }]
-                      : []),
-                  ].map((layer) => (
-                    <button
-                      key={layer.id}
-                      aria-pressed={terrainLayer === layer.id}
-                      onClick={() => setTerrainLayer(layer.id)}
-                      className={`${buttonStyle} ${terrainLayer === layer.id ? "bg-white/10" : ""}`}
-                    >
-                      {layer.label}
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
-            <div className="ml-auto flex flex-wrap items-center justify-end gap-1">
-              <button
-                className={`${buttonStyle} ${measure ? activeToolStyle : ""}`}
-                aria-pressed={measure}
-                onClick={() => {
-                  setMeasure(!measure);
-                  planner.stop();
-                  setMeasurement([]);
-                }}
-              >
-                测距
-              </button>
-              <button
-                className={`${buttonStyle} ${planner.enabled ? activeToolStyle : ""}`}
-                aria-pressed={planner.enabled}
-                onClick={() => {
-                  planner.toggle();
-                  setMeasure(false);
-                  setMeasurement([]);
-                }}
-              >
-                寻路
-              </button>
-              <div
-                className="ml-1 flex h-8 shrink-0 items-center gap-0 border-l border-white/10 pl-1"
-                aria-label="地图缩放"
-              >
+          <div className="map-stage grid grid-cols-[minmax(0,1fr)_64px] items-stretch gap-1">
+            <div
+              ref={surfaceRef}
+              className="map-viewport relative h-[70vh] min-h-[400px] overflow-hidden rounded bg-[#0b131a] sm:h-[calc(100dvh-160px)]"
+              aria-label="地图视口"
+            >
+              <canvas
+                ref={canvasRef}
+                tabIndex={0}
+                aria-label="交互地图；方向键平移，加减号缩放，0复位，Escape清除选择"
+                className="block h-full w-full touch-none"
+              />
+              <div className="absolute left-3 top-3 z-10">
                 <HoverTooltip
-                  className="grid size-4 place-items-center rounded-full border border-white/25 text-[10px] text-[#c9d7e2] hover:bg-white/10"
+                  className="grid size-5 place-items-center rounded-full border border-white/25 text-[10px] text-[#c9d7e2] hover:bg-white/10"
                   content={
                     <div className="text-xs leading-6">
                       <p>拖拽平移 · 滚轮或双指缩放</p>
@@ -1657,29 +1650,177 @@ export function MapViewer({ data }: { data: MapViewData }) {
                 >
                   <span aria-hidden="true">?</span>
                   <span className="sr-only">地图操作说明</span>
-                </HoverTooltip>{" "}
-                <button
-                  className="flex size-8 items-center justify-center rounded text-xs leading-none hover:bg-white/5"
-                  onClick={() => controls.current?.zoom(1.5)}
-                  aria-label="放大地图"
+                </HoverTooltip>
+              </div>
+              {(!data.imageUrl || imageError) && (
+                <div className="pointer-events-none absolute inset-0 grid place-content-center px-8 text-center">
+                  <div className="max-w-sm rounded bg-[#101a22ee] p-6">
+                    <h2 className="text-sm font-medium">
+                      {imageError ? "地图底图加载失败" : "等待原生地图资源"}
+                    </h2>
+                    <p
+                      role="status"
+                      className="mt-2 text-xs leading-6 text-[var(--text-muted)]"
+                    >
+                      {imageError
+                        ? "请检查地图资源是否完整，再重新加载页面。"
+                        : "已读取当前版本的坐标配置。地形底图、建筑、野区和神符点位需要从完整游戏资源中提取。"}
+                    </p>
+                  </div>
+                </div>
+              )}
+              <div
+                ref={cornerRef}
+                className="map-corner-info pointer-events-none absolute flex flex-col justify-end overflow-hidden text-[#b9c7d0]"
+                aria-label="地图视口提示"
+              >
+                <div className="map-compass truncate">
+                  北 ↑ · 天辉西南 / 夜魇东北
+                </div>
+                <div ref={pickHintRef} className="truncate text-cyan-100" />
+                {(hovered || measure) && (
+                  <div className="line-clamp-2 shrink-0" role="status">
+                    {measure
+                      ? distance === null
+                        ? measurement.length
+                          ? "选择第二个点"
+                          : "依次点击两个点测量直线距离"
+                        : `直线距离 ${distance.toLocaleString()} 单位`
+                      : `${watcherLabel(hovered!)} · X ${Math.round(hovered!.x)}, Y ${Math.round(hovered!.y)}, ${hovered!.kind === "camp" ? "Z 轴" : "Z"} ${hovered!.z === null ? "未知" : Math.round(hovered!.z)}`}
+                    {!measure && hoveredCamp && data.economy && (
+                      <p className="truncate">
+                        <span className="text-[#e8c781]">
+                          金币 {hoveredCampLabels?.gold ?? "未收录"}
+                        </span>
+                        <span className="ml-3 text-[#a6daf4]">
+                          经验 {hoveredCampLabels?.xp ?? "未收录"}
+                        </span>
+                        <span className="sr-only">
+                          {clockText(time)} · 单人清野，经验独享
+                          {includeChildren ? " · 含分裂体" : ""}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                )}
+                {!hovered && lanePreviews.length > 0 && (
+                  <div
+                    role="status"
+                    aria-label="兵线路径收益"
+                    className="line-clamp-2"
+                  >
+                    {lanePreviews.map(({ route, wave }) => (
+                      <p key={route.id} className="truncate">
+                        {route.team === "radiant" ? "天辉" : "夜魇"} ·{" "}
+                        {{ top: "上路", mid: "中路", bot: "下路" }[route.lane]}{" "}
+                        · {clockText(time)}
+                        {wave
+                          ? ` · 金币 ${goldText(wave.total)} / 经验 ${wave.xp ?? "未收录"}`
+                          : " · 收益未收录"}
+                      </p>
+                    ))}
+                  </div>
+                )}
+                <div className="map-ruler mt-1 shrink-0">
+                  <span ref={rulerLabelRef} />
+                  <div ref={rulerRef} className="mt-0.5 h-px bg-[#b9c7d0]" />
+                </div>
+              </div>
+            </div>
+            <div
+              className="map-view-tools flex min-w-0 flex-col items-stretch gap-1 rounded bg-white/[0.025] p-1"
+              aria-label="地图视图工具栏"
+            >
+              {!!data.rasterLayers?.length && (
+                <section
+                  aria-label="地形数据"
+                  className="flex flex-col items-stretch gap-1 text-[10px]"
                 >
-                  ＋
+                  <h2 className="py-1 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                    地形
+                  </h2>
+                  <div className="flex flex-col gap-0.5">
+                    {[
+                      { id: "", label: "底图" },
+                      ...data.rasterLayers,
+                      ...(data.routing?.currents?.length
+                        ? [{ id: "currents", label: "湍流" }]
+                        : []),
+                    ].map((layer) => (
+                      <button
+                        key={layer.id}
+                        aria-pressed={terrainLayer === layer.id}
+                        onClick={() => setTerrainLayer(layer.id)}
+                        className={`${buttonStyle} !px-1 !py-1.5 !text-[10px] ${terrainLayer === layer.id ? "bg-white/10" : ""}`}
+                      >
+                        {layer.label}
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )}
+              {!!data.rasterLayers?.length && (
+                <div
+                  role="separator"
+                  className="mx-1 my-1 h-px shrink-0 bg-white/15"
+                />
+              )}
+              <div className="flex flex-col items-stretch gap-1">
+                <button
+                  className={`${buttonStyle} !px-1 !py-1.5 !text-[10px] ${measure ? activeToolStyle : ""}`}
+                  aria-pressed={measure}
+                  onClick={() => {
+                    setMeasure(!measure);
+                    planner.stop();
+                    setMeasurement([]);
+                  }}
+                >
+                  测距
                 </button>
-                <span
-                  className="flex h-8 w-10 items-center justify-center text-[11px] leading-none tabular-nums"
-                  aria-label="缩放比例"
-                >
-                  {Math.round(zoom * 100)}%
-                </span>
                 <button
-                  className="flex size-8 items-center justify-center rounded text-xs leading-none hover:bg-white/5"
-                  onClick={() => controls.current?.zoom(1 / 1.5)}
-                  aria-label="缩小地图"
+                  className={`${buttonStyle} !px-1 !py-1.5 !text-[10px] ${planner.enabled ? activeToolStyle : ""}`}
+                  aria-pressed={planner.enabled}
+                  onClick={() => {
+                    planner.toggle();
+                    setMeasure(false);
+                    setMeasurement([]);
+                  }}
                 >
-                  −
+                  寻路
                 </button>
+              </div>
+              <div
+                role="separator"
+                className="mx-1 my-1 h-px shrink-0 bg-white/15"
+              />
+              <div
+                className="flex flex-col items-center gap-1"
+                aria-label="地图缩放"
+              >
+                <div className="grid h-7 w-full grid-cols-[14px_minmax(0,1fr)_14px] items-center">
+                  <button
+                    className="grid h-7 place-items-center rounded text-xs leading-none hover:bg-white/5"
+                    onClick={() => controls.current?.zoom(1 / 1.5)}
+                    aria-label="缩小地图"
+                  >
+                    −
+                  </button>
+                  <span
+                    className="min-w-0 text-center text-[9px] leading-none tracking-tight tabular-nums"
+                    aria-label="缩放比例"
+                  >
+                    {Math.round(zoom * 100)}%
+                  </span>
+                  <button
+                    className="grid h-7 place-items-center rounded text-xs leading-none hover:bg-white/5"
+                    onClick={() => controls.current?.zoom(1.5)}
+                    aria-label="放大地图"
+                  >
+                    ＋
+                  </button>
+                </div>
                 <button
-                  className="flex size-8 items-center justify-center rounded hover:bg-white/5"
+                  className="flex h-7 w-full items-center justify-center rounded hover:bg-white/5"
                   aria-label="复位地图"
                   title="复位地图（0）"
                   onClick={() => controls.current?.reset()}
@@ -1698,115 +1839,6 @@ export function MapViewer({ data }: { data: MapViewData }) {
                 </button>
               </div>
             </div>
-          </div>
-          <div
-            ref={surfaceRef}
-            className="relative h-[62vh] min-h-[330px] overflow-hidden rounded bg-[#0b131a] sm:h-[72vh]"
-            aria-label="地图视口"
-          >
-            <canvas
-              ref={canvasRef}
-              tabIndex={0}
-              aria-label="交互地图；方向键平移，加减号缩放，0复位，Escape清除选择"
-              className="block h-full w-full touch-none"
-            />
-            {(!data.imageUrl || imageError) && (
-              <div className="pointer-events-none absolute inset-0 grid place-content-center px-8 text-center">
-                <div className="max-w-sm rounded bg-[#101a22ee] p-6">
-                  <h2 className="text-sm font-medium">
-                    {imageError ? "地图底图加载失败" : "等待原生地图资源"}
-                  </h2>
-                  <p
-                    role="status"
-                    className="mt-2 text-xs leading-6 text-[var(--text-muted)]"
-                  >
-                    {imageError
-                      ? "请检查地图资源是否完整，再重新加载页面。"
-                      : "已读取当前版本的坐标配置。地形底图、建筑、野区和神符点位需要从完整游戏资源中提取。"}
-                  </p>
-                </div>
-              </div>
-            )}
-            <div className="pointer-events-none absolute left-3 top-3 rounded bg-[#0b131acc] px-2 py-1 text-[10px] text-[var(--text-muted)]">
-              北 ↑ · 天辉西南 / 夜魇东北
-            </div>
-            {(hovered || measure) && (
-              <div
-                className="pointer-events-none absolute bottom-3 right-3 max-w-[65%] rounded bg-[#0b131ae8] px-3 py-2 text-[11px]"
-                role="status"
-              >
-                {measure
-                  ? distance === null
-                    ? measurement.length
-                      ? "选择第二个点"
-                      : "依次点击两个点测量直线距离"
-                    : `直线距离 ${distance.toLocaleString()} 单位`
-                  : `${watcherLabel(hovered!)} · X ${Math.round(hovered!.x)}, Y ${Math.round(hovered!.y)}, ${hovered!.kind === "camp" ? "Z 轴" : "Z"} ${hovered!.z === null ? "未知" : Math.round(hovered!.z)}`}
-                {!measure && hoveredCamp && data.economy && (
-                  <p className="mt-1">
-                    <span className="text-[#e8c781]">
-                      金币 {hoveredCampLabels?.gold ?? "未收录"}
-                    </span>
-                    <span className="ml-3 text-[#a6daf4]">
-                      经验 {hoveredCampLabels?.xp ?? "未收录"}
-                    </span>
-                    <span className="block mt-1 text-[10px] text-[var(--text-muted)]">
-                      {clockText(time)} · 单人清野，经验独享
-                      {includeChildren ? " · 含分裂体" : ""}
-                    </span>
-                  </p>
-                )}
-              </div>
-            )}
-            {!hovered && lanePreviews.length > 0 && (
-              <div
-                role="status"
-                aria-label="兵线路径收益"
-                className="pointer-events-none absolute bottom-3 right-3 z-10 w-80 max-w-[90%] rounded bg-[#08141bf5] p-3 text-[11px] shadow-lg"
-              >
-                <strong>兵线 · {clockText(time)} · 每方一波</strong>
-                <p className="mt-1 text-[10px] text-[var(--text-muted)]">
-                  {BARRACKS_LABELS[barracks]}（各出兵方的敌方兵营）
-                </p>
-                {lanePreviews.map(({ route, wave }) => (
-                  <div key={route.id} className="mt-2">
-                    <strong
-                      style={{
-                        color: route.team === "radiant" ? "#b3ffcf" : "#ffc3b3",
-                      }}
-                    >
-                      {route.team === "radiant" ? "天辉" : "夜魇"} ·{" "}
-                      {{ top: "上路", mid: "中路", bot: "下路" }[route.lane]}
-                    </strong>
-                    {wave ? (
-                      <>
-                        <div className="my-1">
-                          <span className="text-[#e8c781]">
-                            金币 {goldText(wave.total)}
-                          </span>
-                          <span className="ml-3 text-[#a6daf4]">
-                            经验 {wave.xp ?? "未收录"}
-                          </span>
-                        </div>
-                        <p>
-                          {wave.rows
-                            .map(
-                              (r) =>
-                                `${r.label.replace("（替换近战兵）", "")}×${r.count}`,
-                            )
-                            .join(" · ")}
-                        </p>
-                      </>
-                    ) : (
-                      <p>该版本收益数据未收录</p>
-                    )}
-                  </div>
-                ))}
-                <p className="mt-2 text-[10px] text-[var(--text-muted)]">
-                  按当前时间出生的一波计算。金币全补刀并含旗手奖励；经验单人独享，多人会分摊，未计反补。
-                </p>
-              </div>
-            )}
           </div>
           {terrainError && (
             <p role="alert" className="mt-2">
@@ -1918,13 +1950,13 @@ export function MapViewer({ data }: { data: MapViewData }) {
           <TerrainLegend layer={terrainLayer} />
           <h2 className="my-2 font-semibold">对象属性与操作</h2>
           {!selected && (
-            <p className="rounded bg-white/[0.035] p-3 leading-6 text-[var(--text-muted)]">
+            <p className="rounded bg-white/[0.035] p-2 text-[11px] leading-5 text-[var(--text-muted)]">
               点击地图上的对象，查看属性、收益及范围；可从地图下方搜索定位。
             </p>
           )}
           {selected && (
             <section
-              className="rounded bg-white/[0.035] p-3"
+              className="rounded bg-white/[0.035] p-2"
               aria-label="点位详情"
             >
               <div className="flex justify-between gap-2">

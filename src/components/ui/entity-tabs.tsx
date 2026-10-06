@@ -22,7 +22,7 @@ export function EntityTabs() {
             href={entity.href}
             prefetch={true}
             aria-current={active ? "page" : undefined}
-            className={`relative flex min-h-10 items-center px-2.5 text-xs font-semibold uppercase tracking-[0.14em] sm:px-3 ${active ? "bg-white/5 text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
+            className={`relative flex min-h-7 items-center px-2 text-xs font-semibold uppercase tracking-[0.14em] sm:px-3 ${active ? "bg-white/5 text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
           >
             {entity.label}
           </Link>

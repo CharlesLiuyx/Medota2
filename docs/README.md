@@ -100,6 +100,7 @@
 | [旧current完整快照](history/2026-10-06-current.md)                          | historical | 61个旧章节与原证据路径                      |
 | [旧环境登记快照](history/2026-10-06-development-environments.md)            | historical | 环境观察历史                                |
 | [Context迁移与验收](history/2026-10-07-context-migration.md)                | reference  | 原章节去向、此次范围与验收                  |
+| [地图紧凑UI](history/2026-10-07-map-compact-ui.md)                          | historical | 本轮布局与验证                              |
 | [Windows复验任务](work/windows-native-validation.md)                        | active     | 平台失败的接手步骤与解除条件                |
 | [实体版本与 Diff 优化](work/entity-version-diff.md)                         | active     | 待实施需求、范围、差异语义及验收条件        |
 

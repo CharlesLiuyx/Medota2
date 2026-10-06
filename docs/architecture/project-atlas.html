@@ -1818,8 +1818,8 @@
                     data-name="地图浏览与静态寻路"
                     data-definition="加载所选地图，在浏览器绘制并估算路线。"
                     data-why="支持查看空间关系、测距和比较路线。"
-                    data-detail="当前是静态网格估算。动态碰撞、战争迷雾以及与游戏引擎一致的语义仍有限制。"
-                    data-files='["src/components/map/map-viewer.tsx", "src/components/map/route-client.ts", "src/domain/map/routing.ts"]'
+                    data-detail="紧凑地图工作区：28px顶栏显示版本核验状态，时间与版本共用控制行；64px右侧工具轨以两条分隔线区分三组，缩放紧凑横排；地图操作问号位于视口左上角。增高视口配200px属性栏，指示文字限制在底图左下留白，选中营地保留悬停时的边界、名称、经验与高度范围；寻路参数紧凑，估算口径与操作说明通过信息图标展开。当前仍为静态网格估算，动态碰撞、战争迷雾及引擎语义一致性仍有限制。"
+                    data-files='["src/components/map/map-viewer.tsx", "src/components/map/route-planner.tsx", "src/components/map/header-status.tsx", "src/components/map/route-client.ts", "src/domain/map/routing.ts", "docs/specs/map-explorer.md"]'
                     data-node-id="data-graph-mapview"
                     aria-pressed="false"
                   >

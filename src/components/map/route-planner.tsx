@@ -1,4 +1,6 @@
 "use client";
+import { HoverTooltip } from "@/components/ui/hover-tooltip";
+import { Info, Plus } from "lucide-react";
 import { CompactSelect } from "@/components/ui/compact-select";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -333,7 +335,7 @@ export function useRoutePlanner(data: MapViewData) {
 }
 export type RoutePlanner = ReturnType<typeof useRoutePlanner>;
 const control =
-  "rounded bg-[#20303d] px-2 py-1.5 text-xs text-[#edf5fc] [color-scheme:dark]";
+  "h-6 rounded bg-[#20303d] px-1.5 py-0.5 text-[11px] text-[#edf5fc] [color-scheme:dark]";
 export function RoutePanel({
   planner: p,
   data,
@@ -345,16 +347,60 @@ export function RoutePanel({
   return (
     <section
       aria-label="寻路设置与结果"
-      className="mb-4 rounded bg-[#14212b] p-3 text-xs"
+      className="map-route-panel mb-2 rounded bg-[#14212b] p-2 text-[11px]"
     >
-      <div className="flex flex-col items-stretch gap-2">
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col items-stretch gap-1.5">
+        <div className="flex items-center justify-between gap-1">
           <strong>
             {p.activeId === null ? "新建路线" : `路线 ${p.activeId}`}
           </strong>
+          <div className="flex items-center gap-2">
+            <span className="text-[9px] text-[var(--text-muted)]">
+              静态估算
+            </span>
+            <HoverTooltip
+              className="grid size-5 place-items-center rounded text-[var(--text-muted)] hover:bg-white/10"
+              content={
+                <div className="max-w-xs space-y-2 text-[11px] leading-5">
+                  <strong>寻路估算与操作说明</strong>
+                  <p>
+                    选择地图上的起点 A、终点
+                    B，也可选择地标。点击路线切换方案，重合处重复点击轮换；Delete
+                    删除，右键或 Esc 退出工具。
+                  </p>
+                  <p>
+                    仅显示最快及相差不超过3秒或10%的方案。陆地最短距离与湍流最短耗时均计算沿途顺流加速：最大
+                    +150，逆流不减速，斜向按正向投影；尚未经引擎验证。
+                  </p>
+                  <p>
+                    陆地使用64单位导航格和初始树木／建筑阻挡，禁止穿越阻挡及斜切墙角；最短指八方向网格路径，首尾连接所在格中心。选点与路径坐标对齐1单位，地形数据精度仍为64单位。
+                  </p>
+                  <p>
+                    未模拟转身、动态单位碰撞、建筑变化及技能效果；双生门落点按门旁可行走格估算。路线尚未在同版本游戏引擎逐点验证。
+                  </p>
+                </div>
+              }
+            >
+              <Info aria-hidden="true" size={14} />
+              <span className="sr-only">寻路估算与操作说明</span>
+            </HoverTooltip>
+            <button
+              className="flex h-6 items-center gap-0.5 rounded bg-white/5 px-1 hover:bg-white/10"
+              aria-label="新建路线"
+              onClick={p.clear}
+            >
+              <Plus aria-hidden="true" size={12} />
+              新建
+            </button>
+          </div>
           {p.activeId !== null && (
-            <button className="text-red-200" onClick={p.remove} title="Delete">
-              删除路线
+            <button
+              className="px-1 text-red-200"
+              onClick={p.remove}
+              title="删除路线（Delete）"
+              aria-label="删除路线"
+            >
+              ×
             </button>
           )}
         </div>
@@ -386,11 +432,11 @@ export function RoutePanel({
             湍流 · 陆地加速估算
           </option>
         </CompactSelect>
-        <label>
-          移动速度{" "}
+        <label className="flex items-center gap-1.5">
+          移速{" "}
           <input
             aria-label="英雄移动速度"
-            className={`${control} w-20`}
+            className={`${control} min-w-0 flex-1 tabular-nums`}
             type="number"
             min="1"
             step="1"
@@ -399,25 +445,22 @@ export function RoutePanel({
           />{" "}
           单位/秒
         </label>
-        <button className={control} onClick={p.clear}>
-          新建路线
-        </button>
-        <span role="status">
+        <span role="status" className="text-[10px] leading-4 text-[#b9dce7]">
           {p.points.length === 0
             ? "点击地图选择起点 A"
             : p.points.length === 1
               ? "点击地图选择终点 B"
-              : "路线已创建；点击路线可选中，Delete 删除"}
+              : "路线已创建 · 点击路径切换"}
         </span>
       </div>
-      <div className="mt-3 grid gap-2">
+      <div className="mt-1.5 grid gap-1">
         {(["A", "B"] as const).map((label, i) => (
-          <label key={label} className="flex min-w-0 items-center gap-2">
+          <label key={label} className="flex min-w-0 items-center gap-1.5">
             {label}
             <CompactSelect
               hideLabel
               label={`${label === "A" ? "起点" : "终点"}地标`}
-              className="map-select"
+              className="map-select min-w-0 flex-1"
               value=""
               onValueChange={(value) => {
                 const point = data.points.find((v) => v.id === value);
@@ -453,7 +496,7 @@ export function RoutePanel({
         </p>
       )}
       {p.computing && (
-        <div role="status" className="mt-3 space-y-2" aria-label="寻路计算状态">
+        <div role="status" className="mt-2 space-y-1" aria-label="寻路计算状态">
           <p>{p.progress?.stage ?? "正在启动后台寻路"}…</p>
           <progress
             className="w-full accent-[#89eaff]"
@@ -477,13 +520,13 @@ export function RoutePanel({
       )}
       {!!p.result?.routes.length && (
         <>
-          <div className="mt-3 grid gap-2">
+          <div className="mt-1.5 grid gap-1">
             {p.result.routes.map((r) => (
               <button
                 key={routeKey(r)}
                 aria-pressed={p.shown.includes(r)}
                 onClick={() => p.select(routeKey(r))}
-                className={`rounded border px-3 py-2 text-left ${p.shown.includes(r) ? "border-white/50 bg-white/10" : "border-white/10"}`}
+                className={`rounded border px-2 py-1.5 text-left ${p.shown.includes(r) ? "border-white/50 bg-white/10" : "border-white/10"}`}
               >
                 <span style={{ color: routeColor(r) }}>
                   {r.mode === "flying"
@@ -493,7 +536,7 @@ export function RoutePanel({
                       : "陆地最短距离"}{" "}
                   · {r.kind === "gate" ? "经双生门" : "直达"}
                 </span>
-                <strong className="ml-2 text-base">
+                <strong className="ml-1 text-[13px] tabular-nums">
                   {r.seconds.toFixed(1)} 秒
                 </strong>
                 <span className="mt-1 block text-[10px]">
@@ -503,10 +546,7 @@ export function RoutePanel({
               </button>
             ))}
           </div>
-          <p className="mt-2 text-[10px] text-[var(--text-muted)]">
-            仅显示最快及相差不超过3秒或10%的方案；点击路径切换，重合处重复点击轮换。
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <button className={control} onClick={p.play}>
               {p.playing
                 ? "暂停移动"
@@ -544,10 +584,6 @@ export function RoutePanel({
           · 计算 {p.calculationMs?.toFixed(1)} ms
         </p>
       )}
-      <p className="mt-2 text-[10px] leading-5 text-[var(--text-muted)]">
-        静态预计耗时。陆地最短距离与湍流最短耗时均计算沿途顺流加速（最大
-        +150，逆流不减速，斜向按正向投影；尚未经引擎验证）。陆地使用64单位导航格和初始树木／建筑阻挡，禁止穿越阻挡及斜切墙角；最短指八方向网格路径，首尾连接所在格中心；选点及路径坐标对齐1单位，地形数据精度仍为64单位。未模拟转身、动态单位碰撞、建筑变化及技能效果；双生门落点按门旁可行走格估算。路线尚未在同版本游戏引擎逐点验证。
-      </p>
     </section>
   );
 }

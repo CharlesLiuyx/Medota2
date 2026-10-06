@@ -13,6 +13,8 @@
 
 文档、Context与检查范围整理已完成，用户已审阅并授权提交至main。48份文档已登记，61个旧章节完整归档；本机必要组合检查通过。范围、检查结果与接手演练见[迁移验收](history/2026-10-07-context-migration.md)。
 
+地图紧凑UI与营地选中保持已完成，用户已授权本轮提交并合入main；布局与验证见[记录](history/2026-10-07-map-compact-ui.md)。
+
 活动任务：
 
 - Windows浏览及原生构建异常仍待专项复验，保留原断言，按[平台交接](work/windows-native-validation.md)定位。

@@ -25,7 +25,7 @@ export function AppShell({
     <>
       <header className="sticky top-0 z-40 bg-[#0d141bef] backdrop-blur-xl">
         <div className="mx-auto flex max-w-[var(--content-max)] items-center justify-between gap-3 px-4 sm:px-6">
-          <div className="flex h-10 items-stretch gap-4 sm:gap-7">
+          <div className="flex h-7 items-stretch gap-2 sm:gap-5">
             <Link
               href={mapOnly ? "/map" : "/heroes"}
               className="flex shrink-0 items-center gap-1.5"
@@ -34,12 +34,12 @@ export function AppShell({
               <Image
                 src="/brand/medota2-rook-knight.png"
                 alt=""
-                width={26}
-                height={26}
+                width={22}
+                height={22}
                 priority
-                className="size-[26px] object-contain"
+                className="size-[22px] object-contain"
               />
-              <strong className="text-sm font-semibold tracking-wide">
+              <strong className="text-xs font-semibold tracking-wide">
                 Medota2
               </strong>
             </Link>
@@ -51,13 +51,16 @@ export function AppShell({
               <EntityTabs />
             )}
           </div>
-          {mapOnly ? (
-            <aside className="text-[10px] text-[var(--text-muted)]">
-              本地地图 · 按版本读取
-            </aside>
-          ) : (
-            <EnvironmentStrip environment={environment} />
-          )}
+          <div className="flex h-7 min-w-0 items-center justify-end gap-3">
+            <div id="map-header-status" className="flex items-center" />
+            {mapOnly ? (
+              <aside className="text-[10px] text-[var(--text-muted)]">
+                本地地图 · 按版本读取
+              </aside>
+            ) : (
+              <EnvironmentStrip environment={environment} />
+            )}
+          </div>
         </div>
       </header>
       {children}
@@ -83,7 +86,7 @@ export function EnvironmentStrip({
       data-data-class={environment.dataClass}
       data-verification={environment.verified ? "verified" : "unverified"}
       data-run={environment.runId ?? "none"}
-      className="flex gap-2 py-2 text-[10px] text-[var(--text-muted)]"
+      className="flex items-center gap-2 text-[10px] text-[var(--text-muted)]"
     >
       <span>{heading}</span>
       <span className="hidden sm:inline">·</span>

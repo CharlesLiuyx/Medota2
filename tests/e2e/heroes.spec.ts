@@ -230,7 +230,7 @@ test("detail renders readable skills, talents, facets and base stats", async ({
     ).toHaveAttribute("aria-current", "location");
     await expect
       .poll(async () => (await nav.boundingBox())!.y)
-      .toBeCloseTo(40, 0);
+      .toBeCloseTo(28, 0);
     const navBounds = (await nav.boundingBox())!;
     const statsBounds = (await page.locator("#stats").boundingBox())!;
     expect(statsBounds.y).toBeGreaterThanOrEqual(

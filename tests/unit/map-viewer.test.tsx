@@ -223,6 +223,7 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
             x: 10,
             properties: { volumename: "[PR#]camp-a" },
           },
+          { ...tree, id: "shop", label: "商店", kind: "shop", x: 70 },
         ],
         zones: [
           {
@@ -245,8 +246,30 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
           patch: "7.41f",
           rulesVersion: "creep-economy-7.41-v2",
           units,
-          groups: [],
-          camps: [],
+          groups: [
+            {
+              id: "camp-group",
+              label: "测试野怪",
+              tier: 0,
+              spawnType: 1,
+              members: [{ unit: "npc_dota_creep_goodguys_melee", count: 1 }],
+              children: [],
+            },
+          ],
+          camps: [
+            {
+              pointId: "camp",
+              name: "camp-a",
+              tier: 0,
+              minType: 1,
+              maxType: 1,
+              forced: 0,
+              maxUpgrade: 0,
+              stack: [54, 55],
+              stackDirection: null,
+              pulls: [],
+            },
+          ],
           sources: [],
           neutralUpgrade: { interval: 450, gold: 1, xp: 5, max: 30 },
           laneUpgrade: { interval: 450, rangedXp: 8 },
@@ -347,10 +370,64 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
   expect(paint.at(-1)).toBe("fillText:营地,328.8,323");
   expect(paint.some((s) => s.startsWith("arc:328.8,300,4,"))).toBe(true);
   expect(paint.some((s) => s.startsWith("arc:328.8,300,11,"))).toBe(false);
+  (canvas as HTMLCanvasElement).setPointerCapture = vi.fn();
+  for (const type of ["pointerdown", "pointerup"]) {
+    fireEvent(
+      canvas,
+      new MouseEvent(type, {
+        clientX: 329,
+        clientY: 300,
+        button: 0,
+        bubbles: true,
+      }),
+    );
+  }
+  paint.length = 0;
+  fireEvent.pointerLeave(canvas);
+  act(() => queued?.(3.1));
+  expect(paint).toContain("set:lineWidth:5");
+  expect(paint.some((s) => s.includes("Z 轴范围：-128～256"))).toBe(true);
+  expect(paint.some((s) => s.startsWith("fillText:经验 50,"))).toBe(true);
+  expect(paint.at(-1)).toBe("fillText:营地,328.8,323");
+  // Moving onto empty space must not remove the selected camp's foreground.
+  paint.length = 0;
+  fireEvent(
+    canvas,
+    new MouseEvent("pointermove", { clientX: 25, clientY: 25, bubbles: true }),
+  );
+  act(() => queued?.(3.2));
+  // No hover change: keep the previous complete frame rather than repaint it.
+  expect(paint).toHaveLength(0);
+  fireEvent(
+    canvas,
+    new MouseEvent("pointermove", {
+      clientX: 502,
+      clientY: 300,
+      bubbles: true,
+    }),
+  );
+  act(() => queued?.(3.25));
+  expect(paint.some((s) => s.startsWith("fillText:营地,"))).toBe(true);
+  expect(paint.some((s) => s.startsWith("fillText:商店,"))).toBe(true);
+  expect(paint).toContain("set:lineWidth:5");
+  expect(paint.some((s) => s.startsWith("fillText:经验 50,"))).toBe(true);
+  const campToggle = screen.getByRole("checkbox", { name: /野怪营地/ });
+  fireEvent.click(campToggle);
+  paint.length = 0;
+  act(() => queued?.(3.3));
+  expect(paint).not.toContain("set:lineWidth:5");
+  expect(paint.some((s) => s.includes("Z 轴范围"))).toBe(false);
+  expect(paint.some((s) => s.startsWith("fillText:经验 50,"))).toBe(false);
+  fireEvent.click(campToggle);
+  paint.length = 0;
+  act(() => queued?.(3.4));
+  expect(paint).toContain("set:lineWidth:5");
+  fireEvent.click(screen.getByRole("button", { name: "关闭点位详情" }));
   paint.length = 0;
   fireEvent.pointerLeave(canvas);
   act(() => queued?.(4));
   expect(paint).not.toContain("set:lineWidth:5");
+  expect(paint.some((s) => s.startsWith("fillText:经验 50,"))).toBe(false);
   expect(paint.some((s) => s.includes("Z 轴范围"))).toBe(false);
   fireEvent(
     canvas,
