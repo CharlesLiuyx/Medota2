@@ -31,6 +31,7 @@ import {
 } from "./protocol";
 import { atomicJson } from "./files";
 import { taskProcess, type inspectDatabase } from "./tasks";
+import { mapDigest } from "./maps";
 
 type Inspection = Awaited<ReturnType<typeof inspectDatabase>>;
 export async function restoreCandidateTask(
@@ -83,6 +84,7 @@ export async function restoreCandidateTask(
     });
     return {
       databaseDigest: digest(content.tables),
+      mapDigest: mapDigest(saved.manifest.map),
       tables: content.tables.map(({ name, rows }) => ({ name, rows })),
       heads: content.heads,
       identity: {
@@ -119,7 +121,7 @@ export async function applicationPlan(manifest: SnapshotManifest) {
       ? exported?.manifest.databaseDigest
       : null);
   const nonempty = Boolean(actual?.tables.some((table) => table.rows > 0));
-  const unsaved = hasUnexportedChanges({
+  const databaseUnsaved = hasUnexportedChanges({
     current: actual?.databaseDigest ?? null,
     target: manifest.databaseDigest,
     baseline: savedDigest ?? null,
@@ -129,10 +131,27 @@ export async function applicationPlan(manifest: SnapshotManifest) {
         ? (exported?.manifest.databaseDigest ?? null)
         : null,
   });
+  const baselineManifest = active
+    ? (readSyncJson(
+        resolve(active.lease.stateDirectory, "../manifest.json"),
+      ) as SnapshotManifest)
+    : null;
+  const mapsUnsaved = Boolean(
+    actual &&
+    hasUnexportedChanges({
+      current: actual.mapDigest,
+      target: mapDigest(manifest.map),
+      baseline: baselineManifest ? mapDigest(baselineManifest.map) : null,
+      exported: exported ? mapDigest(exported.manifest.map) : null,
+      nonempty: actual.mapDigest !== mapDigest(null),
+    }),
+  );
   return {
     targetDigest: manifest.databaseDigest,
     current: actual,
-    unsaved,
+    unsaved: databaseUnsaved || mapsUnsaved,
+    mapsUnsaved,
+    targetMapDigest: mapDigest(manifest.map),
     changes: manifest.tables.map((table) => ({
       name: table.name,
       before:
@@ -153,7 +172,7 @@ export async function prepareCandidate(
   const plan = await applicationPlan(saved.manifest);
   if (plan.unsaved)
     throw new Error(
-      "Current database has unexported changes. Run pnpm data:export to preserve them before applying another snapshot.",
+      "Current database or maps have unexported changes. Run pnpm data:export to preserve them before applying another snapshot.",
     );
   const dependencies = await prepareDependencies(
     saved.manifest,
@@ -216,6 +235,10 @@ export async function prepareCandidate(
     appliedAt: new Date().toISOString(),
     lease,
     ...dependencies,
+    mapInputsAtApply: {
+      collectionPath: process.env.DOTA_MAP_COLLECTION_PATH ?? "",
+      dataPath: process.env.DOTA_MAP_DATA_PATH ?? "",
+    },
   });
   await atomicJson(resolve(lease.stateDirectory, "../activation.json"), active);
   return { active, verification, plan };
@@ -266,11 +289,16 @@ export async function recoverInterruptedSwitch(): Promise<void> {
 export async function activateCandidate(
   next: ActiveSnapshot,
   expectedDigest: string | null,
+  expectedMapDigest: string | null,
 ): Promise<void> {
   const current = await inspectCurrent();
   if ((current?.databaseDigest ?? null) !== expectedDigest)
     throw new Error(
       "Current database changed while preparing the candidate. Export those changes and retry activation.",
+    );
+  if ((current?.mapDigest ?? null) !== expectedMapDigest)
+    throw new Error(
+      "Current maps changed while preparing the candidate. Export and retry.",
     );
   const previous = readActiveSnapshot();
   const journal: SwitchJournal = {
@@ -293,6 +321,8 @@ export async function activateCandidate(
     const stopped = await inspectCurrent();
     if ((stopped?.databaseDigest ?? null) !== expectedDigest)
       throw new Error("Source data changed before cutover.");
+    if ((stopped?.mapDigest ?? null) !== expectedMapDigest)
+      throw new Error("Maps changed before cutover.");
     await atomicJson(resolve(syncRoot(), "active.json"), next);
     await run(process.execPath, ["--import", "tsx", "src/workers/dev.ts"]);
     await atomicJson(journalPath(), { ...journal, phase: "completed" });

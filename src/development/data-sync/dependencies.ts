@@ -1,20 +1,18 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { loadLocalEnv } from "@/config/env";
 import { syncRoot, assertOwnedPath } from "@/config/data-sync-state";
-import { mapPackageSchema } from "@/domain/map/schema";
+import { collectMaps, inspectMaps, mapDigest, restoreMaps } from "./maps";
 import {
   assertRelativeFile,
-  assertPublishableText,
   sha256,
   type TextRow,
   type SnapshotManifest,
-  type FileIdentity,
 } from "./protocol";
-import { blobPath, putBlob, verifiedFile } from "./files";
+import { verifiedFile } from "./files";
 const exec = promisify(execFile);
 const runtimePaths = [
   "steam.inf",
@@ -124,54 +122,17 @@ export async function collectSources(
   );
 }
 
-export async function collectMap(
-  root: string,
-  objects: Map<string, FileIdentity>,
-): Promise<SnapshotManifest["map"]> {
-  loadLocalEnv();
-  if (!process.env.DOTA_MAP_DATA_PATH) return null;
-  const path = resolve(process.env.DOTA_MAP_DATA_PATH);
-  const metadata = await readFile(resolve(path, "map.json"));
-  assertPublishableText(metadata.toString("utf8"), "map.json");
-  const map = mapPackageSchema.parse(JSON.parse(metadata.toString("utf8")));
-  const image = await readFile(resolve(path, "overview.webp"));
-  if (sha256(image) !== map.image.sha256)
-    throw new Error("Map image checksum mismatch.");
-  const names = ["map.json", "overview.webp"];
-  for (const file of map.provenance.files) {
-    assertRelativeFile(file.path);
-    const sourceFile = resolve(path, "source", file.path);
-    if (existsSync(sourceFile)) {
-      const data = await readFile(sourceFile);
-      if (sha256(data) !== file.sha256)
-        throw new Error(`Map source checksum mismatch: ${file.path}`);
-      names.push(`source/${file.path}`);
-    }
-  }
-  // Preserve source attribution/metadata already present in the local package.
-  for (const name of (await readdir(path)).sort())
-    if (
-      /^(?:LICENSE(?:\.[a-z]+)?|NOTICE(?:\.[a-z]+)?|attribution\.json)$/i.test(
-        name,
-      ) &&
-      !names.includes(name)
-    )
-      names.push(name);
-  const files = [];
-  for (const name of names) {
-    const bytes = await readFile(resolve(path, name));
-    const file = await putBlob(root, bytes);
-    objects.set(file.sha256, file);
-    files.push({ path: name, ...file });
-  }
-  return { files };
-}
+export const collectMap = collectMaps;
 
 export async function prepareDependencies(
   manifest: SnapshotManifest,
   repository: string,
   offline = false,
-): Promise<{ sourceRoot: string; mapRoot: string | null }> {
+): Promise<{
+  sourceRoot: string;
+  mapRoot: string | null;
+  mapCollectionPath: string | null;
+}> {
   const sourceRoot = resolve(syncRoot(), "sources");
   await mkdir(sourceRoot, { recursive: true });
   for (const source of manifest.sources) {
@@ -243,34 +204,7 @@ export async function prepareDependencies(
       await verifiedFile(assertOwnedPath(resolve(root, file.path), root), file);
     }
   }
-  let mapRoot: string | null = null;
-  if (manifest.map) {
-    const mapFile = manifest.map.files.find(
-      (file) => file.path === "map.json",
-    )!;
-    mapRoot = assertOwnedPath(resolve(syncRoot(), "maps", mapFile.sha256));
-    await mkdir(mapRoot, { recursive: true });
-    for (const file of manifest.map.files) {
-      assertRelativeFile(file.path);
-      const bytes = await verifiedFile(blobPath(repository, file.sha256), file);
-      const path = assertOwnedPath(resolve(mapRoot, file.path), mapRoot);
-      await mkdir(resolve(path, ".."), { recursive: true });
-      if (!existsSync(path))
-        await writeFile(path, bytes, { flag: "wx", mode: 0o600 });
-      await verifiedFile(path, file);
-    }
-    const map = mapPackageSchema.parse(
-      JSON.parse(
-        (await readFile(resolve(mapRoot, "map.json"))).toString("utf8"),
-      ),
-    );
-    const image = manifest.map.files.find(
-      (file) => file.path === "overview.webp",
-    );
-    if (!image || image.sha256 !== map.image.sha256)
-      throw new Error("Map dependency manifest is inconsistent.");
-  }
-  return { sourceRoot, mapRoot };
+  return { sourceRoot, ...(await restoreMaps(manifest.map, repository)) };
 }
 
 export async function verifyLiveDependencies(
@@ -293,23 +227,15 @@ export async function verifyLiveDependencies(
       );
     }
   }
-  if (manifest.map) {
-    try {
-      if (!process.env.DOTA_MAP_DATA_PATH)
-        throw new Error("Map package is not configured.");
-      for (const file of manifest.map.files) {
-        assertRelativeFile(file.path);
-        await verifiedFile(
-          resolve(process.env.DOTA_MAP_DATA_PATH, file.path),
-          file,
-        );
-      }
-    } catch (error) {
+  try {
+    if (mapDigest(await inspectMaps()) !== mapDigest(manifest.map))
       problems.push(
-        error instanceof Error ? error.message : "Map verification failed.",
+        "Current map collection differs from the target snapshot. Run pnpm data:publish before pushing code.",
       );
-    }
-  } else if (process.env.DOTA_MAP_DATA_PATH)
-    problems.push("Current map is configured but target snapshot has no map.");
+  } catch (error) {
+    problems.push(
+      error instanceof Error ? error.message : "Map verification failed.",
+    );
+  }
   return problems;
 }

@@ -23,12 +23,14 @@ import { assertSnapshotWritable } from "@/server/environment/snapshot-write-guar
 const state = vi.hoisted(() => ({
   active: null as unknown,
   journal: null as unknown,
+  candidate: null as unknown,
 }));
 vi.mock("@/config/data-sync-state", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/config/data-sync-state")>()),
   getWorkbenchPort: () => 3000,
   readActiveSnapshot: () => state.active,
-  readSyncJson: () => state.journal,
+  readSyncJson: (path: string) =>
+    path.endsWith("candidate.json") ? state.candidate : state.journal,
 }));
 let root: string | undefined;
 afterEach(async () => {
@@ -36,6 +38,7 @@ afterEach(async () => {
   root = undefined;
   state.active = null;
   state.journal = null;
+  state.candidate = null;
   vi.unstubAllEnvs();
 });
 async function emptySnapshot() {
@@ -66,6 +69,31 @@ async function emptySnapshot() {
   return { manifest, id };
 }
 describe("development snapshot handoff", () => {
+  it("permits a new native-path candidate to migrate/restore while an old workspace stays active, but blocks ordinary or completed candidate writes", () => {
+    const candidate = resolve(
+      ".medota2/data-sync/candidates/11111111-1111-4111-8111-111111111111/state",
+    );
+    state.active = {
+      lease: {
+        environment: "local-review",
+        stateDirectory: resolve(".medota2/old/state"),
+      },
+    };
+    state.candidate = { phase: "ready-to-restore" };
+    expect(() =>
+      assertSnapshotWritable(candidate, "local-review", "migrate"),
+    ).not.toThrow();
+    expect(() =>
+      assertSnapshotWritable(candidate, "local-review", "restore"),
+    ).not.toThrow();
+    expect(() =>
+      assertSnapshotWritable(candidate, "local-review", "import"),
+    ).toThrow("selection changed");
+    state.candidate = { phase: "verified" };
+    expect(() =>
+      assertSnapshotWritable(candidate, "local-review", "restore"),
+    ).toThrow("selection changed");
+  });
   it("accepts a complete empty snapshot and rejects incompatible schema or modified manifest", async () => {
     const { manifest, id } = await emptySnapshot();
     const saved = await readSnapshot(root!, id);

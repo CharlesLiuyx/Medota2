@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { resolve, sep } from "node:path";
 import {
   readActiveSnapshot,
   readSyncJson,
@@ -21,7 +21,7 @@ export function assertSnapshotWritable(
   )
     return;
   const active = readActiveSnapshot();
-  const candidate = state.startsWith(resolve(syncRoot(), "candidates") + "/")
+  const candidate = state.startsWith(resolve(syncRoot(), "candidates") + sep)
     ? (readSyncJson(resolve(state, "../candidate.json")) as {
         phase?: string;
       } | null)

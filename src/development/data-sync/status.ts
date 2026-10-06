@@ -13,6 +13,7 @@ import { inspectCurrent } from "./restore";
 import { taskProcess } from "./tasks";
 import { atomicJson } from "./files";
 import { type SnapshotManifest } from "./protocol";
+import { mapDigest } from "./maps";
 const exec = promisify(execFile);
 export async function syncStatus() {
   const workspace = readSyncWorkspace();
@@ -61,10 +62,11 @@ export async function syncStatus() {
       ? "unlocked"
       : !manifest
         ? "not-fetched"
-        : problems.length
-          ? "dependencies-missing"
-          : current.databaseDigest !== manifest.databaseDigest
-            ? "data-differs"
+        : current.databaseDigest !== manifest.databaseDigest ||
+            current.mapDigest !== mapDigest(manifest.map)
+          ? "data-differs"
+          : problems.length
+            ? "dependencies-missing"
             : codeDirty
               ? "code-modified"
               : "in-sync";

@@ -51,7 +51,10 @@ export const manifestSchema = z
     objects: z.array(fileSchema),
     sources: z.array(sourceSchema),
     map: z
-      .object({ files: z.array(sourceFileSchema).min(2) })
+      .object({
+        files: z.array(sourceFileSchema).min(2),
+        collection: z.literal("versions.json").optional(),
+      })
       .strict()
       .nullable(),
     heads: z.record(

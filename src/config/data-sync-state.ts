@@ -37,6 +37,10 @@ export const activeSchema = z
     lease: leaseSchema,
     sourceRoot: z.string(),
     mapRoot: z.string().nullable(),
+    mapCollectionPath: z.string().nullable().optional(),
+    mapInputsAtApply: z
+      .object({ collectionPath: z.string(), dataPath: z.string() })
+      .optional(),
   })
   .strict();
 export type ActiveSnapshot = z.infer<typeof activeSchema>;
@@ -89,6 +93,7 @@ export function readActiveSnapshot(): ActiveSnapshot | null {
   validateCandidateLease(active.candidateId, active.lease);
   assertOwnedPath(active.sourceRoot);
   if (active.mapRoot) assertOwnedPath(active.mapRoot);
+  if (active.mapCollectionPath) assertOwnedPath(active.mapCollectionPath);
   return active;
 }
 

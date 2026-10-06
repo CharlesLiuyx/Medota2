@@ -33,6 +33,8 @@ import {
   inspectDatabase,
 } from "@/development/data-sync/tasks";
 import { acquireLock } from "@/development/runtime";
+import { publishData } from "@/development/data-sync/publish";
+import { mapDigest } from "@/development/data-sync/maps";
 
 async function main() {
   const { values, positionals } = parseArgs({
@@ -49,6 +51,7 @@ async function main() {
       plan: { type: "boolean" },
       offline: { type: "boolean" },
       "prepare-only": { type: "boolean" },
+      "backup-local": { type: "boolean" },
     },
   });
   loadLocalEnv();
@@ -81,6 +84,7 @@ async function main() {
   if (command === "init") return output(workspace);
   const release = values.plan ? async () => {} : await acquireLock("data-sync");
   try {
+    if (command === "publish") return output(await publishData());
     if (command === "export") {
       const result = await taskProcess<
         Awaited<ReturnType<typeof exportDatabase>>
@@ -152,12 +156,21 @@ async function main() {
       if (command === "fetch") return output({ snapshotId: id, ...files });
       const plan = await applicationPlan(saved.manifest);
       if (values.plan) return output({ snapshotId: id, ...plan, ...files });
+      if (plan.unsaved && (values["backup-local"] || command === "sync")) {
+        const backup = await taskProcess<
+          Awaited<ReturnType<typeof exportDatabase>>
+        >("export", ["--root", resolve(syncRoot(), "export")]);
+        console.log(
+          `Saved local data before applying the shared snapshot: ${backup.snapshotId}`,
+        );
+      }
       if (command === "sync")
         await run("pnpm", ["install", "--frozen-lockfile"]);
       const active = readActiveSnapshot();
       if (
         active?.snapshotId === id &&
-        plan.current?.databaseDigest === saved.manifest.databaseDigest
+        plan.current?.databaseDigest === saved.manifest.databaseDigest &&
+        plan.current?.mapDigest === mapDigest(saved.manifest.map)
       ) {
         const problems = await taskProcess<string[]>("dependencies", [
           "--root",
@@ -186,6 +199,7 @@ async function main() {
       await activateCandidate(
         prepared.active,
         prepared.plan.current?.databaseDigest ?? null,
+        prepared.plan.current?.mapDigest ?? null,
       );
       return output({
         state: "applied",

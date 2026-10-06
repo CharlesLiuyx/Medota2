@@ -5,10 +5,13 @@ import { readSnapshot, verifySnapshotFiles, manifestPath } from "./snapshot";
 import { putFile, blobPath, chunkPath } from "./files";
 
 /** Prepare an exact, reviewable Git payload. This never stages, commits or pushes. */
-export async function bundleSnapshot(root: string, id: string) {
+export async function bundleSnapshot(
+  root: string,
+  id: string,
+  destination = resolve(syncRoot(), "bundles", id),
+) {
   const saved = await readSnapshot(root, id);
   const verification = await verifySnapshotFiles(root, saved.manifest);
-  const destination = resolve(syncRoot(), "bundles", id);
   await mkdir(destination, { recursive: true });
   await putFile(
     manifestPath(destination, id),

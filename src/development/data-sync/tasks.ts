@@ -11,6 +11,7 @@ import { collectDatabase } from "./database";
 import { exportSnapshot } from "./snapshot";
 import { digest } from "./protocol";
 import { atomicJson } from "./files";
+import { inspectMaps, mapDigest } from "./maps";
 const execute = promisify(execFile);
 export async function taskProcess<T>(
   task: string,
@@ -39,6 +40,7 @@ export async function inspectDatabase() {
     const content = await db.readSnapshot((reader) => collectDatabase(reader));
     return {
       databaseDigest: digest(content.tables),
+      mapDigest: mapDigest(await inspectMaps()),
       tables: content.tables.map(({ name, rows }) => ({ name, rows })),
       heads: content.heads,
       identity: {

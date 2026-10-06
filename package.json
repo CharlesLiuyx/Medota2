@@ -10,6 +10,9 @@
     "pnpm": ">=11.0.0"
   },
   "scripts": {
+    "push": "tsx src/workers/push.ts",
+    "sync": "node scripts/development/sync.mjs",
+    "data:publish": "tsx src/workers/data-sync.ts publish",
     "dev": "tsx src/workers/dev.ts",
     "local": "pnpm dev:local",
     "local:prepare": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/local-review MEDOTA2_PROCESS_ROLE=control MEDOTA2_ENVIRONMENT=local-review MEDOTA2_DATA_CLASS=production-snapshot MEDOTA2_DATABASE_CONFIRMATION=medota2_local tsx src/workers/prepare-local-review.ts",

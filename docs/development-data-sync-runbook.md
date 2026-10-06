@@ -42,18 +42,21 @@ pnpm data:status
 
 Windows验收限制：265项单测与21项隔离数据库合同测试通过，实际开发重启通过。合同测试在Windows为逐次ACL检查提供60秒hook／30秒test时限；仍核验全部身份和权限。浏览器技能列表跳转用例持续超时，release在编译通过后复制standalone产物因symlink权限EPERM失败，完整check尚未通过。需要浏览器测试时先运行 `pnpm exec playwright install chromium`；不要将本机开发可用表述成发布流程已验收。
 
-| 命令                                                    | 实际作用                                                  |
-| ------------------------------------------------------- | --------------------------------------------------------- |
-| `pnpm data:workspace --name <名称> --profile local`     | 首次建立工作区身份，重复相同参数不改变身份                |
-| `pnpm data:fetch`                                       | 获取 lock 指定的 Git commit／LFS 对象并校验，不切换数据库 |
-| `pnpm data:apply --plan`                                | 只读检查已缓存目标；缓存缺失先运行 fetch                  |
-| `pnpm data:apply`                                       | 完整核验，在独立候选恢复，切换并启动工作台                |
-| `pnpm data:apply --prepare-only`                        | 仅创建并核验候选，当前工作台保持原选择                    |
-| `pnpm dev:sync`                                         | 核对冻结依赖、应用锁定快照、启动／重启工作台              |
-| `pnpm data:status`                                      | 重新读取完整业务数据和文件依赖，保存带时间的核验结果      |
-| `pnpm data:export`                                      | 将当前业务状态保存为本机不可变快照，输出内容ID与体积      |
-| `pnpm data:bundle --snapshot <ID>`                      | 准备精确发布目录，包含 manifest、表分块、对象与 LFS 规则  |
-| `pnpm data:lock --commit <完整Git提交> --snapshot <ID>` | 验证已发布数据及 LFS 全部可获取后写代码 lock              |
+| 命令                                                    | 实际作用                                                                    |
+| ------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `pnpm data:workspace --name <名称> --profile local`     | 首次建立工作区身份，重复相同参数不改变身份                                  |
+| `pnpm data:fetch`                                       | 获取 lock 指定的 Git commit／LFS 对象并校验，不切换数据库                   |
+| `pnpm data:apply --plan`                                | 只读检查已缓存目标；缓存缺失先运行 fetch                                    |
+| `pnpm data:apply`                                       | 完整核验，在独立候选恢复，切换并启动工作台                                  |
+| `pnpm data:apply --prepare-only`                        | 仅创建并核验候选，当前工作台保持原选择                                      |
+| `pnpm dev:sync`                                         | 核对冻结依赖、应用锁定快照、启动／重启工作台                                |
+| `pnpm data:status`                                      | 重新读取完整业务数据和文件依赖，保存带时间的核验结果                        |
+| `pnpm data:export`                                      | 将当前业务状态保存为本机不可变快照，输出内容ID与体积                        |
+| `pnpm data:bundle --snapshot <ID>`                      | 准备精确发布目录，包含 manifest、表分块、对象与 LFS 规则                    |
+| `pnpm data:lock --commit <完整Git提交> --snapshot <ID>` | 验证已发布数据及 LFS 全部可获取后写代码 lock                                |
+| `pnpm data:publish`                                     | 导出当前完整数据，向私有数据仓库发布不可变分支，独立回取校验后更新本地 lock |
+| `pnpm push`                                             | 提交本地代码、发布完整数据、更新lock并一起普通推送当前分支                  |
+| `pnpm sync`                                             | 拉取代码、安装固定依赖、备份未导出数据、应用共享快照并重启                  |
 
 离线使用 `data:apply --offline`，前提是数据 commit、全部对象与固定来源已经在缓存中。重复应用同一快照会重新核验并返回 `already-applied`。本地验收可用 `--root <导出目录> --snapshot <ID>`；它不创建远端 lock，也不代表另一机器已能获取。
 
@@ -69,10 +72,18 @@ Windows验收限制：265项单测与21项隔离数据库合同测试通过，�
 
 ## 发布步骤与保留规则
 
+日常只有两个入口：开发完成运行 `pnpm push`，另一台机器运行 `pnpm sync`。前者自动提交本地未提交代码（可用 `-m` 指定说明），发布全部业务数据、更新并提交lock，再普通推送当前代码分支。后者拉取代码和固定依赖，自动保存未导出的本地业务数据，恢复lock选择的快照并重启工作台。原数据库与地图包保留，不合并不同快照的业务记录；代码分叉仍使用正常Git协作流程处理。
+
+所有环境共享数据库记录、图片、地图集合及其默认版本、底图、导航、高度、来源和许可。快照只使用相对路径；工作区UUID、凭据、端口、进程启动和系统路径属于各机器的兼容层。应用快照会记录原本机地图选择，以共享集合替代该旧选择；以后显式配置一个新的不可变集合才表示新的本地数据编辑，页面与导出使用相同选择。无需手工清理旧.env地图路径。
+
+数据使用私有仓库中的不可变快照分支。上传Git/LFS后从独立缓存回取全部内容并核对，本地数据仍一致才更新代码lock；失败保留旧状态和候选。相同内容复用已有快照。当前自动发布支持私有GitHub仓库，使用Git凭据或GH_TOKEN／GITHUB_TOKEN验证私有性，不打印凭据。没有安装或修改Git hooks；普通git push只推代码，项目统一使用pnpm push交接两部分。原始安装、提取缓存、凭据和数据库卷不上传，发布的是带provenance的已导入业务包。
+
+以下分步命令继续用于需要单独审阅数据的情况：
+
 1. 在具备来源能力的环境完成导入、验证并 `data:export`。`data:bundle --snapshot <ID>` 得到 `.medota2/data-sync/bundles/<ID>`；核对报告和资源范围。
 2. 获得针对具体仓库、快照与资源范围的发布批准。私有存储不代替第三方资源许可；凭据、控制表、staging、运行中导入、机器 receipt 和数据库卷都不进入 bundle。
 3. 在获准的**私有**数据仓库中加入 bundle 文件，保留已有 snapshots、tables 与 objects；使用 `git lfs install --local` 和 bundle 的 `.gitattributes`，普通提交并非强制推送。首个数据仓库的创建同样属于批准范围。
 4. 用新的、完整数据 commit 运行 `data:lock`，确认全部远端对象可取，再检查并提交／推送公开代码仓库中的实现、文档和 lock。公开仓库不加入数据文件。
 5. 发布前重新 fetch 目标代码分支，确认它仍等于批准基线。远端已推进则重新核对数据祖先和 schema，不通过强制推送覆盖并发工作。
 
-所有受支持代码版本引用的数据 commit 与 LFS 对象都需要保留。不要自动 force push、清空历史或删除旧对象。当前 CLI 负责准备与验证，Git 提交／推送由获准操作者执行；没有自动合并或远端垃圾清理服务。
+所有受支持代码版本引用的数据 commit 与 LFS 对象都需要保留。不要自动 force push、清空历史或删除旧对象。`data:export`／`data:bundle`仍只准备本机产物；只有显式 `data:publish`／`push` 执行上述发布动作，没有后台上传、自动合并或远端垃圾清理服务。

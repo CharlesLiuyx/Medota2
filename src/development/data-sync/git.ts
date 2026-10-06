@@ -15,7 +15,7 @@ const gitEnv = () => ({
   GIT_LFS_SKIP_SMUDGE: "1",
   GIT_TERMINAL_PROMPT: "0",
 });
-async function git(args: string[], root = repositoryRoot()) {
+export async function dataGit(args: string[], root = repositoryRoot()) {
   return (
     await execute(
       "git",
@@ -69,9 +69,10 @@ export async function readDataLock(): Promise<DataLock | null> {
 }
 export async function fetchSnapshot(
   lock: DataLock,
-  options: { repository?: string; offline?: boolean } = {},
+  options: { repository?: string; offline?: boolean; root?: string } = {},
 ) {
-  const root = assertOwnedPath(repositoryRoot());
+  const root = assertOwnedPath(options.root ?? repositoryRoot());
+  const git = (args: string[]) => dataGit(args, root);
   if (!options.offline) {
     const remote = await configureRepository(options.repository);
     await mkdir(root, { recursive: true });
@@ -133,6 +134,7 @@ export async function lockPublishedSnapshot(
   // Fetch the manifest before constructing its hash, then verify all payloads.
   const remote = await configureRepository(repository);
   const root = repositoryRoot();
+  const git = (args: string[]) => dataGit(args, root);
   await mkdir(root, { recursive: true });
   if (!existsSync(resolve(root, ".git"))) {
     await execute("git", ["init", root]);

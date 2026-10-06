@@ -8,6 +8,7 @@ import type { VerifiedDatabase } from "@/server/environment/contract";
 import { tables, schemaDigest, assertTextRow } from "./schema";
 import { collectDatabase, migrationDigest } from "./database";
 import { collectMap, collectSources } from "./dependencies";
+import { verifyMapManifest } from "./maps";
 import { blobPath, chunkPath, putFile, verifiedFile } from "./files";
 import {
   canonical,
@@ -126,8 +127,9 @@ export async function readSnapshot(
     files.forEach(assertRelativeFile);
     if (
       new Set(files).size !== files.length ||
-      !files.includes("map.json") ||
-      !files.includes("overview.webp")
+      (manifest.map.collection
+        ? !files.includes(manifest.map.collection)
+        : !files.includes("map.json") || !files.includes("overview.webp"))
     )
       throw new Error("Incomplete map dependencies.");
   }
@@ -186,5 +188,8 @@ export async function verifySnapshotFiles(
     await verifiedFile(blobPath(root, file.sha256), file);
     bytes += file.bytes;
   }
+  await verifyMapManifest(manifest.map, (file) =>
+    verifiedFile(blobPath(root, file.sha256), file),
+  );
   return { bytes, rows: total };
 }
