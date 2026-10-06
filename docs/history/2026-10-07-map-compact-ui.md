@@ -1,6 +1,6 @@
 # 地图紧凑界面调整
 
-日期：2026-10-07（Asia/Singapore）。环境：GofurMacM4Max128GB，代码基线main / 451daa5，本轮UI改动已获用户授权提交并合入main；复用固定3000工作台的local-review真实数据。活动快照eef4400b…与lock一致，本轮不修改地图、Catalog、数据库或计算规则。
+日期：2026-10-07（Asia/Singapore）。环境：GofurMacM4Max128GB，代码基线main / 451daa5，本轮UI实现提交`1cfa248`已推送main；复用固定3000工作台的local-review真实数据。活动快照eef4400b…与lock一致，本轮不修改地图、Catalog、数据库或计算规则。
 
 ## 实现结果
 
@@ -29,3 +29,7 @@
 营地选中保持效果的追加实现将选中与悬停共用边界、经验和高度范围的前景绘制。扩展现有地图使用流程，验证移出指针、悬停其他对象、隐藏／恢复图层及关闭选择；35项地图测试与本次5项范围检查通过，收据`.medota2/checks/1791317501908-32fb65bd/run.json`。真实7.41f地图选择营地后移出指针的截图为本机`output/playwright/map-selected-camp-persistent.png`；图谱节点详情与DOM验证同步通过。
 
 用户已明确授权使用项目`pnpm push`流程，将本轮UI实现、合同和验证记录提交至main，同时交接完整业务快照。推送前远端main与本机基线451daa5一致；发布后以远端Git回读及`pnpm data:status`核对结果。
+
+## main 发布核验
+
+2026-10-07用户授权后，提交前组合`pnpm check`的7项检查通过，收据`.medota2/checks/1791317988583-6e829376/run.json`；包含35项地图测试、4项真实浏览流程和9项英雄E2E，固定fixture数值流程按真实模式跳过。通过项目`pnpm push`发布实现提交`1cfa248dc275c78dfbeb2fbbb879a8dd35e588bc`，远端main回读与本机一致，工作树干净。完整业务快照继续使用`eef4400bab9426e0d508e04432a0f9424d241beb7a131e2659da0ba1482f5326`，导出与当前数据确认通过；`pnpm data:status`返回`in-sync`、`problems=[]`。本轮不改变schema、来源或业务数据；另一环境使用`pnpm sync`消费代码与同一快照，并按其平台能力复验。
