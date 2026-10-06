@@ -35,6 +35,8 @@
 | `pnpm test:integration:isolated` / `test:e2e:isolated` | 每次独立环境，用于合同诊断及完整回归                                                    |
 | `pnpm test:clean`                                      | 清理工具自己记录的测试栈，保留测试证据                                                  |
 | `pnpm bench [--input PATH] [--iterations N]`           | 独立进程串行测量解析；默认小样例，可用配置化 VPK 输入                                   |
+| `pnpm storage:clean [--scope releases\|tests]`         | 预览生成产物保留规则与清理候选                                                          |
+| `pnpm storage:clean --apply`                           | 持锁清理可再生发布产物及已完成测试附件                                                  |
 | `pnpm release [--build-only]`                          | 构建 Web、执行数据库查询启动检查，保留可复用产物                                        |
 
 命令是仓库的共同接口，Codex、Claude Code、OpenCode 和普通终端都可调用。新运行时或远程部署没有隐式安装过程。
@@ -88,6 +90,20 @@ CI 取消相同分支旧运行，按规划安装 Chromium，调用相同的 `pnp
 Web 产物放在 `.medota2/releases/<content-key>/`，同一输入复用构建与启动检查。正式产物是该目录下的 `app/`，使用 `.next-release` 缓存构建。产物排除本机缓存、状态目录和 dotenv 文件；启动验收使用单独副本注入测试配置，结束后清理。部署时需注入相应运行配置。当前尚无远程部署目标，命令不会发布到外部平台。未来计算组件能独立交付时再增加发布单元。
 
 AGENTS.md 保存工作规则；CONTEXT.md 保存概念与模块地图；docs/current.md 保存当前决定、问题与接手入口。Claude Code 用薄 `CLAUDE.md` 引用相同文件，OpenCode 用 AGENTS.md 与 `opencode.json` 加载其余入口。更换工具和模型时，用启动、一个小改动和对应检查验证能否接手。
+
+## 自动保留与日志容量
+
+`src/development/storage.ts`集中维护规则；`pnpm release`、共享测试及独立测试Worker结束后调用相同清理入口。清理故障或锁被占用时记录deferred提示，保留原命令结果；CI跳过自动清理，避免验收附件在上传前被移除。手动`pnpm storage:clean`默认只预览，`--apply`重新生成计划并执行，支持`--scope releases`或`tests`。
+
+默认保留最近2份成功发布目录、10份成功测试完整附件，失败／过期／中断结果至少保留7天及最近5份。`.keep`固定保留且执行前再次核对；既有缺少PID元数据的失败记录按未解决证据保留，显式添加`.resolved`后参与正常保留规则。发布记录按builtAt／finishedAt、测试按finishedAt排序，不使用文件修改时间作为版本或成功证据。
+
+清理只移除识别出的已完成发布目录及测试report、test-results、playwright／artifacts、next目录。测试run.json、日志及状态始终保留；共享测试environment.json引用的整个租约目录保留，独立测试须已完成数据库清理且未保留数据库才参与。运行中或没有可识别完成记录的目录保留。相同ZIP附件仅在SHA-256一致时去重，保留完整报告副本；每个测试目录的storage-cleanup.json标明清理范围和保留位置。已删除发布的manifest存入.medota2/maintenance/releases/，本轮计划及结果保存在last-storage-cleanup.json。
+
+应用清理按release→test-database→storage的固定顺序获取所需范围锁，避免与构建及数据库复用竞争。候选路径不能越出工作区或穿过符号链接／Windows junction；产物内部的依赖链接计量和删除时只操作链接本身。清理不会选择来源、同步数据、候选、地图、凭据、数据库备份或正在使用的通用编译缓存。
+
+本机可在.medota2/storage-policy.json覆盖保留数量和日志容量，字段详见README；配置值有范围校验，数量至少1、失败保护期至少1天。MEDOTA2_AUTO_CLEANUP=0禁用自动产物清理，手动清理及日志轮转继续可用。
+
+工作台supervisor拥有唯一日志写入流，准备命令、Next Web、样例和控制台输出统一通过RotatingLog写入；按默认10 MiB切换，保留当前文件及3份归档。写入时关闭并重开由supervisor持有的文件句柄，子进程不持有日志文件句柄，可在Windows轮转。旧追加日志首次启动按相同容量导入；中断导入留下server.log.import时明确报错保留原文，需先核对该文件后重启。修改日志配置须重启工作台。
 
 ## 验收
 

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { withTestEnvironment } from "@/development/test-environment";
 import { run, fingerprint, writeJson } from "@/development/runtime";
+import { automaticStorageCleanup } from "@/development/storage";
 
 async function main(): Promise<void> {
   const [suite, ...args] = process.argv.slice(2);
@@ -27,9 +28,16 @@ async function main(): Promise<void> {
       ".medota2/shared-tests/runs",
       `${Date.now()}-${createHash("sha256").update(String(Math.random())).digest("hex").slice(0, 8)}`,
     );
-    const databaseBefore = await dataVersion();
+    let databaseBefore: string | undefined;
     let result = "running";
+    await writeJson(resolve(evidenceRoot, "run.json"), {
+      status: result,
+      pid: process.pid,
+      startedAt: new Date().toISOString(),
+      input: before,
+    });
     try {
+      databaseBefore = await dataVersion();
       await run(
         "pnpm",
         [
@@ -71,6 +79,7 @@ async function main(): Promise<void> {
     } finally {
       await writeJson(resolve(evidenceRoot, "run.json"), {
         status: result,
+        pid: process.pid,
         input: before,
         dataVersion: databaseBefore,
         finishedAt: new Date().toISOString(),
@@ -149,7 +158,9 @@ async function dataVersion(): Promise<string> {
   };
   return `${body.datasetVersionId}:${body.assetDatasetVersionId}`;
 }
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exitCode = 1;
-});
+main()
+  .finally(() => automaticStorageCleanup("tests"))
+  .catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  });

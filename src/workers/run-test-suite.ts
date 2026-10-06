@@ -1,4 +1,5 @@
 import { runTestSuite, type TestRunSuite } from "@/testing/test-run-harness";
+import { automaticStorageCleanup } from "@/development/storage";
 
 async function main(): Promise<void> {
   const suite = process.argv[2] as TestRunSuite | undefined;
@@ -19,7 +20,9 @@ async function main(): Promise<void> {
   console.log(`Verification evidence: ${runRoot}`);
 }
 
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exitCode = 1;
-});
+main()
+  .finally(() => automaticStorageCleanup("tests"))
+  .catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  });

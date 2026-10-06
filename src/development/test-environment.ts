@@ -151,6 +151,7 @@ export async function withTestEnvironment<T>(
     }
     const evidence = {
       schemaVersion: 1,
+      pid: process.pid,
       startedAt: new Date().toISOString(),
       status: "running",
       databaseRunId: context.runId,

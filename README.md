@@ -80,6 +80,34 @@ Windows 原生接入使用系统 Node、项目指定的 pnpm 和 Docker Compose�
 
 `pnpm push -m "说明"` 可指定代码提交说明。首次需配置现有私有数据仓库权限；命令使用普通 Git 非强制推送，分支分叉时仍按 Git 合并处理。没有额外 Git hooks；直接 `git push` 仍是 Git 的代码推送，因此项目日常统一使用 `pnpm push`。详见[同步运行手册](docs/development-data-sync-runbook.md)。
 
+### 自动空间保留策略
+
+发布和测试命令结束后自动维护本机生成产物，默认保留最近2份成功发布包、10份成功测试完整附件。失败附件至少保留7天及最近5份；已有缺少新执行元数据的历史失败保留，标记`.resolved`后才按规则淘汰。各目录内创建`.keep`可固定保留；当前任务、未完成记录及共享测试租约所引用目录保留。测试摘要与日志持续保留，重复trace经SHA-256核对后只保留完整HTML报告中的副本。
+
+```bash
+pnpm storage:clean                       # 只预览候选和保留理由
+pnpm storage:clean --apply               # 持锁执行可再生产物清理
+pnpm storage:clean --scope tests         # 只预览测试附件
+pnpm storage:clean --scope releases --apply
+```
+
+自定义数量可在忽略文件`.medota2/storage-policy.json`中填写部分配置：
+
+```json
+{
+  "releases": 2,
+  "successfulTests": 10,
+  "failedTests": 5,
+  "failureGraceDays": 7,
+  "logMaxBytes": 10485760,
+  "logArchives": 3
+}
+```
+
+工作台日志持续轮转，每份最多10 MiB，保留当前日志及3份历史日志；子进程输出统一写入`.medota2/development/server.log`及`.1`至`.3`。首次启动会将原来的大日志按同一容量规则迁入；修改日志配置后运行`pnpm dev:restart`。本机文件计量与清理收据见`.medota2/maintenance/last-storage-cleanup.json`；删除发布包的manifest另存于`maintenance/releases/`，测试目录内`storage-cleanup.json`记录附件去向。
+
+自动清理在CI跳过，设置`MEDOTA2_AUTO_CLEANUP=0`可禁用本机自动附件清理；手动命令仍可使用。清理只选择受管发布包与已完成测试的可再生附件，保留来源缓存、数据同步仓库、候选、地图、身份凭据及数据库备份。历史构建目录的整批清理仍需像本次空间审计一样核对运行引用。详细行为见[工作台Spec](docs/specs/development-workbench.md)。
+
 ### 配置 OpenDota Secret
 
 在项目根目录的 `.env` 中填写以下变量（本地文件，不提交 Git）：

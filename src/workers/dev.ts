@@ -2,7 +2,8 @@ import { assertActiveSnapshotCompatible } from "@/development/data-sync/startup"
 import { getWorkbenchOrigin, getWorkbenchPort } from "@/config/data-sync-state";
 import { spawn, type ChildProcess } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { closeSync, openSync, watch, type FSWatcher } from "node:fs";
+import { Console } from "node:console";
+import { watch, type FSWatcher } from "node:fs";
 import { mkdir, readFile, unlink } from "node:fs/promises";
 import { resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
@@ -13,6 +14,7 @@ import {
   processAlive,
   readJson,
   run,
+  setCommandOutput,
   writeJson,
 } from "@/development/runtime";
 import { sampleInputs, type SampleResult } from "@/development/sample";
@@ -23,6 +25,8 @@ import {
   getPreviewDataSource,
   previewEnvironment,
 } from "@/development/preview";
+import { RotatingLog } from "@/development/rotating-log";
+import { readStoragePolicy } from "@/development/storage";
 
 const origin = getWorkbenchOrigin();
 const ownerPath = resolve(developmentRoot, "owner.json");
@@ -67,7 +71,6 @@ async function main(): Promise<void> {
   }
   let expectedPid = owner?.pid;
   if (!owner || owner.workspace !== process.cwd() || !processAlive(owner.pid)) {
-    const log = openSync(resolve(developmentRoot, "server.log"), "a", 0o600);
     const child = spawn(
       process.execPath,
       ["--import", "tsx", "src/workers/dev.ts", "--serve"],
@@ -76,11 +79,10 @@ async function main(): Promise<void> {
         env: process.env,
         detached: true,
         windowsHide: true,
-        stdio: ["ignore", log, log],
+        stdio: "ignore",
       },
     );
     expectedPid = child.pid;
-    closeSync(log);
     child.unref();
   }
   const deadline = Date.now() + 180_000;
@@ -157,6 +159,9 @@ async function serve(): Promise<void> {
     savedAt = Date.now();
   const changed = new Set<string>();
   let activeRevision = 0;
+  let log: RotatingLog | undefined;
+  let restoreOutput: (() => void) | undefined;
+  const originalConsole = console;
   const stop = async (code = 0) => {
     if (stopping) return;
     stopping = true;
@@ -166,12 +171,24 @@ async function serve(): Promise<void> {
     await stopChildTree(web);
     await stopChildTree(sample);
     await publish({ phase: code ? "error" : "stopped" });
+    restoreOutput?.();
+    globalThis.console = originalConsole;
+    if (log && !log.destroyed)
+      await new Promise<void>((accept) => log!.end(accept));
     await release?.();
     process.exitCode = code;
   };
   process.once("SIGINT", () => void stop());
   process.once("SIGTERM", () => void stop());
   try {
+    log = await RotatingLog.create(process.cwd(), await readStoragePolicy());
+    globalThis.console = new Console(log, log);
+    restoreOutput = setCommandOutput(log);
+    log.on("error", (error) => {
+      void publish({ message: `Workbench log failed: ${error.message}` }).then(
+        () => stop(1),
+      );
+    });
     const occupied = await fetch(`${origin}/api/development`, {
       signal: AbortSignal.timeout(600),
     })
@@ -237,8 +254,10 @@ async function serve(): Promise<void> {
         "-p",
         String(getWorkbenchPort()),
       ],
-      { env, stdio: "inherit", windowsHide: true },
+      { env, stdio: ["ignore", "pipe", "pipe"], windowsHide: true },
     );
+    web.stdout?.pipe(log, { end: false });
+    web.stderr?.pipe(log, { end: false });
     web.once("error", (error) => {
       void publish({ message: error.message }).then(() => stop(1));
     });
@@ -302,9 +321,11 @@ async function serve(): Promise<void> {
         {
           env: { ...env, MEDOTA2_PROCESS_ROLE: "worker" },
           windowsHide: true,
-          stdio: ["ignore", "inherit", "inherit", "ipc"],
+          stdio: ["ignore", "pipe", "pipe", "ipc"],
         },
       );
+      child.stdout?.pipe(log!, { end: false });
+      child.stderr?.pipe(log!, { end: false });
       sample = child;
       let received = false;
       child.once(

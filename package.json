@@ -89,7 +89,8 @@
     "data:apply": "tsx src/workers/data-sync.ts apply",
     "data:fetch": "tsx src/workers/data-sync.ts fetch",
     "data:lock": "tsx src/workers/data-sync.ts lock",
-    "dev:sync": "tsx src/workers/data-sync.ts sync"
+    "dev:sync": "tsx src/workers/data-sync.ts sync",
+    "storage:clean": "tsx src/workers/storage-clean.ts"
   },
   "dependencies": {
     "@tailwindcss/postcss": "4.3.3",

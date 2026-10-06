@@ -14,10 +14,21 @@ import {
 } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import { createWriteStream } from "node:fs";
+import type { Writable } from "node:stream";
 import { setTimeout as delay } from "node:timers/promises";
 
 export const workspace = process.cwd();
 export const developmentRoot = resolve(workspace, ".medota2/development");
+let commandOutput: Writable | undefined;
+
+/** Route supervised commands through the workbench's rotating log. */
+export function setCommandOutput(output: Writable): () => void {
+  const previous = commandOutput;
+  commandOutput = output;
+  return () => {
+    commandOutput = previous;
+  };
+}
 
 export async function readJson<T>(path: string): Promise<T | null> {
   try {
@@ -126,17 +137,20 @@ export async function run(
     cwd: workspace,
     env,
     windowsHide: true,
-    stdio: log ? ["ignore", "pipe", "pipe"] : "inherit",
+    stdio: log || commandOutput ? ["ignore", "pipe", "pipe"] : "inherit",
   });
   if (log) {
     child.stdout?.on("data", (chunk: Buffer) => {
       log.write(chunk);
-      process.stdout.write(chunk);
+      (commandOutput ?? process.stdout).write(chunk);
     });
     child.stderr?.on("data", (chunk: Buffer) => {
       log.write(chunk);
-      process.stderr.write(chunk);
+      (commandOutput ?? process.stderr).write(chunk);
     });
+  } else if (commandOutput) {
+    child.stdout?.pipe(commandOutput, { end: false });
+    child.stderr?.pipe(commandOutput, { end: false });
   }
   const stop = () => child.kill("SIGTERM");
   process.once("SIGINT", stop);

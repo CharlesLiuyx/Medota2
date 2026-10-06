@@ -12,6 +12,9 @@ import {
   writeJson,
 } from "@/development/runtime";
 import { withTestEnvironment } from "@/development/test-environment";
+import { automaticStorageCleanup } from "@/development/storage";
+
+const retainedArtifacts: string[] = [];
 
 async function main(): Promise<void> {
   if (process.argv.slice(2).some((arg) => arg !== "--build-only"))
@@ -19,6 +22,8 @@ async function main(): Promise<void> {
       "Usage: pnpm release [--build-only]. Remote deployment is not configured; this command prepares and checks the Web artifact.",
     );
   const release = await acquireLock("release");
+  let pendingManifest: string | undefined;
+  let artifactKey: string | undefined;
   try {
     const inputs = [
       "src",
@@ -50,6 +55,7 @@ async function main(): Promise<void> {
       )
       .digest("hex");
     const root = resolve(".medota2/releases", key);
+    retainedArtifacts.push(root);
     const dist = resolve(".next-release");
     const artifact = resolve(root, "app");
     const manifestPath = resolve(root, "manifest.json");
@@ -63,6 +69,16 @@ async function main(): Promise<void> {
       console.log(`Reusing checked Web artifact: ${root}`);
       return;
     }
+    pendingManifest = manifestPath;
+    artifactKey = key;
+    await writeJson(manifestPath, {
+      schemaVersion: 1,
+      status: "running",
+      unit: "web",
+      key,
+      pid: process.pid,
+      startedAt: new Date().toISOString(),
+    });
     await withTestEnvironment(
       async (env) => {
         const config = resolve(root, "tsconfig.json");
@@ -218,6 +234,7 @@ async function main(): Promise<void> {
         await writeJson(manifestPath, {
           schemaVersion: 1,
           status: "passed",
+          pid: process.pid,
           unit: "web",
           key,
           input,
@@ -236,6 +253,18 @@ async function main(): Promise<void> {
       },
       { seed: true },
     );
+    pendingManifest = undefined;
+  } catch (error) {
+    if (pendingManifest)
+      await writeJson(pendingManifest, {
+        schemaVersion: 1,
+        status: "failed",
+        unit: "web",
+        key: artifactKey,
+        pid: process.pid,
+        finishedAt: new Date().toISOString(),
+      });
+    throw error;
   } finally {
     await release();
   }
@@ -264,7 +293,9 @@ async function removeDotEnv(root: string): Promise<void> {
     else if (entry.isDirectory()) await removeDotEnv(path);
   }
 }
-main().catch((error: unknown) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exitCode = 1;
-});
+main()
+  .finally(() => automaticStorageCleanup("releases", retainedArtifacts))
+  .catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exitCode = 1;
+  });

@@ -55,6 +55,7 @@ interface DatabaseEvidence {
 
 interface VerificationManifest {
   schemaVersion: 1;
+  pid: number;
   runId: string;
   suite: TestRunSuite;
   status: RunStatus;
@@ -498,6 +499,7 @@ async function createManifest(
     ]);
   return {
     schemaVersion: 1,
+    pid: process.pid,
     runId: context.runId,
     suite: context.suite,
     status: "created",
