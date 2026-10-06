@@ -126,9 +126,16 @@ export async function publishData() {
   // Snapshot branches never move; retries recover the exact already-published commit.
   const ref = `refs/heads/snapshots/${current.snapshotId}`;
   const existing = await git(["ls-remote", "origin", ref]);
+  const localCandidate = await git(["rev-parse", "--verify", ref]).catch(() => null);
   let commit: string;
   if (existing) {
     commit = existing.split(/\s/)[0];
+  } else if (localCandidate) {
+    if (await git(["status", "--porcelain"])) throw new Error("Preserve pending changes in the publication checkout before retrying.");
+    await git(["checkout", ref]);
+    commit = localCandidate;
+    await git(["lfs", "push", "origin", ref]);
+    await git(["push", "origin", `${ref}:${ref}`]);
   } else {
     if (await git(["status", "--porcelain"]))
       throw new Error(
@@ -180,8 +187,10 @@ export async function publishData() {
       `Publish development snapshot ${current.snapshotId}`,
     ]);
     commit = await git(["rev-parse", "HEAD"]);
-    await git(["lfs", "push", "origin", commit]);
-    await git(["push", "origin", `${commit}:${ref}`]);
+    // Git LFS 3.x needs a named local ref, even when the commit itself is valid.
+    await git(["update-ref", ref, commit, "0".repeat(40)]);
+    await git(["lfs", "push", "origin", ref]);
+    await git(["push", "origin", `${ref}:${ref}`]);
   }
   // A fresh checkout/LFS store proves the server can supply every byte, not just our export cache.
   const verificationRoot = resolve(
