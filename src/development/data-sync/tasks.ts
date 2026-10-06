@@ -20,7 +20,19 @@ export async function taskProcess<T>(
 ): Promise<T> {
   const result = await execute(
     process.execPath,
-    ["--import", "tsx", "src/workers/data-sync.ts", "--task", task, ...args],
+    [
+      // This Windows runtime exhibited native crashes and inconsistent bytea decoding.
+      // Server-side hashes and interpreter-only reads agree; keep the workaround in the adapter.
+      ...(process.platform === "win32" && process.versions.node === "24.19.0"
+        ? ["--jitless"]
+        : []),
+      "--import",
+      "tsx",
+      "src/workers/data-sync.ts",
+      "--task",
+      task,
+      ...args,
+    ],
     {
       cwd: process.cwd(),
       env: {
