@@ -1,3 +1,4 @@
+import { activeStateDirectory } from "./data-sync-state";
 import { existsSync, lstatSync, mkdirSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
 
@@ -6,7 +7,7 @@ const DEFAULT_STATE_DIRECTORY = ".medota2";
 export function getMedota2StateDirectory(): string {
   return resolveMedota2StateDirectory(
     process.cwd(),
-    process.env.MEDOTA2_STATE_DIRECTORY,
+    activeStateDirectory(process.env.MEDOTA2_STATE_DIRECTORY),
   );
 }
 

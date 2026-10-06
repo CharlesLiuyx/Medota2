@@ -1,3 +1,4 @@
+import { readActiveSnapshot } from "@/config/data-sync-state";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { loadLocalEnv } from "@/config/env";
@@ -21,6 +22,8 @@ export function choosePreviewDataSource(
 
 export function getPreviewDataSource(): PreviewDataSource {
   loadLocalEnv();
+  const active = readActiveSnapshot();
+  if (active) return active.lease.environment;
   return choosePreviewDataSource(
     process.env.MEDOTA2_WORKBENCH_DATA,
     existsSync(
@@ -34,9 +37,19 @@ export function getPreviewDataSource(): PreviewDataSource {
 export function previewEnvironment(
   source: PreviewDataSource,
 ): NodeJS.ProcessEnv {
+  const active = readActiveSnapshot();
   return {
     ...process.env,
-    MEDOTA2_STATE_DIRECTORY: `.medota2/environments/${source}`,
+    ...(active?.lease.environment === source
+      ? {
+          DOTA_VPK_WORKTREE_ROOT: active.sourceRoot,
+          DOTA_MAP_DATA_PATH: active.mapRoot ?? "",
+        }
+      : {}),
+    MEDOTA2_STATE_DIRECTORY:
+      active?.lease.environment === source
+        ? active.lease.stateDirectory
+        : `.medota2/environments/${source}`,
     MEDOTA2_ENVIRONMENT: source,
     MEDOTA2_DATA_CLASS:
       source === "local-review" ? "production-snapshot" : "sandbox",

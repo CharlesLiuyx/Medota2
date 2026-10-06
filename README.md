@@ -66,6 +66,10 @@ pnpm dev:sample              # 在终端执行同一个小样例
 
 开发日志位于 `.medota2/development/server.log`。多个 Session 共用目录和当前分支，各自维护 `.medota2/sessions/<id>.md`；提交、分支切换、依赖安装和数据库写操作先协调。详见 [AGENTS.md](AGENTS.md)。
 
+本地机器、云端与临时工作区通过 Git 协同开发并交接 PostgreSQL、图片和地图的方式见[多环境数据同步设计](docs/specs/development-data-sync.md)。首版已实现工作区身份、Git/LFS 快照获取、受管候选恢复、内容核验与只读数据库页；首个私有快照已发布并通过远端下载核验，跨机器接入需要数据仓库读取权限。具体命令见[同步运行手册](docs/development-data-sync-runbook.md)。
+
+各环境已有资源、适合的任务和限制集中记录在[开发环境与能力登记册](docs/development-environments.md)。目前登记 `GofurMacM4Max128GB` 的三个元数据来源仓库与 `GofurWindowsLenovo` 的 Dota 2 客户端资源；遇到环境缺项时按登记能力推荐执行位置并准备交接。
+
 ### 配置 OpenDota Secret
 
 在项目根目录的 `.env` 中填写以下变量（本地文件，不提交 Git）：

@@ -80,7 +80,7 @@ async function main(): Promise<void> {
 }
 
 function configureEnvironment(): void {
-  process.env.MEDOTA2_STATE_DIRECTORY = STATE_DIRECTORY;
+  process.env.MEDOTA2_STATE_DIRECTORY ??= STATE_DIRECTORY;
   process.env.MEDOTA2_PROCESS_ROLE = "control";
   process.env.MEDOTA2_ENVIRONMENT = "local-review";
   process.env.MEDOTA2_DATA_CLASS = "production-snapshot";

@@ -686,7 +686,7 @@ function assertRoleAllowsOperation(
     {
       web: ["read"],
       worker: ["fixture", "import", "review", "promote", "rollback"],
-      migration: ["migrate", "seed", "reset"],
+      migration: ["migrate", "seed", "reset", "restore"],
     };
   if (!allowed[role].includes(operation)) {
     throw new EnvironmentContractError("ENV_OPERATION_NOT_ALLOWED");
@@ -704,6 +704,9 @@ function assertEnvironmentAllowsOperation(
   const allowed = ENVIRONMENT_OPERATION_POLICY[declaration.environment][role];
   if (!allowed.includes(operation)) {
     throw new EnvironmentContractError("ENV_OPERATION_NOT_ALLOWED");
+  }
+  if (operation === "restore" && confirmation !== databaseName) {
+    throw new EnvironmentContractError("ENV_DESTRUCTIVE_CONFIRMATION_REQUIRED");
   }
   if (declaration.environment === "test") {
     if (!declaration.runId || resetPolicy !== "run-scoped") {
@@ -745,7 +748,7 @@ const ENVIRONMENT_OPERATION_POLICY: Readonly<
   development: {
     web: ["read"],
     worker: ["import", "review", "promote", "rollback"],
-    migration: ["migrate", "seed", "reset"],
+    migration: ["migrate", "seed", "reset", "restore"],
   },
   test: {
     web: ["read"],
@@ -755,7 +758,7 @@ const ENVIRONMENT_OPERATION_POLICY: Readonly<
   "local-review": {
     web: ["read"],
     worker: ["import", "review", "promote", "rollback"],
-    migration: ["migrate", "reset"],
+    migration: ["migrate", "reset", "restore"],
   },
   production: {
     web: ["read"],

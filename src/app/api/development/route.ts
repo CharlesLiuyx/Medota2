@@ -1,3 +1,4 @@
+import { developmentRequestAllowed } from "@/development/request";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { developmentRoot, readJson, writeJson } from "@/development/runtime";
@@ -25,10 +26,9 @@ export async function POST(request: Request): Promise<Response> {
   // Next dev can normalize request.url to localhost even when the browser used
   // 127.0.0.1. Compare the original Host, restricted to this loopback workbench.
   const host = request.headers.get("host") ?? new URL(request.url).host;
-  if (
-    !["127.0.0.1:3000", "localhost:3000"].includes(host) ||
-    request.headers.get("origin") !== `http://${host}`
-  )
+  const headers = new Headers(request.headers);
+  headers.set("host", host);
+  if (!developmentRequestAllowed(headers, true))
     return new Response(null, { status: 403 });
   const body = (await request.json().catch(() => null)) as {
     action?: string;

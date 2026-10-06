@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "repository": "medota2-development-data",
+  "commit": "dfde0a8bbea1d611ffce530a94fd842f6e293a50",
+  "snapshotId": "e81588175b2d57aa4f82b74c88f3a8895a66b8b753820ba4befaa6007826d103",
+  "manifestSha256": "ce69b2112c9f0b1e11fdfb175b558c4bc6b34d63aef65e84ae80ee536887c363",
+  "schemaDigest": "6b6b58fa96efb3d61c233c498ca8ccf088e958b6c71d1405f8278f9e68864ac2",
+  "migrationsDigest": "70586843fee5bb9143316eba6627ea29c159ff7a502db16f49cf564636447167"
+}

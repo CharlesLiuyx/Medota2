@@ -186,13 +186,19 @@ async function main(): Promise<void> {
               if (!(await fetch(new URL(path, `http://127.0.0.1:${port}`))).ok)
                 throw new Error("Standalone static asset is missing.");
             }
-            const developmentApi = await fetch(
-              `http://127.0.0.1:${port}/api/development`,
-            );
-            if (developmentApi.status !== 404)
-              throw new Error(
-                "Production artifact exposed the development API.",
+            for (const developmentPath of [
+              "/api/development",
+              "/api/development/database",
+              "/dev/database",
+            ]) {
+              const developmentApi = await fetch(
+                `http://127.0.0.1:${port}${developmentPath}`,
               );
+              if (developmentApi.status !== 404)
+                throw new Error(
+                  "Production artifact exposed the development API.",
+                );
+            }
           } finally {
             child.kill("SIGTERM");
             process.off("SIGINT", stop);

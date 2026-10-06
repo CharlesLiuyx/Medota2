@@ -1,0 +1,5365 @@
+{
+  "columns": [
+    {
+      "table_name": "abilities",
+      "columns": [
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "internal_name",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "declaration_kind",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "definition_kind",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "catalog_status",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "ability_type",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "behavior",
+          "type": "_text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "unit_target_team",
+          "type": "_text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "unit_target_type",
+          "type": "_text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "unit_target_flags",
+          "type": "_text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "damage_type",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "spell_immunity_type",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "spell_dispellable_type",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "max_level",
+          "type": "int4",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "is_innate",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "is_passive",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "is_hidden",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "is_ultimate",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "has_scepter_upgrade",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "has_shard_upgrade",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "is_granted_by_scepter",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "is_granted_by_shard",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "cast_range",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "cast_point",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "channel_time",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "cooldown",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "mana_cost",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "damage",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "texture_name",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "base_class",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "raw_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "resolved_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "unknown_fields",
+          "type": "_text",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "ability_id_mappings",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int8",
+          "nullable": "NO",
+          "identity": "YES"
+        },
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "internal_name",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "ability_id",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_path",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_line",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "ability_localizations",
+      "columns": [
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "ability_internal_name",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "locale",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "display_name",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "lore",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "scepter_description",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "shard_description",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "source_path",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "name_token",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "description_token",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "lore_token",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "scepter_token",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "shard_token",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "ability_values",
+      "columns": [
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "ability_internal_name",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "value_key",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "ordinal",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "scalar_value",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "level_values",
+          "type": "_text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "modifiers",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "raw_value",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "asset_blobs",
+      "columns": [
+        {
+          "name": "content_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "mime_type",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "width",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "height",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "byte_size",
+          "type": "int8",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "content",
+          "type": "bytea",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "asset_dataset_heads",
+      "columns": [
+        {
+          "name": "catalog_dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "asset_dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "catalog_dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "manifest_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "client_version",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "provider_version",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "lod_policy_version",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_counts",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "imported_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_provenance",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "asset_objects",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "object_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "asset_kind",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "logical_path",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_type",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_repository",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "source_commit",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "client_version",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "source_content_sha256",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "original_blob_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "provider_version",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "metadata",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "asset_refs",
+      "columns": [
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "entity_type",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "entity_key",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "asset_kind",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "logical_path",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "client_version",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "content_sha256",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "mime_type",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "width",
+          "type": "int4",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "height",
+          "type": "int4",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "cache_status",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "provider_version",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "asset_variants",
+      "columns": [
+        {
+          "name": "asset_object_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "lod_key",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "target_width",
+          "type": "int4",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "blob_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "transformer_version",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "quality",
+          "type": "int4",
+          "nullable": "YES",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "catalog_import_staging",
+      "columns": [
+        {
+          "name": "import_run_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "entity_type",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "entity_key",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "ordinal",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "payload",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "catalog_reviews",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int8",
+          "nullable": "NO",
+          "identity": "YES"
+        },
+        {
+          "name": "candidate_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "decision",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "reviewer",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "reason",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "reviewed_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "catalog_rollbacks",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int8",
+          "nullable": "NO",
+          "identity": "YES"
+        },
+        {
+          "name": "from_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "to_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "actor",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "reason",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "rolled_back_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "catalog_semantic_diffs",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int8",
+          "nullable": "NO",
+          "identity": "YES"
+        },
+        {
+          "name": "candidate_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "severity",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "diff_kind",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "entity_type",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "entity_key",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "field_name",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "before_value",
+          "type": "jsonb",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "after_value",
+          "type": "jsonb",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "dataset_heads",
+      "columns": [
+        {
+          "name": "dataset_key",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "catalog_dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "columns": [
+        {
+          "name": "asset_dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "entity_type",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "entity_key",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "asset_kind",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "asset_object_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "resolution_kind",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_status",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "requested_logical_path",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "entity_source_records",
+      "columns": [
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "entity_type",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "entity_key",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "occurrence_ordinal",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_path",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_line",
+          "type": "int4",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "source_key",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "declaration_kind",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "raw_definition",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "resolved_definition",
+          "type": "jsonb",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "raw_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "resolved_sha256",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "inherited_fields",
+          "type": "_text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "unknown_fields",
+          "type": "_text",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "facet_ability_bindings",
+      "columns": [
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "hero_id",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "facet_key",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "ability_internal_name",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_path",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_line",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "facets",
+      "columns": [
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "hero_id",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "facet_key",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "icon",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "color",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "gradient_id",
+          "type": "int4",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "deprecated",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_path",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_line",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "raw_definition",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "columns": [
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "hero_id",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "ability_internal_name",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_slot",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "relation_kind",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "ordinal",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "is_current",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_path",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_line",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "derivation_version",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_snapshot_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "import_run_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "importer_version",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "target_schema_version",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "promoted_at",
+          "type": "timestamptz",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "selector_version",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "selector_manifest_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "semantic_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "gate_status",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "review_status",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "gate_summary",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_counts",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "hero_import_staging",
+      "columns": [
+        {
+          "name": "import_run_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "hero_id",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "payload",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "hero_localizations",
+      "columns": [
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "hero_id",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "locale",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "display_name",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "english_name_variant",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "hype",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "lore",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "name_source_path",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "name_token",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "english_name_variant_token",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "hype_source_path",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "hype_token",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "lore_source_path",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "lore_token",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "reference_snapshot_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "import_run_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "comparator_version",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "canonical_count",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "reference_count",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "matched_count",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "diff_count",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "created_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "hero_reference_diffs",
+      "columns": [
+        {
+          "name": "id",
+          "type": "int8",
+          "nullable": "NO",
+          "identity": "YES"
+        },
+        {
+          "name": "comparison_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "hero_id",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "field_name",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "diff_type",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "canonical_value",
+          "type": "jsonb",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "reference_value",
+          "type": "jsonb",
+          "nullable": "YES",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "hero_roles",
+      "columns": [
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "hero_id",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "role",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "role_level",
+          "type": "int2",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "hero_source_records",
+      "columns": [
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "hero_id",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_key",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_dto_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "inherited_fields",
+          "type": "_text",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "heroes",
+      "columns": [
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "hero_id",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "internal_name",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "slug",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "enabled",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "cm_enabled",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "random_enabled",
+          "type": "bool",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "primary_attribute",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "attack_type",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "faction",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "complexity",
+          "type": "int2",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "base_strength",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "strength_gain",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "base_agility",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "agility_gain",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "base_intelligence",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "intelligence_gain",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "base_health",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "base_mana",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "base_health_regen",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "base_mana_regen",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "base_armor",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "magic_resistance",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "base_attack_damage_min",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "base_attack_damage_max",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "base_attack_speed",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "attack_rate",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "attack_animation_point",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "attack_range",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "projectile_speed",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "movement_speed",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "turn_rate",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "day_vision",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "night_vision",
+          "type": "numeric",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "import_runs",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_kind",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "stage",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_snapshot_id",
+          "type": "uuid",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "medota2_commit",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "transformer_version",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "target_schema_version",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_dirty",
+          "type": "bool",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "source_inputs_match_head",
+          "type": "bool",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "counts",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "issues",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "metrics",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "error_summary",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "started_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "finished_at",
+          "type": "timestamptz",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "result_catalog_version_id",
+          "type": "uuid",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "result_reference_snapshot_id",
+          "type": "uuid",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "result_comparison_id",
+          "type": "uuid",
+          "nullable": "YES",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "reference_hero_records",
+      "columns": [
+        {
+          "name": "reference_snapshot_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "hero_id",
+          "type": "int4",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "internal_name",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "raw_record",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "reference_snapshots",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_repository",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_remote_url",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_commit",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_dirty",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_inputs_match_head",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "package_version",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "heroes_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "package_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "imported_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "schema_migrations",
+      "columns": [
+        {
+          "name": "migration_id",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "file_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "applied_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "source_snapshot_files",
+      "columns": [
+        {
+          "name": "source_snapshot_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_path",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "raw_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "size_bytes",
+          "type": "int8",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "encoding",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "source_snapshots",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_repository",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_remote_url",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_commit",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "manifest_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_dirty",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_inputs_match_head",
+          "type": "bool",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "client_version",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "source_revision",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "version_date",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "version_time",
+          "type": "text",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "imported_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "unit_asset_bindings",
+      "columns": [
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "unit_key",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "asset_object_id",
+          "type": "uuid",
+          "nullable": "YES",
+          "identity": "NO"
+        },
+        {
+          "name": "resolution",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "provenance",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "catalog_dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "manifest_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "expected_keys",
+          "type": "_text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "provenance",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "imported_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "unit_asset_heads",
+      "columns": [
+        {
+          "name": "catalog_dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    }
+  ],
+  "constraints": [
+    {
+      "table_name": "abilities",
+      "name": "abilities_behavior_not_null",
+      "type": "n",
+      "definition": "NOT NULL behavior"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_catalog_status_check",
+      "type": "c",
+      "definition": "CHECK ((catalog_status = ANY (ARRAY['current'::text, 'indirect'::text, 'defined_unbound'::text, 'template'::text, 'deprecated'::text])))"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_catalog_status_not_null",
+      "type": "n",
+      "definition": "NOT NULL catalog_status"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id) REFERENCES hero_catalog_dataset_versions(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_declaration_kind_check",
+      "type": "c",
+      "definition": "CHECK ((declaration_kind = ANY (ARRAY['top_level'::text, 'implicit_talent'::text])))"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_declaration_kind_not_null",
+      "type": "n",
+      "definition": "NOT NULL declaration_kind"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_definition_kind_check",
+      "type": "c",
+      "definition": "CHECK ((definition_kind = ANY (ARRAY['ability'::text, 'talent'::text, 'template'::text])))"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_definition_kind_not_null",
+      "type": "n",
+      "definition": "NOT NULL definition_kind"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_has_scepter_upgrade_not_null",
+      "type": "n",
+      "definition": "NOT NULL has_scepter_upgrade"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_has_shard_upgrade_not_null",
+      "type": "n",
+      "definition": "NOT NULL has_shard_upgrade"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_internal_name_check",
+      "type": "c",
+      "definition": "CHECK ((internal_name ~ '^[a-z0-9_]+$'::text))"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_internal_name_not_null",
+      "type": "n",
+      "definition": "NOT NULL internal_name"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_is_granted_by_scepter_not_null",
+      "type": "n",
+      "definition": "NOT NULL is_granted_by_scepter"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_is_granted_by_shard_not_null",
+      "type": "n",
+      "definition": "NOT NULL is_granted_by_shard"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_is_hidden_not_null",
+      "type": "n",
+      "definition": "NOT NULL is_hidden"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_is_innate_not_null",
+      "type": "n",
+      "definition": "NOT NULL is_innate"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_is_passive_not_null",
+      "type": "n",
+      "definition": "NOT NULL is_passive"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_is_ultimate_not_null",
+      "type": "n",
+      "definition": "NOT NULL is_ultimate"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_version_id, internal_name)"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_raw_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((raw_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_raw_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL raw_sha256"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_resolved_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((resolved_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_resolved_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL resolved_sha256"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_texture_name_not_null",
+      "type": "n",
+      "definition": "NOT NULL texture_name"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_unit_target_flags_not_null",
+      "type": "n",
+      "definition": "NOT NULL unit_target_flags"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_unit_target_team_not_null",
+      "type": "n",
+      "definition": "NOT NULL unit_target_team"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_unit_target_type_not_null",
+      "type": "n",
+      "definition": "NOT NULL unit_target_type"
+    },
+    {
+      "table_name": "abilities",
+      "name": "abilities_unknown_fields_not_null",
+      "type": "n",
+      "definition": "NOT NULL unknown_fields"
+    },
+    {
+      "table_name": "ability_id_mappings",
+      "name": "ability_id_mappings_ability_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL ability_id"
+    },
+    {
+      "table_name": "ability_id_mappings",
+      "name": "ability_id_mappings_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id) REFERENCES hero_catalog_dataset_versions(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "ability_id_mappings",
+      "name": "ability_id_mappings_dataset_version_id_internal_name_abilit_key",
+      "type": "u",
+      "definition": "UNIQUE (dataset_version_id, internal_name, ability_id, source_path, source_line)"
+    },
+    {
+      "table_name": "ability_id_mappings",
+      "name": "ability_id_mappings_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "ability_id_mappings",
+      "name": "ability_id_mappings_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL id"
+    },
+    {
+      "table_name": "ability_id_mappings",
+      "name": "ability_id_mappings_internal_name_not_null",
+      "type": "n",
+      "definition": "NOT NULL internal_name"
+    },
+    {
+      "table_name": "ability_id_mappings",
+      "name": "ability_id_mappings_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "ability_id_mappings",
+      "name": "ability_id_mappings_source_line_check",
+      "type": "c",
+      "definition": "CHECK ((source_line > 0))"
+    },
+    {
+      "table_name": "ability_id_mappings",
+      "name": "ability_id_mappings_source_line_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_line"
+    },
+    {
+      "table_name": "ability_id_mappings",
+      "name": "ability_id_mappings_source_path_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_path"
+    },
+    {
+      "table_name": "ability_localizations",
+      "name": "ability_localizations_ability_internal_name_not_null",
+      "type": "n",
+      "definition": "NOT NULL ability_internal_name"
+    },
+    {
+      "table_name": "ability_localizations",
+      "name": "ability_localizations_dataset_version_id_ability_internal__fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id, ability_internal_name) REFERENCES abilities(dataset_version_id, internal_name) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "ability_localizations",
+      "name": "ability_localizations_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "ability_localizations",
+      "name": "ability_localizations_description_token_not_null",
+      "type": "n",
+      "definition": "NOT NULL description_token"
+    },
+    {
+      "table_name": "ability_localizations",
+      "name": "ability_localizations_locale_check",
+      "type": "c",
+      "definition": "CHECK ((locale ~ '^[a-z]{2,3}(?:-[A-Za-z0-9]+)*$'::text))"
+    },
+    {
+      "table_name": "ability_localizations",
+      "name": "ability_localizations_locale_not_null",
+      "type": "n",
+      "definition": "NOT NULL locale"
+    },
+    {
+      "table_name": "ability_localizations",
+      "name": "ability_localizations_lore_token_not_null",
+      "type": "n",
+      "definition": "NOT NULL lore_token"
+    },
+    {
+      "table_name": "ability_localizations",
+      "name": "ability_localizations_name_token_not_null",
+      "type": "n",
+      "definition": "NOT NULL name_token"
+    },
+    {
+      "table_name": "ability_localizations",
+      "name": "ability_localizations_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_version_id, ability_internal_name, locale)"
+    },
+    {
+      "table_name": "ability_localizations",
+      "name": "ability_localizations_scepter_token_not_null",
+      "type": "n",
+      "definition": "NOT NULL scepter_token"
+    },
+    {
+      "table_name": "ability_localizations",
+      "name": "ability_localizations_shard_token_not_null",
+      "type": "n",
+      "definition": "NOT NULL shard_token"
+    },
+    {
+      "table_name": "ability_localizations",
+      "name": "ability_localizations_source_path_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_path"
+    },
+    {
+      "table_name": "ability_values",
+      "name": "ability_values_ability_internal_name_not_null",
+      "type": "n",
+      "definition": "NOT NULL ability_internal_name"
+    },
+    {
+      "table_name": "ability_values",
+      "name": "ability_values_dataset_version_id_ability_internal_name_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id, ability_internal_name) REFERENCES abilities(dataset_version_id, internal_name) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "ability_values",
+      "name": "ability_values_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "ability_values",
+      "name": "ability_values_level_values_not_null",
+      "type": "n",
+      "definition": "NOT NULL level_values"
+    },
+    {
+      "table_name": "ability_values",
+      "name": "ability_values_modifiers_check",
+      "type": "c",
+      "definition": "CHECK ((jsonb_typeof(modifiers) = 'array'::text))"
+    },
+    {
+      "table_name": "ability_values",
+      "name": "ability_values_modifiers_not_null",
+      "type": "n",
+      "definition": "NOT NULL modifiers"
+    },
+    {
+      "table_name": "ability_values",
+      "name": "ability_values_ordinal_not_null",
+      "type": "n",
+      "definition": "NOT NULL ordinal"
+    },
+    {
+      "table_name": "ability_values",
+      "name": "ability_values_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_version_id, ability_internal_name, ordinal)"
+    },
+    {
+      "table_name": "ability_values",
+      "name": "ability_values_raw_value_not_null",
+      "type": "n",
+      "definition": "NOT NULL raw_value"
+    },
+    {
+      "table_name": "ability_values",
+      "name": "ability_values_value_key_not_null",
+      "type": "n",
+      "definition": "NOT NULL value_key"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_byte_size_check",
+      "type": "c",
+      "definition": "CHECK ((byte_size > 0))"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_byte_size_matches_content",
+      "type": "c",
+      "definition": "CHECK ((byte_size = octet_length(content)))"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_byte_size_not_null",
+      "type": "n",
+      "definition": "NOT NULL byte_size"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_content_not_null",
+      "type": "n",
+      "definition": "NOT NULL content"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_content_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((content_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_content_sha256_matches_content",
+      "type": "c",
+      "definition": "CHECK ((encode(digest(content, 'sha256'::text), 'hex'::text) = content_sha256))"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_content_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL content_sha256"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_created_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL created_at"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_height_check",
+      "type": "c",
+      "definition": "CHECK ((height > 0))"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_height_not_null",
+      "type": "n",
+      "definition": "NOT NULL height"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_mime_type_check",
+      "type": "c",
+      "definition": "CHECK ((mime_type <> ''::text))"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_mime_type_not_null",
+      "type": "n",
+      "definition": "NOT NULL mime_type"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (content_sha256)"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_width_check",
+      "type": "c",
+      "definition": "CHECK ((width > 0))"
+    },
+    {
+      "table_name": "asset_blobs",
+      "name": "asset_blobs_width_not_null",
+      "type": "n",
+      "definition": "NOT NULL width"
+    },
+    {
+      "table_name": "asset_dataset_heads",
+      "name": "asset_dataset_heads_asset_dataset_version_id_key",
+      "type": "u",
+      "definition": "UNIQUE (asset_dataset_version_id)"
+    },
+    {
+      "table_name": "asset_dataset_heads",
+      "name": "asset_dataset_heads_asset_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL asset_dataset_version_id"
+    },
+    {
+      "table_name": "asset_dataset_heads",
+      "name": "asset_dataset_heads_catalog_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (catalog_dataset_version_id) REFERENCES hero_catalog_dataset_versions(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "asset_dataset_heads",
+      "name": "asset_dataset_heads_catalog_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL catalog_dataset_version_id"
+    },
+    {
+      "table_name": "asset_dataset_heads",
+      "name": "asset_dataset_heads_matching_catalog_fk",
+      "type": "f",
+      "definition": "FOREIGN KEY (catalog_dataset_version_id, asset_dataset_version_id) REFERENCES asset_dataset_versions(catalog_dataset_version_id, id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "asset_dataset_heads",
+      "name": "asset_dataset_heads_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (catalog_dataset_version_id)"
+    },
+    {
+      "table_name": "asset_dataset_heads",
+      "name": "asset_dataset_heads_updated_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL updated_at"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_catalog_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (catalog_dataset_version_id) REFERENCES hero_catalog_dataset_versions(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_catalog_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL catalog_dataset_version_id"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_catalog_pair",
+      "type": "u",
+      "definition": "UNIQUE (catalog_dataset_version_id, id)"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL id"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_identity",
+      "type": "u",
+      "definition": "UNIQUE (catalog_dataset_version_id, manifest_sha256, provider_version, lod_policy_version)"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_imported_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL imported_at"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_lod_policy_version_check",
+      "type": "c",
+      "definition": "CHECK ((lod_policy_version <> ''::text))"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_lod_policy_version_not_null",
+      "type": "n",
+      "definition": "NOT NULL lod_policy_version"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_manifest_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((manifest_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_manifest_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL manifest_sha256"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_provider_version_check",
+      "type": "c",
+      "definition": "CHECK ((provider_version <> ''::text))"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_provider_version_not_null",
+      "type": "n",
+      "definition": "NOT NULL provider_version"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_source_counts_check",
+      "type": "c",
+      "definition": "CHECK ((jsonb_typeof(source_counts) = 'object'::text))"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_source_counts_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_counts"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_source_provenance_check",
+      "type": "c",
+      "definition": "CHECK ((jsonb_typeof(source_provenance) = 'object'::text))"
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "name": "asset_dataset_versions_source_provenance_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_provenance"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_asset_kind_check",
+      "type": "c",
+      "definition": "CHECK ((asset_kind = 'icon'::text))"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_asset_kind_not_null",
+      "type": "n",
+      "definition": "NOT NULL asset_kind"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_created_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL created_at"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL id"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_logical_path_check",
+      "type": "c",
+      "definition": "CHECK ((logical_path <> ''::text))"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_logical_path_not_null",
+      "type": "n",
+      "definition": "NOT NULL logical_path"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_metadata_check",
+      "type": "c",
+      "definition": "CHECK ((jsonb_typeof(metadata) = 'object'::text))"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_metadata_not_null",
+      "type": "n",
+      "definition": "NOT NULL metadata"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_object_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((object_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_object_sha256_key",
+      "type": "u",
+      "definition": "UNIQUE (object_sha256)"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_object_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL object_sha256"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_original_blob_sha256_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (original_blob_sha256) REFERENCES asset_blobs(content_sha256) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_original_blob_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL original_blob_sha256"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_provider_version_check",
+      "type": "c",
+      "definition": "CHECK ((provider_version <> ''::text))"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_provider_version_not_null",
+      "type": "n",
+      "definition": "NOT NULL provider_version"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_source_commit_check",
+      "type": "c",
+      "definition": "CHECK (((source_commit IS NULL) OR (source_commit ~ '^[0-9a-f]{40}$'::text)))"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_source_content_sha256_check",
+      "type": "c",
+      "definition": "CHECK (((source_content_sha256 IS NULL) OR (source_content_sha256 ~ '^[0-9a-f]{64}$'::text)))"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_source_type_check",
+      "type": "c",
+      "definition": "CHECK ((source_type = ANY (ARRAY['exact'::text, 'alias'::text, 'generated_fallback'::text])))"
+    },
+    {
+      "table_name": "asset_objects",
+      "name": "asset_objects_source_type_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_type"
+    },
+    {
+      "table_name": "asset_refs",
+      "name": "asset_refs_asset_kind_check",
+      "type": "c",
+      "definition": "CHECK ((asset_kind = ANY (ARRAY['portrait'::text, 'icon'::text])))"
+    },
+    {
+      "table_name": "asset_refs",
+      "name": "asset_refs_asset_kind_not_null",
+      "type": "n",
+      "definition": "NOT NULL asset_kind"
+    },
+    {
+      "table_name": "asset_refs",
+      "name": "asset_refs_cache_status_check",
+      "type": "c",
+      "definition": "CHECK ((cache_status = ANY (ARRAY['available'::text, 'missing'::text, 'mismatch'::text, 'error'::text])))"
+    },
+    {
+      "table_name": "asset_refs",
+      "name": "asset_refs_cache_status_not_null",
+      "type": "n",
+      "definition": "NOT NULL cache_status"
+    },
+    {
+      "table_name": "asset_refs",
+      "name": "asset_refs_content_sha256_check",
+      "type": "c",
+      "definition": "CHECK (((content_sha256 IS NULL) OR (content_sha256 ~ '^[0-9a-f]{64}$'::text)))"
+    },
+    {
+      "table_name": "asset_refs",
+      "name": "asset_refs_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id) REFERENCES hero_catalog_dataset_versions(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "asset_refs",
+      "name": "asset_refs_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "asset_refs",
+      "name": "asset_refs_entity_key_not_null",
+      "type": "n",
+      "definition": "NOT NULL entity_key"
+    },
+    {
+      "table_name": "asset_refs",
+      "name": "asset_refs_entity_type_check",
+      "type": "c",
+      "definition": "CHECK ((entity_type = ANY (ARRAY['hero'::text, 'ability'::text])))"
+    },
+    {
+      "table_name": "asset_refs",
+      "name": "asset_refs_entity_type_not_null",
+      "type": "n",
+      "definition": "NOT NULL entity_type"
+    },
+    {
+      "table_name": "asset_refs",
+      "name": "asset_refs_logical_path_not_null",
+      "type": "n",
+      "definition": "NOT NULL logical_path"
+    },
+    {
+      "table_name": "asset_refs",
+      "name": "asset_refs_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_version_id, entity_type, entity_key, asset_kind)"
+    },
+    {
+      "table_name": "asset_refs",
+      "name": "asset_refs_provider_version_not_null",
+      "type": "n",
+      "definition": "NOT NULL provider_version"
+    },
+    {
+      "table_name": "asset_variants",
+      "name": "asset_variants_asset_object_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (asset_object_id) REFERENCES asset_objects(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "asset_variants",
+      "name": "asset_variants_asset_object_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL asset_object_id"
+    },
+    {
+      "table_name": "asset_variants",
+      "name": "asset_variants_blob_sha256_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (blob_sha256) REFERENCES asset_blobs(content_sha256) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "asset_variants",
+      "name": "asset_variants_blob_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL blob_sha256"
+    },
+    {
+      "table_name": "asset_variants",
+      "name": "asset_variants_lod_key_check",
+      "type": "c",
+      "definition": "CHECK ((lod_key = ANY (ARRAY['original'::text, 'w64'::text, 'w128'::text, 'w256'::text])))"
+    },
+    {
+      "table_name": "asset_variants",
+      "name": "asset_variants_lod_key_not_null",
+      "type": "n",
+      "definition": "NOT NULL lod_key"
+    },
+    {
+      "table_name": "asset_variants",
+      "name": "asset_variants_lod_target_width_check",
+      "type": "c",
+      "definition": "CHECK ((((lod_key = 'original'::text) AND (target_width IS NULL)) OR ((lod_key = 'w64'::text) AND (target_width = 64)) OR ((lod_key = 'w128'::text) AND (target_width = 128)) OR ((lod_key = 'w256'::text) AND (target_width = 256))))"
+    },
+    {
+      "table_name": "asset_variants",
+      "name": "asset_variants_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (asset_object_id, lod_key)"
+    },
+    {
+      "table_name": "asset_variants",
+      "name": "asset_variants_quality_check",
+      "type": "c",
+      "definition": "CHECK (((quality IS NULL) OR ((quality >= 1) AND (quality <= 100))))"
+    },
+    {
+      "table_name": "asset_variants",
+      "name": "asset_variants_transformer_version_check",
+      "type": "c",
+      "definition": "CHECK ((transformer_version <> ''::text))"
+    },
+    {
+      "table_name": "asset_variants",
+      "name": "asset_variants_transformer_version_not_null",
+      "type": "n",
+      "definition": "NOT NULL transformer_version"
+    },
+    {
+      "table_name": "catalog_import_staging",
+      "name": "catalog_import_staging_entity_key_not_null",
+      "type": "n",
+      "definition": "NOT NULL entity_key"
+    },
+    {
+      "table_name": "catalog_import_staging",
+      "name": "catalog_import_staging_entity_type_check",
+      "type": "c",
+      "definition": "CHECK ((entity_type = ANY (ARRAY['hero'::text, 'ability'::text, 'id_mapping'::text, 'binding'::text, 'facet'::text])))"
+    },
+    {
+      "table_name": "catalog_import_staging",
+      "name": "catalog_import_staging_entity_type_not_null",
+      "type": "n",
+      "definition": "NOT NULL entity_type"
+    },
+    {
+      "table_name": "catalog_import_staging",
+      "name": "catalog_import_staging_import_run_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (import_run_id) REFERENCES import_runs(id) ON DELETE CASCADE"
+    },
+    {
+      "table_name": "catalog_import_staging",
+      "name": "catalog_import_staging_import_run_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL import_run_id"
+    },
+    {
+      "table_name": "catalog_import_staging",
+      "name": "catalog_import_staging_ordinal_not_null",
+      "type": "n",
+      "definition": "NOT NULL ordinal"
+    },
+    {
+      "table_name": "catalog_import_staging",
+      "name": "catalog_import_staging_payload_not_null",
+      "type": "n",
+      "definition": "NOT NULL payload"
+    },
+    {
+      "table_name": "catalog_import_staging",
+      "name": "catalog_import_staging_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (import_run_id, entity_type, entity_key, ordinal)"
+    },
+    {
+      "table_name": "catalog_reviews",
+      "name": "catalog_reviews_candidate_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (candidate_version_id) REFERENCES hero_catalog_dataset_versions(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "catalog_reviews",
+      "name": "catalog_reviews_candidate_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL candidate_version_id"
+    },
+    {
+      "table_name": "catalog_reviews",
+      "name": "catalog_reviews_decision_check",
+      "type": "c",
+      "definition": "CHECK ((decision = ANY (ARRAY['approved'::text, 'rejected'::text])))"
+    },
+    {
+      "table_name": "catalog_reviews",
+      "name": "catalog_reviews_decision_not_null",
+      "type": "n",
+      "definition": "NOT NULL decision"
+    },
+    {
+      "table_name": "catalog_reviews",
+      "name": "catalog_reviews_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL id"
+    },
+    {
+      "table_name": "catalog_reviews",
+      "name": "catalog_reviews_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "catalog_reviews",
+      "name": "catalog_reviews_reason_check",
+      "type": "c",
+      "definition": "CHECK ((reason <> ''::text))"
+    },
+    {
+      "table_name": "catalog_reviews",
+      "name": "catalog_reviews_reason_not_null",
+      "type": "n",
+      "definition": "NOT NULL reason"
+    },
+    {
+      "table_name": "catalog_reviews",
+      "name": "catalog_reviews_reviewed_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL reviewed_at"
+    },
+    {
+      "table_name": "catalog_reviews",
+      "name": "catalog_reviews_reviewer_not_null",
+      "type": "n",
+      "definition": "NOT NULL reviewer"
+    },
+    {
+      "table_name": "catalog_rollbacks",
+      "name": "catalog_rollbacks_actor_not_null",
+      "type": "n",
+      "definition": "NOT NULL actor"
+    },
+    {
+      "table_name": "catalog_rollbacks",
+      "name": "catalog_rollbacks_from_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (from_version_id) REFERENCES hero_catalog_dataset_versions(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "catalog_rollbacks",
+      "name": "catalog_rollbacks_from_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL from_version_id"
+    },
+    {
+      "table_name": "catalog_rollbacks",
+      "name": "catalog_rollbacks_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL id"
+    },
+    {
+      "table_name": "catalog_rollbacks",
+      "name": "catalog_rollbacks_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "catalog_rollbacks",
+      "name": "catalog_rollbacks_reason_check",
+      "type": "c",
+      "definition": "CHECK ((reason <> ''::text))"
+    },
+    {
+      "table_name": "catalog_rollbacks",
+      "name": "catalog_rollbacks_reason_not_null",
+      "type": "n",
+      "definition": "NOT NULL reason"
+    },
+    {
+      "table_name": "catalog_rollbacks",
+      "name": "catalog_rollbacks_rolled_back_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL rolled_back_at"
+    },
+    {
+      "table_name": "catalog_rollbacks",
+      "name": "catalog_rollbacks_to_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (to_version_id) REFERENCES hero_catalog_dataset_versions(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "catalog_rollbacks",
+      "name": "catalog_rollbacks_to_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL to_version_id"
+    },
+    {
+      "table_name": "catalog_semantic_diffs",
+      "name": "catalog_semantic_diffs_candidate_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (candidate_version_id) REFERENCES hero_catalog_dataset_versions(id) ON DELETE CASCADE"
+    },
+    {
+      "table_name": "catalog_semantic_diffs",
+      "name": "catalog_semantic_diffs_candidate_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL candidate_version_id"
+    },
+    {
+      "table_name": "catalog_semantic_diffs",
+      "name": "catalog_semantic_diffs_created_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL created_at"
+    },
+    {
+      "table_name": "catalog_semantic_diffs",
+      "name": "catalog_semantic_diffs_diff_kind_not_null",
+      "type": "n",
+      "definition": "NOT NULL diff_kind"
+    },
+    {
+      "table_name": "catalog_semantic_diffs",
+      "name": "catalog_semantic_diffs_entity_key_not_null",
+      "type": "n",
+      "definition": "NOT NULL entity_key"
+    },
+    {
+      "table_name": "catalog_semantic_diffs",
+      "name": "catalog_semantic_diffs_entity_type_not_null",
+      "type": "n",
+      "definition": "NOT NULL entity_type"
+    },
+    {
+      "table_name": "catalog_semantic_diffs",
+      "name": "catalog_semantic_diffs_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL id"
+    },
+    {
+      "table_name": "catalog_semantic_diffs",
+      "name": "catalog_semantic_diffs_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "catalog_semantic_diffs",
+      "name": "catalog_semantic_diffs_severity_check",
+      "type": "c",
+      "definition": "CHECK ((severity = ANY (ARRAY['green'::text, 'yellow'::text, 'red'::text])))"
+    },
+    {
+      "table_name": "catalog_semantic_diffs",
+      "name": "catalog_semantic_diffs_severity_not_null",
+      "type": "n",
+      "definition": "NOT NULL severity"
+    },
+    {
+      "table_name": "dataset_heads",
+      "name": "dataset_heads_dataset_key_check",
+      "type": "c",
+      "definition": "CHECK ((dataset_key = 'hero_catalog'::text))"
+    },
+    {
+      "table_name": "dataset_heads",
+      "name": "dataset_heads_dataset_key_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_key"
+    },
+    {
+      "table_name": "dataset_heads",
+      "name": "dataset_heads_hero_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (catalog_dataset_version_id) REFERENCES hero_catalog_dataset_versions(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "dataset_heads",
+      "name": "dataset_heads_hero_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL catalog_dataset_version_id"
+    },
+    {
+      "table_name": "dataset_heads",
+      "name": "dataset_heads_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_key)"
+    },
+    {
+      "table_name": "dataset_heads",
+      "name": "dataset_heads_updated_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL updated_at"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_asset_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (asset_dataset_version_id) REFERENCES asset_dataset_versions(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_asset_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL asset_dataset_version_id"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_asset_kind_check",
+      "type": "c",
+      "definition": "CHECK ((asset_kind = 'icon'::text))"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_asset_kind_not_null",
+      "type": "n",
+      "definition": "NOT NULL asset_kind"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_asset_object_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (asset_object_id) REFERENCES asset_objects(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_asset_object_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL asset_object_id"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_entity_key_check",
+      "type": "c",
+      "definition": "CHECK ((entity_key <> ''::text))"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_entity_key_not_null",
+      "type": "n",
+      "definition": "NOT NULL entity_key"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_entity_type_check",
+      "type": "c",
+      "definition": "CHECK ((entity_type = ANY (ARRAY['hero'::text, 'ability'::text])))"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_entity_type_not_null",
+      "type": "n",
+      "definition": "NOT NULL entity_type"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (asset_dataset_version_id, entity_type, entity_key, asset_kind)"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_requested_logical_path_check",
+      "type": "c",
+      "definition": "CHECK ((requested_logical_path <> ''::text))"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_requested_logical_path_not_null",
+      "type": "n",
+      "definition": "NOT NULL requested_logical_path"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_resolution_kind_check",
+      "type": "c",
+      "definition": "CHECK ((resolution_kind = ANY (ARRAY['exact'::text, 'alias'::text, 'generated_fallback'::text])))"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_resolution_kind_not_null",
+      "type": "n",
+      "definition": "NOT NULL resolution_kind"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_source_status_check",
+      "type": "c",
+      "definition": "CHECK ((source_status = ANY (ARRAY['available'::text, 'fallback'::text, 'mismatch'::text, 'error'::text])))"
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "name": "entity_asset_bindings_source_status_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_status"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id) REFERENCES hero_catalog_dataset_versions(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_entity_key_not_null",
+      "type": "n",
+      "definition": "NOT NULL entity_key"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_entity_type_check",
+      "type": "c",
+      "definition": "CHECK ((entity_type = ANY (ARRAY['hero'::text, 'ability'::text, 'facet'::text])))"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_entity_type_not_null",
+      "type": "n",
+      "definition": "NOT NULL entity_type"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_inherited_fields_not_null",
+      "type": "n",
+      "definition": "NOT NULL inherited_fields"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_occurrence_ordinal_not_null",
+      "type": "n",
+      "definition": "NOT NULL occurrence_ordinal"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_version_id, entity_type, entity_key, occurrence_ordinal)"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_raw_definition_not_null",
+      "type": "n",
+      "definition": "NOT NULL raw_definition"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_raw_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((raw_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_raw_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL raw_sha256"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_resolved_sha256_check",
+      "type": "c",
+      "definition": "CHECK (((resolved_sha256 IS NULL) OR (resolved_sha256 ~ '^[0-9a-f]{64}$'::text)))"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_source_key_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_key"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_source_path_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_path"
+    },
+    {
+      "table_name": "entity_source_records",
+      "name": "entity_source_records_unknown_fields_not_null",
+      "type": "n",
+      "definition": "NOT NULL unknown_fields"
+    },
+    {
+      "table_name": "facet_ability_bindings",
+      "name": "facet_ability_bindings_ability_internal_name_not_null",
+      "type": "n",
+      "definition": "NOT NULL ability_internal_name"
+    },
+    {
+      "table_name": "facet_ability_bindings",
+      "name": "facet_ability_bindings_dataset_version_id_ability_internal_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id, ability_internal_name) REFERENCES abilities(dataset_version_id, internal_name) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "facet_ability_bindings",
+      "name": "facet_ability_bindings_dataset_version_id_hero_id_facet_ke_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id, hero_id, facet_key) REFERENCES facets(dataset_version_id, hero_id, facet_key) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "facet_ability_bindings",
+      "name": "facet_ability_bindings_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "facet_ability_bindings",
+      "name": "facet_ability_bindings_facet_key_not_null",
+      "type": "n",
+      "definition": "NOT NULL facet_key"
+    },
+    {
+      "table_name": "facet_ability_bindings",
+      "name": "facet_ability_bindings_hero_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL hero_id"
+    },
+    {
+      "table_name": "facet_ability_bindings",
+      "name": "facet_ability_bindings_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_version_id, hero_id, facet_key, ability_internal_name)"
+    },
+    {
+      "table_name": "facet_ability_bindings",
+      "name": "facet_ability_bindings_source_line_check",
+      "type": "c",
+      "definition": "CHECK ((source_line > 0))"
+    },
+    {
+      "table_name": "facet_ability_bindings",
+      "name": "facet_ability_bindings_source_line_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_line"
+    },
+    {
+      "table_name": "facet_ability_bindings",
+      "name": "facet_ability_bindings_source_path_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_path"
+    },
+    {
+      "table_name": "facets",
+      "name": "facets_dataset_version_id_hero_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id, hero_id) REFERENCES heroes(dataset_version_id, hero_id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "facets",
+      "name": "facets_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "facets",
+      "name": "facets_deprecated_not_null",
+      "type": "n",
+      "definition": "NOT NULL deprecated"
+    },
+    {
+      "table_name": "facets",
+      "name": "facets_facet_key_not_null",
+      "type": "n",
+      "definition": "NOT NULL facet_key"
+    },
+    {
+      "table_name": "facets",
+      "name": "facets_hero_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL hero_id"
+    },
+    {
+      "table_name": "facets",
+      "name": "facets_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_version_id, hero_id, facet_key)"
+    },
+    {
+      "table_name": "facets",
+      "name": "facets_raw_definition_not_null",
+      "type": "n",
+      "definition": "NOT NULL raw_definition"
+    },
+    {
+      "table_name": "facets",
+      "name": "facets_source_line_check",
+      "type": "c",
+      "definition": "CHECK ((source_line > 0))"
+    },
+    {
+      "table_name": "facets",
+      "name": "facets_source_line_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_line"
+    },
+    {
+      "table_name": "facets",
+      "name": "facets_source_path_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_path"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_ability_internal_name_not_null",
+      "type": "n",
+      "definition": "NOT NULL ability_internal_name"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_dataset_version_id_ability_internal__fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id, ability_internal_name) REFERENCES abilities(dataset_version_id, internal_name) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_dataset_version_id_hero_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id, hero_id) REFERENCES heroes(dataset_version_id, hero_id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_derivation_version_not_null",
+      "type": "n",
+      "definition": "NOT NULL derivation_version"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_hero_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL hero_id"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_is_current_not_null",
+      "type": "n",
+      "definition": "NOT NULL is_current"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_ordinal_not_null",
+      "type": "n",
+      "definition": "NOT NULL ordinal"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_version_id, hero_id, ability_internal_name, relation_kind, source_slot)"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_relation_kind_check",
+      "type": "c",
+      "definition": "CHECK ((relation_kind = ANY (ARRAY['loadout'::text, 'talent'::text, 'draft'::text, 'facet'::text, 'declared_in_hero_file'::text, 'linked'::text, 'sub_ability'::text, 'upgrade_granted'::text])))"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_relation_kind_not_null",
+      "type": "n",
+      "definition": "NOT NULL relation_kind"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_source_line_check",
+      "type": "c",
+      "definition": "CHECK ((source_line > 0))"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_source_line_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_line"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_source_path_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_path"
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "name": "hero_ability_bindings_source_slot_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_slot"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_catalog_dataset_idempotency_key",
+      "type": "u",
+      "definition": "UNIQUE (source_snapshot_id, importer_version, target_schema_version, selector_version)"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_catalog_dataset_status_check",
+      "type": "c",
+      "definition": "CHECK ((status = ANY (ARRAY['validated'::text, 'candidate'::text, 'promoted'::text, 'rejected'::text])))"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_catalog_dataset_versions_gate_status_not_null",
+      "type": "n",
+      "definition": "NOT NULL gate_status"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_catalog_dataset_versions_gate_summary_not_null",
+      "type": "n",
+      "definition": "NOT NULL gate_summary"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_catalog_dataset_versions_review_status_not_null",
+      "type": "n",
+      "definition": "NOT NULL review_status"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_catalog_dataset_versions_selector_manifest_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL selector_manifest_sha256"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_catalog_dataset_versions_selector_version_not_null",
+      "type": "n",
+      "definition": "NOT NULL selector_version"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_catalog_dataset_versions_semantic_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL semantic_sha256"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_catalog_dataset_versions_source_counts_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_counts"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_catalog_gate_status_check",
+      "type": "c",
+      "definition": "CHECK ((gate_status = ANY (ARRAY['green'::text, 'yellow'::text, 'red'::text])))"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_catalog_review_status_check",
+      "type": "c",
+      "definition": "CHECK ((review_status = ANY (ARRAY['not_required'::text, 'pending'::text, 'approved'::text, 'rejected'::text])))"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_catalog_selector_manifest_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((selector_manifest_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_catalog_semantic_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((semantic_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_dataset_versions_created_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL created_at"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_dataset_versions_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL id"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_dataset_versions_import_run_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (import_run_id) REFERENCES import_runs(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_dataset_versions_import_run_id_key",
+      "type": "u",
+      "definition": "UNIQUE (import_run_id)"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_dataset_versions_import_run_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL import_run_id"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_dataset_versions_importer_version_not_null",
+      "type": "n",
+      "definition": "NOT NULL importer_version"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_dataset_versions_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_dataset_versions_source_snapshot_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (source_snapshot_id) REFERENCES source_snapshots(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_dataset_versions_source_snapshot_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_snapshot_id"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_dataset_versions_status_not_null",
+      "type": "n",
+      "definition": "NOT NULL status"
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "name": "hero_dataset_versions_target_schema_version_not_null",
+      "type": "n",
+      "definition": "NOT NULL target_schema_version"
+    },
+    {
+      "table_name": "hero_import_staging",
+      "name": "hero_import_staging_hero_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL hero_id"
+    },
+    {
+      "table_name": "hero_import_staging",
+      "name": "hero_import_staging_import_run_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (import_run_id) REFERENCES import_runs(id) ON DELETE CASCADE"
+    },
+    {
+      "table_name": "hero_import_staging",
+      "name": "hero_import_staging_import_run_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL import_run_id"
+    },
+    {
+      "table_name": "hero_import_staging",
+      "name": "hero_import_staging_payload_not_null",
+      "type": "n",
+      "definition": "NOT NULL payload"
+    },
+    {
+      "table_name": "hero_import_staging",
+      "name": "hero_import_staging_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (import_run_id, hero_id)"
+    },
+    {
+      "table_name": "hero_localizations",
+      "name": "hero_localizations_dataset_version_id_hero_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id, hero_id) REFERENCES heroes(dataset_version_id, hero_id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "hero_localizations",
+      "name": "hero_localizations_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "hero_localizations",
+      "name": "hero_localizations_display_name_check",
+      "type": "c",
+      "definition": "CHECK ((display_name <> ''::text))"
+    },
+    {
+      "table_name": "hero_localizations",
+      "name": "hero_localizations_display_name_not_null",
+      "type": "n",
+      "definition": "NOT NULL display_name"
+    },
+    {
+      "table_name": "hero_localizations",
+      "name": "hero_localizations_hero_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL hero_id"
+    },
+    {
+      "table_name": "hero_localizations",
+      "name": "hero_localizations_locale_check",
+      "type": "c",
+      "definition": "CHECK ((locale = ANY (ARRAY['en'::text, 'zh-CN'::text])))"
+    },
+    {
+      "table_name": "hero_localizations",
+      "name": "hero_localizations_locale_not_null",
+      "type": "n",
+      "definition": "NOT NULL locale"
+    },
+    {
+      "table_name": "hero_localizations",
+      "name": "hero_localizations_name_source_path_not_null",
+      "type": "n",
+      "definition": "NOT NULL name_source_path"
+    },
+    {
+      "table_name": "hero_localizations",
+      "name": "hero_localizations_name_token_not_null",
+      "type": "n",
+      "definition": "NOT NULL name_token"
+    },
+    {
+      "table_name": "hero_localizations",
+      "name": "hero_localizations_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_version_id, hero_id, locale)"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_canonical_count_check",
+      "type": "c",
+      "definition": "CHECK ((canonical_count >= 0))"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_canonical_count_not_null",
+      "type": "n",
+      "definition": "NOT NULL canonical_count"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_comparator_version_not_null",
+      "type": "n",
+      "definition": "NOT NULL comparator_version"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_created_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL created_at"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id) REFERENCES hero_catalog_dataset_versions(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_dataset_version_id_reference_sna_key",
+      "type": "u",
+      "definition": "UNIQUE (dataset_version_id, reference_snapshot_id, comparator_version)"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_diff_count_check",
+      "type": "c",
+      "definition": "CHECK ((diff_count >= 0))"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_diff_count_not_null",
+      "type": "n",
+      "definition": "NOT NULL diff_count"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL id"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_import_run_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (import_run_id) REFERENCES import_runs(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_import_run_id_key",
+      "type": "u",
+      "definition": "UNIQUE (import_run_id)"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_import_run_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL import_run_id"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_matched_count_check",
+      "type": "c",
+      "definition": "CHECK ((matched_count >= 0))"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_matched_count_not_null",
+      "type": "n",
+      "definition": "NOT NULL matched_count"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_reference_count_check",
+      "type": "c",
+      "definition": "CHECK ((reference_count >= 0))"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_reference_count_not_null",
+      "type": "n",
+      "definition": "NOT NULL reference_count"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_reference_snapshot_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (reference_snapshot_id) REFERENCES reference_snapshots(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "name": "hero_reference_comparisons_reference_snapshot_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL reference_snapshot_id"
+    },
+    {
+      "table_name": "hero_reference_diffs",
+      "name": "hero_reference_diffs_comparison_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (comparison_id) REFERENCES hero_reference_comparisons(id) ON DELETE CASCADE"
+    },
+    {
+      "table_name": "hero_reference_diffs",
+      "name": "hero_reference_diffs_comparison_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL comparison_id"
+    },
+    {
+      "table_name": "hero_reference_diffs",
+      "name": "hero_reference_diffs_diff_type_check",
+      "type": "c",
+      "definition": "CHECK ((diff_type = ANY (ARRAY['missing_in_reference'::text, 'extra_in_reference'::text, 'identity_mismatch'::text, 'value_mismatch'::text])))"
+    },
+    {
+      "table_name": "hero_reference_diffs",
+      "name": "hero_reference_diffs_diff_type_not_null",
+      "type": "n",
+      "definition": "NOT NULL diff_type"
+    },
+    {
+      "table_name": "hero_reference_diffs",
+      "name": "hero_reference_diffs_field_name_not_null",
+      "type": "n",
+      "definition": "NOT NULL field_name"
+    },
+    {
+      "table_name": "hero_reference_diffs",
+      "name": "hero_reference_diffs_hero_id_check",
+      "type": "c",
+      "definition": "CHECK ((hero_id > 0))"
+    },
+    {
+      "table_name": "hero_reference_diffs",
+      "name": "hero_reference_diffs_hero_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL hero_id"
+    },
+    {
+      "table_name": "hero_reference_diffs",
+      "name": "hero_reference_diffs_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL id"
+    },
+    {
+      "table_name": "hero_reference_diffs",
+      "name": "hero_reference_diffs_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "hero_roles",
+      "name": "hero_roles_dataset_version_id_hero_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id, hero_id) REFERENCES heroes(dataset_version_id, hero_id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "hero_roles",
+      "name": "hero_roles_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "hero_roles",
+      "name": "hero_roles_hero_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL hero_id"
+    },
+    {
+      "table_name": "hero_roles",
+      "name": "hero_roles_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_version_id, hero_id, role)"
+    },
+    {
+      "table_name": "hero_roles",
+      "name": "hero_roles_role_check",
+      "type": "c",
+      "definition": "CHECK ((role = ANY (ARRAY['carry'::text, 'support'::text, 'nuker'::text, 'disabler'::text, 'durable'::text, 'escape'::text, 'pusher'::text, 'initiator'::text])))"
+    },
+    {
+      "table_name": "hero_roles",
+      "name": "hero_roles_role_level_check",
+      "type": "c",
+      "definition": "CHECK (((role_level >= 1) AND (role_level <= 3)))"
+    },
+    {
+      "table_name": "hero_roles",
+      "name": "hero_roles_role_level_not_null",
+      "type": "n",
+      "definition": "NOT NULL role_level"
+    },
+    {
+      "table_name": "hero_roles",
+      "name": "hero_roles_role_not_null",
+      "type": "n",
+      "definition": "NOT NULL role"
+    },
+    {
+      "table_name": "hero_source_records",
+      "name": "hero_source_records_dataset_version_id_hero_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id, hero_id) REFERENCES heroes(dataset_version_id, hero_id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "hero_source_records",
+      "name": "hero_source_records_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "hero_source_records",
+      "name": "hero_source_records_hero_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL hero_id"
+    },
+    {
+      "table_name": "hero_source_records",
+      "name": "hero_source_records_inherited_fields_not_null",
+      "type": "n",
+      "definition": "NOT NULL inherited_fields"
+    },
+    {
+      "table_name": "hero_source_records",
+      "name": "hero_source_records_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_version_id, hero_id)"
+    },
+    {
+      "table_name": "hero_source_records",
+      "name": "hero_source_records_source_dto_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((source_dto_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "hero_source_records",
+      "name": "hero_source_records_source_dto_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_dto_sha256"
+    },
+    {
+      "table_name": "hero_source_records",
+      "name": "hero_source_records_source_key_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_key"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_agility_gain_not_null",
+      "type": "n",
+      "definition": "NOT NULL agility_gain"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_attack_animation_point_not_null",
+      "type": "n",
+      "definition": "NOT NULL attack_animation_point"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_attack_range_not_null",
+      "type": "n",
+      "definition": "NOT NULL attack_range"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_attack_rate_not_null",
+      "type": "n",
+      "definition": "NOT NULL attack_rate"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_attack_type_check",
+      "type": "c",
+      "definition": "CHECK ((attack_type = ANY (ARRAY['melee'::text, 'ranged'::text])))"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_attack_type_not_null",
+      "type": "n",
+      "definition": "NOT NULL attack_type"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_base_agility_not_null",
+      "type": "n",
+      "definition": "NOT NULL base_agility"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_base_armor_not_null",
+      "type": "n",
+      "definition": "NOT NULL base_armor"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_base_attack_damage_max_not_null",
+      "type": "n",
+      "definition": "NOT NULL base_attack_damage_max"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_base_attack_damage_min_not_null",
+      "type": "n",
+      "definition": "NOT NULL base_attack_damage_min"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_base_attack_speed_not_null",
+      "type": "n",
+      "definition": "NOT NULL base_attack_speed"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_base_health_not_null",
+      "type": "n",
+      "definition": "NOT NULL base_health"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_base_health_regen_not_null",
+      "type": "n",
+      "definition": "NOT NULL base_health_regen"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_base_intelligence_not_null",
+      "type": "n",
+      "definition": "NOT NULL base_intelligence"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_base_mana_not_null",
+      "type": "n",
+      "definition": "NOT NULL base_mana"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_base_mana_regen_not_null",
+      "type": "n",
+      "definition": "NOT NULL base_mana_regen"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_base_strength_not_null",
+      "type": "n",
+      "definition": "NOT NULL base_strength"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_check",
+      "type": "c",
+      "definition": "CHECK ((base_attack_damage_max >= base_attack_damage_min))"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_cm_enabled_not_null",
+      "type": "n",
+      "definition": "NOT NULL cm_enabled"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_complexity_check",
+      "type": "c",
+      "definition": "CHECK (((complexity >= 1) AND (complexity <= 3)))"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_complexity_not_null",
+      "type": "n",
+      "definition": "NOT NULL complexity"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id) REFERENCES hero_catalog_dataset_versions(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_dataset_version_id_internal_name_key",
+      "type": "u",
+      "definition": "UNIQUE (dataset_version_id, internal_name)"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_dataset_version_id_slug_key",
+      "type": "u",
+      "definition": "UNIQUE (dataset_version_id, slug)"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_day_vision_not_null",
+      "type": "n",
+      "definition": "NOT NULL day_vision"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_enabled_not_null",
+      "type": "n",
+      "definition": "NOT NULL enabled"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_faction_check",
+      "type": "c",
+      "definition": "CHECK ((faction = ANY (ARRAY['radiant'::text, 'dire'::text])))"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_faction_not_null",
+      "type": "n",
+      "definition": "NOT NULL faction"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_hero_id_check",
+      "type": "c",
+      "definition": "CHECK ((hero_id > 0))"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_hero_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL hero_id"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_intelligence_gain_not_null",
+      "type": "n",
+      "definition": "NOT NULL intelligence_gain"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_internal_name_check",
+      "type": "c",
+      "definition": "CHECK ((internal_name ~ '^npc_dota_hero_[a-z0-9_]+$'::text))"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_internal_name_not_null",
+      "type": "n",
+      "definition": "NOT NULL internal_name"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_magic_resistance_not_null",
+      "type": "n",
+      "definition": "NOT NULL magic_resistance"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_movement_speed_not_null",
+      "type": "n",
+      "definition": "NOT NULL movement_speed"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_night_vision_not_null",
+      "type": "n",
+      "definition": "NOT NULL night_vision"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_version_id, hero_id)"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_primary_attribute_check",
+      "type": "c",
+      "definition": "CHECK ((primary_attribute = ANY (ARRAY['strength'::text, 'agility'::text, 'intelligence'::text, 'universal'::text])))"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_primary_attribute_not_null",
+      "type": "n",
+      "definition": "NOT NULL primary_attribute"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_projectile_speed_not_null",
+      "type": "n",
+      "definition": "NOT NULL projectile_speed"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_slug_check",
+      "type": "c",
+      "definition": "CHECK ((slug ~ '^[a-z0-9_]+$'::text))"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_slug_not_null",
+      "type": "n",
+      "definition": "NOT NULL slug"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_strength_gain_not_null",
+      "type": "n",
+      "definition": "NOT NULL strength_gain"
+    },
+    {
+      "table_name": "heroes",
+      "name": "heroes_turn_rate_not_null",
+      "type": "n",
+      "definition": "NOT NULL turn_rate"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_counts_not_null",
+      "type": "n",
+      "definition": "NOT NULL counts"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL id"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_issues_check",
+      "type": "c",
+      "definition": "CHECK ((jsonb_typeof(issues) = 'array'::text))"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_issues_not_null",
+      "type": "n",
+      "definition": "NOT NULL issues"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_medota2_commit_check",
+      "type": "c",
+      "definition": "CHECK ((medota2_commit ~ '^[0-9a-f]{40}$'::text))"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_medota2_commit_not_null",
+      "type": "n",
+      "definition": "NOT NULL medota2_commit"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_metrics_not_null",
+      "type": "n",
+      "definition": "NOT NULL metrics"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_result_comparison_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (result_comparison_id) REFERENCES hero_reference_comparisons(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_result_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (result_catalog_version_id) REFERENCES hero_catalog_dataset_versions(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_result_reference_snapshot_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (result_reference_snapshot_id) REFERENCES reference_snapshots(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_source_kind_check",
+      "type": "c",
+      "definition": "CHECK ((source_kind = ANY (ARRAY['vpk'::text, 'dotaconstants'::text, 'comparison'::text])))"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_source_kind_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_kind"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_source_snapshot_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (source_snapshot_id) REFERENCES source_snapshots(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_stage_not_null",
+      "type": "n",
+      "definition": "NOT NULL stage"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_started_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL started_at"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_status_check",
+      "type": "c",
+      "definition": "CHECK ((status = ANY (ARRAY['running'::text, 'succeeded'::text, 'failed'::text])))"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_status_not_null",
+      "type": "n",
+      "definition": "NOT NULL status"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_target_schema_version_not_null",
+      "type": "n",
+      "definition": "NOT NULL target_schema_version"
+    },
+    {
+      "table_name": "import_runs",
+      "name": "import_runs_transformer_version_not_null",
+      "type": "n",
+      "definition": "NOT NULL transformer_version"
+    },
+    {
+      "table_name": "reference_hero_records",
+      "name": "reference_hero_records_hero_id_check",
+      "type": "c",
+      "definition": "CHECK ((hero_id > 0))"
+    },
+    {
+      "table_name": "reference_hero_records",
+      "name": "reference_hero_records_hero_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL hero_id"
+    },
+    {
+      "table_name": "reference_hero_records",
+      "name": "reference_hero_records_internal_name_not_null",
+      "type": "n",
+      "definition": "NOT NULL internal_name"
+    },
+    {
+      "table_name": "reference_hero_records",
+      "name": "reference_hero_records_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (reference_snapshot_id, hero_id)"
+    },
+    {
+      "table_name": "reference_hero_records",
+      "name": "reference_hero_records_raw_record_not_null",
+      "type": "n",
+      "definition": "NOT NULL raw_record"
+    },
+    {
+      "table_name": "reference_hero_records",
+      "name": "reference_hero_records_reference_snapshot_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (reference_snapshot_id) REFERENCES reference_snapshots(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "reference_hero_records",
+      "name": "reference_hero_records_reference_snapshot_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL reference_snapshot_id"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_heroes_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((heroes_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_heroes_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL heroes_sha256"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL id"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_imported_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL imported_at"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_package_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((package_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_package_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL package_sha256"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_package_version_not_null",
+      "type": "n",
+      "definition": "NOT NULL package_version"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_source_commit_check",
+      "type": "c",
+      "definition": "CHECK ((source_commit ~ '^[0-9a-f]{40}$'::text))"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_source_commit_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_commit"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_source_dirty_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_dirty"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_source_inputs_match_head_check",
+      "type": "c",
+      "definition": "CHECK (source_inputs_match_head)"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_source_inputs_match_head_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_inputs_match_head"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_source_remote_url_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_remote_url"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_source_repository_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_repository"
+    },
+    {
+      "table_name": "reference_snapshots",
+      "name": "reference_snapshots_source_repository_source_commit_heroes__key",
+      "type": "u",
+      "definition": "UNIQUE (source_repository, source_commit, heroes_sha256, package_sha256)"
+    },
+    {
+      "table_name": "schema_migrations",
+      "name": "schema_migrations_applied_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL applied_at"
+    },
+    {
+      "table_name": "schema_migrations",
+      "name": "schema_migrations_file_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((file_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "schema_migrations",
+      "name": "schema_migrations_file_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL file_sha256"
+    },
+    {
+      "table_name": "schema_migrations",
+      "name": "schema_migrations_migration_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL migration_id"
+    },
+    {
+      "table_name": "schema_migrations",
+      "name": "schema_migrations_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (migration_id)"
+    },
+    {
+      "table_name": "source_snapshot_files",
+      "name": "source_snapshot_files_encoding_check",
+      "type": "c",
+      "definition": "CHECK ((encoding = ANY (ARRAY['ascii'::text, 'utf-8'::text, 'utf-8-bom'::text])))"
+    },
+    {
+      "table_name": "source_snapshot_files",
+      "name": "source_snapshot_files_encoding_not_null",
+      "type": "n",
+      "definition": "NOT NULL encoding"
+    },
+    {
+      "table_name": "source_snapshot_files",
+      "name": "source_snapshot_files_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (source_snapshot_id, source_path)"
+    },
+    {
+      "table_name": "source_snapshot_files",
+      "name": "source_snapshot_files_raw_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((raw_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "source_snapshot_files",
+      "name": "source_snapshot_files_raw_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL raw_sha256"
+    },
+    {
+      "table_name": "source_snapshot_files",
+      "name": "source_snapshot_files_size_bytes_check",
+      "type": "c",
+      "definition": "CHECK ((size_bytes >= 0))"
+    },
+    {
+      "table_name": "source_snapshot_files",
+      "name": "source_snapshot_files_size_bytes_not_null",
+      "type": "n",
+      "definition": "NOT NULL size_bytes"
+    },
+    {
+      "table_name": "source_snapshot_files",
+      "name": "source_snapshot_files_source_path_check",
+      "type": "c",
+      "definition": "CHECK (((source_path <> ''::text) AND (POSITION(('\t'::text) IN (source_path)) = 0) AND (POSITION(('\n'::text) IN (source_path)) = 0)))"
+    },
+    {
+      "table_name": "source_snapshot_files",
+      "name": "source_snapshot_files_source_path_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_path"
+    },
+    {
+      "table_name": "source_snapshot_files",
+      "name": "source_snapshot_files_source_snapshot_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (source_snapshot_id) REFERENCES source_snapshots(id) ON DELETE RESTRICT"
+    },
+    {
+      "table_name": "source_snapshot_files",
+      "name": "source_snapshot_files_source_snapshot_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_snapshot_id"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_client_version_not_null",
+      "type": "n",
+      "definition": "NOT NULL client_version"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL id"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_imported_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL imported_at"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_manifest_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((manifest_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_manifest_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL manifest_sha256"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_source_commit_check",
+      "type": "c",
+      "definition": "CHECK ((source_commit ~ '^[0-9a-f]{40}$'::text))"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_source_commit_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_commit"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_source_dirty_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_dirty"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_source_inputs_match_head_check",
+      "type": "c",
+      "definition": "CHECK (source_inputs_match_head)"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_source_inputs_match_head_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_inputs_match_head"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_source_remote_url_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_remote_url"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_source_repository_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_repository"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_source_repository_source_commit_manifest_s_key",
+      "type": "u",
+      "definition": "UNIQUE (source_repository, source_commit, manifest_sha256)"
+    },
+    {
+      "table_name": "source_snapshots",
+      "name": "source_snapshots_source_revision_not_null",
+      "type": "n",
+      "definition": "NOT NULL source_revision"
+    },
+    {
+      "table_name": "unit_asset_bindings",
+      "name": "unit_asset_bindings_asset_object_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (asset_object_id) REFERENCES asset_objects(id)"
+    },
+    {
+      "table_name": "unit_asset_bindings",
+      "name": "unit_asset_bindings_check",
+      "type": "c",
+      "definition": "CHECK (((resolution = 'unavailable'::text) = (asset_object_id IS NULL)))"
+    },
+    {
+      "table_name": "unit_asset_bindings",
+      "name": "unit_asset_bindings_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id) REFERENCES unit_asset_dataset_versions(id)"
+    },
+    {
+      "table_name": "unit_asset_bindings",
+      "name": "unit_asset_bindings_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "unit_asset_bindings",
+      "name": "unit_asset_bindings_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_version_id, unit_key)"
+    },
+    {
+      "table_name": "unit_asset_bindings",
+      "name": "unit_asset_bindings_provenance_check",
+      "type": "c",
+      "definition": "CHECK ((jsonb_typeof(provenance) = 'object'::text))"
+    },
+    {
+      "table_name": "unit_asset_bindings",
+      "name": "unit_asset_bindings_provenance_not_null",
+      "type": "n",
+      "definition": "NOT NULL provenance"
+    },
+    {
+      "table_name": "unit_asset_bindings",
+      "name": "unit_asset_bindings_resolution_check",
+      "type": "c",
+      "definition": "CHECK ((resolution = ANY (ARRAY['portrait'::text, 'shared_portrait'::text, 'related_icon'::text, 'unavailable'::text])))"
+    },
+    {
+      "table_name": "unit_asset_bindings",
+      "name": "unit_asset_bindings_resolution_not_null",
+      "type": "n",
+      "definition": "NOT NULL resolution"
+    },
+    {
+      "table_name": "unit_asset_bindings",
+      "name": "unit_asset_bindings_unit_key_not_null",
+      "type": "n",
+      "definition": "NOT NULL unit_key"
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "name": "unit_asset_dataset_versions_catalog_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (catalog_dataset_version_id) REFERENCES hero_catalog_dataset_versions(id)"
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "name": "unit_asset_dataset_versions_catalog_dataset_version_id_id_key",
+      "type": "u",
+      "definition": "UNIQUE (catalog_dataset_version_id, id)"
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "name": "unit_asset_dataset_versions_catalog_dataset_version_id_mani_key",
+      "type": "u",
+      "definition": "UNIQUE (catalog_dataset_version_id, manifest_sha256)"
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "name": "unit_asset_dataset_versions_catalog_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL catalog_dataset_version_id"
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "name": "unit_asset_dataset_versions_expected_keys_check",
+      "type": "c",
+      "definition": "CHECK ((cardinality(expected_keys) > 0))"
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "name": "unit_asset_dataset_versions_expected_keys_not_null",
+      "type": "n",
+      "definition": "NOT NULL expected_keys"
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "name": "unit_asset_dataset_versions_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL id"
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "name": "unit_asset_dataset_versions_imported_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL imported_at"
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "name": "unit_asset_dataset_versions_manifest_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((manifest_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "name": "unit_asset_dataset_versions_manifest_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL manifest_sha256"
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "name": "unit_asset_dataset_versions_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "name": "unit_asset_dataset_versions_provenance_check",
+      "type": "c",
+      "definition": "CHECK ((jsonb_typeof(provenance) = 'object'::text))"
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "name": "unit_asset_dataset_versions_provenance_not_null",
+      "type": "n",
+      "definition": "NOT NULL provenance"
+    },
+    {
+      "table_name": "unit_asset_heads",
+      "name": "unit_asset_heads_catalog_dataset_version_id_dataset_versio_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (catalog_dataset_version_id, dataset_version_id) REFERENCES unit_asset_dataset_versions(catalog_dataset_version_id, id)"
+    },
+    {
+      "table_name": "unit_asset_heads",
+      "name": "unit_asset_heads_catalog_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (catalog_dataset_version_id) REFERENCES hero_catalog_dataset_versions(id)"
+    },
+    {
+      "table_name": "unit_asset_heads",
+      "name": "unit_asset_heads_catalog_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL catalog_dataset_version_id"
+    },
+    {
+      "table_name": "unit_asset_heads",
+      "name": "unit_asset_heads_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "unit_asset_heads",
+      "name": "unit_asset_heads_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (catalog_dataset_version_id)"
+    }
+  ],
+  "keys": [
+    {
+      "table_name": "abilities",
+      "columns": ["dataset_version_id", "internal_name"]
+    },
+    {
+      "table_name": "ability_id_mappings",
+      "columns": ["id"]
+    },
+    {
+      "table_name": "ability_localizations",
+      "columns": ["dataset_version_id", "ability_internal_name", "locale"]
+    },
+    {
+      "table_name": "ability_values",
+      "columns": ["dataset_version_id", "ability_internal_name", "ordinal"]
+    },
+    {
+      "table_name": "asset_blobs",
+      "columns": ["content_sha256"]
+    },
+    {
+      "table_name": "asset_dataset_heads",
+      "columns": ["catalog_dataset_version_id"]
+    },
+    {
+      "table_name": "asset_dataset_versions",
+      "columns": ["id"]
+    },
+    {
+      "table_name": "asset_objects",
+      "columns": ["id"]
+    },
+    {
+      "table_name": "asset_refs",
+      "columns": [
+        "dataset_version_id",
+        "entity_type",
+        "entity_key",
+        "asset_kind"
+      ]
+    },
+    {
+      "table_name": "asset_variants",
+      "columns": ["asset_object_id", "lod_key"]
+    },
+    {
+      "table_name": "catalog_import_staging",
+      "columns": ["import_run_id", "entity_type", "entity_key", "ordinal"]
+    },
+    {
+      "table_name": "catalog_reviews",
+      "columns": ["id"]
+    },
+    {
+      "table_name": "catalog_rollbacks",
+      "columns": ["id"]
+    },
+    {
+      "table_name": "catalog_semantic_diffs",
+      "columns": ["id"]
+    },
+    {
+      "table_name": "dataset_heads",
+      "columns": ["dataset_key"]
+    },
+    {
+      "table_name": "entity_asset_bindings",
+      "columns": [
+        "asset_dataset_version_id",
+        "entity_type",
+        "entity_key",
+        "asset_kind"
+      ]
+    },
+    {
+      "table_name": "entity_source_records",
+      "columns": [
+        "dataset_version_id",
+        "entity_type",
+        "entity_key",
+        "occurrence_ordinal"
+      ]
+    },
+    {
+      "table_name": "facet_ability_bindings",
+      "columns": [
+        "dataset_version_id",
+        "hero_id",
+        "facet_key",
+        "ability_internal_name"
+      ]
+    },
+    {
+      "table_name": "facets",
+      "columns": ["dataset_version_id", "hero_id", "facet_key"]
+    },
+    {
+      "table_name": "hero_ability_bindings",
+      "columns": [
+        "dataset_version_id",
+        "hero_id",
+        "ability_internal_name",
+        "relation_kind",
+        "source_slot"
+      ]
+    },
+    {
+      "table_name": "hero_catalog_dataset_versions",
+      "columns": ["id"]
+    },
+    {
+      "table_name": "hero_import_staging",
+      "columns": ["import_run_id", "hero_id"]
+    },
+    {
+      "table_name": "hero_localizations",
+      "columns": ["dataset_version_id", "hero_id", "locale"]
+    },
+    {
+      "table_name": "hero_reference_comparisons",
+      "columns": ["id"]
+    },
+    {
+      "table_name": "hero_reference_diffs",
+      "columns": ["id"]
+    },
+    {
+      "table_name": "hero_roles",
+      "columns": ["dataset_version_id", "hero_id", "role"]
+    },
+    {
+      "table_name": "hero_source_records",
+      "columns": ["dataset_version_id", "hero_id"]
+    },
+    {
+      "table_name": "heroes",
+      "columns": ["dataset_version_id", "hero_id"]
+    },
+    {
+      "table_name": "import_runs",
+      "columns": ["id"]
+    },
+    {
+      "table_name": "reference_hero_records",
+      "columns": ["reference_snapshot_id", "hero_id"]
+    },
+    {
+      "table_name": "reference_snapshots",
+      "columns": ["id"]
+    },
+    {
+      "table_name": "schema_migrations",
+      "columns": ["migration_id"]
+    },
+    {
+      "table_name": "source_snapshot_files",
+      "columns": ["source_snapshot_id", "source_path"]
+    },
+    {
+      "table_name": "source_snapshots",
+      "columns": ["id"]
+    },
+    {
+      "table_name": "unit_asset_bindings",
+      "columns": ["dataset_version_id", "unit_key"]
+    },
+    {
+      "table_name": "unit_asset_dataset_versions",
+      "columns": ["id"]
+    },
+    {
+      "table_name": "unit_asset_heads",
+      "columns": ["catalog_dataset_version_id"]
+    }
+  ]
+}

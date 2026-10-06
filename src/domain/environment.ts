@@ -30,6 +30,7 @@ export const DATABASE_OPERATIONS = [
   "rollback",
   "seed",
   "reset",
+  "restore",
 ] as const;
 
 export type DatabaseOperation = (typeof DATABASE_OPERATIONS)[number];

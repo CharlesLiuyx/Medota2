@@ -1,3 +1,6 @@
+import { getMedota2StateDirectory } from "@/config/medota2-state";
+import { assertSnapshotWritable } from "./snapshot-write-guard";
+import { assertRestoreCandidate } from "./restore-candidate";
 import pg, {
   type PoolClient,
   type QueryConfig,
@@ -41,6 +44,13 @@ export interface VerifiedSession {
   release(error?: Error | boolean): void;
 }
 
+export interface VerifiedReadSnapshot {
+  query<Row extends QueryResultRow = QueryResultRow>(
+    text: string,
+    values?: unknown[],
+  ): Promise<QueryResult<Row>>;
+}
+
 interface VerifiedDatabaseBase<
   Operation extends DatabaseOperation = DatabaseOperation,
 > {
@@ -60,7 +70,11 @@ export type VerifiedDatabase<
   Operation extends DatabaseOperation = DatabaseOperation,
 > = VerifiedDatabaseBase<Operation> &
   (Operation extends "read"
-    ? Record<never, never>
+    ? {
+        readSnapshot<T>(
+          work: (snapshot: VerifiedReadSnapshot) => Promise<T>,
+        ): Promise<T>;
+      }
     : { connect(): Promise<VerifiedSession> });
 
 type WorkerMutationOperation = Extract<
@@ -69,7 +83,7 @@ type WorkerMutationOperation = Extract<
 >;
 type MigrationOperation = Extract<
   DatabaseOperation,
-  "migrate" | "seed" | "reset"
+  "migrate" | "seed" | "reset" | "restore"
 >;
 
 export type OpenVerifiedDatabaseOptions =
@@ -362,6 +376,7 @@ class PostgresVerifiedDatabase<Operation extends DatabaseOperation> {
   readonly role: DatabaseRole;
   readonly operation: Operation;
   readonly #pool: pg.Pool;
+  readonly #stateDirectory = getMedota2StateDirectory();
   readonly #declaration: EnvironmentDeclaration;
   readonly #confirmation: string | null;
   readonly #expectedRoleNames: Readonly<Record<DatabaseRole, string>>;
@@ -439,7 +454,13 @@ class PostgresVerifiedDatabase<Operation extends DatabaseOperation> {
         this.operation === "read" &&
         process.env.MEDOTA2_WORKBENCH === "1";
       if (reuseLocalIdentity && this.#verifiedConnections.has(client)) {
-        return createVerifiedSession(client);
+        return createVerifiedSession(client, () =>
+          assertSnapshotWritable(
+            this.#stateDirectory,
+            this.#declaration.environment,
+            this.operation,
+          ),
+        );
       }
       const identity = await this.#attest(client);
       if (this.#identity) {
@@ -447,8 +468,15 @@ class PostgresVerifiedDatabase<Operation extends DatabaseOperation> {
       } else {
         this.#identity = Object.freeze(identity);
       }
+      if (this.operation === "restore") assertRestoreCandidate(identity);
       if (reuseLocalIdentity) this.#verifiedConnections.add(client);
-      return createVerifiedSession(client);
+      return createVerifiedSession(client, () =>
+        assertSnapshotWritable(
+          this.#stateDirectory,
+          this.#declaration.environment,
+          this.operation,
+        ),
+      );
     } catch (error) {
       client.release(error instanceof Error ? error : new Error("attestation"));
       throw error;
@@ -472,6 +500,58 @@ class PostgresVerifiedDatabase<Operation extends DatabaseOperation> {
 
   async end(): Promise<void> {
     await this.#pool.end();
+  }
+
+  async readSnapshot<T>(
+    work: (snapshot: VerifiedReadSnapshot) => Promise<T>,
+  ): Promise<T> {
+    if (this.operation !== "read" || this.role !== "web")
+      throw new EnvironmentContractError("ENV_OPERATION_NOT_ALLOWED");
+    const session = await this.connect();
+    let active = true;
+    const pending = new Set<Promise<unknown>>();
+    let queryFailure: unknown;
+    try {
+      await session.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+      await session.query("SELECT 1");
+      await session.query(
+        "SELECT set_config('TimeZone','UTC',true), set_config('DateStyle','ISO, YMD',true), set_config('statement_timeout','30000',true), set_config('extra_float_digits','3',true)",
+      );
+      const query: VerifiedReadSnapshot["query"] = (text, values) => {
+        if (!active) throw new Error("Read snapshot has ended.");
+        if (!/^\s*(SELECT|WITH)\b/i.test(text))
+          throw new Error("Read snapshot accepts queries only.");
+        const config: QueryConfig & { queryMode: "extended" } = {
+          text,
+          values: values ?? [],
+          queryMode: "extended",
+        };
+        const promise = session.query(config);
+        pending.add(promise);
+        void promise.then(
+          () => pending.delete(promise),
+          (error) => {
+            queryFailure = error;
+            pending.delete(promise);
+          },
+        );
+        return promise;
+      };
+      const result = await work(Object.freeze({ query }));
+      active = false;
+      await Promise.all(pending);
+      if (queryFailure) throw queryFailure;
+      await session.query("COMMIT");
+      return result;
+    } catch (error) {
+      active = false;
+      await Promise.allSettled(pending);
+      await session.query("ROLLBACK").catch(() => undefined);
+      throw error;
+    } finally {
+      active = false;
+      session.release();
+    }
   }
 
   async #readOnlyQuery<Row extends QueryResultRow = QueryResultRow>(
@@ -994,20 +1074,30 @@ function createVerifiedDatabaseFacade<Operation extends DatabaseOperation>(
     end: database.end.bind(database),
   };
   if (database.operation === "read") {
-    return Object.freeze(base) as VerifiedDatabase<Operation>;
+    return Object.freeze({
+      ...base,
+      readSnapshot: database.readSnapshot.bind(database),
+    }) as unknown as VerifiedDatabase<Operation>;
   }
   return Object.freeze({
     ...base,
     connect: database.connect.bind(database),
-  }) as VerifiedDatabase<Operation>;
+  }) as unknown as VerifiedDatabase<Operation>;
 }
 
-function createVerifiedSession(client: PoolClient): VerifiedSession {
+function createVerifiedSession(
+  client: PoolClient,
+  guard: () => void,
+): VerifiedSession {
   let released = false;
   const query = ((...args: unknown[]) => {
     if (released) {
       throw new EnvironmentContractError("ENV_CONNECT_FAILED");
     }
+    if (!(
+      typeof args[0] === "string" && /^\s*ROLLBACK\s*;?\s*$/i.test(args[0])
+    ))
+      guard();
     return Reflect.apply(client.query, client, args);
   }) as PoolClient["query"];
   return Object.freeze({

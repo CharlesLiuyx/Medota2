@@ -8,7 +8,7 @@ import {
 async function main(): Promise<void> {
   const release = await acquireLock("development-database");
   try {
-    process.env.MEDOTA2_STATE_DIRECTORY = ".medota2/environments/development";
+    process.env.MEDOTA2_STATE_DIRECTORY ??= ".medota2/environments/development";
     process.env.MEDOTA2_ENVIRONMENT = "development";
     process.env.MEDOTA2_DATA_CLASS = "sandbox";
     process.env.MEDOTA2_PROCESS_ROLE = "control";

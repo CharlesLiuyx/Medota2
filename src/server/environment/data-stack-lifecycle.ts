@@ -1,3 +1,7 @@
+import {
+  readActiveSnapshot,
+  validateCandidateLease,
+} from "@/config/data-sync-state";
 import { execFile } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { relative, resolve } from "node:path";
@@ -30,6 +34,7 @@ export interface DataStackLease {
 interface ProvisionDataStackInput {
   environment: ManagedEnvironment;
   runId?: string;
+  candidateId?: string;
   workspaceRoot?: string;
   hostPort?: number;
   onProgress?: (message: string) => void;
@@ -56,7 +61,7 @@ export async function provisionDataStack(
   const workspaceRoot = resolve(input.workspaceRoot ?? process.cwd());
   const planned = createDataStackPlan({ ...input, workspaceRoot });
   const plan =
-    planned.environment === "test" && planned.hostPort === 0
+    planned.hostPort === 0
       ? { ...planned, hostPort: await reserveAvailablePort() }
       : planned;
   const bootstrapPassword = randomBytes(32).toString("base64url");
@@ -118,7 +123,11 @@ export async function startPersistentDataStack(
   workspaceRoot = process.cwd(),
 ): Promise<void> {
   const root = resolve(workspaceRoot);
-  const plan = createDataStackPlan({ environment, workspaceRoot: root });
+  const active = root === process.cwd() ? readActiveSnapshot() : null;
+  const plan =
+    active?.lease.environment === environment
+      ? active.lease
+      : createDataStackPlan({ environment, workspaceRoot: root });
   await runCompose(root, plan, ["up", "-d", "--wait", "postgres"], {
     ...process.env,
     MEDOTA2_POSTGRES_PORT: String(plan.hostPort),
@@ -130,7 +139,11 @@ export async function stopPersistentDataStack(
   workspaceRoot = process.cwd(),
 ): Promise<void> {
   const root = resolve(workspaceRoot);
-  const plan = createDataStackPlan({ environment, workspaceRoot: root });
+  const active = root === process.cwd() ? readActiveSnapshot() : null;
+  const plan =
+    active?.lease.environment === environment
+      ? active.lease
+      : createDataStackPlan({ environment, workspaceRoot: root });
   await runCompose(root, plan, ["stop", "postgres"], {
     ...process.env,
     MEDOTA2_POSTGRES_PORT: String(plan.hostPort),
@@ -196,6 +209,28 @@ export function createDataStackPlan(
     };
   }
 
+  if (input.candidateId) {
+    if (
+      !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(
+        input.candidateId,
+      )
+    )
+      throw new Error("A UUID is required for a candidate stack.");
+    return {
+      contractVersion: 1,
+      environment: input.environment,
+      composeProject: `medota2-sync-${input.candidateId}`,
+      composeFile: resolve(workspaceRoot, "docker-compose.data-stack.yml"),
+      stateDirectory: resolve(
+        workspaceRoot,
+        ".medota2/data-sync/candidates",
+        input.candidateId,
+        "state",
+      ),
+      hostPort: validatedTestPort(input.hostPort),
+      persistence: "persistent",
+    };
+  }
   const defaultPort = input.environment === "development" ? 54321 : 54322;
   const hostPort = input.hostPort ?? defaultPort;
   if (!Number.isInteger(hostPort) || hostPort < 1024 || hostPort > 65535) {
@@ -357,4 +392,22 @@ export function isManagedEnvironment(
   value: string,
 ): value is Exclude<RuntimeEnvironment, "production"> {
   return MANAGED_ENVIRONMENTS.includes(value as ManagedEnvironment);
+}
+
+/** Start only an exact, validated candidate lease; never create or adopt here. */
+export async function startCandidateDataStack(
+  id: string,
+  lease: DataStackLease,
+): Promise<void> {
+  if (lease.environment === "test" || lease.persistence !== "persistent")
+    throw new Error("Invalid candidate lease.");
+  validateCandidateLease(id, {
+    ...lease,
+    environment: lease.environment,
+    persistence: "persistent",
+  });
+  await runCompose(process.cwd(), lease, ["up", "-d", "--wait", "postgres"], {
+    ...process.env,
+    MEDOTA2_POSTGRES_PORT: String(lease.hostPort),
+  });
 }

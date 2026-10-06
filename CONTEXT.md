@@ -36,6 +36,7 @@
 ## 深入阅读
 
 - 当前任务、决定和遗留事项：[docs/current.md](docs/current.md)。
+- 开始任务时核对[开发环境与能力登记册](docs/development-environments.md)：`GofurMacM4Max128GB` 元数据来源、`GofurWindowsLenovo` 客户端资源及后续云端能力在此集中维护；当前环境缺项时按任务推荐合适环境，并保留版本核验与交接说明。
 - 共享开发决定：[ADR 0007](docs/adr/0007-shared-development-workbench.md)。
 - 来源职责、许可与 provenance：[来源说明](docs/repositories/README.md)。
 - 对象、导入和发布规则：[Catalog Spec](docs/specs/hero-catalog-v2.md)。
