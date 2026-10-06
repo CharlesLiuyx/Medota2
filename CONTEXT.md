@@ -33,6 +33,8 @@
 
 一个工作目录、分支、Web 地址和开发数据库。`pnpm dev` 复用固定工作台，实时看到多个 Session 的组合结果；`pnpm check` 说明并执行受影响的检查。上下文和脚本放在仓库中，客户端只提供薄入口。详细用法见 [README](README.md) 和[开发工作台规范](docs/specs/development-workbench.md)。
 
+多机器交接统一使用 `pnpm push` 推送代码与完整业务数据，另一机器用 `pnpm sync` 拉取并应用同一快照。数据库、图片、全部地图版本与来源共同同步；机器差异保留在运行环境兼容配置中。没有额外 Git hooks。
+
 ## 深入阅读
 
 - 当前任务、决定和遗留事项：[docs/current.md](docs/current.md)。

@@ -10,6 +10,18 @@ import { readSnapshot, verifySnapshotFiles } from "./snapshot";
 import { dataLockSchema, type DataLock } from "./protocol";
 const execute = promisify(execFile);
 export const repositoryRoot = () => resolve(syncRoot(), "repository");
+async function hasManagedChanges(git: (args: string[]) => Promise<string>) {
+  if (await git(["ls-files", "--others", "--exclude-standard"])) return true;
+  try {
+    // Older Git/LFS can report hydrated files as modified from their cached size.
+    // Compare filtered content, including staged changes, instead of stat-only status.
+    await git(["diff", "--quiet", "--no-ext-diff"]);
+    await git(["diff", "--cached", "--quiet", "--no-ext-diff"]);
+    return false;
+  } catch {
+    return true;
+  }
+}
 const gitEnv = () => ({
   ...process.env,
   GIT_LFS_SKIP_SMUDGE: "1",
@@ -86,7 +98,7 @@ export async function fetchSnapshot(
       if (actual !== remote)
         throw new Error("Managed checkout has an unexpected remote.");
       await git(["lfs", "install", "--local", "--skip-repo"]);
-      if (await git(["status", "--porcelain"]))
+      if (await hasManagedChanges(git))
         throw new Error(
           "Managed data checkout has local changes; preserve them before fetching.",
         );
@@ -143,7 +155,7 @@ export async function lockPublishedSnapshot(
   await git(["lfs", "install", "--local", "--skip-repo"]);
   if (
     (await git(["remote", "get-url", "origin"])) !== remote ||
-    (await git(["status", "--porcelain"]))
+    (await hasManagedChanges(git))
   )
     throw new Error(
       "Managed data checkout is not clean or has a different remote.",

@@ -1,12 +1,12 @@
 # 开发数据同步运行手册
 
-当前实现日期：2026-10-06。首个私有数据快照已发布并经远端重新下载验证，代码 lock 固定数据提交 `dfde0a8bbea1d611ffce530a94fd842f6e293a50`。Mac 与 Windows 原生 PowerShell／Node（Docker WSL2 后端）已完成完整快照恢复和导出回验。其他环境还需配置私有数据仓库的读取权限；云端及全部Windows平台要求尚待验收。
+当前实现日期：2026-10-06。完整业务数据已发布并经独立远端下载验证，代码 lock 固定数据提交 `d786117aab83a8e1d67b08775ac9f872b0dd656c`，包含7.41e与默认7.41f-6944地图。日常使用 `pnpm push` 和 `pnpm sync` 同步代码与数据。Mac 与 Windows 原生 PowerShell／Node（Docker WSL2 后端）均有完整快照恢复及导出回验记录；本次新增地图快照已在Windows恢复验证，Mac仍需拉取应用。其他环境需配置私有数据仓库权限；云端及全部Windows平台要求尚待验收。
 
 ## 新环境接入
 
-需要 Node ≥22.12、仓库指定的 pnpm、Git、Git LFS、可用的 Docker Compose。目标支持 Windows 原生 PowerShell；**WSL2 可选，不是项目的强制依赖**。当前原生兼容适配尚未完成，以下完整流程尚不能标为已支持 Windows；WSL2 也尚未实机验收。Windows 待实施项与验收要求见[方案](specs/development-data-sync.md#windows-原生支持要求待实施)。Docker Desktop 的 Linux 容器后端独立选择，按机器条件使用可用后端，不要求项目进入 WSL2。云端需要同机 Docker 与持久磁盘，数据库保持 loopback。无需安装完整游戏，也无需手工复制 `.medota2`。
+需要 Node ≥22.12、仓库指定的 pnpm、Git、Git LFS、可用的 Docker Compose。支持 Windows 原生 PowerShell；**WSL2 可选，不是项目的强制依赖**。当前Windows实机使用Docker WSL2后端，项目及命令仍运行于原生Windows；其他Docker后端按机器条件核验。云端需要同机 Docker 与持久磁盘，数据库保持 loopback。无需安装完整游戏，也无需手工复制 `.medota2`。完整平台验收限制见下文及[方案](specs/development-data-sync.md)。
 
-以下是现有命令接口；Mac 已验证，Windows本轮使用尚未提交的兼容性修复验证同一同步流程。拉取包含兼容修复的代码后，在干净 checkout 中执行：
+以下是首次接入命令；兼容修复已提交并推送。拉取代码后，在干净 checkout 中执行：
 
 ```sh
 git pull --ff-only
@@ -16,7 +16,7 @@ docker compose version
 pnpm data:workspace --name GofurWindowsLenovo --profile local
 pnpm data:fetch --repository https://github.com/CharlesLiuyx/Medota2-dev-data.git
 pnpm data:apply --plan
-pnpm dev:sync
+pnpm sync
 pnpm data:status
 ```
 
@@ -26,13 +26,13 @@ pnpm data:status
 
 核验成功的 `data:status` 返回0并显示 `in-sync`。报告包含代码 commit、代码改动状态、目标快照、业务摘要、当前数据库身份及核验时间。另一机器的代码 commit、目标快照和业务摘要应相同，workspace／数据库身份应不同。尚未发布 lock 返回 `unlocked`；存在代码改动返回 `code-modified`，不能误报一致。
 
-2026-10-06，Windows 原生已实际通过工作区初始化、私有 Git/LFS 获取、全部快照文件校验与只读应用计划。下载器在受管 checkout 内配置 LFS 过滤器且跳过钩子安装，使用 `.git/disabled-hooks` 替代 Windows 上会被当作相对目录的 `/dev/null`，读取固定快照时禁用换行转换；不改全局 Git 配置。Docker VMM 与 Windows Hypervisor Platform 已配置，但本机必须重启才可启动容器。数据库恢复、重复应用／再导出、ACL 与工作台切换尚未在 Windows 验收；不能只凭下载结果宣称 `in-sync`。本机具体工具与限制见[环境登记](development-environments.md)。
+下载器在受管 checkout 内配置 LFS 过滤器且跳过钩子安装，使用 `.git/disabled-hooks` 替代 Windows 上会被当作相对目录的 `/dev/null`，读取固定快照时禁用换行转换；不改全局 Git 配置。Windows已通过数据库恢复、重复应用／再导出、ACL与工作台切换；仍不能只凭下载结果宣称 `in-sync`。本机具体工具与限制见[环境登记](development-environments.md)。
 
 ## 常用操作
 
 ### Windows 原生适配进展
 
-2026-10-06 重启后，Docker VMM 的 Linux 引擎已可用，实际拉取了 PostgreSQL 镜像。此后配置文件共享并重启 Docker 时出现残留 AF_UNIX socket 重命名错误，容器启动仍待恢复；不要因此重置数据库虚拟磁盘或删除卷。VMM 需显式共享 checkout 的 `docker` 目录，数据库端口继续只绑定 loopback。
+2026-10-06曾因Docker VMM的残留socket和vsock错误无法启动容器，后来切换Docker WSL2后端恢复，原虚拟磁盘与备份保留。数据库端口继续只绑定loopback。
 
 代码现已补充 Windows 原生 pnpm 启动（Node 直接执行 pnpm JS 入口，参数不经 shell）、凭据／身份文件 ACL 校验与私有目录创建、工作台按 instance 匹配的停止指令和子进程树退出。Windows 私有目录只授予当前用户完全控制并关闭继承；读入文件时重新检查所有者、普通文件／重解析点以及 DACL，拒绝其他非系统／管理员主体的访问授权。Unix 保留0600／owner门禁。没有通过跳过权限检查来兼容 Windows。
 

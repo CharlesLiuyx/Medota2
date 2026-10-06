@@ -416,3 +416,7 @@ MapViewer将静态场景缓存与动态高亮分离，营地收益/字符串随�
 独立候选4d16edc3-c4af-4ba2-9dfc-e99807df4cf2已在原活动库保持运行的情况下完成恢复、34表46,238行摘要回验，候选身份与原库不同。首轮发现并修复上述路径分隔符问题；另一轮与生产编译并行时出现Windows ACL检查超时，未绕过权限，保留失败候选，编译结束后复用已通过provision的独立候选完成恢复。来源／地图文件完整回验及数据库结果分别见map-sync-file-roundtrip.json、map-sync-fix-restored.json。本轮没有替换用户活动数据库。
 
 发布实测补充：Git LFS 3.x无法在无命名本地ref的候选仓库上传，已改用命名快照ref并支持重试。Windows数据进程另出现原生崩溃及一次图片字节读取校验异常；数据库端与关闭JIT的客户端复核4,616项均正常，未修改任何图片或放松校验。对应临时运行时适配与待核验条件集中记录于development-environments.md。
+
+同步最终验收：`pnpm push`已将完整快照发布到私有数据提交d786117aab83a8e1d67b08775ac9f872b0dd656c，独立回取4,705对象全部通过，再将对应lock推送main。`pnpm sync`实测完成拉取、冻结依赖、恢复、切换与重启；活动候选b2384f4d-30a6-4895-82c5-00294216e4ad、数据库身份3454f95e-3427-40a3-be97-b915010056f6，34表46,238行摘要一致，旧数据库保留。前端确认采用共享versions.json，默认7.41f-6944；两个版本全部图片通过HTTP返回及SHA-256核对，英雄／技能／单位／地图／数据库页均HTTP200。data:status的problems为空，数据及地图摘要一致；code-modified来自尚未提交文档与兼容修复，不是数据差异。证据为map-sync-push-final.log、map-sync-consume-final.log、map-sync-web-final.json及map-sync-status-final.log。
+
+实测另修复Windows重复写相同DACL遍历大型状态目录的超时，以及旧Git/LFS按缓存大小误报下载文件有改动的问题；只调整兼容层，不跳过实际权限与内容检查。修复后重新通过270项单测、21项数据库测试、类型、ESLint与格式检查。其他机器拉取main后执行`pnpm sync`；尚未远程执行Mac本次新快照同步。既有浏览器详情跳转超时、Windows发布打包EPERM和偶发系统原生异常仍独立待查，不声明完整平台验收通过。

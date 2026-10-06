@@ -54,6 +54,18 @@ export function protectPrivateDirectory(path: string): void {
 if ([IO.File]::GetAttributes($path) -band [IO.FileAttributes]::ReparsePoint) { throw 'Private directory is a reparse point.' }
 $existing = [IO.Directory]::GetAccessControl($path)
 if ($existing.GetOwner([Security.Principal.SecurityIdentifier]).Value -ne $sid.Value) { throw 'Private directory is not owned by the current user.' }
+# Reapplying an identical inheritable DACL propagates through the entire state tree.
+# Inspect on every call, but avoid that expensive write when it is already protected.
+$rules = @($existing.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]))
+if ($existing.AreAccessRulesProtected -and $rules.Count -eq 1) {
+  $current = $rules[0]
+  if ($current.IdentityReference.Value -eq $sid.Value -and
+      $current.AccessControlType -eq 'Allow' -and
+      $current.FileSystemRights -eq [Security.AccessControl.FileSystemRights]::FullControl -and
+      $current.InheritanceFlags -eq ([Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit) -and
+      $current.PropagationFlags -eq [Security.AccessControl.PropagationFlags]::None -and
+      -not $current.IsInherited) { return }
+}
 $acl = New-Object Security.AccessControl.DirectorySecurity
 # The owner was verified above. Only change the DACL: an owner can do that
 # without WRITE_OWNER, which inherited Modify permissions do not include.
