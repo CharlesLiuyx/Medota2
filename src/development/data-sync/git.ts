@@ -19,7 +19,15 @@ async function git(args: string[], root = repositoryRoot()) {
   return (
     await execute(
       "git",
-      ["-C", root, "-c", "core.hooksPath=/dev/null", ...args],
+      [
+        "-C",
+        root,
+        "-c",
+        `core.hooksPath=${resolve(root, ".git", "disabled-hooks")}`,
+        "-c",
+        "core.autocrlf=false",
+        ...args,
+      ],
       { env: gitEnv(), maxBuffer: 16 * 1024 * 1024, timeout: 300_000 },
     )
   ).stdout.trim();
@@ -70,10 +78,13 @@ export async function fetchSnapshot(
     if (!existsSync(resolve(root, ".git"))) {
       await execute("git", ["init", root], { env: gitEnv() });
       await git(["remote", "add", "origin", remote]);
+      // Configure LFS filters without installing hooks or changing global Git settings.
+      await git(["lfs", "install", "--local", "--skip-repo"]);
     } else {
       const actual = await git(["remote", "get-url", "origin"]);
       if (actual !== remote)
         throw new Error("Managed checkout has an unexpected remote.");
+      await git(["lfs", "install", "--local", "--skip-repo"]);
       if (await git(["status", "--porcelain"]))
         throw new Error(
           "Managed data checkout has local changes; preserve them before fetching.",
@@ -105,6 +116,9 @@ export async function fetchSnapshot(
         `--include=${paths.join(",")}`,
         "--exclude=",
       ]);
+      console.log(
+        `Downloaded ${Math.min(i + 100, saved.manifest.objects.length)}/${saved.manifest.objects.length} objects; full checksum verification follows.`,
+      );
     }
   }
   const verification = await verifySnapshotFiles(root, saved.manifest);
@@ -124,6 +138,7 @@ export async function lockPublishedSnapshot(
     await execute("git", ["init", root]);
     await git(["remote", "add", "origin", remote]);
   }
+  await git(["lfs", "install", "--local", "--skip-repo"]);
   if (
     (await git(["remote", "get-url", "origin"])) !== remote ||
     (await git(["status", "--porcelain"]))

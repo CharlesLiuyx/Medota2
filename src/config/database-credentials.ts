@@ -1,7 +1,7 @@
+import { assertPrivateRegularFile } from "./private-file";
 import { randomUUID } from "node:crypto";
 import {
   existsSync,
-  lstatSync,
   readFileSync,
   renameSync,
   unlinkSync,
@@ -85,6 +85,7 @@ export function writeLocalDatabaseCredentials(
       flag: "wx",
       mode: 0o600,
     });
+    assertPrivateRegularFile(temporaryPath);
     renameSync(temporaryPath, path);
   } catch (error) {
     if (existsSync(temporaryPath)) unlinkSync(temporaryPath);
@@ -95,17 +96,4 @@ export function writeLocalDatabaseCredentials(
 
 export function getLocalDatabaseCredentialsPath(): string {
   return resolve(getMedota2StateDirectory(), "database-credentials.v1.json");
-}
-
-function assertPrivateRegularFile(path: string): void {
-  const metadata = lstatSync(path);
-  if (
-    !metadata.isFile() ||
-    (metadata.mode & 0o777) !== 0o600 ||
-    (typeof process.getuid === "function" && metadata.uid !== process.getuid())
-  ) {
-    throw new Error(
-      "The local database credential receipt must be a regular 0600 file owned by the current user.",
-    );
-  }
 }

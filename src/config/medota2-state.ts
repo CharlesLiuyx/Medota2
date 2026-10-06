@@ -1,3 +1,4 @@
+import { protectPrivateDirectory } from "./private-file";
 import { activeStateDirectory } from "./data-sync-state";
 import { existsSync, lstatSync, mkdirSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
@@ -28,6 +29,8 @@ export function ensureMedota2StateDirectory(): string {
       "The Medota2 state directory must be a real directory owned by the current user.",
     );
   }
+  protectPrivateDirectory(resolve(process.cwd(), DEFAULT_STATE_DIRECTORY));
+  protectPrivateDirectory(directory);
   return directory;
 }
 

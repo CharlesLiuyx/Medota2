@@ -1,12 +1,12 @@
 # 开发数据同步运行手册
 
-当前实现日期：2026-10-06。本机完整快照已导出并恢复到独立数据库。首个私有数据快照已发布并经远端重新下载验证，代码 lock 固定数据提交 `dfde0a8bbea1d611ffce530a94fd842f6e293a50`。其他环境还需配置私有数据仓库的读取权限。Windows／云端尚待实际验收。
+当前实现日期：2026-10-06。首个私有数据快照已发布并经远端重新下载验证，代码 lock 固定数据提交 `dfde0a8bbea1d611ffce530a94fd842f6e293a50`。Mac 与 Windows 原生 PowerShell／Node（Docker WSL2 后端）已完成完整快照恢复和导出回验。其他环境还需配置私有数据仓库的读取权限；云端及全部Windows平台要求尚待验收。
 
 ## 新环境接入
 
 需要 Node ≥22.12、仓库指定的 pnpm、Git、Git LFS、可用的 Docker Compose。目标支持 Windows 原生 PowerShell；**WSL2 可选，不是项目的强制依赖**。当前原生兼容适配尚未完成，以下完整流程尚不能标为已支持 Windows；WSL2 也尚未实机验收。Windows 待实施项与验收要求见[方案](specs/development-data-sync.md#windows-原生支持要求待实施)。Docker Desktop 的 Linux 容器后端独立选择，按机器条件使用可用后端，不要求项目进入 WSL2。云端需要同机 Docker 与持久磁盘，数据库保持 loopback。无需安装完整游戏，也无需手工复制 `.medota2`。
 
-以下是现有命令接口；Mac 已验证，Windows 原生需在兼容适配完成后验证同一流程。拉取包含本功能的代码后，在干净 checkout 中执行：
+以下是现有命令接口；Mac 已验证，Windows本轮使用尚未提交的兼容性修复验证同一同步流程。拉取包含兼容修复的代码后，在干净 checkout 中执行：
 
 ```sh
 git pull --ff-only
@@ -26,7 +26,21 @@ pnpm data:status
 
 核验成功的 `data:status` 返回0并显示 `in-sync`。报告包含代码 commit、代码改动状态、目标快照、业务摘要、当前数据库身份及核验时间。另一机器的代码 commit、目标快照和业务摘要应相同，workspace／数据库身份应不同。尚未发布 lock 返回 `unlocked`；存在代码改动返回 `code-modified`，不能误报一致。
 
+2026-10-06，Windows 原生已实际通过工作区初始化、私有 Git/LFS 获取、全部快照文件校验与只读应用计划。下载器在受管 checkout 内配置 LFS 过滤器且跳过钩子安装，使用 `.git/disabled-hooks` 替代 Windows 上会被当作相对目录的 `/dev/null`，读取固定快照时禁用换行转换；不改全局 Git 配置。Docker VMM 与 Windows Hypervisor Platform 已配置，但本机必须重启才可启动容器。数据库恢复、重复应用／再导出、ACL 与工作台切换尚未在 Windows 验收；不能只凭下载结果宣称 `in-sync`。本机具体工具与限制见[环境登记](development-environments.md)。
+
 ## 常用操作
+
+### Windows 原生适配进展
+
+2026-10-06 重启后，Docker VMM 的 Linux 引擎已可用，实际拉取了 PostgreSQL 镜像。此后配置文件共享并重启 Docker 时出现残留 AF_UNIX socket 重命名错误，容器启动仍待恢复；不要因此重置数据库虚拟磁盘或删除卷。VMM 需显式共享 checkout 的 `docker` 目录，数据库端口继续只绑定 loopback。
+
+代码现已补充 Windows 原生 pnpm 启动（Node 直接执行 pnpm JS 入口，参数不经 shell）、凭据／身份文件 ACL 校验与私有目录创建、工作台按 instance 匹配的停止指令和子进程树退出。Windows 私有目录只授予当前用户完全控制并关闭继承；读入文件时重新检查所有者、普通文件／重解析点以及 DACL，拒绝其他非系统／管理员主体的访问授权。Unix 保留0600／owner门禁。没有通过跳过权限检查来兼容 Windows。
+
+原生测试已覆盖 ACL 正常读入及额外 Users 授权拒绝、只有 Modify 权限的目录收紧与重复保护、包含空格／中文／shell符号的字面参数传递，以及精确停止本进程树而保留另一个子进程。新终端执行仓库指定的 `pnpm`，工作台重启仍用 `pnpm dev:restart`；脚本内环境变量赋值使用 `pnpm-workspace.yaml` 的 `shellEmulator: true`，测试运行器也复用原生 pnpm 入口。当前没有声明所有Windows平台要求已完成。
+
+同日实际恢复验收：用户选择 Docker WSL2 后端后，引擎与挂载正常；原生 PowerShell／Node 完成独立候选恢复、工作台切换、全量数据／文件依赖检查、重复应用和导出。34表46,238行、4,623对象及84,475,984字节通过核验；业务摘要与lock一致，导出的快照ID相同。`data:status` 的 `code-modified` 表示代码有未提交修复；此时 `problems=[]` 且业务摘要一致，不应误报数据未同步，也不应将其改写成 `in-sync`。VMM 的旧目录和经过SHA-256校验的磁盘副本保留，未重置卷。
+
+Windows验收限制：265项单测与21项隔离数据库合同测试通过，实际开发重启通过。合同测试在Windows为逐次ACL检查提供60秒hook／30秒test时限；仍核验全部身份和权限。浏览器技能列表跳转用例持续超时，release在编译通过后复制standalone产物因symlink权限EPERM失败，完整check尚未通过。需要浏览器测试时先运行 `pnpm exec playwright install chromium`；不要将本机开发可用表述成发布流程已验收。
 
 | 命令                                                    | 实际作用                                                  |
 | ------------------------------------------------------- | --------------------------------------------------------- |

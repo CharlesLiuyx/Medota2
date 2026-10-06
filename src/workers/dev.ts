@@ -17,6 +17,7 @@ import {
 } from "@/development/runtime";
 import { sampleInputs, type SampleResult } from "@/development/sample";
 import { warmCatalogRoutes } from "@/development/warm-catalog";
+import { stopChildTree } from "@/development/process";
 import type { WorkbenchStatus } from "@/development/protocol";
 import {
   getPreviewDataSource,
@@ -33,6 +34,16 @@ interface Owner {
   workspace: string;
 }
 
+async function requestStop(owner: Owner): Promise<void> {
+  if (process.platform === "win32")
+    await writeJson(controlPath, { action: "stop", instance: owner.instance });
+  else process.kill(owner.pid, "SIGTERM");
+  const deadline = Date.now() + 15_000;
+  while (processAlive(owner.pid) && Date.now() < deadline) await delay(150);
+  if (processAlive(owner.pid))
+    throw new Error("Previous workbench is still stopping; see its log.");
+}
+
 async function main(): Promise<void> {
   getPreviewDataSource(); // Load local settings before choosing the ready URL or spawning the supervisor.
   await mkdir(developmentRoot, { recursive: true });
@@ -44,20 +55,12 @@ async function main(): Promise<void> {
     owner.workspace === process.cwd() &&
     processAlive(owner.pid)
   ) {
-    process.kill(owner.pid, "SIGTERM");
-    const deadline = Date.now() + 15_000;
-    while (processAlive(owner.pid) && Date.now() < deadline) await delay(150);
-    if (processAlive(owner.pid))
-      throw new Error("Previous workbench is still stopping; see its log.");
+    await requestStop(owner);
     owner = null;
   }
   if (process.argv.includes("--stop")) {
     if (owner && owner.workspace === process.cwd() && processAlive(owner.pid)) {
-      process.kill(owner.pid, "SIGTERM");
-      const deadline = Date.now() + 15_000;
-      while (processAlive(owner.pid) && Date.now() < deadline) await delay(150);
-      if (processAlive(owner.pid))
-        throw new Error("Previous workbench is still stopping; see its log.");
+      await requestStop(owner);
       console.log("Shared workbench stopped; database data is retained.");
     } else console.log("Shared workbench is not running.");
     return;
@@ -72,6 +75,7 @@ async function main(): Promise<void> {
         cwd: process.cwd(),
         env: process.env,
         detached: true,
+        windowsHide: true,
         stdio: ["ignore", log, log],
       },
     );
@@ -159,8 +163,8 @@ async function serve(): Promise<void> {
     clearTimeout(timer);
     clearInterval(controls);
     watchers.forEach((watcher) => watcher.close());
-    web?.kill("SIGTERM");
-    sample?.kill("SIGTERM");
+    await stopChildTree(web);
+    await stopChildTree(sample);
     await publish({ phase: code ? "error" : "stopped" });
     await release?.();
     process.exitCode = code;
@@ -233,7 +237,7 @@ async function serve(): Promise<void> {
         "-p",
         String(getWorkbenchPort()),
       ],
-      { env, stdio: "inherit" },
+      { env, stdio: "inherit", windowsHide: true },
     );
     web.once("error", (error) => {
       void publish({ message: error.message }).then(() => stop(1));
@@ -297,6 +301,7 @@ async function serve(): Promise<void> {
         ["--import", "tsx", "src/workers/run-development-sample.ts"],
         {
           env: { ...env, MEDOTA2_PROCESS_ROLE: "worker" },
+          windowsHide: true,
           stdio: ["ignore", "inherit", "inherit", "ipc"],
         },
       );
@@ -443,6 +448,10 @@ async function serve(): Promise<void> {
             instance: string;
           };
           if (command.instance !== instance) return;
+          if (command.action === "stop") {
+            await stop();
+            return;
+          }
           if (command.action === "cancel") {
             activeRevision += 1;
             clearTimeout(timer);

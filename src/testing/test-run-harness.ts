@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
+import { nativeCommand } from "@/development/command";
 import { randomBytes } from "node:crypto";
 import { createWriteStream } from "node:fs";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
@@ -167,9 +168,11 @@ export async function runTestSuite(
     let stdout = "";
     let stderr = "";
     try {
-      const child = spawn(command, [...args], {
+      const invocation = nativeCommand(command, args, environment);
+      const child = spawn(invocation.command, invocation.args, {
         cwd: context.workspaceRoot,
         env: environment,
+        windowsHide: true,
         stdio: ["ignore", "pipe", "pipe"],
       });
       activeChild = child;
@@ -596,9 +599,11 @@ async function runProductionSmoke(
     flags: "wx",
     mode: 0o600,
   });
-  const child = spawn("pnpm", args, {
+  const invocation = nativeCommand("pnpm", args, environment);
+  const child = spawn(invocation.command, invocation.args, {
     cwd: context.workspaceRoot,
     env: { ...environment, MEDOTA2_PROCESS_ROLE: "web" },
+    windowsHide: true,
     stdio: ["ignore", "pipe", "pipe"],
   });
   setActiveChild(child);
@@ -835,9 +840,11 @@ async function readMetadataCommand(
   args: readonly string[],
 ): Promise<string | null> {
   return new Promise((resolveResult) => {
-    const child = spawn(command, [...args], {
+    const invocation = nativeCommand(command, args, process.env);
+    const child = spawn(invocation.command, invocation.args, {
       cwd,
       env: process.env,
+      windowsHide: true,
       stdio: ["ignore", "pipe", "ignore"],
     });
     let output = "";

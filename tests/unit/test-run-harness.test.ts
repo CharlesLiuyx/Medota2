@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createRunId, createTestRunContext } from "@/testing/test-run-harness";
 
@@ -24,6 +25,6 @@ describe("Test Run Harness", () => {
     expect(first.databasePort).not.toBe(second.databasePort);
     expect(first.nextDistDirectory).not.toBe(second.nextDistDirectory);
     expect(first.nextTsconfigPath).not.toBe(second.nextTsconfigPath);
-    expect(first.stateDirectory).toContain(`/${first.runId}/state`);
+    expect(first.stateDirectory).toBe(resolve(first.runRoot, "state"));
   });
 });

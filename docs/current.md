@@ -352,3 +352,45 @@ MapViewer将静态场景缓存与动态高亮分离，营地收益/字符串随�
 本次合并后格式、全仓 ESLint、TypeScript、git diff --check 与5次解析基准通过。全部262个单测中255个通过，7个失败位于既有 data-stack-lifecycle、game-localization、medota2-state、test-run-harness 测试：6个依赖 POSIX 路径字符串，1个受 Windows 符号链接权限限制；这些测试文件本轮未修改。pnpm check --plan 正常，pnpm check 仍因 spawn pnpm ENOENT 失败，已改用直接静态与单测命令核验；本轮未运行数据库、浏览器流程或正式构建，不声明全量通过。证据位于 .medota2/sessions/pull-main-20261006.md 及同目录 pull-main-*.log。
 
 后续继续按 Windows 原生方案处理命令启动、路径与符号链接验收；具备既有数据库／构建验证条件的 GofurMacM4Max128GB 可在拉取本次代码并核对 lock 对应数据后复跑完整检查，回传检查记录。该建议不表示已远程执行。本轮未同步业务数据、安装依赖或修改共享数据库。
+
+## Windows 多环境同步配置（2026-10-06）
+
+本机 GofurWindowsLenovo 已建立独立工作区身份，安装系统 Node 24.19.0、项目指定 pnpm 11.7.0、Docker Desktop 4.94.0／Compose 5.5.1，并以冻结 lock 验证依赖。选择 Docker VMM，未安装 WSL；Windows Hypervisor Platform 已启用，hypervisorlaunchtype 设为 auto，系统明确要求重启。重启前 Docker 报 no hypervisor is available，未创建数据库候选或切换现有地图工作台。完整机器事实见[环境登记](development-environments.md)。
+
+私有数据仓库读取成功；固定快照 e81588175b2d57aa4f82b74c88f3a8895a66b8b753820ba4befaa6007826d103 的84,475,984字节、34表46,238行及4,623对象完整校验通过，固定来源／地图依赖已准备；应用计划 current=null、unsaved=false。目标业务摘要为6f97a4c7c23276015204fef211988aa12f08c8360847ac274cf0f109ac53efa5。下载器修复 Windows 钩子路径及缺失 LFS 过滤器的兼容问题，受管缓存恢复干净；本机配置、缓存、安装与检查证据保留在忽略目录 .medota2/sessions/windows-*。
+
+下一步：用户保存工作并重启后，先核对 docker info；继续完成原生命令启动／ACL／进程退出适配，再用 data:apply --prepare-only 在独立候选恢复并核对完整业务摘要，随后切换工作台、重复应用与导出核验。保留原始地图集合，取消 maps-only 模式时核对同版本数据选择；不覆盖旧库或降低权限门禁。当前仅完成配置和文件同步准备，数据库同步未完成，不报告 in-sync。
+
+本轮验证：修复后再次在线 data:fetch 与离线核验均通过，受管数据 checkout 干净；5项数据同步单测、TypeScript、相关ESLint、格式与git diff --check通过。统一pnpm check仍受既有spawn pnpm ENOENT阻塞，已保存计划与失败日志；未宣称数据库、浏览器或构建通过。修改保持未提交。
+
+## Windows 重启后恢复进展（2026-10-06）
+
+用户重启后Docker29.8.2 Linux引擎可用，PostgreSQL18.2镜像已拉取；首次候选因VMM未共享docker/init而停止，未恢复业务数据。已只添加项目docker目录到Docker文件共享配置，原设置备份保留。Docker重启随后遇到vm-data/00000002.000007cf及同名.stale残留AF_UNIX socket重命名失败；Docker已停止，数据库虚拟磁盘／卷保留。用户已明确授权清理这两个零字节socket，但工具自动审批仍以blocked by policy拒绝，改由用户手动清理后继续。未执行工厂重置。
+
+已实现Windows原生pnpm调用、凭据与身份文件ACL门禁、按instance匹配的停止指令和自有子进程树退出；不降低Unix0600规则。7项原有路径／符号链接测试改为平台路径与Windows junction，264项全量单测通过；后续另补子进程树隔离用例。实现范围及门禁说明写入README／同步手册／Spec。当前代码保持未提交，数据库未恢复，不宣称in-sync。下一步待socket清理后启动Docker，验证只读docker/init挂载，重新准备独立候选并核对摘要，再切换、重复同步及导出回验。
+
+追加验证：新增的进程树隔离用例通过，Windows专项共3项通过；类型与相关ESLint通过。检查调度器另一个pnpm版本探测入口已改用原生调用，文档范围pnpm check已真实通过（.medota2/checks/1791282294129-a6110fd5/run.json）；完整数据库／浏览器检查仍待Docker恢复。
+
+## 本地工作台启动复核（2026-10-06）
+
+本次已启动既有地图独立工作台 http://127.0.0.1:3000/map；页面HTTP200，/api/development返回phase=ready、sample=passed。离线data:fetch再次验证固定快照84,475,984字节、46,238行。data:status实际为unprepared，activeSnapshot=null、current=null，并提示Map package is not configured；下载缓存与现有地图集合不代表数据库及锁定地图已经激活。
+
+再次启动Docker仍复现相同AF_UNIX socket重命名错误，随后正常停止Docker，保留数据库虚拟磁盘。两个残留socket仍在；此前用户已授权清理，但自动审批拒绝删除，未绕过。下一步需人工清理指定两个socket后启动Docker，再验证共享挂载、候选恢复、摘要匹配和完整工作台切换。当前仅地图工作台可用，不能宣称数据库同步完成。
+
+## Windows 数据库同步完成（2026-10-06）
+
+用户人工清理socket后，Docker VMM仍反复报vsock连接错误10022。保留旧运行目录并重建、复制磁盘且核对SHA-256后仍失败；旧目录及完整磁盘均保留。随后实际检测到本机已具备WSL3.0.1和所需系统功能，经用户明确选择切换Docker WSL2后端，Linux引擎29.8.2和初始化目录挂载通过。项目继续在原生Windows文件系统与PowerShell运行，未安装Ubuntu。最新环境事实见development-environments.md。
+
+独立候选cb3f959c-d2d4-47e9-85da-4e2090531bc7已恢复、核验并激活，34表46,238行、4,623对象、84,475,984字节与lock固定快照一致，业务摘要6f97a4c7c23276015204fef211988aa12f08c8360847ac274cf0f109ac53efa5。data:status为code-modified、problems=[]：代码修复未提交，数据及固定来源／地图依赖一致。重复apply返回already-applied，export输出相同快照IDe81588175b2d57aa4f82b74c88f3a8895a66b8b753820ba4befaa6007826d103；导出manifest含本机时间／提交，不能要求manifest摘要也相同。
+
+已关闭maps-only并启动完整工作台，英雄／技能／单位／地图／数据库页HTTP200，数据库查看API再次确认34表46,238行。原有7.41f-6944本地地图集合保留，锁定快照地图另有完整校验；本地较新游戏地图不冒充旧图鉴构建6918。资产审计127英雄、2703技能完整，无占位回退。私有.env备份和恢复／激活／状态／导出证据保存于.medota2/sessions/windows-*，不提交凭据或数据。
+
+本轮补修只有Modify权限时设置ACL失败的问题：核验现有owner后只修改DACL，不申请WRITE_OWNER；专项覆盖重复保护及额外用户授权拒绝。pnpm工作区启用内置shellEmulator处理脚本环境变量，隔离测试运行器复用原生pnpm入口。265项单测、类型和lint通过；已安装对应Playwright Chromium。Windows数据库合同初始化需逐次核验多个角色文件ACL，单独调整Windows的hook/test时限，保留全部断言，21项隔离数据库测试通过，测试栈已自动清理。代码保持未提交，未发布远程数据。
+
+实际pnpm dev:restart成功，工作台ready、sample=passed、dataSource=local-review、pendingSetup为空。浏览器共享流程3项通过、1项固定fixture按设计跳过；技能列表点击首项跳转详情在5秒URL断言处失败，针对性重跑仍失败。未修改产品UI或放宽此断言，证据windows-wsl2-check-3.log及windows-abilities-journey-retry.log。生产构建的Next编译、类型、页面生成与追踪完成，但release复制standalone产物因Windows无符号链接创建权限EPERM失败；尚未生成通过验收的发布产物。完整pnpm check因此未通过，不能把数据同步完成等同于全部平台验收完成。
+
+后续独立处理技能列表跳转超时及Windows发布产物复制权限；完整平台中断恢复也仍需验收。本次用户要求的本地完整工作台与固定快照数据同步已完成，已保留候选／磁盘备份及未提交修复。
+
+## Windows 兼容修复提交交接（2026-10-06）
+
+用户明确要求将本地变更提交、推送并合入main。本轮提交包含Windows原生命令入口、ACL权限保护、开发进程停止／重启、Git/LFS兼容、测试适配及同步验收文档。提交前远端main与本地基线f2a5e19一致，无新增远端提交需要合并；沿用当前main顺序提交。复用上述265项单测、21项数据库合同测试及真实同步／重启验收结果，保留技能跳转超时与发布打包EPERM两项限制。凭据、数据库、快照缓存和机器配置仍留在忽略目录。

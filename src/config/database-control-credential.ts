@@ -1,7 +1,7 @@
+import { assertPrivateRegularFile } from "./private-file";
 import { randomUUID } from "node:crypto";
 import {
   existsSync,
-  lstatSync,
   readFileSync,
   renameSync,
   unlinkSync,
@@ -26,16 +26,7 @@ export type LocalDatabaseControlCredential = z.infer<typeof controlCredential>;
 export function readLocalDatabaseControlCredential(): LocalDatabaseControlCredential | null {
   const path = getLocalDatabaseControlCredentialPath();
   if (!existsSync(path)) return null;
-  const metadata = lstatSync(path);
-  if (
-    !metadata.isFile() ||
-    (metadata.mode & 0o777) !== 0o600 ||
-    (typeof process.getuid === "function" && metadata.uid !== process.getuid())
-  ) {
-    throw new Error(
-      "The local database control credential must be a regular 0600 file owned by the current user.",
-    );
-  }
+  assertPrivateRegularFile(path);
   const result = controlCredential.safeParse(
     JSON.parse(readFileSync(path, "utf8")) as unknown,
   );
@@ -61,6 +52,7 @@ export function writeLocalDatabaseControlCredential(
       flag: "wx",
       mode: 0o600,
     });
+    assertPrivateRegularFile(temporaryPath);
     renameSync(temporaryPath, path);
   } catch (error) {
     if (existsSync(temporaryPath)) unlinkSync(temporaryPath);

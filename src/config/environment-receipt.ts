@@ -1,7 +1,7 @@
+import { assertPrivateRegularFile } from "./private-file";
 import { randomUUID } from "node:crypto";
 import {
   existsSync,
-  lstatSync,
   readFileSync,
   renameSync,
   unlinkSync,
@@ -68,16 +68,7 @@ export function getLocalEnvironmentReceiptIdentity(
 export function readLocalEnvironmentReceipt(): LocalEnvironmentReceipt | null {
   const path = getLocalEnvironmentReceiptPath();
   if (!existsSync(path)) return null;
-  const metadata = lstatSync(path);
-  if (
-    !metadata.isFile() ||
-    (metadata.mode & 0o777) !== 0o600 ||
-    (typeof process.getuid === "function" && metadata.uid !== process.getuid())
-  ) {
-    throw new Error(
-      "The local environment identity receipt must be a regular 0600 file owned by the current user.",
-    );
-  }
+  assertPrivateRegularFile(path);
   let parsed: unknown;
   try {
     parsed = JSON.parse(readFileSync(path, "utf8"));
@@ -109,6 +100,7 @@ export function writeLocalEnvironmentReceipt(
       flag: "wx",
       mode: 0o600,
     });
+    assertPrivateRegularFile(temporaryPath);
     renameSync(temporaryPath, path);
   } catch (error) {
     if (existsSync(temporaryPath)) unlinkSync(temporaryPath);

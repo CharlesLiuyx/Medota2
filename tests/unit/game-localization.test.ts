@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { afterEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ readFile: vi.fn(), query: vi.fn() }));
@@ -33,7 +34,9 @@ describe("snapshot-bound game text", () => {
         .dota_tooltip_ability_broodmother_spin_web,
     ).toBe("织网");
     expect(mocks.readFile).toHaveBeenCalledWith(
-      `/verified-game-sources/${commit}/resource/localization/abilities_schinese.txt`,
+      resolve(
+        `/verified-game-sources/${commit}/resource/localization/abilities_schinese.txt`,
+      ),
     );
     // A changed checkout must not reuse the previously verified parsed cache.
     mocks.readFile.mockResolvedValue(Buffer.from("different version"));

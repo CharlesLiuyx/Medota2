@@ -7,7 +7,7 @@ import { resolveMedota2StateDirectory } from "@/config/medota2-state";
 describe("Medota2 state directory", () => {
   it("defaults to the workspace .medota2 directory", () => {
     expect(resolveMedota2StateDirectory("/workspace/medota2", undefined)).toBe(
-      "/workspace/medota2/.medota2",
+      resolve("/workspace/medota2/.medota2"),
     );
   });
 
@@ -17,7 +17,7 @@ describe("Medota2 state directory", () => {
         "/workspace/medota2",
         ".medota2/test-runs/run-42/state",
       ),
-    ).toBe("/workspace/medota2/.medota2/test-runs/run-42/state");
+    ).toBe(resolve("/workspace/medota2/.medota2/test-runs/run-42/state"));
   });
 
   it.each(["..", "state", ".medota2/../outside", "/tmp/medota2-state"])(
@@ -34,7 +34,11 @@ describe("Medota2 state directory", () => {
     const outside = mkdtempSync(resolve(tmpdir(), "medota2-state-outside-"));
     try {
       mkdirSync(resolve(workspace, ".medota2"));
-      symlinkSync(outside, resolve(workspace, ".medota2", "escaped"));
+      symlinkSync(
+        outside,
+        resolve(workspace, ".medota2", "escaped"),
+        process.platform === "win32" ? "junction" : "dir",
+      );
 
       expect(() =>
         resolveMedota2StateDirectory(workspace, ".medota2/escaped/test-state"),

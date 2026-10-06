@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { nativeCommand } from "./command";
 import { createHash, randomUUID } from "node:crypto";
 import {
   mkdir,
@@ -120,9 +121,11 @@ export async function run(
 ): Promise<void> {
   if (logPath) await mkdir(dirname(logPath), { recursive: true });
   const log = logPath ? createWriteStream(logPath, { mode: 0o600 }) : undefined;
-  const child = spawn(command, [...args], {
+  const invocation = nativeCommand(command, args, env);
+  const child = spawn(invocation.command, invocation.args, {
     cwd: workspace,
     env,
+    windowsHide: true,
     stdio: log ? ["ignore", "pipe", "pipe"] : "inherit",
   });
   if (log) {

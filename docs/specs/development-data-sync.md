@@ -62,6 +62,8 @@ flowchart TB
 
 ## Windows 原生支持要求（待实施）
 
+2026-10-06 实施进展：已补充 pnpm 原生启动入口、私有文件 ACL 门禁和工作台 instance 匹配停止／子进程树退出，相关原生测试通过。工作区只继承 Modify 时只修改 DACL，不重复设置已核验的所有者；脚本环境变量由 pnpm 的 shellEmulator 处理。Windows 原生 PowerShell／Node 配合经用户选择的 Docker WSL2 后端，已完成 Git/LFS 获取、独立候选恢复、完整摘要核验、工作台切换、重复应用和导出回验。数据库与来源／地图依赖一致；代码仍有未提交修复，因此状态为 code-modified。Docker VMM 通信故障仍未解决，全部平台失败恢复也尚未验收，下列要求继续作为验收清单。
+
 Windows 原生开发纳入正式支持目标：代码、Node、pnpm、Git／LFS 和开发命令可直接在 Windows 文件系统与 PowerShell 中运行。WSL2 是用户可选的独立工作区，不作为安装、同步、运行或验收的前置条件。Docker Desktop 的容器后端与项目所在终端分别选择；可使用满足系统条件的 Hyper-V 等可用 Linux 容器后端，也可选择 WSL2 后端。预检应检测实际容器能力；缺少可用后端时说明缺项，不自动安装或强制切换 WSL2。
 
 当前主链路已在 Mac 验证；Windows 原生存在以下实现缺项，不能仅改文档就标为支持完成：

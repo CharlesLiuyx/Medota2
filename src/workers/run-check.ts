@@ -3,6 +3,7 @@ import { randomUUID, createHash } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
+import { nativeCommand } from "@/development/command";
 import {
   changedFiles,
   createPlan,
@@ -28,8 +29,9 @@ process.once("SIGTERM", () => {
 });
 
 async function taskKey(task: CheckTask): Promise<string> {
+  const pnpm = nativeCommand("pnpm", ["--version"], process.env);
   const versions = await Promise.all([
-    exec("pnpm", ["--version"]),
+    exec(pnpm.command, pnpm.args, { windowsHide: true }),
     exec("git", ["config", "--get", "core.autocrlf"]).catch(() => ({
       stdout: "unset",
     })),

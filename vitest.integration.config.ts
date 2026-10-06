@@ -10,5 +10,10 @@ export default defineConfig({
   test: {
     include: ["tests/integration/**/*.test.ts"],
     environment: "node",
+    // Windows re-reads native ACLs for every database admission. The setup
+    // opens six independently verified roles; keep those checks in the budget.
+    ...(process.platform === "win32"
+      ? { hookTimeout: 60_000, testTimeout: 30_000 }
+      : {}),
   },
 });

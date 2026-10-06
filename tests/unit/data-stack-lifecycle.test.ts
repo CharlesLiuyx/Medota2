@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   createDataStackPlan,
@@ -19,13 +20,17 @@ describe("data stack lifecycle", () => {
       composeProject: "medota2-development",
       hostPort: 54321,
       persistence: "persistent",
-      stateDirectory: "/workspace/medota2/.medota2/environments/development",
+      stateDirectory: resolve(
+        "/workspace/medota2/.medota2/environments/development",
+      ),
     });
     expect(localReview).toMatchObject({
       composeProject: "medota2-local-review",
       hostPort: 54322,
       persistence: "persistent",
-      stateDirectory: "/workspace/medota2/.medota2/environments/local-review",
+      stateDirectory: resolve(
+        "/workspace/medota2/.medota2/environments/local-review",
+      ),
     });
     expect(development.composeProject).not.toBe(localReview.composeProject);
     expect(development.hostPort).not.toBe(localReview.hostPort);
@@ -43,8 +48,9 @@ describe("data stack lifecycle", () => {
       composeProject: "medota2-test-e2e-20260831-abcdef12",
       hostPort: 0,
       persistence: "disposable",
-      stateDirectory:
+      stateDirectory: resolve(
         "/workspace/medota2/.medota2/test-runs/e2e-20260831-abcdef12/state",
+      ),
     });
   });
 
