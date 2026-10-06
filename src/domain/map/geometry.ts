@@ -77,3 +77,29 @@ export function pointIndex(points: MapPoint[], cell = 512) {
     return nearby;
   };
 }
+
+/** Distance to the finite path segments, including repeated vertices and endpoints. */
+export function distanceToPath(
+  point: { x: number; y: number },
+  vertices: readonly { x: number; y: number }[],
+) {
+  let closest = Infinity;
+  for (let i = 1; i < vertices.length; i++) {
+    const a = vertices[i - 1],
+      b = vertices[i],
+      dx = b.x - a.x,
+      dy = b.y - a.y;
+    const length = dx * dx + dy * dy;
+    const t = length
+      ? Math.max(
+          0,
+          Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / length),
+        )
+      : 0;
+    closest = Math.min(
+      closest,
+      Math.hypot(point.x - a.x - t * dx, point.y - a.y - t * dy),
+    );
+  }
+  return closest;
+}

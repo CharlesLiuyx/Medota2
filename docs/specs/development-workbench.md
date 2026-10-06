@@ -99,3 +99,9 @@ AGENTS.md 保存工作规则；CONTEXT.md 保存概念与模块地图；docs/cur
 6. 固定 fixture 覆盖解析 → 保存 → 查询 → 显示，并核对已知移动速度。
 7. 测试数据库可以复用、排队和精确清理，已有开发数据保持不动。
 8. Web 产物通过启动检查；基准输出可比较输入与测量条件。
+
+## 本机文件地图模式
+
+当机器尚无数据库，只需预览独立地图Dataset时，可设置`MEDOTA2_WORKBENCH_MAPS_ONLY=1`及`DOTA_MAP_COLLECTION_PATH`，并声明`MEDOTA2_ENVIRONMENT=development`、`MEDOTA2_DATA_CLASS=sandbox`。`pnpm dev`／`pnpm dev:restart`复用固定3000服务，验证集合后跳过数据库准备与图鉴预热。页头仅展示地图，入口为`/map`；地图版本通过URL显式选择。
+
+该模式不生成数据库receipt，环境身份仍为unverified，数据库API合同不变；不提供英雄、技能、单位数据。恢复完整工作台时设`MEDOTA2_WORKBENCH_MAPS_ONLY=0`并重启。可执行提取／导入／集合命令见[地图Spec](map-explorer.md)。默认模式行为保持原样。

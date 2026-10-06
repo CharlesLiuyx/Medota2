@@ -4,12 +4,17 @@ export async function GET(
   request: Request,
   context: { params: Promise<{ name: string }> },
 ) {
-  if ((await context.params).name !== "overview.webp")
+  const name = (await context.params).name;
+  if (!["overview.webp", "navigation.webp", "height.webp"].includes(name))
     return new Response(null, { status: 404 });
   try {
-    const asset = await readMapImage();
-    if (!asset || new URL(request.url).searchParams.get("v") !== asset.revision)
-      return new Response(null, { status: 404 });
+    const query = new URL(request.url).searchParams;
+    const asset = await readMapImage(
+      query.get("version") ?? undefined,
+      name,
+      query.get("v"),
+    );
+    if (!asset) return new Response(null, { status: 404 });
     const headers = {
       "Content-Type": "image/webp",
       "Cache-Control": "private, max-age=31536000, immutable",

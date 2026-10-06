@@ -1,0 +1,38 @@
+{
+  "source_repository": "Valve Dota 2 local installation",
+  "source_commit": null,
+  "source_path": "bin/win64/server.dll",
+  "sha256": "8ec4b6a9b9bb35ec8d1cd27f383d9a681e592bd07c5296208112c6411461aa92",
+  "client_version": "6944",
+  "map_sha1": "412137a154d86cd4ba61da98692a5fb15e1cb79a",
+  "imported_at": "2026-10-06T09:40:00Z",
+  "importer_version": "static-hull-audit/1",
+  "schema_version": 1,
+  "hulls": {
+    "SMALLEST": 4,
+    "SMALL": 18,
+    "REGULAR": 36,
+    "HERO": 27,
+    "BIG_HERO": 43,
+    "SIEGE": 40,
+    "TOWER": 144,
+    "LARGE": 41,
+    "HUGE": 80,
+    "BARRACKS": 160,
+    "FILLER": 112
+  },
+  "models": {
+    "models/props_structures/radiant_ancient001.vmdl": {
+      "radius": 314.726463,
+      "sha256": "bd5021ab0dfed98bbdfbc8fa63379005f0b502ca2bbac5742bd22e631e83d211",
+      "source_path": "models/props_structures/radiant_ancient001.vmdl_c",
+      "method": "half maximum XY mesh extent; conservative static estimate, not engine collision verification"
+    },
+    "models/props_structures/dire_ancient_base001.vmdl": {
+      "radius": 428.4855045,
+      "sha256": "0a5cf82781033cb13011ba4acf7f14f1ad31c410d293347db300d6900e6b97c4",
+      "source_path": "models/props_structures/dire_ancient_base001.vmdl_c",
+      "method": "half maximum XY mesh extent; conservative static estimate, not engine collision verification"
+    }
+  }
+}

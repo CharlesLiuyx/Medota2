@@ -80,3 +80,4 @@ d2vpkr + Dota 数据接口 + 手工 JSON ─> dotaconstants ─┘
 - [ReDota：可选单位模型截图及许可边界](redota.md)
 
 - 可选公开地图提取来源：[Sloppy](sloppy-map.md)，固定补丁／commit，独立适配、版本声明和许可边界。
+- [本机 Dota 2 地图](local-dota-map.md)：6944 安装的真实提取、地图哈希核对、导航／高度数据及高清渲染路线；原生产品导入仍有待修复项。

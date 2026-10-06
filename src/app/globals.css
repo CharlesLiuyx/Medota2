@@ -656,3 +656,65 @@ textarea:focus {
   font-size: 11px;
   color: var(--text-primary);
 }
+
+/* Map controls reuse the catalog select, including its keyboard and popup behavior. */
+.map-select > .compact-menu-trigger {
+  height: 30px;
+  border-radius: 4px;
+  background: #20303d;
+  color: #edf5fc;
+  font-size: 12px;
+}
+.map-select .compact-menu-popup {
+  border: 1px solid #526574;
+  border-radius: 4px;
+}
+.compact-menu-option[aria-disabled="true"] {
+  color: #a5b1bb;
+  cursor: not-allowed;
+  background: transparent;
+}
+.compact-menu-trigger[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Explicit thumb geometry keeps the custom vision ticks on the actual travel range. */
+.map-range {
+  appearance: none;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.map-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: #47545a;
+}
+.map-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
+  border: 0;
+  border-radius: 50%;
+  background: #a4c5bc;
+}
+.map-range::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: #47545a;
+}
+.map-range::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 50%;
+  background: #a4c5bc;
+}
+.map-range:focus-visible {
+  outline: 1px solid #a4c5bc;
+  outline-offset: 2px;
+  border-radius: 3px;
+}

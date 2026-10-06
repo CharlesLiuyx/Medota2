@@ -373,14 +373,22 @@ pnpm data:import:unit-assets:local --portrait-commit f51e568e6ef45e32e1a7d21def8
 
 ## 地图
 
-顶栏「地图」进入 `/map`，提供本地Canvas缩放／拖拽、图层、点位搜索、直线测距和范围圈。当前可通过下方公开来源导入7.41e游戏俯视图，也保留原生VPK离线提取与导入入口：`pnpm exec tsx src/workers/extract-map-vpk.ts`、`pnpm exec tsx src/workers/import-map.ts`。全部参数见[地图 Spec](docs/specs/map-explorer.md)。本轮没有安装提取器、修改数据库或公开发布资源。
+顶栏「地图」进入 `/map`，支持缩放／拖拽、分类图层、搜索、测距和范围圈。版本来源在右上问号提示中查看；地形与视图操作合用一行，搜索与紧凑图层筛选位于地图下方，点位多列平铺；右侧显示所选对象属性与操作。静态画面缓存和逐帧输入合并减少悬停开销，切换状态不清空画布。版本是独立数据身份：7.41e与7.41f同等可选，各自绑定底图、实体、地形层和来源，不随默认版本切换而失去访问入口。
 
-### 无游戏安装的地图预览
+右上角深色下拉选择地图版本；树木默认填满对齐导航网格的阻挡色块，在100%缩放下即可悬停查看XYZ，悬停文字位于所有地图标记上方。7.41f／6944新增28个营地刷新体积、拉野／叠野提示时间、26类基础野怪组合与清野金币／经验区间，以及六条原生兵线路径。营地默认细边框，悬停时高亮并显示「Z 轴范围」；营地、组合和单体经验随时间与分裂体开关联动。兵线路径可悬停查看当前时间一波兵的金币与经验；可选择单座、本路两座或全部六座敌方兵营被毁状态。经验按单人独享、旗手额外奖励仅计金币。7.41e没有匹配收益资料，界面明确显示缺失，不混用7.41f数值。组合／时序是按补丁审阅的规则模型，尚未逐项实机结算验证。
 
-当前本机地图已接入Sloppy固定快照的 **7.41e** 高清俯视图（4096px）、2585个静态点位及28个营地边界。版本为来源标注，保留地图VPK哈希和Steam manifest；没有把图鉴客户端6918当作地图的已验证构建号。公开导入命令：
+本机已接入两个版本：**7.41e**为Sloppy固定来源的4096px SFM图、2585点和28营地边界；**7.41f**为地图哈希核验后的本机客户端6944数据，包含原生XYZ／阵营、活动世界层、营地PHYS边界、导航栅格与高度图，搭配相同地图哈希的4096px SFM底图。7.41e客户端号未知；7.41f补丁名称仍来自固定社区索引。地形栅格尚未经引擎验证；提供静态寻路估算，不提供真实游戏导航或视野模拟。
+
+无需游戏安装也可导入指定的公开版本：
 
 ```sh
 pnpm exec tsx src/workers/import-public-map.ts --commit 38fb8ef1d16c99c141d0630e5227110fd082b364 --patch 7.41e --output .medota2/maps/7.41e-sloppy-38fb8ef
 ```
 
-输出须为新目录，随后设置`DOTA_MAP_DATA_PATH`并运行`pnpm dev:restart`。浏览器入口`/map`；操作、版本边界及原生VPK途径见[地图Spec](docs/specs/map-explorer.md)，来源与许可见[Sloppy审阅](docs/repositories/sloppy-map.md)。尚未提供游戏内导航／碰撞／高低坡／视野模拟。
+本机原生提取与导入分别使用`pnpm exec tsx src/workers/extract-local-map.ts`、`pnpm exec tsx src/workers/import-local-map.ts`；集合命令`pnpm exec tsx src/workers/index-maps.ts`将各Dataset登记为独立版本。全部参数、完整步骤、兼容入口和来源边界见[地图Spec](docs/specs/map-explorer.md)，本机格式审阅见[本机地图数据](docs/repositories/local-dota-map.md)。
+
+配置`DOTA_MAP_COLLECTION_PATH`后运行`pnpm dev:restart`，通过`/map?version=7.41e`与`/map?version=7.41f-6944`分别查看。无数据库的本机可使用显式`MEDOTA2_WORKBENCH_MAPS_ONLY=1`文件地图预览模式；要求development+sandbox，沿用固定3000服务，不伪造数据库身份。安装与测试命令见Spec。
+
+所有提取和导入输出必须是新目录；原文、版本号、哈希、导入器／schema版本与许可文件随Dataset保存。Valve资源保持本机Git忽略，未公开发布。
+
+「测距」旁的「寻路」支持创建／选中多条路线，右侧设置移速并比较陆地最短距离、湍流最短耗时及双生门；只显示最快与耗时接近的方案，点击线切换，Delete删除，右键或Esc退出工具。后台计算显示进度，普通陆地路线经过湍流同样计入方向加速。常规入口不包含飞行。树木和建筑显示对齐64单位格的阻挡近似，路径坐标按1单位取整；遗迹模型范围与湍流斜向加速仍需引擎验证。地形图例位于右侧，有视野单位默认显示昼夜范围圈。顶部拉野/叠野秒数默认开启，野区经验默认关闭；使用和估算边界见[地图Spec](docs/specs/map-explorer.md#寻路树木阻挡与地图提示)。

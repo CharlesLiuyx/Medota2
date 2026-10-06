@@ -34,6 +34,7 @@ interface Owner {
 }
 
 async function main(): Promise<void> {
+  getPreviewDataSource(); // Load local settings before choosing the ready URL or spawning the supervisor.
   await mkdir(developmentRoot, { recursive: true });
   if (process.argv.includes("--serve")) return serve();
   let owner = await readJson<Owner>(ownerPath);
@@ -103,7 +104,7 @@ async function main(): Promise<void> {
           .catch(() => null)) as WorkbenchStatus | null;
         if (health?.instance === current.instance) {
           console.log(
-            `Shared workbench ready: ${origin}/heroes\nLog: .medota2/development/server.log`,
+            `Shared workbench ready: ${origin}/${process.env.MEDOTA2_WORKBENCH_MAPS_ONLY === "1" ? "map" : "heroes"}\nLog: .medota2/development/server.log`,
           );
           return;
         }
@@ -176,17 +177,24 @@ async function serve(): Promise<void> {
       throw new Error(
         `Port ${getWorkbenchPort()} already belongs to a server. Stop or coordinate that server before starting the shared workbench.`,
       );
-    const dataSource = getPreviewDataSource();
+    const mapsOnly = process.env.MEDOTA2_WORKBENCH_MAPS_ONLY === "1";
+    const dataSource = mapsOnly ? "development" : getPreviewDataSource();
+    if (mapsOnly && !process.env.DOTA_MAP_COLLECTION_PATH)
+      throw new Error("Map-only workbench requires DOTA_MAP_COLLECTION_PATH");
     const databaseEnv = previewEnvironment(dataSource);
     await assertActiveSnapshotCompatible();
     await publish({
       dataSource,
-      message:
-        dataSource === "local-review"
+      message: mapsOnly
+        ? "准备独立的地图版本集合"
+        : dataSource === "local-review"
           ? "准备真实数据并检查头像资产"
           : "准备开发数据；空库使用含占位图的测试样例",
     });
-    if (dataSource === "local-review") {
+    if (mapsOnly) {
+      const { readCollection } = await import("@/server/map/packages");
+      await readCollection(process.env.DOTA_MAP_COLLECTION_PATH!);
+    } else if (dataSource === "local-review") {
       const releaseDatabase = await acquireLock("local-review-database");
       try {
         await run(
@@ -236,9 +244,13 @@ async function serve(): Promise<void> {
           message: `Web 服务已退出（${code}）；查看开发日志后重新运行 pnpm dev。`,
         }).then(() => stop(1));
     });
-    await publish({ message: "正在预热图鉴、详情路由与本机缓存接口" });
+    await publish({
+      message: mapsOnly
+        ? "正在启动地图工作台"
+        : "正在预热图鉴、详情路由与本机缓存接口",
+    });
     try {
-      await warmCatalogRoutes(origin);
+      if (!mapsOnly) await warmCatalogRoutes(origin);
     } catch (error) {
       // Warmup is an optimization, not a substitute for the verified data/setup
       // gates above. Keep a usable workbench if optional cache warmup fails.

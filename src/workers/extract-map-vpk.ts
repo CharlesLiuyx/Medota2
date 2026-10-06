@@ -14,6 +14,7 @@ import { promisify } from "node:util";
 import { argument, fileSha256, listFiles } from "@/importers/dota-map/files";
 import { parseOverview } from "@/importers/dota-map/adapter";
 import { parseSteamInf } from "@/importers/dota-vpk/steam";
+import { sameSteamInf } from "@/importers/dota-map/native";
 const exec = promisify(execFile);
 /** Offline extraction; the web process never launches the decoder. */
 async function main() {
@@ -50,7 +51,7 @@ async function main() {
     readGit("resource/overviews/dota.txt"),
     readFile(resolve(dirname(vpk), "steam.inf")),
   ]);
-  if (!steam.equals(installedSteam))
+  if (!sameSteamInf(steam.toString("utf8"), installedSteam.toString("utf8")))
     throw new Error(
       "Installed steam.inf does not match the pinned source commit",
     );
@@ -114,11 +115,12 @@ async function main() {
     const after = await Promise.all([fileSha256(vpk), fileSha256(mapVpk)]);
     if (
       before.some((hash, i) => hash !== after[i]) ||
-      !steam.equals(await readFile(resolve(dirname(vpk), "steam.inf")))
+      !installedSteam.equals(await readFile(resolve(dirname(vpk), "steam.inf")))
     )
       throw new Error("Source changed during extraction");
     await writeFile(resolve(staging, "overview.txt"), overview);
     await writeFile(resolve(staging, "steam.inf"), steam);
+    await writeFile(resolve(staging, "installed-steam.inf"), installedSteam);
     const paths = await listFiles(staging);
     if (
       !paths.some(

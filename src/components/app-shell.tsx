@@ -15,9 +15,11 @@ const ENVIRONMENT_NOTICES = {
 export function AppShell({
   children,
   environment,
+  mapOnly = false,
 }: {
   children: ReactNode;
   environment: PublicEnvironmentIdentity;
+  mapOnly?: boolean;
 }) {
   return (
     <>
@@ -25,9 +27,9 @@ export function AppShell({
         <div className="mx-auto flex max-w-[var(--content-max)] items-center justify-between gap-3 px-4 sm:px-6">
           <div className="flex h-10 items-stretch gap-4 sm:gap-7">
             <Link
-              href="/heroes"
+              href={mapOnly ? "/map" : "/heroes"}
               className="flex shrink-0 items-center gap-1.5"
-              aria-label="Medota2 英雄图鉴"
+              aria-label={mapOnly ? "Medota2 地图" : "Medota2 英雄图鉴"}
             >
               <Image
                 src="/brand/medota2-rook-knight.png"
@@ -41,9 +43,21 @@ export function AppShell({
                 Medota2
               </strong>
             </Link>
-            <EntityTabs />
+            {mapOnly ? (
+              <Link href="/map" className="flex items-center text-xs">
+                地图
+              </Link>
+            ) : (
+              <EntityTabs />
+            )}
           </div>
-          <EnvironmentStrip environment={environment} />
+          {mapOnly ? (
+            <aside className="text-[10px] text-[var(--text-muted)]">
+              本地地图 · 按版本读取
+            </aside>
+          ) : (
+            <EnvironmentStrip environment={environment} />
+          )}
         </div>
       </header>
       {children}

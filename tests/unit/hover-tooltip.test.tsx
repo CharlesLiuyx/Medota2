@@ -28,6 +28,24 @@ afterEach(() => {
   renders.clear();
 });
 
+it("opens a help button without navigation and keeps source links keyboard-accessible", () => {
+  render(
+    <HoverTooltip content={<a href="https://example.com/source">来源</a>}>
+      版本说明
+    </HoverTooltip>,
+  );
+  const help = screen.getByRole("button", { name: "版本说明" });
+  fireEvent.click(help);
+  expect(screen.getByRole("tooltip")).toBeTruthy();
+  expect(renders.size).toBe(0);
+  const source = screen.getByRole("link", { name: "来源" });
+  fireEvent.blur(help, { relatedTarget: source });
+  fireEvent.focus(source);
+  expect(screen.getByRole("tooltip")).toBeTruthy();
+  fireEvent.keyDown(document, { key: "Escape" });
+  expect(screen.queryByRole("tooltip")).toBeNull();
+});
+
 it("updates only the previous and next anchor across a dense catalog", () => {
   render(
     <>

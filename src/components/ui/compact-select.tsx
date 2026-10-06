@@ -12,21 +12,39 @@ import {
 
 /** Shares the filter-menu surface with multi-select filters; no OS select popup. */
 export function CompactSelect({
-  name,
+  name = "selection",
   label,
   value,
   children,
   onChange,
+  onValueChange,
+  disabled = false,
+  hideLabel = false,
+  className = "",
 }: {
-  name: string;
+  name?: string;
   label: string;
-  value: string;
+  value: string | number;
   children: ReactNode;
-  onChange: (data: FormData, composing: boolean) => void;
+  onChange?: (data: FormData, composing: boolean) => void;
+  onValueChange?: (value: string) => void;
+  disabled?: boolean;
+  hideLabel?: boolean;
+  className?: string;
 }) {
   const options = Children.toArray(children).flatMap((child) =>
-    isValidElement<{ value: string; children: ReactNode }>(child)
-      ? [{ value: child.props.value, label: child.props.children }]
+    isValidElement<{
+      value: string | number;
+      children: ReactNode;
+      disabled?: boolean;
+    }>(child)
+      ? [
+          {
+            value: String(child.props.value),
+            label: child.props.children,
+            disabled: child.props.disabled,
+          },
+        ]
       : [],
   );
   const id = useId();
@@ -36,7 +54,7 @@ export function CompactSelect({
   const typeahead = useRef({ text: "", time: 0 });
   const selected = Math.max(
     0,
-    options.findIndex((option) => option.value === value),
+    options.findIndex((option) => option.value === String(value)),
   );
   const focusOption = (index: number) => {
     const option =
@@ -49,10 +67,13 @@ export function CompactSelect({
     if (restoreFocus) details.current?.querySelector("summary")?.focus();
   };
   const choose = (next: string) => {
-    if (!input.current?.form) return;
-    const data = new FormData(input.current.form);
-    data.set(name, next);
-    onChange(data, false);
+    if (disabled || options.find((o) => o.value === next)?.disabled) return;
+    onValueChange?.(next);
+    if (onChange && input.current?.form) {
+      const data = new FormData(input.current.form);
+      data.set(name, next);
+      onChange(data, false);
+    }
     close(true);
   };
   useEffect(() => {
@@ -68,6 +89,10 @@ export function CompactSelect({
     return () => document.removeEventListener("pointerdown", outside);
   }, []);
   const keys = (event: KeyboardEvent, index: number) => {
+    if (disabled) {
+      event.preventDefault();
+      return;
+    }
     if (event.key === "Escape") {
       event.preventDefault();
       close(true);
@@ -76,17 +101,19 @@ export function CompactSelect({
       event.preventDefault();
       if (!details.current?.open) {
         if (details.current) details.current.open = true;
-      } else
-        focusOption(
+      } else {
+        const direction =
+          event.key === "ArrowUp" || event.key === "End" ? -1 : 1;
+        let next =
           event.key === "Home"
             ? 0
             : event.key === "End"
               ? options.length - 1
-              : (index +
-                  (event.key === "ArrowDown" ? 1 : -1) +
-                  options.length) %
-                options.length,
-        );
+              : (index + direction + options.length) % options.length;
+        for (let n = 0; n < options.length && options[next]?.disabled; n++)
+          next = (next + direction + options.length) % options.length;
+        if (!options[next]?.disabled) focusOption(next);
+      }
     } else if (
       event.key.length === 1 &&
       event.key !== " " &&
@@ -100,10 +127,12 @@ export function CompactSelect({
           event.key.toLocaleLowerCase(),
         time: now,
       };
-      const match = options.findIndex((option) =>
-        String(option.label)
-          .toLocaleLowerCase()
-          .startsWith(typeahead.current.text),
+      const match = options.findIndex(
+        (option) =>
+          !option.disabled &&
+          String(option.label)
+            .toLocaleLowerCase()
+            .startsWith(typeahead.current.text),
       );
       if (match >= 0 && details.current?.open) {
         event.preventDefault();
@@ -115,7 +144,7 @@ export function CompactSelect({
     <details
       ref={details}
       data-filter-menu
-      className="compact-menu"
+      className={`compact-menu ${className}`}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) close();
       }}
@@ -134,13 +163,22 @@ export function CompactSelect({
           popup.style.translate = "0px";
           const bounds = popup.getBoundingClientRect();
           popup.style.translate = `${Math.min(0, window.innerWidth - 8 - bounds.right)}px`;
-          focusOption(selected);
+          focusOption(
+            options[selected]?.disabled
+              ? options.findIndex((o) => !o.disabled)
+              : selected,
+          );
         }
       }}
     >
       <input ref={input} type="hidden" name={name} value={value} />
       <summary
         role="combobox"
+        aria-disabled={disabled}
+        tabIndex={disabled ? -1 : 0}
+        onClick={(e) => {
+          if (disabled) e.preventDefault();
+        }}
         aria-label={label}
         aria-expanded={open}
         aria-controls={id}
@@ -148,8 +186,12 @@ export function CompactSelect({
         className="compact-menu-trigger"
         onKeyDown={(event) => keys(event, selected)}
       >
-        <span className="text-[var(--text-muted)]">{label}</span>
-        <span className="max-w-28 truncate">{options[selected]?.label}</span>
+        {!hideLabel && (
+          <span className="text-[var(--text-muted)]">{label}</span>
+        )}
+        <span className="min-w-0 flex-1 truncate">
+          {options[selected]?.label}
+        </span>
         <span aria-hidden="true" className="compact-menu-chevron">
           ⌄
         </span>
@@ -164,7 +206,8 @@ export function CompactSelect({
           <div
             key={option.value}
             role="option"
-            aria-selected={option.value === value}
+            aria-selected={option.value === String(value)}
+            aria-disabled={option.disabled || undefined}
             tabIndex={-1}
             className="compact-menu-option"
             onClick={() => choose(option.value)}
@@ -176,7 +219,7 @@ export function CompactSelect({
             }}
           >
             <span className="w-3 shrink-0" aria-hidden="true">
-              {option.value === value ? "✓" : ""}
+              {option.value === String(value) ? "✓" : ""}
             </span>
             {option.label}
           </div>

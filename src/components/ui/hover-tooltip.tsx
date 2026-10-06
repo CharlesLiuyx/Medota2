@@ -9,6 +9,7 @@ import {
   useState,
   useSyncExternalStore,
   type ReactNode,
+  type HTMLAttributes,
 } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -48,7 +49,7 @@ export function HoverTooltip({
 }: {
   children: ReactNode;
   content: ReactNode;
-  href: string;
+  href?: string;
   className?: string;
 }) {
   const id = useId();
@@ -62,10 +63,10 @@ export function HoverTooltip({
   // Only the active anchor opts into full route prefetch. A short dwell avoids
   // fetching hundreds of detail pages while the pointer crosses a dense grid.
   useEffect(() => {
-    if (!open || prefetchReady) return;
+    if (!href || !open || prefetchReady) return;
     const timer = setTimeout(() => setPrefetchReady(true), 120);
     return () => clearTimeout(timer);
-  }, [open, prefetchReady]);
+  }, [href, open, prefetchReady]);
   const anchor = useRef<HTMLElement | null>(null);
   const panel = useRef<HTMLDivElement | null>(null);
   const closing = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -158,27 +159,38 @@ export function HoverTooltip({
     };
   }, [open, id]);
 
+  const triggerProps: HTMLAttributes<HTMLElement> = {
+    className,
+    "aria-describedby": open ? id : undefined,
+    onPointerEnter: (event) => {
+      if (event.pointerType !== "touch") show(event.currentTarget, true);
+    },
+    onPointerMove: (event) => {
+      if (event.pointerType === "touch") return;
+      hoverSuppressed = false;
+      if (activeTooltip !== id) show(event.currentTarget, true);
+    },
+    onPointerLeave: scheduleClose,
+    onFocus: (event) => show(event.currentTarget),
+    onBlur: (event) => {
+      if (!panel.current?.contains(event.relatedTarget)) hide();
+    },
+  };
   return (
     <>
-      <Link
-        href={href}
-        prefetch={open && prefetchReady}
-        className={className}
-        aria-describedby={open ? id : undefined}
-        onPointerEnter={(event) => {
-          if (event.pointerType !== "touch") show(event.currentTarget, true);
-        }}
-        onPointerMove={(event) => {
-          if (event.pointerType === "touch") return;
-          hoverSuppressed = false;
-          if (activeTooltip !== id) show(event.currentTarget, true);
-        }}
-        onPointerLeave={scheduleClose}
-        onFocus={(event) => show(event.currentTarget)}
-        onBlur={hide}
-      >
-        {children}
-      </Link>
+      {href ? (
+        <Link href={href} prefetch={open && prefetchReady} {...triggerProps}>
+          {children}
+        </Link>
+      ) : (
+        <button
+          type="button"
+          {...triggerProps}
+          onClick={(event) => show(event.currentTarget)}
+        >
+          {children}
+        </button>
+      )}
       {open &&
         createPortal(
           <div
@@ -188,6 +200,13 @@ export function HoverTooltip({
             className="game-hover-tooltip"
             onPointerEnter={cancelClose}
             onPointerLeave={scheduleClose}
+            onBlur={(event) => {
+              if (
+                !event.currentTarget.contains(event.relatedTarget) &&
+                !anchor.current?.contains(event.relatedTarget)
+              )
+                hide();
+            }}
           >
             {content}
           </div>,

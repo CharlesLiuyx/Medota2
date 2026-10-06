@@ -5,7 +5,7 @@ import {
   type MapLayer,
   type MapPoint,
 } from "@/domain/map/schema";
-export const MAP_IMPORTER_VERSION = "dota-map-1";
+export const MAP_IMPORTER_VERSION = "dota-map-2";
 export function parseOverview(text: string) {
   const object = uniqueObject(parseKeyValues(text), "dota");
   const fields: Record<string, string> = {};
@@ -51,26 +51,29 @@ const CLASSES: Record<string, MapLayer> = {
   npc_dota_unit_twin_gate: "gate",
   npc_dota_lotus_pool: "lotus",
   ent_dota_tree: "tree",
+  ent_dota_fountain: "fountain",
+  npc_dota_lantern: "watcher",
+  npc_dota_xp_fountain: "wisdom",
 };
-/** Source2Viewer EntityLump.ToEntityDumpString, not arbitrary KV3 or guessed JSON. */
-export function parseEntityDump(text: string, sourcePath: string) {
+/** Preserve multiline values verbatim, including unknown fields, without executing KV3. */
+export function readEntityRecords(text: string, sourcePath: string) {
   const sections = text.split(/^====(\d+)====\s*$/m);
   if (sections.length < 3)
     throw new Error(
       "Unsupported entity dump: expected Source2Viewer ====N==== records",
     );
-  const points: MapPoint[] = [],
-    unknown = new Set<string>(),
-    ids = new Set<string>();
-  let skipped = 0;
+  const records: { id: string; properties: Record<string, string> }[] = [];
+  const ids = new Set<string>();
   for (let i = 1; i < sections.length; i += 2) {
     const id = `${sourcePath}:${sections[i]}`;
     if (ids.has(id)) throw new Error(`Duplicate entity ID: ${id}`);
     ids.add(id);
     const props: Record<string, string> = {};
-    for (const line of sections[i + 1].split(/\r?\n/)) {
+    const lines = sections[i + 1].split(/\r?\n/);
+    for (let j = 0; j < lines.length; j++) {
+      const line = lines[j];
       if (!line.trim() || line.startsWith("@")) continue;
-      const match = /^([a-zA-Z0-9_]+)\s+(.+)$/.exec(line);
+      const match = /^([a-zA-Z0-9_.]+)\s+(.+)$/.exec(line);
       if (!match)
         throw new Error(
           `Unsupported entity field in ${id}: ${line.slice(0, 80)}`,
@@ -78,7 +81,14 @@ export function parseEntityDump(text: string, sourcePath: string) {
       if (Object.hasOwn(props, match[1]))
         throw new Error(`Duplicate entity field: ${match[1]}`);
       let value = match[2].trim();
-      if (value.startsWith('"')) {
+      if (value === '"""') {
+        const parts: string[] = [];
+        while (++j < lines.length && lines[j].trim() !== '"""')
+          parts.push(lines[j]);
+        if (j === lines.length)
+          throw new Error(`Unclosed multiline entity field: ${match[1]}`);
+        value = parts.join("\n");
+      } else if (value.startsWith('"')) {
         try {
           value = JSON.parse(value);
         } catch {
@@ -88,9 +98,26 @@ export function parseEntityDump(text: string, sourcePath: string) {
       props[match[1]] = value;
     }
     if (!props.classname) throw new Error(`Missing classname: ${id}`);
-    const kind = Object.hasOwn(CLASSES, props.classname)
+    records.push({ id, properties: props });
+  }
+  return records;
+}
+/** Source2Viewer EntityLump.ToEntityDumpString, not arbitrary KV3 or guessed JSON. */
+export function parseEntityDump(text: string, sourcePath: string) {
+  const records = readEntityRecords(text, sourcePath);
+  const points: MapPoint[] = [],
+    unknown = new Set<string>();
+  let skipped = 0;
+  for (const { id, properties: props } of records) {
+    let kind: MapLayer = Object.hasOwn(CLASSES, props.classname)
       ? CLASSES[props.classname]
       : "other";
+    const target = (props.targetname ?? "").replace(/^\[PR#\]/, "");
+    if (
+      props.classname === "info_player_start_dota" &&
+      /^(roshan|miniboss)_location_\d+$/.test(target)
+    )
+      kind = "boss";
     if (kind === "other") unknown.add(props.classname);
     // Parent/local transforms need world composition before these can be displayed.
     if (!props.origin || (props.parentname && props.parentname !== "(null)")) {
@@ -106,7 +133,13 @@ export function parseEntityDump(text: string, sourcePath: string) {
       throw new Error(`Invalid origin: ${id}`);
     const teamNumber = props.teamnumber ?? props.runeteam;
     const team =
-      teamNumber === "2" ? "radiant" : teamNumber === "3" ? "dire" : "neutral";
+      teamNumber === "2"
+        ? "radiant"
+        : teamNumber === "3"
+          ? "dire"
+          : teamNumber === "0" || teamNumber === "4"
+            ? "neutral"
+            : "unknown";
     let label =
       props.classname === "npc_dota_roshan_spawner"
         ? "肉山"
@@ -117,6 +150,14 @@ export function parseEntityDump(text: string, sourcePath: string) {
             : props.classname === "dota_item_rune_spawner_bounty"
               ? "赏金神符"
               : MAP_LAYERS[kind].label;
+    if (kind === "boss" && props.classname === "info_player_start_dota")
+      label = target.startsWith("roshan") ? "肉山巢穴" : "魔方位置";
+    if (kind === "barracks")
+      label = props.mapunitname?.includes("melee")
+        ? "近战兵营"
+        : props.mapunitname?.includes("range")
+          ? "远程兵营"
+          : label;
     if (kind === "camp")
       label =
         (
@@ -148,5 +189,5 @@ export function parseEntityDump(text: string, sourcePath: string) {
       properties: props,
     });
   }
-  return { points, skipped, unknownClasses: [...unknown].sort() };
+  return { points, skipped, unknownClasses: [...unknown].sort(), records };
 }
