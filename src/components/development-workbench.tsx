@@ -1,10 +1,14 @@
 "use client";
+import { useLocale } from "@/i18n/provider";
+import { diagnosticText } from "@/i18n/diagnostics";
+import { Message, useTranslations } from "@/i18n/provider";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { WorkbenchStatus } from "@/development/protocol";
-
 export function DevelopmentWorkbench() {
+  const t = useTranslations();
+  const locale = useLocale();
   const [status, setStatus] = useState<WorkbenchStatus | null>(null);
   const [error, setError] = useState("");
   const previous = useRef<string | null>(null);
@@ -19,7 +23,7 @@ export function DevelopmentWorkbench() {
           cache: "no-store",
           signal: controller.signal,
         });
-        if (!response.ok) throw new Error("工作台暂时不可用");
+        if (!response.ok) throw new Error(t("工作台暂时不可用"));
         const next = (await response.json()) as WorkbenchStatus;
         if (stopped) return;
         setStatus(next);
@@ -30,7 +34,7 @@ export function DevelopmentWorkbench() {
           previous.current = key;
         }
       } catch {
-        if (!stopped) setError("连接中；服务恢复后会自动继续");
+        if (!stopped) setError(t("连接中；服务恢复后会自动继续"));
       } finally {
         if (!stopped) timer = setTimeout(poll, document.hidden ? 1500 : 350);
       }
@@ -41,7 +45,7 @@ export function DevelopmentWorkbench() {
       controller.abort();
       clearTimeout(timer);
     };
-  }, [router]);
+  }, [router, t]);
   async function command(action: "rerun" | "cancel") {
     try {
       const response = await fetch("/api/development", {
@@ -49,41 +53,48 @@ export function DevelopmentWorkbench() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       });
-      if (!response.ok) throw new Error("操作暂时无法执行");
+      if (!response.ok) throw new Error(t("操作暂时无法执行"));
       setError("");
     } catch {
-      setError("操作暂时无法执行，请检查开发服务");
+      setError(t("操作暂时无法执行，请检查开发服务"));
     }
   }
   const stale = status?.result && status.resultRevision !== status.revision;
   return (
     <aside
       className="development-workbench"
-      aria-label="共享开发工作台"
+      aria-label={t("共享开发工作台")}
       data-sample-state={status?.sample ?? "connecting"}
     >
       <details>
         <summary>
-          <strong>共享开发</strong> ·{" "}
-          {status?.dataSource === "local-review" ? "真实数据" : "开发数据"} ·{" "}
-          {error || status?.message || "连接中"}
+          <strong>{t("共享开发")}</strong> ·{" "}
+          {status?.dataSource === "local-review"
+            ? t("真实数据")
+            : t("开发数据")}{" "}
+          · {diagnosticText(locale, error || status?.message || t("连接中"))}
         </summary>
         <div className="development-workbench-body">
           <p>
-            {status?.dataSource === "local-review"
-              ? "页面：真实 Catalog 与已验收头像"
-              : "页面：开发数据库，初始样例含占位图"}
-            。下方小样例单独重算，使用真实解析器。
+            <Message
+              id="{value0}。下方小样例单独重算，使用真实解析器。"
+              values={{
+                value0:
+                  status?.dataSource === "local-review"
+                    ? t("页面：真实 Catalog 与已验收头像")
+                    : t("页面：开发数据库，初始样例含占位图"),
+              }}
+            />
           </p>
           {status?.pendingSetup.map((message) => (
-            <p role="status" key={message}>
-              {message}
+            <p role="status" key={diagnosticText(locale, message)}>
+              {diagnosticText(locale, message)}
             </p>
           ))}
           <div className="development-workbench-actions">
-            <a href="/dev/database">查看数据库与同步状态</a>
+            <a href="/dev/database">{t("查看数据库与同步状态")}</a>
             <button type="button" onClick={() => void command("rerun")}>
-              重算样例
+              {t("重算样例")}
             </button>
             <button
               type="button"
@@ -92,26 +103,36 @@ export function DevelopmentWorkbench() {
                 !status || !["running", "queued"].includes(status.sample)
               }
             >
-              取消计算
+              {t("取消计算")}
             </button>
           </div>
           {status?.result && (
             <>
               <p aria-live="polite">
-                {stale ? "上一次结果（等待更新）" : "最新结果"} ·{" "}
-                {status.result.heroes.length} 位英雄 · {status.result.abilities}{" "}
-                项技能
+                <Message
+                  id="{value0} · {value1} 位英雄 · {value2} 项技能"
+                  values={{
+                    value0: stale ? t("上一次结果（等待更新）") : t("最新结果"),
+                    value1: status.result.heroes.length,
+                    value2: status.result.abilities,
+                  }}
+                />
               </p>
               <p>
-                解析 {status.result.durationMs} ms · 进程峰值{" "}
-                {status.result.peakMemoryMb} MB · 保存到结果{" "}
-                {status.savedToResultMs ?? "—"} ms
+                <Message
+                  id="解析 {value0} ms · 进程峰值 {value1} MB · 保存到结果 {value2} ms"
+                  values={{
+                    value0: status.result.durationMs,
+                    value1: status.result.peakMemoryMb,
+                    value2: status.savedToResultMs ?? "—",
+                  }}
+                />
               </p>
               <table>
                 <thead>
                   <tr>
-                    <th>英雄</th>
-                    <th>移动速度</th>
+                    <th>{t("英雄")}</th>
+                    <th>{t("移动速度")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -124,13 +145,25 @@ export function DevelopmentWorkbench() {
                 </tbody>
               </table>
               <p>
-                输入版本 {status.result.inputVersion.slice(0, 12)} · 结果版本{" "}
-                {status.resultRevision}
+                <Message
+                  id="输入版本 {value0} · 结果版本 {value1}"
+                  values={{
+                    value0: status.result.inputVersion.slice(0, 12),
+                    value1: status.resultRevision,
+                  }}
+                />
               </p>
             </>
           )}
           {status?.changedFiles.length ? (
-            <p>本次变化：{status.changedFiles.join("、")}</p>
+            <p>
+              <Message
+                id="本次变化：{value0}"
+                values={{
+                  value0: status.changedFiles.join("、"),
+                }}
+              />
+            </p>
           ) : null}
         </div>
       </details>

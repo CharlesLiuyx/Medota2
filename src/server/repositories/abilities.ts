@@ -36,6 +36,7 @@ import {
 import {
   assertCatalogDatasetPairAvailable,
   getActiveCatalogMeta,
+  getCatalogMeta,
   type ActiveDatasetMeta,
 } from "./heroes";
 
@@ -142,9 +143,10 @@ async function ensureReady(): Promise<VerifiedDatabase> {
 
 export async function getAbilityOverview(
   filters: AbilityFilters | null,
+  datasetVersionId?: string,
 ): Promise<AbilityOverview> {
   await ensureReady();
-  const meta = await getActiveCatalogMeta();
+  const meta = await getCatalogMeta(datasetVersionId);
   if (!meta) return { meta, slice: null, abilities: [], total: 0 };
   if (!filters) {
     const slice = emptyAbilitySlice(meta);
@@ -327,7 +329,7 @@ async function readAbilityCatalogSlice(
       : null;
 
   return {
-    items: selectedRows.map(mapAbilityCardRow),
+    items: selectedRows.map((row) => mapAbilityCardRow(row, filters.lang)),
     datasetVersionId: resolved.catalogDatasetVersionId,
     assetDatasetVersionId: resolved.assetDatasetVersionId,
     previousCursor,
@@ -502,7 +504,10 @@ function emptyAbilitySlice(
   };
 }
 
-function mapAbilityCardRow(row: AbilityCardQueryRow): AbilityCardRow {
+function mapAbilityCardRow(
+  row: AbilityCardQueryRow,
+  locale: "en" | "zh-CN",
+): AbilityCardRow {
   const resolved = effectiveAbility({
     ...row,
     values: row.presentation_values,
@@ -513,11 +518,13 @@ function mapAbilityCardRow(row: AbilityCardQueryRow): AbilityCardRow {
     displayName: displayName(
       row.display_name,
       "技能名称待补充",
-      textValues(row.presentation_values),
+      textValues(row.presentation_values, undefined, locale),
+      locale,
     ),
     description: gameText(
       row.description,
-      textValues(row.presentation_values, resolved),
+      textValues(row.presentation_values, resolved, locale),
+      locale,
     ),
     fallbackName: row.fallback_name,
     catalogStatus: row.catalog_status,
@@ -544,9 +551,10 @@ export const getAbilityByInternalName = cache(
   async function getAbilityByInternalName(
     internalName: string,
     locale: "en" | "zh-CN",
+    datasetVersionId?: string,
   ): Promise<AbilityDetail | null> {
     const database = await ensureReady();
-    const meta = await getActiveCatalogMeta();
+    const meta = await getCatalogMeta(datasetVersionId);
     if (!meta) return null;
     const ability = await database.query<AbilityDetail["ability"]>(
       "SELECT * FROM abilities WHERE dataset_version_id = $1 AND internal_name = $2",
@@ -642,6 +650,7 @@ export async function getHeroSpellbook(
     `
     SELECT a.*, b.relation_kind, b.source_slot, b.ordinal,
       (SELECT s.resolved_definition FROM entity_source_records s WHERE s.dataset_version_id=a.dataset_version_id AND s.entity_type='ability' AND s.entity_key=a.internal_name ORDER BY s.occurrence_ordinal DESC LIMIT 1) AS source_definition,
+      jsonb_build_object('display_name', CASE WHEN l.display_name IS NOT NULL THEN $3 ELSE 'en' END, 'description', CASE WHEN l.description IS NOT NULL THEN $3 ELSE 'en' END, 'lore', CASE WHEN l.lore IS NOT NULL THEN $3 ELSE 'en' END, 'scepter_description', CASE WHEN l.scepter_description IS NOT NULL THEN $3 ELSE 'en' END, 'shard_description', CASE WHEN l.shard_description IS NOT NULL THEN $3 ELSE 'en' END) AS "sourceLocales",
       COALESCE(l.display_name, en.display_name) AS display_name,
       COALESCE(l.description, en.description) AS description,
       COALESCE(l.lore, en.lore) AS lore,
@@ -657,8 +666,20 @@ export async function getHeroSpellbook(
     [dataset, heroId, locale],
   );
   const tokens = await getGameLocalization(dataset, sourceCommit, locale);
-  for (const row of result.rows)
+  for (const row of result.rows) {
+    const prefix = `dota_tooltip_ability_${row.internal_name}`;
+    for (const field of [
+      "display_name",
+      "description",
+      "lore",
+      "scepter_description",
+      "shard_description",
+    ] as const) {
+      if (tokens[field === "display_name" ? prefix : `${prefix}_${field}`])
+        (row.sourceLocales ??= {})[field] = locale;
+    }
     Object.assign(row, localizedAbilityFields(row.internal_name, tokens, row));
+  }
   const allValues = result.rows.flatMap((a) => a.values);
   return result.rows.map((a) =>
     a.definition_kind === "talent"

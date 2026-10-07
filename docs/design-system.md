@@ -19,6 +19,8 @@ Medota2 使用深色优先、百科式、高信息密度的目录界面。设计
 - 产品页面以底色、间距与字重组织层级，焦点使用浅色背景；具体密度和交互见[语义UI](specs/semantic-game-ui.md)。
 - 组件允许本地化文本增长，不使用依赖中英文固定长度的布局。
 
+单选与多选菜单箭头共用14×14px的ChevronDown矢量图标、描边权重2.5，继承控件文字颜色；触发器使用16px行高和flex居中，标签、选中值与箭头保持同一中心。
+
 ## Token
 
 Token 定义在 `src/app/globals.css`，组件只消费语义变量：
@@ -35,20 +37,21 @@ Token 定义在 `src/app/globals.css`，组件只消费语义变量：
 
 ## 组件
 
-| 组件                           | 职责                                   |
-| ------------------------------ | -------------------------------------- |
-| `AppShell`                     | 全局 header、实体导航、内容和 footer   |
-| `EntityTabs`                   | 英雄／技能／单位／地图入口与当前状态   |
-| `PageHeader`                   | eyebrow、标题、摘要和右侧版本/统计区域 |
-| `DatasetBadge`                 | 可读版本信息与健康状态                 |
-| `Badge`                        | 属性、关系、状态和普通标签             |
-| `Panel`                        | 标准surface与间距容器                  |
-| `SectionHeading`               | 属性分组和详情 section 标题            |
-| `HeroCard`                     | 高密度 Hero 入口与资产 fallback        |
-| `AbilityCard`                  | Ability 状态、关系、cost 与 owner 摘要 |
-| `HeroCrest` / `AbilityIcon`    | Valve 本地资产及可访问 fallback        |
-| `StatGroup`                    | 紧凑 key/value 数值组                  |
-| `EmptyState` / `FailureBanner` | 空、失败和待处理状态                   |
+| 组件                           | 职责                                                 |
+| ------------------------------ | ---------------------------------------------------- |
+| `AppShell`                     | 全局 header、实体导航、语言／版本入口、内容和 footer |
+| `EntityTabs`                   | 英雄／技能／单位／物品／地图／变化入口与当前状态     |
+| `PageHeader`                   | eyebrow、标题、摘要和右侧版本/统计区域               |
+| `CompactSelect`                | 全站单选下拉；受控回调与普通表单共用状态、键盘及浮层 |
+| `DatasetBadge`                 | 可读版本信息与健康状态                               |
+| `Badge`                        | 属性、关系、状态和普通标签                           |
+| `Panel`                        | 标准surface与间距容器                                |
+| `SectionHeading`               | 属性分组和详情 section 标题                          |
+| `HeroCard`                     | 高密度 Hero 入口与资产 fallback                      |
+| `AbilityCard`                  | Ability 状态、关系、cost 与 owner 摘要               |
+| `HeroCrest` / `AbilityIcon`    | Valve 本地资产及可访问 fallback                      |
+| `StatGroup`                    | 紧凑 key/value 数值组                                |
+| `EmptyState` / `FailureBanner` | 空、失败和待处理状态                                 |
 
 开发画廊位于 `/design-system`，用于视觉回归和状态审阅。
 
@@ -62,3 +65,7 @@ Token 定义在 `src/app/globals.css`，组件只消费语义变量：
 - 不移除原生表单、`details`、heading 和 list 语义。
 - `prefers-reduced-motion` 下关闭非必要动画和位移。
 - Playwright 在 Desktop Chrome 与 Pixel 7 视口固定 Heroes 目录和 Ability 详情视觉基线；宽表在移动端只在自身容器滚动，不扩大页面画布。
+
+## 全局语言与布局
+
+28px顶栏在版本之前提供唯一的`LanguageSwitcher`，复用`CompactSelect`，选项显示语言本名。窄屏实体导航可横向滚动，语言与版本入口保持可见，页面本身不得横向溢出。窄屏环境说明位于顶栏下方，保持预览环境可辨识。应用文字、可访问性名称、Canvas标签和metadata统一从`src/i18n`取消息；富文本用整句参数模板，数字与日期按Intl格式化。默认启用`zh-CN/en`，新增语种经注册表与资源完整性检查，合同见[国际化](specs/global-i18n.md)。

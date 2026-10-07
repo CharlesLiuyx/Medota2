@@ -13,6 +13,9 @@ remote HEAD discovery
   -> file checksum + manifest verification
   -> full catalog candidate
   -> semantic diff
+  -> hero/ability pictures + pinned units and unit picture states
+  -> matching map + assets and routing verification
+  -> complete release readiness
   -> Green auto-promotion | Yellow review | Red reject
 ```
 
@@ -30,7 +33,7 @@ DOTA_VPK_LOCK_ROOT=.medota2/locks
 CATALOG_NOTIFICATION_WEBHOOK_URL=
 ```
 
-Webhook 可选且必须是 HTTPS。它接收 `no_change`、`succeeded` 或 `failed` 事件；通知失败会使本次自动化返回失败，便于调度器告警。
+`succeeded`表示完整候选已准备，Yellow仍须人工审阅；用实际head与Review状态确认是否已发布。Webhook 可选且必须是 HTTPS。它接收 `no_change`、`succeeded` 或 `failed` 事件；通知失败会使本次自动化返回失败，便于调度器告警。
 
 ## 手动刷新
 
@@ -49,11 +52,11 @@ pnpm data:import:catalog --lock <lock-file> --no-promote
 pnpm data:diff:catalog --candidate <dataset-version-id>
 ```
 
-正式导入要求 Medota2 checkout 干净，使 `importer_version` 能唯一标识转换代码。无新远端 commit 时，refresh 直接 no-op，不创建新 dataset。
+正式导入要求 Medota2 checkout 干净，使 `importer_version` 能唯一标识转换代码。只有远端commit相同且当前版本完整核验通过时，refresh才no-op。候选导入使用 `--no-promote --download-missing`，随后准备单位图片，再核对完整Release。地图必须先按[地图合同](../specs/map-explorer.md)准备同补丁Collection；已知客户端构建须一致，缺图或来源校验失败时停止提升并保留候选。可用 `--portrait-commit <40-character-sha>`指定补充头像来源，否则复用当前单位资产记录的固定补充提交。
 
 ## Green、Yellow 与 Red
 
-- Green：已知且安全的加法或字段更新，导入事务自动切换 `hero_catalog` head。
+- Green：已知且安全的加法或字段更新，完整实体、双语文本、关系、单位图片状态和地图校验通过后才自动切换 `hero_catalog` head。直接导入缺这些资料时仍保留候选。
 - Yellow：候选和机器可读 semantic diff 已保存，当前 head 继续服务。Reviewer 检查来源 commit、selector 变化、删除、ID/关系变化、本地化与资产状态。
 - Red：来源锁、解析、身份、引用或数据库完整性失败，不发布候选；当前 head 保持不变。
 
@@ -63,6 +66,8 @@ Yellow Review：
 pnpm data:diff:catalog --candidate <dataset-version-id>
 pnpm data:review:catalog --candidate <dataset-version-id> --decision approved --reason "<reason>"
 pnpm data:import:assets --catalog-version <dataset-version-id>
+pnpm data:import:unit-assets --catalog-version <dataset-version-id> --reuse-portraits
+# 按地图合同准备同补丁完整Collection后，提升入口再次检查全部覆盖
 pnpm data:promote:catalog --candidate <dataset-version-id>
 ```
 
@@ -126,3 +131,5 @@ development sandbox 默认建议每 15 分钟 discover 一次。macOS 示例位�
 6. 错误发布：执行原子 rollback；不要删除审计记录。
 
 刷新失败不影响 Web 读取当前版本。只有经 gate 和受约束数据库函数提升的完整 catalog 才会成为 current head。
+
+新增物品实体后，完整Release检查同时解析固定提交的items.txt与双语说明；物品定义缺失或解析异常阻止提升，修复匹配来源后重跑原检查。

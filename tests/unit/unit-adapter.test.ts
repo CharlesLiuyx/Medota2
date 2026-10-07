@@ -37,6 +37,8 @@ it("handles localization case, missing values and placeholders without inventing
   ).units;
   expect(units[0]).toMatchObject({
     zhName: "肉山",
+    enName: "肉山",
+    nameLocales: { zh: "zh-CN", en: "zh-CN" },
     category: "boss",
     stats: { StatusHealth: "6000", MovementSpeed: null },
   });

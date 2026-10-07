@@ -92,6 +92,8 @@ export interface CanonicalHero {
   localizations: HeroLocalization[];
   source: {
     sourceKey: string;
+    sourcePath?: string;
+    sourceLine?: number;
     sourceDtoSha256: string;
     inheritedFields: string[];
   };

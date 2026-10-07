@@ -163,9 +163,12 @@ export async function verifySnapshotFiles(
           required.set(hash, { sha256: hash, bytes: Number(row.byte_size) });
         }
         if (
-          ["dataset_heads", "asset_dataset_heads", "unit_asset_heads"].includes(
-            table.name,
-          )
+          [
+            "dataset_heads",
+            "asset_dataset_heads",
+            "unit_asset_heads",
+            "item_asset_heads",
+          ].includes(table.name)
         )
           (heads[table.name] ??= []).push(row);
       }

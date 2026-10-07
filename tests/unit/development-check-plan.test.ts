@@ -1,5 +1,26 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createPlan } from "../../scripts/development/check-plan.mjs";
+
+const hiddenFiles = vi.hoisted(() => new Set<string>());
+vi.mock("node:fs", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs")>();
+  return {
+    ...actual,
+    existsSync: (path: string) =>
+      !hiddenFiles.has(path) && actual.existsSync(path),
+  };
+});
+afterEach(() => hiddenFiles.clear());
+
+function selectedJourneys(paths: string[]) {
+  const task = createPlan(paths).tasks.find((task) => task.id === "journeys");
+  if (!task) return () => false;
+  const index = task.args.indexOf("--grep");
+  const pattern = index < 0 ? null : new RegExp(task.args[index + 1]);
+  return (title: string) =>
+    !pattern ||
+    pattern.test(`desktop-chromium tests/journeys/example.spec.ts ${title}`);
+}
 
 describe("development check scope", () => {
   it("keeps documentation changes out of product setup and checks", () => {
@@ -10,9 +31,22 @@ describe("development check scope", () => {
   });
   it("runs only the hero journey for an individual hero component", () => {
     const plan = createPlan(["src/components/hero-card.tsx"]);
-    expect(plan.tasks.find((task) => task.id === "journeys")?.args.at(-1)).toBe(
-      "heroes",
-    );
+    const selected = selectedJourneys(["src/components/hero-card.tsx"]);
+    expect(selected("heroes: query, filter and open a detail")).toBe(true);
+    expect(
+      selected("heroes and abilities: readable tooltips and mobile layout"),
+    ).toBe(true);
+    expect(
+      selected(
+        "heroes global locale covers deep pages and preserves map state",
+      ),
+    ).toBe(false);
+    expect(
+      selected(
+        "heroes changes: shared dropdowns submit and restore comparison filters",
+      ),
+    ).toBe(false);
+    expect(selected("abilities: query, filter and open a detail")).toBe(false);
     expect(
       plan.tasks.some((task) =>
         ["build", "database", "benchmark"].includes(task.id),
@@ -24,9 +58,16 @@ describe("development check scope", () => {
       "src/components/ui/deleted-panel.tsx",
       "src/components/panel.tsx",
     ]);
-    expect(plan.tasks.find((task) => task.id === "journeys")?.args.at(-1)).toBe(
-      "heroes|abilities|units",
-    );
+    const selected = selectedJourneys(plan.paths);
+    for (const title of [
+      "heroes: query",
+      "abilities: query",
+      "units: search",
+      "items: search",
+      "heroes releases: version navigation",
+      "heroes global language persists across catalogs",
+    ])
+      expect(selected(title)).toBe(true);
     expect(plan.tasks.find((task) => task.id === "unit")?.args).toContain(
       "tests/unit/map-viewer.test.tsx",
     );
@@ -59,6 +100,7 @@ describe("development check scope", () => {
     const e2e = createPlan(["tests/e2e/heroes.spec.ts"]);
     expect(e2e.tasks.find((task) => task.id === "e2e")?.args).toEqual([
       "test:e2e",
+      "--retries=1",
       "tests/e2e/heroes.spec.ts",
     ]);
   });
@@ -94,9 +136,11 @@ describe("development check scope", () => {
         "tests/unit/unit-assets.test.ts",
       ]),
     );
-    expect(plan.tasks.find((task) => task.id === "journeys")?.args.at(-1)).toBe(
-      "units",
-    );
+    const selected = selectedJourneys(plan.paths);
+    expect(
+      selected("units: search, clear, filter, open detail and follow ability"),
+    ).toBe(true);
+    expect(selected("heroes: query, filter and open a detail")).toBe(false);
     expect(plan.tasks.map((task) => task.id)).toContain("database");
   });
   it("widens mixed, unknown and removed dependencies instead of hiding them", () => {
@@ -131,4 +175,123 @@ describe("development check scope", () => {
     expect(plan.browser).toBe(false);
     expect(plan.database).toBe(false);
   });
+  it("keeps a reviewed label and translation change on existing component/resource tests", () => {
+    const plan = createPlan([
+      "src/components/ui/dataset-badge.tsx",
+      "src/i18n/en.json",
+      "tests/unit/dataset-badge.test.tsx",
+      "docs/specs/semantic-game-ui.md",
+    ]);
+    expect(plan.browser).toBe(false);
+    expect(plan.database).toBe(false);
+    expect(plan.tasks.map((task) => task.id)).toEqual([
+      "format",
+      "lint",
+      "docs",
+      "types",
+      "unit",
+    ]);
+    expect(plan.tasks.find((task) => task.id === "unit")?.args).toEqual([
+      "test",
+      "tests/unit/dataset-badge.test.tsx",
+      "tests/unit/i18n.test.ts",
+      "tests/unit/i18n-resources.test.ts",
+    ]);
+  });
+  it("distinguishes translation resources from language routing and rendering", () => {
+    expect(createPlan(["src/i18n/en.json"]).browser).toBe(false);
+    for (const path of [
+      "src/i18n/provider.tsx",
+      "src/i18n/locale.ts",
+      "src/proxy.ts",
+    ]) {
+      const selected = selectedJourneys([path]);
+      expect(
+        selected(
+          "heroes global language persists across catalogs, details, history and reload",
+        ),
+      ).toBe(true);
+      expect(
+        selected(
+          "heroes global locale covers deep pages and preserves map state",
+        ),
+      ).toBe(true);
+    }
+  });
+  it("widens mixed label changes for unknown/shared code and includes newly named journeys", () => {
+    for (const path of [
+      "src/components/ui/new-widget.tsx",
+      "src/app/layout.tsx",
+      "src/i18n/new-runtime.ts",
+    ]) {
+      const plan = createPlan([
+        "src/components/ui/dataset-badge.tsx",
+        "src/i18n/en.json",
+        path,
+      ]);
+      expect(plan.browser).toBe(true);
+    }
+    const plan = createPlan(["tests/journeys/new-flow.spec.ts"]);
+    expect(
+      plan.tasks.find((task) => task.id === "journeys")?.args,
+    ).not.toContain("--grep");
+    expect(
+      selectedJourneys(plan.paths)("a completely new workflow title"),
+    ).toBe(true);
+  });
+  it("checks the planner with its boundary tests without starting the product", () => {
+    const plan = createPlan([
+      "scripts/development/check-plan.mjs",
+      "tests/unit/development-check-plan.test.ts",
+    ]);
+    expect(plan.browser).toBe(false);
+    expect(plan.database).toBe(false);
+    expect(plan.tasks.find((task) => task.id === "unit")?.args).toEqual([
+      "test",
+      "tests/unit/development-check-plan.test.ts",
+    ]);
+    expect(plan.tasks.some((task) => task.id === "build")).toBe(false);
+    // Runner/build changes retain the broad toolchain checks.
+    expect(
+      createPlan(["src/workers/run-check.ts"]).tasks.some(
+        (task) => task.id === "build",
+      ),
+    ).toBe(true);
+  });
+  it("retries only failed browser cases once within the same validated run", () => {
+    expect(
+      createPlan(["src/components/hero-card.tsx"]).tasks.find(
+        (task) => task.id === "journeys",
+      )?.args,
+    ).toContain("--retries=1");
+  });
+  it("falls back to broad validation when a registered source or its test is missing", () => {
+    for (const path of [
+      "src/components/ui/dataset-badge.tsx",
+      "tests/unit/dataset-badge.test.tsx",
+    ]) {
+      hiddenFiles.add(path);
+      expect(createPlan(["src/components/ui/dataset-badge.tsx"]).browser).toBe(
+        true,
+      );
+      hiddenFiles.clear();
+    }
+    hiddenFiles.add("tests/unit/development-check-plan.test.ts");
+    expect(
+      createPlan(["scripts/development/check-plan.mjs"]).tasks.some(
+        (task) => task.id === "build",
+      ),
+    ).toBe(true);
+  });
+});
+
+it("selects the attributes journey for attribute routes and item value mapping", () => {
+  for (const file of [
+    "src/app/attributes/page.tsx",
+    "src/importers/dota-vpk/item-adapter.ts",
+    "src/domain/attributes.ts",
+  ])
+    expect(
+      selectedJourneys([file])("attributes: links and versioned mechanics"),
+    ).toBe(true);
 });

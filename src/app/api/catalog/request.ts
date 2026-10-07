@@ -1,3 +1,6 @@
+import { canonicalReleaseId, readReleaseParameter } from "@/domain/releases";
+import { getReleaseIndex } from "@/server/services/releases";
+import { getCatalogMeta } from "@/server/repositories/heroes";
 import type { InfiniteListProblem } from "@/domain/infinite-list";
 import type { PublicEnvironmentIdentity } from "@/domain/environment";
 import { createEnvironmentResponseHeaders } from "@/server/environment/public-projection";
@@ -11,6 +14,7 @@ import {
 } from "@/server/services/catalog-cursor";
 
 const TRANSPORT_KEYS = new Set([
+  "release",
   "after",
   "before",
   "datasetVersionId",
@@ -116,4 +120,34 @@ function singleTransportValue(
     throw new ListRequestError(`${key} 不能为空。`);
   }
   return values[0];
+}
+
+export async function resolveListRouteRequest(url: URL) {
+  const parsed = parseListRouteRequest(url);
+  const raw = singleTransportValue(url.searchParams, "release");
+  if (raw === undefined) return parsed;
+  let id: string | undefined;
+  try {
+    id = readReleaseParameter(raw);
+  } catch {
+    throw new ListRequestError("版本参数无效。");
+  }
+  const index = await getReleaseIndex();
+  const release = index.releases.find(
+    (r) => r.id === canonicalReleaseId(index, id!),
+  );
+  if (!release?.catalogId)
+    throw new ListDatasetUnavailableError("所选版本未收录图鉴资料。");
+  const meta = await getCatalogMeta(release.catalogId);
+  if (!meta) throw new ListDatasetUnavailableError();
+  if (
+    (parsed.sliceRequest.catalogDatasetVersionId &&
+      parsed.sliceRequest.catalogDatasetVersionId !== meta.datasetVersionId) ||
+    (parsed.sliceRequest.assetDatasetVersionId &&
+      parsed.sliceRequest.assetDatasetVersionId !== meta.assetDatasetVersionId)
+  )
+    throw new ListRequestError("URL版本与列表资料版本不一致。");
+  parsed.sliceRequest.catalogDatasetVersionId = meta.datasetVersionId;
+  parsed.sliceRequest.assetDatasetVersionId = meta.assetDatasetVersionId;
+  return parsed;
 }

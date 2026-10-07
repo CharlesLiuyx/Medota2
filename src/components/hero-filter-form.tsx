@@ -2,6 +2,7 @@
 import { useFilterEvents } from "./use-live-catalog";
 import { Search, X } from "lucide-react";
 import type { HeroFilters } from "@/server/services/hero-filters";
+import { useLocale, useTranslations } from "@/i18n/provider";
 import { CompactSelect } from "./ui/compact-select";
 import { CompactFilterMenu } from "./ui/compact-filter-menu";
 
@@ -35,6 +36,8 @@ export function HeroFilterForm({
   onChange: (data: FormData, composing: boolean) => void;
   onClear: () => void;
 }) {
+  const t = useTranslations();
+  const locale = useLocale();
   const events = useFilterEvents(onChange);
   const activeCount =
     filters.attributes.length +
@@ -51,9 +54,10 @@ export function HeroFilterForm({
       action="/heroes"
       className="flex flex-wrap items-center gap-1.5"
     >
+      <input type="hidden" name="lang" value={locale} />
       <label className="relative min-w-0 basis-full sm:min-w-44 sm:flex-1 sm:basis-44">
         <Search className="absolute left-1.5 top-1/2 size-3.5 -translate-y-1/2 text-zinc-500" />
-        <span className="sr-only">搜索英雄</span>
+        <span className="sr-only">{t("搜索英雄")}</span>
         <input
           name="q"
           autoComplete="off"
@@ -63,41 +67,41 @@ export function HeroFilterForm({
           value={filters.q}
           onChange={events.onFieldChange}
           maxLength={100}
-          placeholder="搜索英雄名称、拼音或别称…"
+          placeholder={t("搜索英雄名称、拼音或别称…")}
           className="h-8 w-full bg-transparent pl-7 pr-2 text-xs placeholder:text-[var(--text-muted)] "
         />
       </label>
-      <CompactFilterMenu title="主属性" count={filters.attributes.length}>
+      <CompactFilterMenu title={t("主属性")} count={filters.attributes.length}>
         {attributes.map(([value, label]) => (
           <FilterOption
             key={value}
             name="attribute"
             value={value}
-            label={label}
+            label={t(label)}
             onChange={events.onFieldChange}
             selected={filters.attributes.includes(value)}
           />
         ))}
       </CompactFilterMenu>
-      <CompactFilterMenu title="角色" count={filters.roles.length}>
+      <CompactFilterMenu title={t("角色")} count={filters.roles.length}>
         {roles.map(([value, label]) => (
           <FilterOption
             key={value}
             name="role"
             value={value}
-            label={label}
+            label={t(label)}
             onChange={events.onFieldChange}
             selected={filters.roles.includes(value)}
           />
         ))}
       </CompactFilterMenu>
-      <CompactFilterMenu title="攻击" count={filters.attacks.length}>
+      <CompactFilterMenu title={t("攻击")} count={filters.attacks.length}>
         {attacks.map(([value, label]) => (
           <FilterOption
             key={value}
             name="attack"
             value={value}
-            label={label}
+            label={t(label)}
             onChange={events.onFieldChange}
             selected={filters.attacks.includes(value)}
           />
@@ -105,32 +109,23 @@ export function HeroFilterForm({
       </CompactFilterMenu>
       <CompactSelect
         name="cm"
-        label="队长模式"
+        label={t("队长模式")}
         value={filters.cm}
         onChange={onChange}
       >
-        <option value="all">全部</option>
-        <option value="true">启用</option>
-        <option value="false">未启用</option>
+        <option value="all">{t("全部")}</option>
+        <option value="true">{t("启用")}</option>
+        <option value="false">{t("未启用")}</option>
       </CompactSelect>
-      <CompactSelect
-        name="lang"
-        label="语言"
-        value={filters.lang}
-        onChange={onChange}
-      >
-        <option value="zh-CN">简体中文</option>
-        <option value="en">English</option>
-      </CompactSelect>
-      {(filters.q || activeCount > 0 || filters.lang !== "zh-CN") && (
+
+      {(filters.q || activeCount > 0) && (
         <button
           type="button"
           onClick={onClear}
           className="flex h-7 items-center gap-1 px-1.5 text-[11px] text-[var(--text-secondary)] hover:text-white"
         >
           <X className="size-3" />
-          清除{" "}
-          {activeCount + (filters.q ? 1 : 0) + (filters.lang === "en" ? 1 : 0)}
+          {t("清除")} {activeCount + (filters.q ? 1 : 0)}
         </button>
       )}
     </form>

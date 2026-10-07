@@ -8,7 +8,7 @@ import {
   type UnitDefinition,
 } from "@/domain/units";
 
-export const UNIT_ADAPTER_VERSION = "vpk-units-v1";
+export const UNIT_ADAPTER_VERSION = "vpk-units-v2";
 export function unitTokens(text: string): Record<string, string> {
   const lang = parseKeyValues(text.replace(/^\uFEFF/u, "")).entries.find(
     (e) => e.key.toLowerCase() === "lang",
@@ -19,11 +19,16 @@ export function unitTokens(text: string): Record<string, string> {
       : undefined;
   if (!tokens || typeof tokens === "string")
     throw new Error("Missing localization tokens");
-  return Object.fromEntries(
+  const index: Record<string, string> = Object.fromEntries(
     tokens.entries
       .filter((e) => typeof e.value === "string")
       .map((e) => [e.key.toLowerCase(), e.value as string]),
   );
+  // Valve keeps some item display names under a suffixed name token.
+  // Preserve the raw key and prefer an explicit unsuffixed token on conflicts.
+  for (const [key, value] of Object.entries(index))
+    if (key.endsWith(":n")) index[key.slice(0, -2)] ??= value;
+  return index;
 }
 function scalar(object: KeyValuesObject): Record<string, string> {
   return Object.fromEntries(
@@ -137,6 +142,18 @@ export function adaptUnits(
       zhName: localizedName(id, zh) || localizedName(id, en) || "名称待补充",
       enName:
         localizedName(id, en) || localizedName(id, zh) || "Name unavailable",
+      nameLocales: {
+        zh: localizedName(id, zh)
+          ? "zh-CN"
+          : localizedName(id, en)
+            ? "en"
+            : null,
+        en: localizedName(id, en)
+          ? "en"
+          : localizedName(id, zh)
+            ? "zh-CN"
+            : null,
+      },
       category: kind,
       team,
       variant: [

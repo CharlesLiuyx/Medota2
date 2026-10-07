@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { LocaleProvider } from "@/i18n/provider";
+import { RouteClient } from "@/components/map/route-client";
 import {
   act,
   waitFor,
@@ -12,6 +14,10 @@ import { afterEach, expect, it, vi } from "vitest";
 import { MapViewer } from "@/components/map/map-viewer";
 import type { MapPoint } from "@/domain/map/schema";
 import type { MapEconomy } from "@/domain/map/economy-schema";
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(),
+}));
 
 afterEach(() => {
   cleanup();
@@ -67,16 +73,18 @@ it("coalesces dense-map pointer input, reuses the scene, and keeps the canvas in
     sourcePath: "fixture",
     properties: {},
   }));
-  const { unmount } = render(
-    <MapViewer
-      data={{
-        bounds: { minX: 0, maxX: 6400, minY: 0, maxY: 6400 },
-        points,
-        imageUrl: "/fixture.webp",
-        clientVersion: "6944",
-        coverage: null,
-      }}
-    />,
+  const dispose = vi.spyOn(RouteClient.prototype, "dispose");
+  const payload = {
+    bounds: { minX: 0, maxX: 6400, minY: 0, maxY: 6400 },
+    points,
+    imageUrl: "/fixture.webp",
+    clientVersion: "6944",
+    coverage: null,
+  };
+  const { unmount, rerender } = render(
+    <LocaleProvider initialLocale="zh-CN">
+      <MapViewer data={payload} />
+    </LocaleProvider>,
   );
   const canvas = screen.getByLabelText(/交互地图/) as HTMLCanvasElement;
   canvas.setPointerCapture = vi.fn();
@@ -99,7 +107,7 @@ it("coalesces dense-map pointer input, reuses the scene, and keeps the canvas in
   flush();
   expect(canvas.dataset.hitTests).toBe("1");
   expect(canvas.dataset.backgroundBuilds).toBe("1");
-  expect(screen.getByRole("status").textContent).toContain("树木");
+  expect(screen.getByRole("status").textContent).toContain("树 ·");
   const paints = canvas.dataset.paints;
   burst();
   flush();
@@ -130,11 +138,21 @@ it("coalesces dense-map pointer input, reuses the scene, and keeps the canvas in
   flush();
   expect(widthWrites).not.toHaveBeenCalled();
   expect(heightWrites).not.toHaveBeenCalled();
-  fireEvent(
-    canvas,
-    new MouseEvent("pointermove", { clientX: 310, clientY: 300 }),
+  rerender(
+    <LocaleProvider initialLocale="en">
+      <MapViewer data={{ ...payload, points: [...points] }} />
+    </LocaleProvider>,
   );
+  flush();
+  expect(screen.getByRole("button", { name: "Routes" })).toBeTruthy();
+  expect(
+    screen.getByRole("region", { name: "Point details" }).textContent,
+  ).toContain("3200, 3200");
+  expect(dispose).not.toHaveBeenCalled();
+  expect(widthWrites.mock.contexts).not.toContain(canvas);
+  expect(heightWrites.mock.contexts).not.toContain(canvas);
   unmount();
+  expect(dispose).toHaveBeenCalledTimes(1);
   expect(frames.size).toBe(0);
 });
 
@@ -336,10 +354,10 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
   );
   act(() => queued?.(1));
   expect(screen.getByRole("status").textContent).toContain(
-    "树木 · X 0, Y 0, Z 128",
+    "树 · X 0, Y 0, Z 128",
   );
-  expect(paint.at(-1)).toBe("fillText:树木,300,323");
-  fireEvent.click(screen.getByRole("checkbox", { name: /树木/ }));
+  expect(paint.at(-1)).toBe("fillText:树,300,323");
+  fireEvent.click(screen.getByRole("checkbox", { name: /树/ }));
   paint.length = 0;
   act(() => queued?.(2));
   expect(treeFill()).toBe(false);
@@ -351,7 +369,7 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
       bubbles: true,
     }),
   );
-  expect(screen.queryByRole("status")?.textContent ?? "").not.toContain("树木");
+  expect(screen.queryByRole("status")?.textContent ?? "").not.toContain("树 ·");
   paint.length = 0;
   fireEvent(
     canvas,

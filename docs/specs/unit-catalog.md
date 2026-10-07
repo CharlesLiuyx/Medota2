@@ -8,9 +8,11 @@
 
 ## 数据边界
 
-复用当前 Catalog 元数据及可配置 `DOTA_VPK_UPDATES_PATH` / `DOTA_VPK_WORKTREE_ROOT`，从其固定 source commit 的 Git 对象读取 `scripts/npc/npc_units.txt`、`resource/localization/abilities_schinese.txt` 和 `abilities_english.txt`。先核对同 commit 的 `steam.inf` checksum 与数据库记录。不读工作树改动、不追踪最新 HEAD。单位定义仍是只读补充模型，独立资产导入会写入数据库。无匹配来源时明确显示资料未接入，解析错误进入错误页。
+缺失名称通过固定来源提交限定的[审阅资源](semantic-game-ui.md#经过审阅的名称补充)补充，provenance保留资源ID与内容摘要；历史名称与明确关联名称只用于标签。没有正式名称的辅助、活动和未启用实体标注用途名，不推测其是否可在当前对局出现。当前每版123个原缺名单位均有可读双语名称。
 
-这是按当前 Catalog 绑定的只读补充模型，尚未成为独立 PostgreSQL Unit Dataset。服务器保留两份以内的解析缓存、完整单位 KV 对象（含未知键）、文件 checksum，以及 `source_repository`、`source_commit`、`source_path`、`client_version`、`imported_at`、适配器版本和 schema 版本。此处 imported_at 表示只读模型构建时间，缓存随进程结束释放；原始定义由固定 Git commit 保留。首次读取只加载上述文件，不扫描完整来源目录。
+复用所选已发布 Catalog 元数据及可配置 `DOTA_VPK_UPDATES_PATH` / `DOTA_VPK_WORKTREE_ROOT`，从其固定 source commit 的 Git 对象读取 `scripts/npc/npc_units.txt`、`resource/localization/abilities_schinese.txt` 和 `abilities_english.txt`。先核对同 commit 的 `steam.inf` checksum 与数据库记录。不读工作树改动、不追踪最新 HEAD。单位定义仍是只读补充模型，独立资产导入会写入数据库。无匹配来源时明确显示资料未接入，解析错误进入错误页。
+
+这是按所选 Catalog 绑定的只读补充模型，尚未成为独立 PostgreSQL Unit Dataset。服务器保留两份以内的解析缓存、完整单位 KV 对象（含未知键）、文件 checksum，以及 `source_repository`、`source_commit`、`source_path`、`client_version`、`imported_at`、适配器版本和 schema 版本。此处 imported_at 表示只读模型构建时间，缓存随进程结束释放；原始定义由固定 Git commit 保留。首次读取只加载上述文件，不扫描完整来源目录。
 
 适配器按 `npc_dota_units_base → include_keys_from 递归父定义 → 本条目` 解析标量字段。重复实体身份、缺失父定义和循环继承直接报错；BaseClass 是引擎类，不当作继承引用。名称优先本条目的同版本本地化，继承变体可使用明确父条目的名称并标明等级；动态占位符和缺失文本显示待补充。不能解析的数值显示待确认，未知字段不抛弃。
 
@@ -31,8 +33,10 @@
 
 ## 单位头像
 
-`pnpm data:import:unit-assets` / `pnpm data:import:unit-assets:local` 从当前 Catalog 已核对的固定单位源获取完整身份集合，优先下载 Valve Steam static 单位图。可选 `--portrait-commit <完整commit>` 从 ReDota 固定提交读取截图及模型映射；只对明确的变体和同模型共享头像，守卫材质、阵营不同的兵线不会自动互换。关联技能只复用同 Catalog 已入库的 exact 原生图标，关系标为 `related_icon`，不是单位肖像。没有可核对图片的定义保留 `unavailable`，不生成假图片。
+`pnpm data:import:unit-assets` / `pnpm data:import:unit-assets:local` 从当前 Catalog 已核对的固定单位源获取完整身份集合；可用 `--catalog-version <UUID>` 指定历史／待审候选，拒绝 Red／rejected 候选，图片准备不改变 Catalog head，优先下载 Valve Steam static 单位图。可选 `--portrait-commit <完整commit>` 从 ReDota 固定提交读取截图及模型映射；只对明确的变体和同模型共享头像，守卫材质、阵营不同的兵线不会自动互换。关联技能只复用同 Catalog 已入库的 exact 原生图标，关系标为 `related_icon`，不是单位肖像。没有可核对图片的定义保留 `unavailable`，不生成假图片。
 
 单位资产有独立的版本/head，复用 `asset_objects / asset_variants / asset_blobs`。原图和 w64/w128/w256 WebP 全部入库，SHA-256 校验、完整单位身份集合、LoD 完整性和防覆盖降级检查在提升前执行。事务失败回滚整个候选；英雄与技能资产 head 不改变。导入报告列出各类数量及缺图身份；`--reuse-portraits` 可保留相同 Catalog / 补充来源提交已有的独立和共用头像。网络只出现在导入阶段，页面响应由数据库提供，带版本、ETag 和私有缓存。
 
 单位定义的客户端版本与图片版本分别记录。CDN 图片没有 Git commit，客户端版本明确为空；ReDota 图像有来源 commit，但原始游戏构建号仍未知。每张新图片记录来源路径、URL、SHA、下载时间、导入器版本和 schema 版本；版本记录关联单位快照的全部溯源数据。社区资产来源与再分发限制见 `docs/repositories/redota.md`。
+
+单位页与关联技能保持顶栏Release，缺少该版Catalog或固定单位来源时明确不可用；语义Diff保留单位原文与来源，独立持久化仍待实施。统一规则见[实体版本合同](entity-versions.md)。

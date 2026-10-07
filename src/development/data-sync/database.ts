@@ -134,9 +134,12 @@ export async function collectDatabase(
         byteCount += Buffer.byteLength(line);
         total++;
         if (
-          ["dataset_heads", "asset_dataset_heads", "unit_asset_heads"].includes(
-            table.name,
-          )
+          [
+            "dataset_heads",
+            "asset_dataset_heads",
+            "unit_asset_heads",
+            "item_asset_heads",
+          ].includes(table.name)
         )
           (result.heads[table.name] ??= []).push(row);
         if (table.name === "source_snapshots") result.sourceRows.push(row);

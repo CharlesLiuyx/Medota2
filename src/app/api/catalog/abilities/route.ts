@@ -9,7 +9,7 @@ import { ListRequestError } from "@/server/services/catalog-cursor";
 import {
   catalogJsonResponse,
   listProblemResponse,
-  parseListRouteRequest,
+  resolveListRouteRequest,
 } from "../request";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request): Promise<Response> {
   const declaredEnvironment = getDeclaredPublicEnvironment();
   try {
-    const { params, sliceRequest } = parseListRouteRequest(
+    const { params, sliceRequest } = await resolveListRouteRequest(
       new URL(request.url),
     );
     const parsed = parseAbilityFilters(params);

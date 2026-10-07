@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/i18n/provider";
 
 import Image from "next/image";
 import { useState } from "react";
@@ -17,6 +18,7 @@ export function HeroCrest({
   portrait?: boolean;
   src?: string;
 }) {
+  const t = useTranslations();
   const [failed, setFailed] = useState(false);
   const initials = name
     .split(/[\s-]+/u)
@@ -41,13 +43,13 @@ export function HeroCrest({
         background: `linear-gradient(145deg, color-mix(in srgb, ${color} 58%, var(--surface-panel)), var(--surface-sunken))`,
       }}
       role={!src || failed ? "img" : undefined}
-      aria-label={!src || failed ? `${name} icon unavailable` : undefined}
+      aria-label={!src || failed ? t("{name} 图标未提供", { name }) : undefined}
     >
       {src && !failed && (
         <Image
           loader={valveAssetImageLoader}
           src={src}
-          alt={`${name} icon`}
+          alt={t("{name} 图标", { name })}
           fill
           sizes={
             portrait

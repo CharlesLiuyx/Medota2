@@ -1,3 +1,4 @@
+import { pinnedVpkRoots } from "@/importers/dota-vpk/source-roots";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { existsSync } from "node:fs";
@@ -18,6 +19,7 @@ const runtimePaths = [
   "steam.inf",
   "scripts/change_log.txt",
   "scripts/npc/npc_units.txt",
+  "scripts/npc/items.txt",
   "resource/localization/abilities_english.txt",
   "resource/localization/abilities_schinese.txt",
 ];
@@ -100,12 +102,8 @@ export async function findSourceRoot(commit: string): Promise<string> {
   loadLocalEnv();
   const candidates = [
     resolve(syncRoot(), "sources", commit),
-    resolve(
-      process.env.DOTA_VPK_WORKTREE_ROOT || ".medota2/cache/worktrees",
-      commit,
-    ),
-    process.env.DOTA_VPK_UPDATES_PATH,
-  ].filter((path): path is string => Boolean(path));
+    ...pinnedVpkRoots(commit),
+  ];
   for (const path of candidates) {
     if (!existsSync(path)) continue;
     try {
@@ -249,8 +247,23 @@ export async function prepareDependencies(
       const bytes = contents.get(file.path)!;
       if (sha256(bytes) !== file.sha256 || bytes.length !== file.bytes)
         throw new Error(`Pinned source changed: ${file.path}`);
-      // Supplemental localization reads the working file; validate it too.
-      await verifiedFile(assertOwnedPath(resolve(root, file.path), root), file);
+      // A newer manifest can add runtime inputs to an existing sparse cache.
+      // Expand only missing files; existing bytes must still pass verification.
+      const workingPath = assertOwnedPath(resolve(root, file.path), root);
+      try {
+        await verifiedFile(workingPath, file);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+        await exec(
+          "git",
+          ["-C", root, "sparse-checkout", "add", `/${file.path}`],
+          {
+            timeout: 30_000,
+            maxBuffer: 8 * 1024 * 1024,
+          },
+        );
+        await verifiedFile(workingPath, file);
+      }
     }
   }
   return { sourceRoot, ...(await restoreMaps(manifest.map, repository)) };

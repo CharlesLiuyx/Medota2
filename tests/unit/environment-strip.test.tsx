@@ -23,7 +23,7 @@ describe("EnvironmentStrip", () => {
       );
 
       const strip = screen.getByRole("status", {
-        name: "Runtime environment",
+        name: "运行环境",
       });
       expect(strip.getAttribute("data-environment")).toBe(environment);
       expect(strip.getAttribute("data-data-class")).toBe(dataClass);
@@ -42,7 +42,7 @@ describe("EnvironmentStrip", () => {
       />,
     );
 
-    const strip = screen.getByRole("status", { name: "Runtime environment" });
+    const strip = screen.getByRole("status", { name: "运行环境" });
     expect(strip.getAttribute("data-verification")).toBe("verified");
     expect(strip.getAttribute("data-run")).toBe("e2e-42");
     expect(screen.getByText("测试样例数据")).toBeTruthy();
@@ -65,7 +65,7 @@ describe("EnvironmentStrip", () => {
       />,
     );
 
-    const strip = screen.getByRole("status", { name: "Runtime environment" });
+    const strip = screen.getByRole("status", { name: "运行环境" });
     expect(strip.getAttribute("data-verification")).toBe("unverified");
     expect(strip.getAttribute("data-run")).toBe("none");
     expect(screen.getByText("数据连接未验证，暂不可用")).toBeTruthy();

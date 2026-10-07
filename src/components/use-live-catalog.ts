@@ -1,5 +1,7 @@
 "use client";
 
+import { gameLocale } from "@/i18n/config";
+
 import {
   useCallback,
   useEffect,
@@ -8,7 +10,10 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useLocale } from "@/i18n/provider";
+import { withLocale, resolveLocale } from "@/i18n/locale";
+import { withRelease } from "@/domain/releases";
 import {
   getBrowserReplica,
   prefetchSibling,
@@ -29,7 +34,7 @@ export function readFilterParams(
 ): SearchParams {
   const params: SearchParams = {};
   for (const [key, value] of entries) {
-    if (typeof value !== "string") continue;
+    if (typeof value !== "string" || key === "release") continue;
     const previous = params[key];
     params[key] =
       previous === undefined
@@ -86,6 +91,8 @@ export function useLiveCatalog<
   canonical,
 }: Options<T, F>) {
   const router = useRouter();
+  const locale = useLocale();
+  const release = useSearchParams().get("release");
   const replicas = useRef(new Map<string, CatalogReplica>());
   const initialQuery = canonical(initialFilters);
   const [filters, setFilters] = useState(initialFilters);
@@ -241,9 +248,15 @@ export function useLiveCatalog<
         const replica = await getBrowserReplica(identity);
         if (cancelled) return;
         replicas.current.set(identity.locale, replica);
-        const current = parse(
-          readFilterParams(new URLSearchParams(window.location.search)),
-        );
+        const current = parse({
+          ...readFilterParams(new URLSearchParams(window.location.search)),
+          lang: gameLocale(
+            resolveLocale(
+              new URLSearchParams(window.location.search).get("lang"),
+              locale,
+            ),
+          ),
+        });
         if (!current.errors.length && current.filters.lang === identity.locale)
           request(current.filters, 0, true);
         // Warm the other catalog after the current one is usable. A single
@@ -268,10 +281,11 @@ export function useLiveCatalog<
     initialSlice.assetDatasetVersionId,
     parse,
     request,
+    locale,
   ]);
 
   useEffect(() => {
-    if (!localEntity) return;
+    if (!localEntity || release) return;
     let cancelled = false;
     const identity = {
       entity: localEntity,
@@ -313,11 +327,15 @@ export function useLiveCatalog<
     initialSlice.datasetVersionId,
     initialSlice.assetDatasetVersionId,
     router,
+    release,
   ]);
 
   const update = useCallback(
     (data: FormData, composing: boolean) => {
-      const params = readFilterParams(data.entries());
+      const params: SearchParams = {
+        ...readFilterParams(data.entries()),
+        lang: gameLocale(locale),
+      };
       const parsed = parse(params);
       const rawQ = typeof params.q === "string" ? params.q : "";
       // Preserve the caret, spaces and the IME draft; normalize only the query.
@@ -326,30 +344,48 @@ export function useLiveCatalog<
       setValidationErrors(parsed.errors);
       if (parsed.errors.length) return;
       const query = canonical(parsed.filters);
-      window.history.replaceState(null, "", query ? `${path}?${query}` : path);
+      window.history.replaceState(
+        null,
+        "",
+        withLocale(
+          withRelease(query ? `${path}?${query}` : path, release),
+          locale,
+          true,
+        ),
+      );
       const textChanged =
         new URLSearchParams(pending.current.query ?? "").get("q") !==
         (parsed.filters.q || null);
       request(parsed.filters, textChanged && parsed.filters.q ? 80 : 0);
     },
-    [canonical, parse, path, request],
+    [canonical, parse, path, request, release, locale],
   );
 
   const clear = useCallback(() => {
-    const next = parse({}).filters;
+    const next = parse({ lang: gameLocale(locale) }).filters;
     setFilters(next);
     setValidationErrors([]);
-    window.history.replaceState(null, "", path);
+    window.history.replaceState(
+      null,
+      "",
+      withLocale(withRelease(path, release), locale),
+    );
     request(next, 0);
-  }, [parse, path, request]);
+  }, [parse, path, request, release, locale]);
 
   useEffect(() => {
     const state = pending.current;
     const restore = () => {
       if (window.location.pathname !== path) return;
-      const parsed = parse(
-        readFilterParams(new URLSearchParams(window.location.search)),
-      );
+      const parsed = parse({
+        ...readFilterParams(new URLSearchParams(window.location.search)),
+        lang: gameLocale(
+          resolveLocale(
+            new URLSearchParams(window.location.search).get("lang"),
+            locale,
+          ),
+        ),
+      });
       if (parsed.errors.length) {
         setValidationErrors(parsed.errors);
         return;
@@ -370,7 +406,7 @@ export function useLiveCatalog<
       state.controller?.abort();
       state.generation += 1;
     };
-  }, [path, parse, request, canonical]);
+  }, [path, parse, request, canonical, locale]);
 
   return {
     filters,
@@ -383,8 +419,15 @@ export function useLiveCatalog<
     clear,
     retry: () =>
       request(
-        parse(readFilterParams(new URLSearchParams(window.location.search)))
-          .filters,
+        parse({
+          ...readFilterParams(new URLSearchParams(window.location.search)),
+          lang: gameLocale(
+            resolveLocale(
+              new URLSearchParams(window.location.search).get("lang"),
+              locale,
+            ),
+          ),
+        }).filters,
         0,
         true,
       ),

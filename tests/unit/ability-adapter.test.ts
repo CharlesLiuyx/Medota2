@@ -1,3 +1,4 @@
+import { loadSplitHeroFixture } from "../helpers/split-hero-fixture";
 import { describe, expect, it } from "vitest";
 import { AbilityImportValidationError } from "@/domain/abilities";
 import { parseAbilityDataset } from "@/importers/dota-vpk/ability-adapter";
@@ -8,6 +9,73 @@ import {
 } from "../helpers/vpk-fixture";
 
 describe("VPK ability adapter", () => {
+  it("loads split heroes and nested abilities with the same values, relations and source paths", async () => {
+    const files = await loadSplitHeroFixture();
+    const heroes = parseHeroDataset(files);
+    const dataset = parseAbilityDataset(files, heroes.heroes);
+    const old = await loadCatalogFixture();
+    const oldDataset = parseAbilityDataset(old, parseHeroDataset(old).heroes);
+    expect(
+      heroes.heroes.map((hero) => [hero.heroId, hero.movementSpeed]),
+    ).toEqual(
+      parseHeroDataset(old).heroes.map((hero) => [
+        hero.heroId,
+        hero.movementSpeed,
+      ]),
+    );
+    expect(
+      dataset.abilities.map((ability) => [
+        ability.internalName,
+        ability.cooldown,
+        ability.catalogStatus,
+      ]),
+    ).toEqual(
+      oldDataset.abilities.map((ability) => [
+        ability.internalName,
+        ability.cooldown,
+        ability.catalogStatus,
+      ]),
+    );
+    const gameplayBindings = (data: typeof dataset) =>
+      data.bindings
+        .filter((binding) => binding.relationKind !== "declared_in_hero_file")
+        .map((binding) =>
+          [
+            binding.heroId,
+            binding.abilityInternalName,
+            binding.relationKind,
+            binding.sourceSlot,
+          ].join(":"),
+        )
+        .sort();
+    expect(gameplayBindings(dataset)).toEqual(gameplayBindings(oldDataset));
+    expect(heroes.heroes[0].source.sourcePath).toBe(
+      "scripts/npc/heroes/npc_dota_hero_antimage.txt",
+    );
+    expect(
+      dataset.abilities.find(
+        (ability) => ability.source.declarationKind === "implicit_talent",
+      )?.source.path,
+    ).toBe("scripts/npc/heroes/npc_dota_hero_antimage.txt");
+    expect(() =>
+      parseHeroDataset(
+        files.filter((file) => !file.path.endsWith("npc_dota_hero_base.txt")),
+      ),
+    ).toThrow("outside checked selector");
+    expect(() =>
+      parseHeroDataset(
+        files.map((file) =>
+          file.path === "scripts/npc/npc_heroes.txt"
+            ? {
+                ...file,
+                text: file.text + '\n#base "heroes/npc_dota_hero_base.txt"',
+              }
+            : file,
+        ),
+      ),
+    ).toThrow("Duplicate or cyclic");
+  });
+
   it("preserves every source definition and materializes implicit talents", async () => {
     const files = await loadCatalogFixture();
     const heroes = parseHeroDataset(files).heroes;

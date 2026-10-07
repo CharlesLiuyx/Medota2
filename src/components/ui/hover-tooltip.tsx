@@ -12,7 +12,7 @@ import {
   type HTMLAttributes,
 } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
+import Link from "@/components/version-link";
 
 let activeTooltip: string | null = null;
 let hoverSuppressed = false;

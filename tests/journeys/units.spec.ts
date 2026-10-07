@@ -5,7 +5,7 @@ test("units: search, clear, filter, open detail and follow ability", async ({
   await page.goto("/units");
   await expect(
     page
-      .getByRole("navigation", { name: "Catalog entities" })
+      .getByRole("navigation", { name: "图鉴分类" })
       .getByRole("link", { name: "单位", exact: true }),
   ).toHaveAttribute("aria-current", "page");
   await expect(
@@ -24,8 +24,13 @@ test("units: search, clear, filter, open detail and follow ability", async ({
   expect(total).toBeGreaterThan(0);
   const search = page.getByRole("textbox", { name: "搜索单位" });
   await search.fill("roushan");
-  const roshan = results.locator('a[href="/units/npc_dota_roshan"]');
+  const roshan = results.locator('a[href^="/units/npc_dota_roshan?"]');
   await expect(roshan).toBeVisible();
+  expect(
+    new URL((await roshan.getAttribute("href"))!, page.url()).searchParams.get(
+      "release",
+    ),
+  ).toBe(new URL(page.url()).searchParams.get("release"));
   const portrait = roshan.locator("img");
   {
     await expect(portrait).toHaveAttribute(
@@ -66,7 +71,7 @@ test("units: search, clear, filter, open detail and follow ability", async ({
   await roshan.click();
   await expect(page.locator("h1")).toHaveText("肉山");
   await expect(page.getByRole("heading", { name: "单位技能" })).toBeVisible();
-  await expect(page.locator("dl")).toContainText("生命值");
+  await expect(page.locator("main dl:visible")).toContainText("生命值");
 
   await expect
     .poll(() =>

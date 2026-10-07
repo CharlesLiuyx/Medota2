@@ -1,12 +1,21 @@
 "use client";
-import { useMemo, useState } from "react";
+import { SourceText } from "@/i18n/provider";
+import { gameLocale } from "@/i18n/config";
+import { unitVariant } from "@/presentation/map-labels";
+
+import { useMemo, useState, useSyncExternalStore } from "react";
+import { withRelease } from "@/domain/releases";
 import { useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { UNIT_CATEGORIES, type UnitDefinition } from "@/domain/units";
+import { useLocale, useTranslations } from "@/i18n/provider";
 import { CompactSelect } from "./ui/compact-select";
 import { HoverTooltip } from "./ui/hover-tooltip";
 import { UnitStats } from "./unit-stats";
 import { UnitPortrait, type UnitPortraitRef } from "./unit-portrait";
+const subscribeToHydration = () => () => {};
+const hydrated = () => true;
+const notHydrated = () => false;
 const normalize = (value: string) =>
   value
     .normalize("NFKC")
@@ -16,14 +25,23 @@ export function UnitCatalog({
   units,
 }: {
   units: Array<
-    UnitDefinition & { searchText: string; portrait?: UnitPortraitRef }
+    UnitDefinition & {
+      searchText: string;
+      portrait?: UnitPortraitRef;
+    }
   >;
 }) {
   const params = useSearchParams();
+  const t = useTranslations();
+  const ready = useSyncExternalStore(
+    subscribeToHydration,
+    hydrated,
+    notHydrated,
+  );
   const q = (params.get("q") ?? "").slice(0, 100);
   const selected = params.get("category") ?? "all";
   const category = Object.hasOwn(UNIT_CATEGORIES, selected) ? selected : "all";
-  const lang = params.get("lang") === "en" ? "en" : "zh-CN";
+  const lang = useLocale();
   const [draft, setDraft] = useState(q);
   const [previousQ, setPreviousQ] = useState(q);
   if (previousQ !== q) {
@@ -35,11 +53,14 @@ export function UnitCatalog({
     const search = new URLSearchParams();
     if (next.q.trim()) search.set("q", next.q.trim());
     if (next.category !== "all") search.set("category", next.category);
-    if (next.lang === "en") search.set("lang", "en");
+    search.set("lang", next.lang);
     window.history.replaceState(
       null,
       "",
-      `/units${search.size ? `?${search}` : ""}`,
+      withRelease(
+        `/units${search.size ? `?${search}` : ""}`,
+        params.get("release"),
+      ),
     );
   };
   const filtered = useMemo(() => {
@@ -53,7 +74,6 @@ export function UnitCatalog({
   const select = (data: FormData) =>
     update({
       category: String(data.get("category")),
-      lang: String(data.get("lang")),
     });
   return (
     <>
@@ -67,9 +87,10 @@ export function UnitCatalog({
             aria-hidden
             className="absolute left-1.5 top-2 size-3.5 text-[var(--text-muted)]"
           />
-          <span className="sr-only">搜索单位</span>
+          <span className="sr-only">{t("搜索单位")}</span>
           <input
             name="q"
+            disabled={!ready}
             value={draft}
             onChange={(event) => {
               setDraft(event.target.value);
@@ -84,31 +105,29 @@ export function UnitCatalog({
             autoCorrect="off"
             autoCapitalize="none"
             spellCheck={false}
-            placeholder="搜索单位中文、英文或拼音…"
+            placeholder={t("搜索单位中文、英文或拼音…")}
             className="h-8 w-full bg-transparent pl-7 pr-2 text-xs"
           />
         </label>
         <CompactSelect
           name="category"
-          label="分类"
+          disabled={!ready}
+          label={t("分类")}
           value={category}
           onChange={select}
         >
-          <option value="all">全部分类</option>
+          <option value="all">{t("全部分类")}</option>
           {Object.entries(UNIT_CATEGORIES).map(([value, label]) => (
             <option key={value} value={value}>
-              {label}
+              {t(label)}
             </option>
           ))}
         </CompactSelect>
-        <CompactSelect name="lang" label="语言" value={lang} onChange={select}>
-          <option value="zh-CN">中文</option>
-          <option value="en">English</option>
-        </CompactSelect>
+
         {(q || category !== "all") && (
           <button
             type="button"
-            aria-label="清除筛选"
+            aria-label={t("清除筛选")}
             onClick={() => {
               setDraft("");
               update({ q: "", category: "all" });
@@ -120,18 +139,18 @@ export function UnitCatalog({
         )}
       </form>
       <p role="status" className="my-3 text-[11px] text-[var(--text-muted)]">
-        {filtered.length} / {units.length} 个单位定义
+        {filtered.length} / {units.length} {t("个单位定义")}
       </p>
       <ul
-        aria-label="单位结果"
+        aria-label={t("单位结果")}
         className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8"
       >
         {filtered.map((unit) => {
-          const name = lang === "en" ? unit.enName : unit.zhName;
+          const name = gameLocale(lang) === "en" ? unit.enName : unit.zhName;
           return (
             <li key={unit.internalName} className="min-w-0">
               <HoverTooltip
-                href={`/units/${unit.internalName}${lang === "en" ? "?lang=en" : ""}`}
+                href={`/units/${unit.internalName}`}
                 className="flex h-[70px] items-center gap-2 overflow-hidden bg-[#182127]/65 p-2 hover:bg-[#25313a]"
                 content={
                   <>
@@ -142,16 +161,26 @@ export function UnitCatalog({
                         portrait={unit.portrait}
                         large
                       />
-                      <p className="text-sm font-semibold">{name}</p>
+                      <p className="text-sm font-semibold">
+                        <SourceText
+                          sourceLocale={
+                            unit.nameLocales?.[
+                              gameLocale(lang) === "en" ? "en" : "zh"
+                            ]
+                          }
+                        >
+                          {name}
+                        </SourceText>
+                      </p>
                     </div>
                     <p className="my-2 text-[11px] text-[#c4a16a]">
-                      {UNIT_CATEGORIES[unit.category]} · {unit.team} ·{" "}
-                      {unit.attack}
-                      {unit.variant && ` · ${unit.variant}`}
+                      {t(UNIT_CATEGORIES[unit.category])} · {t(unit.team)} ·{" "}
+                      {t(unit.attack)}
+                      {unit.variant && ` · ${unitVariant(unit.variant, lang)}`}
                     </p>
                     <UnitStats unit={unit} compact />
                     <p className="mt-3 text-[10px] text-[var(--text-muted)]">
-                      基础定义值 · 点击查看属性与技能
+                      {t("基础定义值 · 点击查看属性与技能")}
                     </p>
                   </>
                 }
@@ -162,13 +191,23 @@ export function UnitCatalog({
                   portrait={unit.portrait}
                 />
                 <div className="min-w-0">
-                  <h2 className="truncate text-xs font-medium">{name}</h2>
+                  <h2 className="truncate text-xs font-medium">
+                    <SourceText
+                      sourceLocale={
+                        unit.nameLocales?.[
+                          gameLocale(lang) === "en" ? "en" : "zh"
+                        ]
+                      }
+                    >
+                      {name}
+                    </SourceText>
+                  </h2>
                   <p className="mt-1 truncate text-[10px] text-[var(--text-muted)]">
-                    {UNIT_CATEGORIES[unit.category]} · {unit.team}
+                    {t(UNIT_CATEGORIES[unit.category])} · {t(unit.team)}
                   </p>
                   {unit.variant && (
                     <p className="truncate text-[10px] text-[#a8b4be]">
-                      {unit.variant}
+                      {unitVariant(unit.variant, lang)}
                     </p>
                   )}
                 </div>
@@ -179,7 +218,7 @@ export function UnitCatalog({
       </ul>
       {!filtered.length && (
         <div className="py-16 text-center text-sm text-[var(--text-muted)]">
-          没有符合条件的单位，请调整关键词或分类。
+          {t("没有符合条件的单位，请调整关键词或分类。")}
         </div>
       )}
     </>

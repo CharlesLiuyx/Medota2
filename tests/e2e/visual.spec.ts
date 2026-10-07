@@ -18,7 +18,7 @@ test("heroes catalog visual baseline", async ({ page }) => {
     page.getByText("已显示全部英雄。", { exact: true }).last(),
   ).toBeVisible();
   await expect(
-    page.getByRole("img", { name: "Anti-Mage icon", exact: true }),
+    page.getByRole("img", { name: "Anti-Mage 图标", exact: true }),
   ).toBeVisible();
   await waitForImages(page);
   await expect(page).toHaveScreenshot("heroes-catalog.png", {
@@ -32,6 +32,9 @@ test("heroes catalog visual baseline", async ({ page }) => {
 
 test("ability detail visual baseline", async ({ page }) => {
   await page.goto("/abilities/antimage_blink?lang=en");
+  await expect(
+    page.getByRole("combobox", { name: "Game version" }),
+  ).toContainText("Unknown patch");
   await expect(
     page.getByRole("heading", { name: "Blink", level: 1 }),
   ).toBeVisible();
@@ -54,12 +57,12 @@ test("landmarks and heading structure remain semantic", async ({ page }) => {
   await expect(page.getByRole("main")).toHaveCount(1);
   await expect(page.getByRole("contentinfo")).toHaveCount(1);
   await expect(
-    page.getByRole("navigation", { name: "Catalog entities" }),
+    page.getByRole("navigation", { name: "图鉴分类" }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
 
   const environmentStrip = page.getByRole("status", {
-    name: "Runtime environment",
+    name: "运行环境",
   });
   await expect(environmentStrip).toBeVisible();
   await expect(environmentStrip).toContainText("测试预览");

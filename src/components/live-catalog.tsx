@@ -1,4 +1,8 @@
 "use client";
+import { useLocale } from "@/i18n/provider";
+import { diagnosticText } from "@/i18n/diagnostics";
+import { LocalizedText, useTranslations } from "@/i18n/provider";
+
 import type { ReactNode } from "react";
 import type { VersionedListSlice } from "@/domain/infinite-list";
 import type { HeroCardRow } from "@/server/repositories/heroes";
@@ -19,7 +23,6 @@ import { InfiniteHeroCatalog } from "./infinite-hero-catalog";
 import { InfiniteAbilityCatalog } from "./infinite-ability-catalog";
 import { ValidationErrorList } from "./validation-error-list";
 import { useLiveCatalog } from "./use-live-catalog";
-
 export function LiveHeroCatalog({
   initialSlice,
   initialFilters,
@@ -33,6 +36,8 @@ export function LiveHeroCatalog({
   total: number;
   updatedAt: string;
 }) {
+  const t = useTranslations();
+  const locale = useLocale();
   const live = useLiveCatalog({
     path: "/heroes",
     localEntity: "heroes",
@@ -57,12 +62,16 @@ export function LiveHeroCatalog({
       <CatalogStatus
         count={live.result.slice.total ?? 0}
         total={total}
-        unit="位英雄"
+        unit={t("位英雄")}
         busy={live.busy}
-        error={live.error}
+        error={
+          live.error === null ? null : diagnosticText(locale, live.error ?? "")
+        }
         retry={live.retry}
       >
-        <span data-catalog-updated-at>资料更新于 {updatedAt}</span>
+        <span data-catalog-updated-at>
+          <LocalizedText>资料更新于</LocalizedText> {updatedAt}
+        </span>
       </CatalogStatus>
       <div
         aria-busy={live.busy}
@@ -84,7 +93,6 @@ export function LiveHeroCatalog({
     </>
   );
 }
-
 export function LiveAbilityCatalog({
   initialSlice,
   initialFilters,
@@ -96,8 +104,14 @@ export function LiveAbilityCatalog({
   initialFilters: AbilityFilters;
   initialErrors: string[];
   total: number;
-  heroes: Array<{ slug: string; zhName: string; enName: string }>;
+  heroes: Array<{
+    slug: string;
+    zhName: string;
+    enName: string;
+  }>;
 }) {
+  const t = useTranslations();
+  const locale = useLocale();
   const live = useLiveCatalog({
     path: "/abilities",
     localEntity: "abilities",
@@ -123,12 +137,14 @@ export function LiveAbilityCatalog({
       <CatalogStatus
         count={live.result.slice.total ?? 0}
         total={total}
-        unit="项技能"
+        unit={t("项技能")}
         busy={live.busy}
-        error={live.error}
+        error={
+          live.error === null ? null : diagnosticText(locale, live.error ?? "")
+        }
         retry={live.retry}
       >
-        向下浏览更多技能
+        <LocalizedText>向下浏览更多技能</LocalizedText>
       </CatalogStatus>
       <div
         aria-busy={live.busy}
@@ -150,7 +166,6 @@ export function LiveAbilityCatalog({
     </>
   );
 }
-
 function CatalogStatus({
   count,
   total,
@@ -168,18 +183,20 @@ function CatalogStatus({
   retry: () => void;
   children: ReactNode;
 }) {
+  const t = useTranslations();
+  const locale = useLocale();
   return (
     <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--text-muted)]">
       <p role="status" aria-live="polite" aria-atomic="true">
         <span className="font-data text-[var(--text-primary)]">{count}</span> /{" "}
-        {total} {unit}
-        {busy && <span className="ml-2">筛选中…</span>}
+        {total} {t(unit)}
+        {busy && <span className="ml-2">{t("筛选中…")}</span>}
       </p>
       {error ? (
         <p role="alert">
-          {error}{" "}
+          {diagnosticText(locale, error)}{" "}
           <button onClick={retry} className="underline">
-            重试
+            {t("重试")}
           </button>
         </p>
       ) : (

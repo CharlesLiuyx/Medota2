@@ -63,8 +63,11 @@ async function check(): Promise<boolean> {
     console.log(JSON.stringify(plan, null, 2));
     return true;
   }
-  const release = await acquireLock("checks");
-  plan = createPlan(options.files ?? changedFiles(options.base));
+  // Static tasks only read shared inputs and write independent/atomic evidence.
+  // TypeScript already holds its own `types` lock for the incremental cache.
+  const shared = plan.tasks.some((task) => task.kind !== "static");
+  const release = shared ? await acquireLock("checks") : async () => {};
+  if (shared) plan = createPlan(options.files ?? changedFiles(options.base));
   const runId = `${Date.now()}-${randomUUID().slice(0, 8)}`;
   const evidence = resolve(".medota2/checks", runId, "run.json");
   const manifest = {
@@ -153,10 +156,8 @@ async function check(): Promise<boolean> {
       }
     }
     if (
-      JSON.stringify(plan.paths) !==
-      JSON.stringify(
-        createPlan(options.files ?? changedFiles(options.base)).paths,
-      )
+      JSON.stringify(plan) !==
+      JSON.stringify(createPlan(options.files ?? changedFiles(options.base)))
     )
       stale = true;
     manifest.status = stale ? "stale" : "passed";

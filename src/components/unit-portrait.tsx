@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/i18n/provider";
 import Image from "next/image";
 import { ImageOff } from "lucide-react";
 import { useState } from "react";
@@ -18,6 +19,7 @@ export function UnitPortrait({
   portrait?: UnitPortraitRef;
   large?: boolean;
 }) {
+  const t = useTranslations();
   const [failed, setFailed] = useState<string | null>(null);
   const src = portrait
     ? `/valve-assets/unit/${unitKey}?v=${portrait.version}`
@@ -25,12 +27,12 @@ export function UnitPortrait({
   const available =
     portrait && portrait.resolution !== "unavailable" && failed !== src;
   const label = !available
-    ? "头像待补充"
+    ? t("头像待补充")
     : portrait.resolution === "related_icon"
-      ? "关联技能图标"
+      ? t("关联技能图标")
       : portrait.resolution === "shared_portrait"
-        ? "共用模型头像"
-        : "头像";
+        ? t("共用模型头像")
+        : t("头像");
   return (
     <span
       className={`relative grid shrink-0 place-items-center overflow-hidden bg-white/[0.035] text-[var(--text-muted)] ${large ? "size-14" : "size-9"}`}
@@ -52,7 +54,7 @@ export function UnitPortrait({
       )}
       {available && portrait.resolution === "related_icon" && (
         <span className="absolute bottom-0 right-0 bg-black/70 px-0.5 text-[8px]">
-          技能
+          {t("技能")}
         </span>
       )}
     </span>

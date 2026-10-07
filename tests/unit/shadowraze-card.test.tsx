@@ -41,7 +41,7 @@ it("uses one card and selects the complete range definition and its original det
     ).toBe("true");
     expect(
       screen.getByRole("link", { name: "毁灭阴影" }).getAttribute("href"),
-    ).toBe(`/abilities/nevermore_shadowraze${index + 1}?lang=en`);
+    ).toBe(`/abilities/nevermore_shadowraze${index + 1}?lang=zh-CN`);
     expect(screen.getByText(/◷ 冷却/).textContent).toContain(`${9 + index}`);
   }
   // Existing links into any of the three original skill anchors still resolve.

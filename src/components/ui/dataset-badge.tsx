@@ -1,3 +1,4 @@
+import { LocalizedText } from "@/i18n/provider";
 import type { CatalogGateStatus } from "@/domain/catalog";
 export function DatasetBadge({
   clientVersion,
@@ -12,15 +13,19 @@ export function DatasetBadge({
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--text-muted)]">
       <span className="text-[var(--text-secondary)]">
-        收录版本{" "}
+        <LocalizedText>游戏版本</LocalizedText>{" "}
         <strong className="font-data font-medium text-[var(--accent-primary)]">
-          {gameplayVersion ?? "待确认"}
+          {gameplayVersion ?? <LocalizedText>待确认</LocalizedText>}
         </strong>
       </span>
-      <span>客户端 {clientVersion}</span>
+      <span>
+        <LocalizedText>客户端</LocalizedText> {clientVersion}
+      </span>
       {gateStatus !== "green" && (
         <span>
-          {gateStatus === "yellow" ? "部分资料仍待核对" : "资料暂不可用"}
+          <LocalizedText>
+            {gateStatus === "yellow" ? "部分资料仍待核对" : "资料暂不可用"}
+          </LocalizedText>
         </span>
       )}
     </div>

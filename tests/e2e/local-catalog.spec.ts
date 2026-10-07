@@ -109,7 +109,11 @@ test("heroes search and filter offline, then restore from IndexedDB without a do
   await expect(page.locator("[data-infinite-list-item]")).toHaveCount(1);
   await input.fill("敌法");
   await input.dispatchEvent("compositionend", { data: "敌法" });
-  await expect(page).toHaveURL(/q=%E6%95%8C%E6%B3%95$/u);
+  await expect(page).toHaveURL(
+    (url) =>
+      url.searchParams.get("q") === "敌法" &&
+      url.searchParams.get("lang") === "zh-CN",
+  );
   await page.getByRole("button", { name: /清除/u }).click();
   await expect(page.locator("[data-infinite-list-item]")).toHaveCount(allCount);
   await page.locator("summary").filter({ hasText: "主属性" }).click();
@@ -144,7 +148,9 @@ test("abilities use the local bilingual index and recover a corrupted stored sna
   await page.goto("/abilities");
   const result = page.locator("[data-live-results]");
   await expect(result).toHaveAttribute("data-browser-cache", "ready");
-  const input = page.getByRole("textbox", { name: "搜索技能" });
+  const input = page.getByRole("textbox", {
+    name: /搜索技能|Search abilities/,
+  });
   await page.getByRole("combobox", { name: "语言" }).click();
   await page.getByRole("option", { name: "English", exact: true }).click();
   await expect(result).toHaveAttribute("data-browser-cache", "ready");
@@ -233,6 +239,6 @@ test("a snapshot arriving during a card click preserves the link", async ({
     "ready",
   );
   await page.mouse.up();
-  await expect(page).toHaveURL(new RegExp(`${href}$`));
+  await expect(page).toHaveURL(new URL(href!, page.url()).href);
   await expect(page.locator("h1")).toBeVisible();
 });

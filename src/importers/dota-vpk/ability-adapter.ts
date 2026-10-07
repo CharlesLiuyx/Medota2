@@ -1,3 +1,4 @@
+import { readHeroSource } from "./hero-source";
 import { basename } from "node:path";
 import {
   AbilityImportValidationError,
@@ -32,7 +33,6 @@ import {
   HERO_ABILITY_SOURCE_PATTERN,
 } from "./constants";
 
-const HEROES_PATH = "scripts/npc/npc_heroes.txt";
 const ABILITIES_PATH = "scripts/npc/npc_abilities.txt";
 const ABILITY_IDS_PATH = "scripts/npc/npc_ability_ids.txt";
 const ABILITY_SLOT = /^Ability(\d+)$/u;
@@ -101,22 +101,13 @@ export function parseAbilityDataset(
   const collected = collectDefinitions(files, issues);
   const definitions = collected.definitions;
   const sourceDefinitions = definitions.size;
-  collectImplicitTalentDefinitions(
-    requiredFile(byPath, HEROES_PATH),
-    heroes,
-    definitions,
-  );
+  collectImplicitTalentDefinitions(files, heroes, definitions);
   const resolved = resolveDefinitions(definitions, issues);
   const idMappings = parseAbilityIdMappings(
     requiredFile(byPath, ABILITY_IDS_PATH),
     issues,
   );
-  const heroResult = parseHeroRelations(
-    requiredFile(byPath, HEROES_PATH),
-    heroes,
-    resolved,
-    issues,
-  );
+  const heroResult = parseHeroRelations(files, heroes, resolved, issues);
   const localizations = readAbilityLocalizations(byPath, issues);
   const baseClassNames = new Set(
     [...resolved.values()]
@@ -213,7 +204,28 @@ function collectDefinitions(
   const definitions = new Map<string, DefinitionRecord>();
   let excluded = 0;
   for (const file of sources) {
-    const root = uniqueObject(parseKeyValues(file.text), "DOTAAbilities");
+    const document = parseKeyValues(file.text);
+    const abilityRoots = objectEntries(document, "DOTAAbilities");
+    let root: KeyValuesObject;
+    if (abilityRoots.length) {
+      root = uniqueObject(document, "DOTAAbilities");
+    } else {
+      const heroRoot = uniqueObject(document, "DOTAHeroes");
+      root = { entries: [] };
+      for (const hero of heroRoot.entries) {
+        if (typeof hero.value === "string") continue;
+        const blocks = objectEntries(hero.value, "AbilityDefinitions");
+        if (
+          blocks.length > 1 ||
+          blocks.some((block) => typeof block.value === "string")
+        ) {
+          throw new Error(`Invalid AbilityDefinitions in ${file.path}`);
+        }
+        for (const block of blocks) {
+          root.entries.push(...(block.value as KeyValuesObject).entries);
+        }
+      }
+    }
     const declaredHero = HERO_ABILITY_SOURCE_PATTERN.test(file.path)
       ? basename(file.path, ".txt")
       : null;
@@ -271,12 +283,13 @@ function collectDefinitions(
 }
 
 function collectImplicitTalentDefinitions(
-  file: CheckedSourceFile,
+  files: readonly CheckedSourceFile[],
   heroes: readonly CanonicalHero[],
   definitions: Map<string, DefinitionRecord>,
 ): void {
-  const root = uniqueObject(parseKeyValues(file.text), "DOTAHeroes");
+  const { root, origins } = readHeroSource(files);
   for (const hero of heroes) {
+    const file = origins.get(hero.internalName)!;
     const matches = objectEntries(root, hero.internalName);
     if (matches.length !== 1 || typeof matches[0].value === "string") continue;
     for (const entry of matches[0].value.entries) {
@@ -492,17 +505,18 @@ function collectIdEntries(
 }
 
 function parseHeroRelations(
-  file: CheckedSourceFile,
+  files: readonly CheckedSourceFile[],
   heroes: readonly CanonicalHero[],
   definitions: Map<string, ResolvedDefinition>,
   issues: ImportIssue[],
 ): { bindings: HeroAbilityBinding[]; facets: CanonicalFacet[] } {
-  const root = uniqueObject(parseKeyValues(file.text), "DOTAHeroes");
+  const { root, origins } = readHeroSource(files);
   const bindings: HeroAbilityBinding[] = [];
   const facets: CanonicalFacet[] = [];
   const seen = new Set<string>();
 
   for (const hero of heroes) {
+    const file = origins.get(hero.internalName)!;
     const matches = objectEntries(root, hero.internalName);
     if (matches.length !== 1 || typeof matches[0].value === "string") {
       issues.push(

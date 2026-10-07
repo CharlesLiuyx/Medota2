@@ -1046,3 +1046,78 @@ export const unitAssetHeads = pgTable(
     }),
   ],
 );
+
+export const itemAssetDatasetVersions = pgTable(
+  "item_asset_dataset_versions",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    catalogDatasetVersionId: uuid("catalog_dataset_version_id")
+      .notNull()
+      .references(() => heroCatalogDatasetVersions.id),
+    manifestSha256: text("manifest_sha256").notNull(),
+    expectedKeys: text("expected_keys").array().notNull(),
+    provenance: jsonb().notNull(),
+    importedAt: timestamp("imported_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    unique().on(table.catalogDatasetVersionId, table.manifestSha256),
+    unique().on(table.catalogDatasetVersionId, table.id),
+    check(
+      "item_asset_dataset_versions_manifest_sha256_check",
+      sql`${table.manifestSha256} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      "item_asset_dataset_versions_expected_keys_check",
+      sql`cardinality(${table.expectedKeys}) > 0`,
+    ),
+    check(
+      "item_asset_dataset_versions_provenance_check",
+      sql`jsonb_typeof(${table.provenance}) = 'object'`,
+    ),
+  ],
+);
+export const itemAssetBindings = pgTable(
+  "item_asset_bindings",
+  {
+    datasetVersionId: uuid("dataset_version_id")
+      .notNull()
+      .references(() => itemAssetDatasetVersions.id),
+    itemKey: text("item_key").notNull(),
+    assetObjectId: uuid("asset_object_id")
+      .notNull()
+      .references(() => assetObjects.id),
+    resolution: text().notNull(),
+    provenance: jsonb().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.datasetVersionId, table.itemKey] }),
+    check(
+      "item_asset_bindings_resolution_check",
+      sql`${table.resolution} IN ('icon','shared_icon')`,
+    ),
+    check(
+      "item_asset_bindings_provenance_check",
+      sql`jsonb_typeof(${table.provenance}) = 'object'`,
+    ),
+  ],
+);
+export const itemAssetHeads = pgTable(
+  "item_asset_heads",
+  {
+    catalogDatasetVersionId: uuid("catalog_dataset_version_id")
+      .primaryKey()
+      .references(() => heroCatalogDatasetVersions.id),
+    datasetVersionId: uuid("dataset_version_id").notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.catalogDatasetVersionId, table.datasetVersionId],
+      foreignColumns: [
+        itemAssetDatasetVersions.catalogDatasetVersionId,
+        itemAssetDatasetVersions.id,
+      ],
+    }),
+  ],
+);

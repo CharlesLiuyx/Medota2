@@ -1,12 +1,14 @@
 "use client";
+import { Message, useLocale, useTranslations } from "@/i18n/provider";
 
+import { formatNumber } from "@/i18n/format";
 import { useEffect, useState } from "react";
+import { CompactSelect } from "./ui/compact-select";
 import type {
   DatabaseOverview,
   DatabasePage,
 } from "@/development/data-sync/view";
 import styles from "@/app/dev/database/database.module.css";
-
 const states: Record<string, string> = {
   "in-sync": "上次核验一致",
   "code-modified": "代码有未提交修改",
@@ -18,6 +20,8 @@ const states: Record<string, string> = {
 };
 const bytes = (size: number) => `${(size / 1024 / 1024).toFixed(1)} MB`;
 export function DatabaseInspector() {
+  const t = useTranslations();
+  const locale = useLocale();
   const [overview, setOverview] = useState<DatabaseOverview | null>(null);
   const [table, setTable] = useState("heroes");
   const [page, setPage] = useState<DatabasePage | null>(null);
@@ -35,7 +39,7 @@ export function DatabaseInspector() {
           cache: "no-store",
           signal: abort.signal,
         });
-        if (!response.ok) throw new Error("无法连接当前工作区数据库");
+        if (!response.ok) throw new Error(t("无法连接当前工作区数据库"));
         setOverview(await response.json());
       } catch (error) {
         if (!abort.signal.aborted) setError(String(error));
@@ -43,7 +47,7 @@ export function DatabaseInspector() {
     }
     void load();
     return () => abort.abort();
-  }, [revision]);
+  }, [revision, t]);
   useEffect(() => {
     const abort = new AbortController();
     async function load() {
@@ -62,7 +66,7 @@ export function DatabaseInspector() {
           signal: abort.signal,
         });
         if (!response.ok)
-          throw new Error("记录读取失败，请检查筛选条件或开发日志");
+          throw new Error(t("记录读取失败，请检查筛选条件或开发日志"));
         setPage(await response.json());
         setError("");
       } catch (error) {
@@ -71,7 +75,7 @@ export function DatabaseInspector() {
     }
     void load();
     return () => abort.abort();
-  }, [table, offset, filter, revision]);
+  }, [table, offset, filter, revision, t]);
   const selected = overview?.tables.find((item) => item.name === table);
   const currentPage =
     page?.table === table && page.offset === offset ? page : null;
@@ -84,17 +88,22 @@ export function DatabaseInspector() {
     setPage(null);
   }
   return (
-    <section className={styles.root} aria-label="开发数据库查看器">
+    <section className={styles.root} aria-label={t("开发数据库查看器")}>
       <div className={styles.heading}>
         <div>
-          <h1>开发数据库</h1>
+          <h1>{t("开发数据库")}</h1>
           <p>
-            只读查看 · {overview?.workspace?.name ?? "当前工作区"} ·{" "}
-            {overview?.environment.environment ?? "连接中"}
+            <Message
+              id="只读查看 · {value0} · {value1}"
+              values={{
+                value0: overview?.workspace?.name ?? t("当前工作区"),
+                value1: overview?.environment.environment ?? t("连接中"),
+              }}
+            />
           </p>
         </div>
         <button onClick={() => setRevision((value) => value + 1)}>
-          刷新记录
+          {t("刷新记录")}
         </button>
       </div>
       {error && (
@@ -104,7 +113,7 @@ export function DatabaseInspector() {
       )}
       <div className={styles.summary}>
         <div>
-          <span>当前数据库</span>
+          <span>{t("当前数据库")}</span>
           <strong>{overview?.environment.databaseName ?? "—"}</strong>
           <small>
             {overview?.environment.dataClass} ·{" "}
@@ -112,60 +121,87 @@ export function DatabaseInspector() {
           </small>
         </div>
         <div>
-          <span>目标快照</span>
+          <span>{t("目标快照")}</span>
           <strong>
-            {overview?.target?.snapshotId.slice(0, 16) ?? "尚未配置"}
+            {overview?.target?.snapshotId.slice(0, 16) ?? t("尚未配置")}
           </strong>
           <small>
-            当前应用：{overview?.activeSnapshot?.slice(0, 16) ?? "原有开发数据"}
+            <Message
+              id="当前应用：{value0}"
+              values={{
+                value0:
+                  overview?.activeSnapshot?.slice(0, 16) ?? t("原有开发数据"),
+              }}
+            />
           </small>
         </div>
         <div>
-          <span>上次完整核验</span>
+          <span>{t("上次完整核验")}</span>
           <strong>
             {overview?.lastVerification
-              ? (states[overview.lastVerification.state] ??
-                overview.lastVerification.state)
-              : "尚无记录"}
+              ? t(
+                  states[overview.lastVerification.state] ??
+                    overview.lastVerification.state,
+                )
+              : t("尚无记录")}
           </strong>
           <small>
-            {overview?.lastVerification?.checkedAt ?? "运行 pnpm data:status"}
+            {overview?.lastVerification?.checkedAt ??
+              t("运行 pnpm data:status")}
           </small>
         </div>
         <div>
-          <span>业务表与记录</span>
+          <span>{t("业务表与记录")}</span>
           <strong>
-            {overview?.tables.length ?? "—"} 张表 ·{" "}
-            {overview?.tables
-              .reduce((sum, item) => sum + item.rows, 0)
-              .toLocaleString() ?? "—"}{" "}
-            条
+            <Message
+              id="{value0} 张表 · {value1} 条"
+              values={{
+                value0: overview?.tables.length ?? "—",
+                value1: overview
+                  ? formatNumber(
+                      locale,
+                      overview.tables.reduce((sum, item) => sum + item.rows, 0),
+                    )
+                  : "—",
+              }}
+            />
           </strong>
           <small>
-            {overview
-              ? bytes(
-                  overview.tables.reduce((sum, item) => sum + item.bytes, 0),
-                )
-              : "—"}
-            （含索引）
+            <Message
+              id="{value0}（含索引）"
+              values={{
+                value0: overview
+                  ? bytes(
+                      overview.tables.reduce(
+                        (sum, item) => sum + item.bytes,
+                        0,
+                      ),
+                    )
+                  : "—",
+              }}
+            />
           </small>
         </div>
       </div>
       <p className={styles.note}>
-        记录从当前数据库读取。完整核验结果带有时间；要核对全部内容、图片与来源，请在该工作区运行{" "}
-        <code>pnpm data:status</code>。
+        <Message
+          id="记录从当前数据库读取。完整核验结果带有时间；要核对全部内容、图片与来源，请在该工作区运行 {value0}。"
+          values={{
+            value0: <code>pnpm data:status</code>,
+          }}
+        />
       </p>
       {overview?.lastVerification?.problems.map((problem) => (
         <p className={styles.error} key={problem}>
-          {problem}
+          <code>{problem}</code>
         </p>
       ))}
       <details className={styles.heads}>
-        <summary>查看 Catalog／图片版本指针</summary>
+        <summary>{t("查看 Catalog／图片版本指针")}</summary>
         <pre>{JSON.stringify(overview?.heads ?? {}, null, 2)}</pre>
       </details>
       <div className={styles.browser}>
-        <nav className={styles.tables} aria-label="数据库表">
+        <nav className={styles.tables} aria-label={t("数据库表")}>
           {overview?.tables.map((item) => (
             <button
               key={item.name}
@@ -173,17 +209,24 @@ export function DatabaseInspector() {
               onClick={() => selectTable(item.name)}
             >
               <span>{item.name}</span>
-              <small>{item.rows.toLocaleString()}</small>
+              <small>{formatNumber(locale, item.rows)}</small>
             </button>
           ))}
         </nav>
         <div className={styles.content}>
           <div className={styles.heading}>
             <h2>{table}</h2>
-            <span>{selected?.rows.toLocaleString() ?? "—"} 条</span>
+            <span>
+              <Message
+                id="{value0} 条"
+                values={{
+                  value0: selected ? formatNumber(locale, selected.rows) : "—",
+                }}
+              />
+            </span>
           </div>
           <details>
-            <summary>列类型与主键</summary>
+            <summary>{t("列类型与主键")}</summary>
             <div className={styles.columns}>
               {selected?.columns.map((item) => (
                 <span key={item.name}>
@@ -203,12 +246,14 @@ export function DatabaseInspector() {
               setFilter({ column, query });
             }}
           >
-            <select
-              aria-label="筛选字段"
+            <CompactSelect
+              label={t("筛选字段")}
+              name="column"
+              hideLabel
               value={column}
-              onChange={(event) => setColumn(event.target.value)}
+              onValueChange={setColumn}
             >
-              <option value="">选择字段</option>
+              <option value="">{t("选择字段")}</option>
               {selected?.columns
                 .filter((item) => item.type !== "bytea")
                 .map((item) => (
@@ -216,15 +261,15 @@ export function DatabaseInspector() {
                     {item.name}
                   </option>
                 ))}
-            </select>
+            </CompactSelect>
             <input
-              aria-label="筛选内容"
-              placeholder="字段包含…"
+              aria-label={t("筛选内容")}
+              placeholder={t("字段包含…")}
               maxLength={200}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
-            <button disabled={Boolean(query && !column)}>筛选</button>
+            <button disabled={Boolean(query && !column)}>{t("筛选")}</button>
             <button
               type="button"
               onClick={() => {
@@ -234,14 +279,14 @@ export function DatabaseInspector() {
                 setOffset(0);
               }}
             >
-              清除
+              {t("清除")}
             </button>
           </form>
           <div className={styles.grid}>
             <table>
               <thead>
                 <tr>
-                  {table === "asset_blobs" && <th>图片</th>}
+                  {table === "asset_blobs" && <th>{t("图片")}</th>}
                   {selected?.columns.map((item) => (
                     <th key={item.name}>{item.name}</th>
                   ))}
@@ -254,7 +299,7 @@ export function DatabaseInspector() {
                       <td>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          alt="数据库图片预览"
+                          alt={t("数据库图片预览")}
                           loading="lazy"
                           width={64}
                           height={48}
@@ -275,21 +320,28 @@ export function DatabaseInspector() {
               </tbody>
             </table>
           </div>
-          {!currentPage && <p role="status">正在读取记录…</p>}
-          {currentPage?.rows.length === 0 && <p>没有匹配记录。</p>}
+          {!currentPage && <p role="status">{t("正在读取记录…")}</p>}
+          {currentPage?.rows.length === 0 && <p>{t("没有匹配记录。")}</p>}
           <div className={styles.pagination}>
             <button
               disabled={offset === 0}
               onClick={() => setOffset((value) => Math.max(0, value - 50))}
             >
-              上一页
+              {t("上一页")}
             </button>
-            <span>第 {Math.floor(offset / 50) + 1} 页 · 每页 50 条</span>
+            <span>
+              <Message
+                id="第 {value0} 页 · 每页 50 条"
+                values={{
+                  value0: Math.floor(offset / 50) + 1,
+                }}
+              />
+            </span>
             <button
               disabled={!currentPage?.hasMore}
               onClick={() => setOffset((value) => value + 50)}
             >
-              下一页
+              {t("下一页")}
             </button>
           </div>
         </div>
@@ -317,12 +369,12 @@ function Cell({
   if (json || value.length > 180)
     return (
       <details>
-        <summary>
+        <summary data-source-text="">
           {value.slice(0, 90)}
           {value.length > 90 ? "…" : ""}
         </summary>
         <pre>{display}</pre>
       </details>
     );
-  return <span>{value}</span>;
+  return <span data-source-text="">{value}</span>;
 }

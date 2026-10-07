@@ -1,29 +1,24 @@
 "use client";
-
-import Link from "next/link";
+import { useTranslations } from "@/i18n/provider";
+import Link from "@/components/version-link";
 import { AbilityIcon } from "@/components/ability-icon";
 import { InfiniteList } from "@/components/infinite-list";
 import type { HeroDetail } from "@/server/repositories/heroes";
-
 type HeroAbility = HeroDetail["abilities"][number];
 type HeroFacet = HeroDetail["facets"][number];
 type HeroRole = HeroDetail["roles"][number];
 type HeroSourceFile = HeroDetail["sourceFiles"][number];
 type HeroLocalization = HeroDetail["localizations"][number];
 type ReferenceDiff = NonNullable<HeroDetail["comparison"]>["diffs"][number];
-
 export type HeroStatRow = [label: string, value: unknown, suffix?: string];
-
 export interface HeroTraceRow {
   label: string;
   value: string;
   mono?: boolean;
 }
-
 interface HeroListIdentity {
   listIdentity: string;
 }
-
 export function HeroAbilityList({
   abilities,
   assetVersion,
@@ -34,6 +29,7 @@ export function HeroAbilityList({
   assetVersion: string;
   lang: "en" | "zh-CN";
 }) {
+  const t = useTranslations();
   return (
     <InfiniteList
       source={{
@@ -44,12 +40,12 @@ export function HeroAbilityList({
       getKey={(ability) =>
         `${ability.internal_name}:${ability.relation_kind}:${ability.source_slot}:${ability.ordinal}`
       }
-      ariaLabel="Hero abilities"
+      ariaLabel={t("英雄技能列表")}
       className="mt-5 space-y-2"
       chunkClassName="grid gap-2 md:grid-cols-2"
       emptyFallback={
         <div className="mt-5 border border-dashed border-[var(--border-default)] p-6 text-sm text-[var(--text-muted)]">
-          当前关系图没有此类 Ability。
+          {t("当前关系图没有此类 Ability。")}
         </div>
       }
       renderChunk={(items) =>
@@ -66,7 +62,7 @@ export function HeroAbilityList({
               data-infinite-list-key={`${ability.internal_name}:${ability.relation_kind}:${ability.source_slot}:${ability.ordinal}`}
             >
               <Link
-                href={`/abilities/${ability.internal_name}${lang === "en" ? "?lang=en" : ""}`}
+                href={`/abilities/${ability.internal_name}`}
                 className="flex h-full gap-3 border border-[var(--border-default)] bg-[var(--surface-panel)] p-3 hover:bg-[var(--surface-hover)]"
               >
                 <AbilityIcon
@@ -86,13 +82,17 @@ export function HeroAbilityList({
                     <DetailBadge muted={!ability.is_current}>
                       {ability.is_current ? "current" : ability.catalog_status}
                     </DetailBadge>
-                    {ability.is_innate && <DetailBadge>innate</DetailBadge>}
-                    {ability.is_ultimate && <DetailBadge>ultimate</DetailBadge>}
+                    {ability.is_innate && (
+                      <DetailBadge>{t("先天技能")}</DetailBadge>
+                    )}
+                    {ability.is_ultimate && (
+                      <DetailBadge>{t("终极技能")}</DetailBadge>
+                    )}
                     {ability.has_scepter_upgrade && (
-                      <DetailBadge>scepter</DetailBadge>
+                      <DetailBadge>{t("神杖")}</DetailBadge>
                     )}
                     {ability.has_shard_upgrade && (
-                      <DetailBadge>shard</DetailBadge>
+                      <DetailBadge>{t("魔晶")}</DetailBadge>
                     )}
                   </span>
                 </span>
@@ -104,16 +104,18 @@ export function HeroAbilityList({
     />
   );
 }
-
 export function HeroFacetList({
   facets,
   listIdentity,
-}: HeroListIdentity & { facets: HeroFacet[] }) {
+}: HeroListIdentity & {
+  facets: HeroFacet[];
+}) {
+  const t = useTranslations();
   return (
     <InfiniteList
       source={{ kind: "local", items: facets, identity: listIdentity }}
       getKey={(facet) => facet.facet_key}
-      ariaLabel="Hero facets"
+      ariaLabel={t("英雄命石列表")}
       className="mt-5 space-y-2"
       chunkClassName="grid gap-2 sm:grid-cols-2"
       renderChunk={(items) =>
@@ -134,8 +136,8 @@ export function HeroFacetList({
               </DetailBadge>
             </div>
             <p className="mt-2 text-[10px] text-[var(--text-muted)]">
-              {facet.icon ?? "no icon"} · {facet.color ?? "no color"} · gradient{" "}
-              {facet.gradient_id ?? "—"}
+              {facet.icon ?? "no icon"} · {facet.color ?? "no color"} ·{" "}
+              {t("渐变")} {facet.gradient_id ?? "—"}
             </p>
           </div>
         ))
@@ -143,7 +145,6 @@ export function HeroFacetList({
     />
   );
 }
-
 export function HeroRoleList({
   roles,
   labels,
@@ -152,11 +153,12 @@ export function HeroRoleList({
   roles: HeroRole[];
   labels: Record<string, string>;
 }) {
+  const t = useTranslations();
   return (
     <InfiniteList
       source={{ kind: "local", items: roles, identity: listIdentity }}
       getKey={(role) => role.role}
-      ariaLabel="Hero role strengths"
+      ariaLabel={t("英雄定位强度")}
       className="mt-4 space-y-3"
       chunkClassName="space-y-3"
       renderChunk={(items) =>
@@ -169,7 +171,7 @@ export function HeroRoleList({
             className="grid grid-cols-[1fr_auto] items-center gap-3 text-xs"
           >
             <span className="text-zinc-300">
-              {labels[role.role] ?? role.role}
+              {t(labels[role.role] ?? role.role)}
             </span>
             <span className="flex gap-1">
               {[1, 2, 3].map((level) => (
@@ -185,7 +187,6 @@ export function HeroRoleList({
     />
   );
 }
-
 export function HeroStatGroup({
   title,
   rows,
@@ -194,6 +195,7 @@ export function HeroStatGroup({
   title: string;
   rows: HeroStatRow[];
 }) {
+  const t = useTranslations();
   return (
     <div className="border border-white/8 bg-[#121418] p-5">
       <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
@@ -202,7 +204,7 @@ export function HeroStatGroup({
       <InfiniteList
         source={{ kind: "local", items: rows, identity: listIdentity }}
         getKey={(row) => row[0]}
-        ariaLabel={`${title} stats`}
+        ariaLabel={t("{title} 属性", { title })}
         contentRole="group"
         className="mt-4 space-y-0"
         renderChunk={(items) => (
@@ -233,16 +235,18 @@ export function HeroStatGroup({
     </div>
   );
 }
-
 export function HeroTraceList({
   rows,
   listIdentity,
-}: HeroListIdentity & { rows: HeroTraceRow[] }) {
+}: HeroListIdentity & {
+  rows: HeroTraceRow[];
+}) {
+  const t = useTranslations();
   return (
     <InfiniteList
       source={{ kind: "local", items: rows, identity: listIdentity }}
       getKey={(row) => row.label}
-      ariaLabel="Hero provenance fields"
+      ariaLabel={t("英雄来源字段")}
       contentRole="group"
       className="mt-5 space-y-3 text-[11px]"
       renderChunk={(items) => (
@@ -266,16 +270,18 @@ export function HeroTraceList({
     />
   );
 }
-
 export function HeroSourceFileList({
   files,
   listIdentity,
-}: HeroListIdentity & { files: HeroSourceFile[] }) {
+}: HeroListIdentity & {
+  files: HeroSourceFile[];
+}) {
+  const t = useTranslations();
   return (
     <InfiniteList
       source={{ kind: "local", items: files, identity: listIdentity }}
       getKey={(file) => file.source_path}
-      ariaLabel="Hero source files"
+      ariaLabel={t("英雄来源文件")}
       className="mt-4 space-y-4"
       chunkClassName="space-y-4"
       renderChunk={(items) =>
@@ -298,7 +304,6 @@ export function HeroSourceFileList({
     />
   );
 }
-
 export function HeroLocalizationList({
   localizations,
   inheritedFields,
@@ -307,6 +312,7 @@ export function HeroLocalizationList({
   localizations: HeroLocalization[];
   inheritedFields: string[];
 }) {
+  const t = useTranslations();
   const inheritedItems = inheritedFields.map((value, index) => ({
     key: `${index}:${value}`,
     value,
@@ -321,7 +327,7 @@ export function HeroLocalizationList({
           identity: `${listIdentity}:localizations`,
         }}
         getKey={(locale) => locale.locale}
-        ariaLabel="Hero localization provenance"
+        ariaLabel={t("英雄本地化来源")}
         className="space-y-4"
         chunkClassName="space-y-4"
         renderChunk={(items) =>
@@ -347,7 +353,7 @@ export function HeroLocalizationList({
         }
       />
       <div>
-        <p className="font-semibold text-zinc-500">Inherited</p>
+        <p className="font-semibold text-zinc-500">{t("继承属性")}</p>
         <div className="mt-1 break-all font-mono">
           <InfiniteList
             source={{
@@ -356,7 +362,7 @@ export function HeroLocalizationList({
               identity: `${listIdentity}:inherited`,
             }}
             getKey={(field) => field.key}
-            ariaLabel="Inherited hero fields"
+            ariaLabel={t("英雄继承字段")}
             emptyFallback="none"
             className="inline"
             chunkClassName="inline"
@@ -379,21 +385,23 @@ export function HeroLocalizationList({
     </div>
   );
 }
-
 export function HeroReferenceDiffList({
   diffs,
   listIdentity,
-}: HeroListIdentity & { diffs: ReferenceDiff[] }) {
+}: HeroListIdentity & {
+  diffs: ReferenceDiff[];
+}) {
+  const t = useTranslations();
   return (
     <InfiniteList
       source={{ kind: "local", items: diffs, identity: listIdentity }}
       getKey={(diff) => `${diff.field_name}:${diff.diff_type}`}
-      ariaLabel="Hero reference differences"
+      ariaLabel={t("英雄参考差异")}
       className="divide-y divide-white/7"
       chunkClassName="divide-y divide-white/7"
       emptyFallback={
         <p className="p-6 text-sm text-emerald-300/70">
-          该英雄在首期比较字段中没有差异。
+          {t("该英雄在首期比较字段中没有差异。")}
         </p>
       }
       renderChunk={(items) =>
@@ -411,7 +419,7 @@ export function HeroReferenceDiffList({
                 {diff.diff_type}
               </p>
             </div>
-            <DiffValue label="VPK 规范" value={diff.canonical_value} />
+            <DiffValue label={t("VPK 规范")} value={diff.canonical_value} />
             <DiffValue label="reference" value={diff.reference_value} />
           </div>
         ))
@@ -419,7 +427,6 @@ export function HeroReferenceDiffList({
     />
   );
 }
-
 function DetailBadge({
   children,
   muted = false,
@@ -435,7 +442,6 @@ function DetailBadge({
     </span>
   );
 }
-
 function DiffValue({ label, value }: { label: string; value: unknown }) {
   return (
     <div>
@@ -448,7 +454,6 @@ function DiffValue({ label, value }: { label: string; value: unknown }) {
     </div>
   );
 }
-
 function formatValue(value: unknown): string {
   const text = String(value ?? "—");
   return /^-?\d+\.\d+$/u.test(text)

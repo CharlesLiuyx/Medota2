@@ -1,5 +1,7 @@
 "use client";
+import { diagnosticText } from "@/i18n/diagnostics";
 
+import { useLocale, useTranslations } from "@/i18n/provider";
 import { AlertCircle } from "lucide-react";
 import { InfiniteList } from "@/components/infinite-list";
 
@@ -10,6 +12,8 @@ export function ValidationErrorList({
   errors: string[];
   surface?: boolean;
 }) {
+  const locale = useLocale(),
+    t = useTranslations();
   const items = errors.map((message, index) => ({
     id: `${index}:${message}`,
     message,
@@ -27,7 +31,7 @@ export function ValidationErrorList({
           identity: items.map((item) => item.id).join("\u0000"),
         }}
         getKey={(item) => item.id}
-        ariaLabel="Query validation errors"
+        ariaLabel={t("查询参数错误")}
         className="space-y-1"
         renderChunk={(chunk) =>
           chunk.map((item) => (
@@ -37,7 +41,7 @@ export function ValidationErrorList({
               data-infinite-list-item=""
               data-infinite-list-key={item.id}
             >
-              {item.message}
+              {diagnosticText(locale, item.message)}
             </p>
           ))
         }

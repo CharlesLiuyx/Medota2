@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/i18n/provider";
 
 import { AlertTriangle, CheckCircle2, Database, Swords } from "lucide-react";
 import { InfiniteList } from "@/components/infinite-list";
@@ -54,11 +55,12 @@ const METRICS = [
 ];
 
 export function DesignSystemColorList() {
+  const t = useTranslations();
   return (
     <InfiniteList
       source={{ kind: "local", items: COLORS, identity: "design:colors:v1" }}
       getKey={([label]) => label}
-      ariaLabel="Semantic color examples"
+      ariaLabel={t("语义颜色示例")}
       className="mt-4"
       chunkClassName="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
       renderChunk={(items) =>
@@ -73,7 +75,7 @@ export function DesignSystemColorList() {
             <Panel className="flex h-full items-center gap-3 p-3">
               <span className="size-8 " style={{ backgroundColor: color }} />
               <span className="font-data text-xs text-[var(--text-secondary)]">
-                {label}
+                {t(label)}
               </span>
             </Panel>
           </div>
@@ -84,12 +86,13 @@ export function DesignSystemColorList() {
 }
 
 export function DesignSystemBadgeList() {
+  const t = useTranslations();
   return (
     <Panel className="mt-4 p-5">
       <InfiniteList
         source={{ kind: "local", items: BADGES, identity: "design:badges:v1" }}
         getKey={(item) => item.label}
-        ariaLabel="Badge examples"
+        ariaLabel={t("徽标示例")}
         chunkClassName="flex flex-wrap gap-2"
         renderChunk={(items) =>
           items.map((item) => (
@@ -104,7 +107,7 @@ export function DesignSystemBadgeList() {
                 {item.icon === "warning" && (
                   <AlertTriangle className="size-3" />
                 )}
-                {item.label}
+                {t(item.label)}
               </Badge>
             </span>
           ))
@@ -115,11 +118,12 @@ export function DesignSystemBadgeList() {
 }
 
 export function DesignSystemMetricList() {
+  const t = useTranslations();
   return (
     <InfiniteList
       source={{ kind: "local", items: METRICS, identity: "design:metrics:v1" }}
       getKey={(item) => item.key}
-      ariaLabel="Data panel examples"
+      ariaLabel={t("数据面板示例")}
       className="mt-4"
       chunkClassName="grid gap-3 md:grid-cols-3"
       renderChunk={(items) =>
@@ -142,12 +146,12 @@ export function DesignSystemMetricList() {
                 <AlertTriangle className="size-5 text-[var(--status-warning)]" />
               )}
               <p className="mt-4 text-xs uppercase tracking-[0.14em] text-[var(--text-muted)]">
-                {item.label}
+                {t(item.label)}
               </p>
               <p
                 className={`mt-1 text-lg text-[var(--text-primary)] ${item.key === "review" ? "" : "font-data"}`}
               >
-                {item.value}
+                {t(item.value)}
               </p>
             </Panel>
           </div>

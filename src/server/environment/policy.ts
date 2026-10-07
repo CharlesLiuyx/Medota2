@@ -445,6 +445,8 @@ const WORKER_TABLE_DML_ALLOWLIST = new Set([
   "public.ability_localizations:INSERT",
   "public.ability_values:INSERT",
   "public.asset_blobs:INSERT",
+  "public.item_asset_dataset_versions:INSERT",
+  "public.item_asset_bindings:INSERT",
   "public.unit_asset_dataset_versions:INSERT",
   "public.unit_asset_bindings:INSERT",
   "public.asset_dataset_versions:INSERT",
@@ -480,6 +482,10 @@ const WORKER_SEQUENCE_WRITE_ALLOWLIST = new Set([
 ]);
 
 export const WORKER_SECURITY_DEFINER_DEFINITION_MANIFEST = [
+  [
+    "public.promote_item_asset_dataset(uuid)",
+    "1da5fa79d35945c2ae1e4fed580bc132502f9563d6ae85de908fb72dae262343",
+  ],
   [
     "public.promote_unit_asset_dataset(uuid)",
     "c4217ee80abc756b638a693330c4db909563df3955007ded130702e7ef568b1d",

@@ -4,7 +4,7 @@ Medota2 是本地 Dota 2 数据与图鉴平台。能力和模块见 [CONTEXT.md]
 
 ## 开始任务与 Context 范围
 
-1. 读取 [CONTEXT.md](CONTEXT.md)、[当前工作](docs/current.md)、[环境登记](docs/development-environments.md)，核对 `git status`、相关 diff 和 `.medota2/sessions/` 中涉及相同文件的记录。已自动加载的相同内容无需重复读取。
+1. 读取 [CONTEXT.md](CONTEXT.md)、[当前工作](docs/current.md)、[环境登记](docs/development-environments.md)，核对 `git status`、相关 diff 和 `.medota2/sessions/` 中涉及相同文件的记录。已加载内容只补读变化部分；搜索先限定目录、文件和匹配数量，避免全仓正文输出及截断后的重复读取。
 2. 按[文档导航](docs/README.md#按任务读取)追加本任务的 Spec、ADR、代码及测试，并读[图谱](docs/architecture/project-atlas.html)相关图。默认不展开 `docs/history/` 和大型 HTML Review；调查旧决定时按链接读取。
 3. 在 `.medota2/sessions/<id>.md` 写范围卡：**目标与完成条件、可修改文件／接口、读取的合同、代码及未提交改动基线、数据／环境、验证范围、状态与下一步**。不涉及数据时注明；涉及时核对 lock、Catalog 或地图版本。跨 Session／机器的长任务另在 `docs/work/` 保留必要交接。
 4. 任务新增模块、迁移、来源版本或运行环境时，先更新范围并补读相关合同；不能将既有授权自动扩展到新的高风险操作。普通实现细节自行决定，不重复询问已明确的需求。
@@ -19,7 +19,8 @@ Medota2 是本地 Dota 2 数据与图鉴平台。能力和模块见 [CONTEXT.md]
 
 ## 实施与验证
 
-- 先用 `pnpm check --plan` 看范围，修改后运行 `pnpm check`；指定范围用 `--files`，持续编辑用 `--watch`。过期结果补跑有关检查，`pnpm verify` 用于显式全量诊断。
+- 默认按范围卡列出本任务文件，用 `pnpm check --plan --files ...` 规划、`pnpm check --files ...` 验证；发现新增依赖及时扩围。共享工作区不把其他任务的全部未提交改动并入小任务。组合交付用 `--base` 或无范围 `check`，全量诊断用 `pnpm verify`。
+- 按变更职责选择已有专项；已通过且输入有效的结果复用，后续仅文档变更只补文档检查。浏览失败在同轮单项重试一次，记录flaky；仍失败先诊断，输入变化／过期才重跑受影响范围。新交互、数据读取或模块边界变化须同步更新检查映射。
 - 测试覆盖少量有效使用流程；计算检查已知答案，测量对应实现。复用已有专项测试，不为每个函数新增测试，不把覆盖率当默认门槛。检查失败先诊断，不降低标准或把局部通过说成全部通过。
 - 修改命令、运行时或环境要求时，同步对应运行手册；修改行为同步负责该规则的 Spec。新增大型框架、服务或 Rust 前提交 ADR，技术理由见[技术选型](docs/architecture/technology-selection.md)。
 - 纯文档由 `pnpm docs:check` 检查可达性、命令和入口，再由 `pnpm check` 检查格式；不为文档启动产品数据库或浏览器。

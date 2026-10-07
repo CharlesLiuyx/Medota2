@@ -256,7 +256,7 @@ entity_localizations
 
 ### 9.1 来源、提取与解析
 
-Hero icon 和 Ability icon 的规范资源引用来自当前 Hero Catalog，图片二进制来自用户本地 Dota 2 `pak01_dir.vpk`。`dota_vpk_updates` 不保证提交这些图片字节，`GameTracking-Dota2/game/dota/pak01_dir.txt` 也只是文件索引；二者不能替代真实 VPK。
+Hero icon 和 Ability icon 的规范资源引用来自所选 Hero Catalog，图片二进制来自用户本地 Dota 2 `pak01_dir.vpk`。`dota_vpk_updates` 不保证提交这些图片字节，`GameTracking-Dota2/game/dota/pak01_dir.txt` 也只是文件索引；二者不能替代真实 VPK。
 
 Source 2 Viewer CLI 只读处理显式配置的 VPK，限定提取 `panorama/images/heroes`、`panorama/images/spellicons` 和所需 Innate icon 路径中的 `vtex_c`。提取目录是 Git 忽略的本地中间产物；运行时不直接读取 VPK。
 
@@ -273,7 +273,7 @@ alias 和 generated fallback 都是正式入库的图片对象，不是请求 40
 - 图片实际字节存入 PostgreSQL `asset_blobs`，按内容 SHA-256 去重，并记录 MIME、宽高和字节数。
 - `asset_objects` 保存逻辑路径、来源类型、ClientVersion、provider version 和原始 blob；`entity_asset_bindings` 保存实体在某个 asset dataset 中采用的对象。
 - 每个对象必须有 `original`、`w64`、`w128`、`w256` 四个 `asset_variants`。`original` 保留解析后源图编码与尺寸；其余使用版本化 Sharp/WebP recipe，禁止放大较小源图但仍保留对应 LoD key 和实际尺寸。
-- HTTP 资产路由只从当前 asset head 读取数据库字节，根据请求宽度选择最小的足够 rendition，并以内容 SHA-256 提供 ETag；机器绝对路径不进入 URL、领域模型或响应。
+- HTTP 资产路由从URL固定资产版本或对应Catalog的asset head读取数据库字节，根据请求宽度选择最小的足够 rendition，并以内容 SHA-256 提供 ETag；机器绝对路径不进入 URL、领域模型或响应。
 - VPK、提取目录、转换缓存、数据库 dump 与批量图片不提交到 Git。
 
 ### 9.3 版本、完整性与降级
@@ -292,7 +292,7 @@ Hero Catalog promotion/rollback 必须先确认目标 Catalog 已有匹配且完
 
 ### 10.1 共享版本边界
 
-v2 使用一个 Hero Catalog dataset version 覆盖 Heroes、Abilities、关系、Facet 和本地化。所有规范外键都带 `dataset_version_id`，所有产品查询从 `dataset_heads('hero_catalog')` 读取。
+v2 使用一个 Hero Catalog dataset version 覆盖 Heroes、Abilities、关系、Facet 和本地化。所有规范外键都带 `dataset_version_id`，默认入口由 `dataset_heads('hero_catalog')` 选择；显式历史查询选择已发布Catalog，按[实体版本合同](entity-versions.md)读取完整状态。
 
 不能分别提升 heroes head 和 abilities head；否则 Hero 页面可能指向一个版本，而 Ability 关系指向另一个版本。
 
@@ -472,7 +472,7 @@ Hero与Ability查询按同一Catalog版本读取实体、关系及本地化，�
 - Git remote、source path 和错误内容在日志/UI 中按不可信数据处理。
 - Web 账号继续只读；Worker 无 DDL 和直接修改 head 的权限，只能调用受约束 promotion/rollback 函数。
 - 资产提取器只处理明确配置的 Dota 2 VPK 与 allowlist 路径，不扫描无关目录或修改 VPK 内容；提取结果只写入配置的 Git 忽略目录。
-- Web 只从 PostgreSQL 当前 asset head 读取图片；提取目录路径、数据库内部来源 metadata 和机器绝对路径不能暴露给浏览器。
+- Web 从 PostgreSQL 的固定资产版本或对应Catalog的asset head读取图片；提取目录路径、数据库内部来源 metadata 和机器绝对路径不能暴露给浏览器。
 
 ## 15. 测试与验收
 
@@ -615,3 +615,13 @@ Hero与Ability查询按同一Catalog版本读取实体、关系及本地化，�
 - [dota_vpk_updates 调研](../repositories/dota-vpk-updates.md)
 - [ADR 0004：Hero 与 Ability 图标使用数据库资产数据集](../adr/0004-database-icon-asset-datasets.md)
 - [Source 2 Viewer CLI](https://github.com/ValveResourceFormat/ValveResourceFormat/blob/master/docs/guides/command-line.md)
+
+## 按版本浏览与比较
+
+产品支持顶栏全局Release及显式已发布历史Catalog查询，head仅负责默认入口。完整快照、原子导入、Review门禁及资产兼容要求保留；统一版本与端点Diff按[实体版本合同](entity-versions.md)。未发布／Red候选不进入公共版本索引。
+
+## 7.41f 来源结构兼容
+
+英雄总表既支持旧版内联 DOTAHeroes，也支持新版 #base heroes/npc_dota_hero_*.txt。只解析同一已校验 selector 内的包含文件，拒绝缺失、越界、重复与循环；不从磁盘补读未锁定文件。英雄原始路径／行号随拆分记录。技能同时支持 DOTAAbilities 与英雄对象内 AbilityDefinitions；天赋与关系使用实际英雄来源文件。旧快照解析合同保留，文件搬迁不当作游戏值变化。
+
+本机 local-preview 的 importer_version 追加当前转换代码与依赖文件 SHA-256，避免同一 Git HEAD 下不同未提交实现复用不可变候选。正式导入仍要求干净 checkout。本机更新证据见 [7.41f 更新报告](../work/7.41f-update.md)。

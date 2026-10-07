@@ -1,0 +1,855 @@
+{
+  "schemaVersion": "patch-locale-v1",
+  "locale": "en",
+  "source": {
+    "url": "https://www.dota2.com/datafeed/patchnotes?version=7.41f&language=english",
+    "page": "https://www.dota2.com/patches/7.41f?l=english",
+    "sha256": "f9cd855b7b77dc8a6025f875ef21b539f539b44d832d7dfd80bbb087f745fc26",
+    "sourceCommit": null,
+    "importedAt": "2026-10-07T05:19:36.777112+00:00",
+    "importer": "patchnotes-locale-v1"
+  },
+  "nameSources": [
+    {
+      "path": "scripts/npc/npc_ability_ids.txt",
+      "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+      "sha256": "a4709374a249dcd9e98b1d996d53e44a944581c04b5d65c5afd36d40973de598"
+    }
+  ],
+  "heroes": [
+    {
+      "heroId": 1,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "antimage_mana_break",
+          "notes": [
+            {
+              "text": "Mana Burned as Damage increased from 60% to 65%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 3,
+      "notes": [
+        {
+          "text": "Base Armor decreased by 1"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 9,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "mirana_celestial_quiver",
+          "notes": [
+            {
+              "text": "Base Charge Restore Time increased from 6s to 7s"
+            }
+          ]
+        },
+        {
+          "key": "mirana_arrow",
+          "notes": [
+            {
+              "text": "Maximum Stun decreased from 2.6/3.4/4.2/5s to 2.3/3.2/4.1/5s"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 11,
+      "notes": [],
+      "talents": [
+        {
+          "text": "Level 15 Talent Presence Armor Reduction decreased from +2 to +1.5"
+        }
+      ],
+      "abilities": [
+        {
+          "key": "nevermore_necromastery",
+          "notes": [
+            {
+              "text": "Damage per soul changed from 1.35 + 0.15 damage per level to 1 + 0.8 damage per 6 levels",
+              "detail": "From 1.5-5.85 to 1-5"
+            }
+          ]
+        },
+        {
+          "key": "nevermore_shadowraze1",
+          "notes": [
+            {
+              "text": "Bonus Damage Per Soul decreased from 3 to 2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 25,
+      "notes": [
+        {
+          "text": "Base Intelligence decreased from 30 to 28"
+        },
+        {
+          "text": "Damage at level 1 decreased from 51-59 to 49-57"
+        }
+      ],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "lina_fiery_soul",
+          "notes": [
+            {
+              "text": "Attack Speed Bonus decreased from 8/16/24/32 to 7/14/21/28"
+            },
+            {
+              "text": "Duration decreased from 18s to 16s"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 28,
+      "notes": [
+        {
+          "text": "Base Health Regen decreased by 0.25"
+        }
+      ],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "slardar_slithereen_crush",
+          "notes": [
+            {
+              "text": "Damage decreased from 75/150/225/300 to 60/140/220/300"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 33,
+      "notes": [],
+      "talents": [
+        {
+          "text": "Level 20 Talent Eidolon Damage decreased from +40 to +30"
+        }
+      ],
+      "abilities": [
+        {
+          "key": "enigma_demonic_conversion",
+          "notes": [
+            {
+              "text": "Eidolon Attack Range decreased from 425/450/475/500 to 380/420/460/500"
+            }
+          ]
+        },
+        {
+          "key": "enigma_black_hole",
+          "notes": [
+            {
+              "text": "Aghanim's Scepter pull speed decreased from 175 to 150",
+              "upgrade": "scepter"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 36,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "necrolyte_sadist",
+          "notes": [
+            {
+              "text": "Hero Kill Multiplier decreased from 6 to 4"
+            }
+          ]
+        },
+        {
+          "key": "necrolyte_ghost_shroud",
+          "notes": [
+            {
+              "text": "Restoration Amplification decreased from 55/65/75/85% to 45/55/65/75%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 37,
+      "notes": [
+        {
+          "text": "Base Attack Speed increased from 90 to 95"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 51,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "rattletrap_power_cogs",
+          "notes": [
+            {
+              "text": "Mana Cost increased from 75 to 90"
+            },
+            {
+              "text": "Knockback Duration decreased from 0.8s to 0.7s"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 54,
+      "notes": [],
+      "talents": [
+        {
+          "text": "Level 10 Talent Movement Speed decreased from +20 to +15"
+        }
+      ],
+      "abilities": [
+        {
+          "key": "life_stealer_rage",
+          "notes": [
+            {
+              "text": "Cooldown increased from 20/19/18/17s to 21/20/19/18s"
+            }
+          ]
+        },
+        {
+          "key": "life_stealer_infest",
+          "notes": [
+            {
+              "text": "Aghanim's Scepter Enemy Duration decreased from 5s to 4s",
+              "upgrade": "scepter"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 59,
+      "notes": [
+        {
+          "text": "Base Strength decreased from 23 to 22"
+        },
+        {
+          "text": "Damage at level 1 decreased from 44-49 to 43-48"
+        },
+        {
+          "text": "Strength gain increased from 3.3 to 3.4"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 61,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "broodmother_insatiable_hunger",
+          "notes": [
+            {
+              "text": "Mana Cost decreased from 80 to 70"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 62,
+      "notes": [],
+      "talents": [
+        {
+          "text": "Level 10 Talent Shuriken Toss Slow decreased from +0.6s to +0.35s"
+        },
+        {
+          "text": "Level 20 Talent Track Grants Shared Vision replaced with +190 Shuriken Toss Damage"
+        },
+        {
+          "text": "Level 25 Talent +250 Shuriken Toss Damage replaced with Track Grants Shared Vision"
+        }
+      ],
+      "abilities": [
+        {
+          "key": "bounty_hunter_track",
+          "notes": [
+            {
+              "text": "Self bonus gold decreased from 130/225/320 to 80/160/240"
+            },
+            {
+              "text": "Allies bonus gold decreased from 50/90/130 to 40/80/120"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 65,
+      "notes": [
+        {
+          "text": "Intelligence gain increased from 2.9 to 3.2"
+        },
+        {
+          "text": "Damage gain per level increased from 3.5 to 3.6"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 66,
+      "notes": [
+        {
+          "text": "Strength gain increased from 2.0 to 2.2"
+        }
+      ],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "chen_zealot",
+          "notes": [
+            {
+              "text": "Zealot respawn time changed from 60s to 60s - 1s per hero level"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 67,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "spectre_desolate",
+          "notes": [
+            {
+              "text": "Damage decreased from 23 + 2 per level to 23.5 + 1.5 per level",
+              "detail": "From 25-83 to 25-68.5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 70,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "ursa_maul",
+          "notes": [
+            {
+              "text": "Health As Damage increased from 1.25% to 1.75%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 74,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "invoker_cold_snap",
+          "notes": [
+            {
+              "text": "Cooldown increased from 18s to 19s"
+            }
+          ]
+        },
+        {
+          "key": "invoker_ghost_walk",
+          "notes": [
+            {
+              "text": "Aghanim's Shard no longer applies damage to non-Hero units",
+              "upgrade": "shard"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 80,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "lone_druid_entangle",
+          "notes": [
+            {
+              "text": "Stack Duration decreased from 10s to 7/8/9/10s"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 83,
+      "notes": [
+        {
+          "text": "Base Intelligence decreased from 20 to 17"
+        }
+      ],
+      "talents": [
+        {
+          "text": "Level 10 Talent +3 Living Armor Heal per Second replaced with +3s Living Armor Duration"
+        }
+      ],
+      "abilities": [
+        {
+          "key": "treant_natures_guise",
+          "notes": [
+            {
+              "text": "Invisibility linger when leaving trees decreased from 2s to 1s"
+            }
+          ]
+        },
+        {
+          "key": "treant_leech_seed",
+          "notes": [
+            {
+              "text": "Now costs 35 mana"
+            },
+            {
+              "text": "Damage to Healing rescaled from 20% to 10/15/20/25%"
+            }
+          ]
+        },
+        {
+          "key": "treant_living_armor",
+          "notes": [
+            {
+              "text": "Minimum damage block decreased from 20 to 10"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 85,
+      "notes": [
+        {
+          "text": "Base Health Regen decreased by 0.25"
+        }
+      ],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "undying_decay",
+          "notes": [
+            {
+              "text": "Mana Cost increased from 100 to 110"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 87,
+      "notes": [
+        {
+          "text": "Base Intelligence increased from 20 to 21"
+        },
+        {
+          "text": "Damage at level 1 increased from 47-51 to 48-52"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 90,
+      "notes": [
+        {
+          "text": "Base Attack Speed decreased from 100 to 90"
+        }
+      ],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "keeper_of_the_light_chakra_magic",
+          "notes": [
+            {
+              "text": "Cooldown Reduction decreased from 3/4/5/6s to 2.5/3.5/4.5/5.5s"
+            }
+          ]
+        },
+        {
+          "key": "keeper_of_the_light_spirit_form",
+          "notes": [
+            {
+              "text": "Illuminate Heal decreased from 70% to 60%"
+            },
+            {
+              "text": "Illuminate Heal with Aghanim's Shard unchanged at 100%",
+              "upgrade": "shard"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 91,
+      "notes": [],
+      "talents": [
+        {
+          "text": "Level 15 Talent Spirits Damage decreased from +50% to +40%"
+        }
+      ],
+      "abilities": []
+    },
+    {
+      "heroId": 96,
+      "notes": [
+        {
+          "text": "Base Damage decreased by 2"
+        },
+        {
+          "text": "Damage at level 1 decreased from 64-66 to 62-64"
+        },
+        {
+          "text": "Base Movement Speed decreased from 300 to 295"
+        }
+      ],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "centaur_mount",
+          "notes": [
+            {
+              "text": "Cast Range decreased from 250 to 200"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 106,
+      "notes": [
+        {
+          "text": "Base Agility decreased from 22 to 21"
+        },
+        {
+          "text": "Damage at level 1 decreased from 52-56 to 51-55"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 107,
+      "notes": [
+        {
+          "text": "Base Attack Speed decreased from 100 to 95"
+        }
+      ],
+      "talents": [
+        {
+          "text": "Level 20 Talent +25% Magnetize Damage & Duration replaced with +35 Magnetize Damage Per Second"
+        },
+        {
+          "text": "Level 20 Talent +175% Rolling Boulder Damage from Strength replaced with +200 Geomagnetic Grip Remnant Damage"
+        },
+        {
+          "text": "Level 25 Talent +250 Geomagnetic Grip Remnant Damage replaced with +250% Rolling Boulder Damage from Strength"
+        }
+      ],
+      "abilities": [
+        {
+          "key": "earth_spirit_stone_caller",
+          "notes": [
+            {
+              "text": "Charges changed from (7 + 1 per 4 levels) to (7 + 1 per 5 levels)"
+            },
+            {
+              "text": "Max charges decreased from 14 at level 28 to 13 at level 30"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 108,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "abyssal_underlord_pit_of_malice",
+          "notes": [
+            {
+              "text": "No longer upgraded with Aghanim's Scepter"
+            }
+          ]
+        },
+        {
+          "key": "abyssal_underlord_dark_portal",
+          "notes": [
+            {
+              "text": "Aghanim's Scepter Cooldown decreased from 100/95/90s to 90/85/80s",
+              "upgrade": "scepter"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 112,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "winter_wyvern_arctic_burn",
+          "notes": [
+            {
+              "text": "Cooldown increased from 26/24/22/20s to 29/26/23/20s"
+            }
+          ]
+        },
+        {
+          "key": "winter_wyvern_cold_embrace",
+          "notes": [
+            {
+              "text": "Max HP Heal per second decreased from 2.25/3/3.75/4.5% to 1.5/2.5/3.5/4.5%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 123,
+      "notes": [
+        {
+          "text": "Base Strength decreased from 17 to 16"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 129,
+      "notes": [
+        {
+          "text": "Base Armor increased by 1"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 136,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "marci_companion_run",
+          "notes": [
+            {
+              "text": "Ally bonus movement speed rescaled from 15/20/25/30% to 25%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 145,
+      "notes": [
+        {
+          "text": "Base Damage decreased by 1"
+        },
+        {
+          "text": "Damage at level 1 decreased from 50-56 to 49-55"
+        }
+      ],
+      "talents": [
+        {
+          "text": "Level 20 Talent Kazurai Katana Damage Per Second decreased from +4% to +3.5%"
+        }
+      ],
+      "abilities": []
+    },
+    {
+      "heroId": 155,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "largo_song_good_vibrations",
+          "notes": [
+            {
+              "text": "Heal rescaled from 34/56/78 to 30/55/80"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "key": "item_infused_raindrop",
+      "notes": [
+        {
+          "text": "Mana Regen bonus decreased from +0.8 to +0.6"
+        }
+      ]
+    },
+    {
+      "key": "item_bfury",
+      "notes": [
+        {
+          "text": "Chop Tree cooldown decreased from 4s to 3s"
+        }
+      ]
+    },
+    {
+      "key": "item_greater_crit",
+      "notes": [
+        {
+          "text": "Recipe cost increased from 900 to 1000. Total cost increased from 5100g to 5200g"
+        }
+      ]
+    },
+    {
+      "key": "item_dragon_lance",
+      "notes": [
+        {
+          "text": "Recipe cost increased from 450 to 550. Total cost increased from 1900g to 2000g"
+        }
+      ]
+    },
+    {
+      "key": "item_essence_distiller",
+      "notes": [
+        {
+          "text": "Mana Regen bonus decreased from +1.75 to +1.5"
+        }
+      ]
+    },
+    {
+      "key": "item_heart",
+      "notes": [
+        {
+          "text": "Recipe cost increased from 700 to 800. Total cost increased from 5200g to 5300g"
+        }
+      ]
+    },
+    {
+      "key": "item_heavens_halberd",
+      "notes": [
+        {
+          "text": "Recipe cost decreased from 450 to 350. Total cost decreased from 3400g to 3300g"
+        }
+      ]
+    },
+    {
+      "key": "item_hurricane_pike",
+      "notes": [
+        {
+          "text": "Total cost increased from 4450g to 4550g (due to Dragon Lance cost increase)"
+        }
+      ]
+    },
+    {
+      "key": "item_hydras_breath",
+      "notes": [
+        {
+          "text": "Recipe cost decreased from 1100 to 1000. Total cost unchanged at 5900g (due to Dragon Lance cost increase)"
+        }
+      ]
+    },
+    {
+      "key": "item_manta",
+      "notes": [
+        {
+          "text": "Mirror Image ranged images damage decreased from 28% to 25%"
+        }
+      ]
+    },
+    {
+      "key": "item_mask_of_madness",
+      "notes": [
+        {
+          "text": "Lifesteal bonus decreased from +24% to +22%"
+        },
+        {
+          "text": "Creep lifesteal decreased from +14.4% to +13.2%"
+        }
+      ]
+    },
+    {
+      "key": "item_mjollnir",
+      "notes": [
+        {
+          "text": "Static Charge duration decreased from 15s to 12s"
+        }
+      ]
+    },
+    {
+      "key": "item_octarine_core",
+      "notes": [
+        {
+          "text": "Recipe cost increased from 200 to 400. Total cost increased from 4900g to 5100g"
+        }
+      ]
+    },
+    {
+      "key": "item_satanic",
+      "notes": [
+        {
+          "text": "Lifesteal bonus decreased from +30% to +25%"
+        },
+        {
+          "text": "Creep lifesteal decreased from +18% to +15%"
+        }
+      ]
+    },
+    {
+      "key": "item_shivas_guard",
+      "notes": [
+        {
+          "text": "Arctic Blast damage decreased from 260 to 225"
+        }
+      ]
+    },
+    {
+      "key": "item_silver_edge",
+      "notes": [
+        {
+          "text": "Shadow Walk cooldown increased from 22s to 23s"
+        },
+        {
+          "text": "Shadow Walk bonus movement speed decreased from 22% to 20%"
+        }
+      ]
+    },
+    {
+      "key": "item_enhancement_greedy",
+      "notes": [
+        {
+          "text": "Attack Damage penalty increased from 30/60 to 35/70"
+        }
+      ]
+    }
+  ]
+}

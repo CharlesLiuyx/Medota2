@@ -4,7 +4,7 @@ import { getWebDatabase } from "@/server/db/client";
 import { assertSchemaCurrent } from "@/server/db/migrations";
 import type { VerifiedDatabase } from "@/server/environment/contract";
 
-export type AssetEntityType = "hero" | "ability" | "unit";
+export type AssetEntityType = "hero" | "ability" | "unit" | "item";
 
 export interface ActiveAssetVariant {
   content: Buffer;
@@ -48,22 +48,23 @@ export async function getActiveEntityIcon(
   assetDatasetVersionId?: string,
 ): Promise<ActiveAssetVariant | null> {
   const database = await ensureReady();
-  const unit = entityType === "unit";
+  const independent = entityType === "unit" || entityType === "item";
+  const prefix = entityType === "item" ? "item" : "unit";
   const result = await database.query<ActiveAssetVariantRow>(
     `SELECT b.content, b.content_sha256, b.mime_type, b.width, b.height,
        b.byte_size::text, v.lod_key, v.target_width, o.source_type, o.logical_path
-     FROM ${unit ? "unit_asset_bindings" : "entity_asset_bindings"} binding
+     FROM ${independent ? `${prefix}_asset_bindings` : "entity_asset_bindings"} binding
      JOIN asset_objects o ON o.id = binding.asset_object_id
      JOIN asset_variants v ON v.asset_object_id = o.id
      JOIN asset_blobs b ON b.content_sha256 = v.blob_sha256
-     WHERE ${unit ? "$1::text = 'unit' AND binding.unit_key = $2" : "binding.entity_type = $1 AND binding.entity_key = $2 AND binding.asset_kind = 'icon'"}
+     WHERE ${independent ? `$1::text = '${prefix}' AND binding.${prefix}_key = $2` : "binding.entity_type = $1 AND binding.entity_key = $2 AND binding.asset_kind = 'icon'"}
        AND ${
          assetDatasetVersionId
-           ? `binding.${unit ? "dataset_version_id" : "asset_dataset_version_id"} = $4::uuid`
-           : `binding.${unit ? "dataset_version_id" : "asset_dataset_version_id"} = (
-               SELECT asset_head.${unit ? "dataset_version_id" : "asset_dataset_version_id"}
+           ? `binding.${independent ? "dataset_version_id" : "asset_dataset_version_id"} = $4::uuid`
+           : `binding.${independent ? "dataset_version_id" : "asset_dataset_version_id"} = (
+               SELECT asset_head.${independent ? "dataset_version_id" : "asset_dataset_version_id"}
                FROM dataset_heads catalog_head
-               JOIN ${unit ? "unit_asset_heads" : "asset_dataset_heads"} asset_head
+               JOIN ${independent ? `${prefix}_asset_heads` : "asset_dataset_heads"} asset_head
                  ON asset_head.catalog_dataset_version_id = catalog_head.catalog_dataset_version_id
                WHERE catalog_head.dataset_key = 'hero_catalog'
              )`

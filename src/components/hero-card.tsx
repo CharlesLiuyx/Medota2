@@ -1,6 +1,7 @@
 "use client";
+import { useLocale } from "@/i18n/provider";
+import { Message, useTranslations } from "@/i18n/provider";
 import { memo } from "react";
-
 import type { HeroCardRow } from "@/server/repositories/heroes";
 import { labels, displayName } from "@/presentation/dota";
 import { HeroCrest } from "./hero-crest";
@@ -14,13 +15,17 @@ export const HeroCard = memo(function HeroCard({
   assetVersion: string;
   lang?: "zh-CN" | "en";
 }) {
+  const locale = useLocale();
+  const t = useTranslations();
   const name = displayName(
     lang === "en" ? hero.enName : hero.zhName,
-    "英雄名称待补充",
+    t("英雄名称待补充"),
+    undefined,
+    locale,
   );
   return (
     <HoverTooltip
-      href={`/heroes/${hero.slug}${lang === "en" ? "?lang=en" : ""}`}
+      href={`/heroes/${hero.slug}`}
       className="group block h-full overflow-hidden bg-[#182127] transition-colors hover:bg-[#25313a]"
       content={
         <HeroSummary hero={hero} name={name} assetVersion={assetVersion} />
@@ -42,7 +47,6 @@ export const HeroCard = memo(function HeroCard({
     </HoverTooltip>
   );
 });
-
 function HeroSummary({
   hero,
   name,
@@ -52,6 +56,7 @@ function HeroSummary({
   name: string;
   assetVersion: string;
 }) {
+  const t = useTranslations();
   return (
     <>
       <div className="flex items-center gap-2.5">
@@ -66,12 +71,14 @@ function HeroSummary({
             className="mt-1 text-[11px]"
             style={{ color: `var(--attribute-${hero.primaryAttribute})` }}
           >
-            ◆ {labels[hero.primaryAttribute]}{" "}
-            <span className="text-[#b9c2c7]">· {labels[hero.attackType]}</span>
+            ◆ {t(labels[hero.primaryAttribute])}{" "}
+            <span className="text-[#b9c2c7]">
+              · {t(labels[hero.attackType])}
+            </span>
           </p>
         </div>
         <div className="ml-auto shrink-0 text-right text-[10px] text-[#a4adb4]">
-          <p>操作难度</p>
+          <p>{t("操作难度")}</p>
           <p
             className="mt-1 tracking-wider text-[#dfbd7e]"
             aria-label={`${hero.complexity} / 3`}
@@ -83,9 +90,9 @@ function HeroSummary({
       </div>
       <div className="mt-2.5 grid grid-cols-3 gap-1">
         {[
-          ["strength", "力量", hero.baseStrength],
-          ["agility", "敏捷", hero.baseAgility],
-          ["intelligence", "智力", hero.baseIntelligence],
+          ["strength", t("力量"), hero.baseStrength],
+          ["agility", t("敏捷"), hero.baseAgility],
+          ["intelligence", t("智力"), hero.baseIntelligence],
         ].map(([key, label, value]) => (
           <div
             key={key}
@@ -106,7 +113,7 @@ function HeroSummary({
               key={r.role}
               className="flex items-center justify-between text-[11px]"
             >
-              <span className="text-[#ccd2d6]">{labels[r.role]}</span>
+              <span className="text-[#ccd2d6]">{t(labels[r.role])}</span>
               <span className="flex gap-0.5" aria-label={`${r.level} / 3`}>
                 {[1, 2, 3].map((level) => (
                   <span
@@ -121,12 +128,18 @@ function HeroSummary({
       )}
       <div className="mt-2 flex items-center justify-between pt-2 text-[11px]">
         <span className="text-[#a4adb4]">
-          移动速度{" "}
-          <strong className="ml-1 font-data text-[#e2e8ec]">
-            {Number(hero.movementSpeed)}
-          </strong>
+          <Message
+            id="移动速度 {value0}"
+            values={{
+              value0: (
+                <strong className="ml-1 font-data text-[#e2e8ec]">
+                  {Number(hero.movementSpeed)}
+                </strong>
+              ),
+            }}
+          />
         </span>
-        <span className="text-[#dfbd7e]">点击查看技能与天赋 →</span>
+        <span className="text-[#dfbd7e]">{t("点击查看技能与天赋 →")}</span>
       </div>
     </>
   );

@@ -1,3 +1,4 @@
+import { requiredArgument } from "./cli-args";
 import { prepareWorker } from "./worker-utils";
 import { readPinnedUnitSnapshot } from "@/importers/dota-vpk/unit-snapshot";
 import {
@@ -8,6 +9,15 @@ import { persistPreparedAssetObjects } from "@/server/assets/asset-store";
 import { canonicalJsonSha256 } from "@/lib/hash";
 
 async function main() {
+  const catalogVersion = process.argv.includes("--catalog-version")
+    ? requiredArgument("catalog-version")
+    : null;
+  if (
+    catalogVersion &&
+    !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/u.test(catalogVersion)
+  ) {
+    throw new Error("--catalog-version requires a Catalog UUID.");
+  }
   const { pool } = await prepareWorker("import");
   try {
     const {
@@ -18,12 +28,16 @@ async function main() {
       sourceRepository: string;
       clientVersion: string;
       raw_sha256: string;
-    }>(`
+    }>(
+      `
       SELECT v.id AS "datasetVersionId", s.source_commit AS "sourceCommit", s.source_repository AS "sourceRepository", s.client_version AS "clientVersion", f.raw_sha256
-      FROM dataset_heads h JOIN hero_catalog_dataset_versions v ON v.id=h.catalog_dataset_version_id
+      FROM hero_catalog_dataset_versions v
       JOIN source_snapshots s ON s.id=v.source_snapshot_id JOIN source_snapshot_files f ON f.source_snapshot_id=s.id AND f.source_path='steam.inf'
-      WHERE h.dataset_key='hero_catalog'`);
-    if (!meta) throw new Error("No active catalog source.");
+      WHERE v.id=COALESCE($1::uuid,(SELECT catalog_dataset_version_id FROM dataset_heads WHERE dataset_key='hero_catalog'))
+        AND v.gate_status<>'red' AND v.review_status<>'rejected'`,
+      [catalogVersion],
+    );
+    if (!meta) throw new Error("No eligible catalog source.");
     const snapshot = await readPinnedUnitSnapshot(meta, {
       source_commit: meta.sourceCommit,
       raw_sha256: meta.raw_sha256,

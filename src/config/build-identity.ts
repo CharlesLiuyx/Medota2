@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { promisify } from "node:util";
+import { createHash } from "node:crypto";
 
 const execFileAsync = promisify(execFile);
 
@@ -48,4 +49,38 @@ export function assertSourceImportBuildIsClean(identity: BuildIdentity): void {
       "Medota2 has uncommitted changes. A formal tsx source import cannot promote an active dataset; commit the implementation first.",
     );
   }
+}
+
+// A local preview must not reuse an immutable candidate made by different code.
+export async function readWorkingTreeFingerprint(
+  root = process.cwd(),
+): Promise<string> {
+  const { stdout } = await execFileAsync(
+    "git",
+    [
+      "ls-files",
+      "-z",
+      "--cached",
+      "--others",
+      "--exclude-standard",
+      "--",
+      "src",
+      "package.json",
+      "pnpm-lock.yaml",
+      "tsconfig.json",
+    ],
+    { cwd: root, encoding: "utf8" },
+  );
+  const digest = createHash("sha256");
+  for (const path of [...new Set(stdout.split("\0").filter(Boolean))].sort()) {
+    const bytes = await readFile(resolve(root, path)).catch(
+      (error: NodeJS.ErrnoException) => {
+        if (error.code === "ENOENT") return null;
+        throw error;
+      },
+    );
+    digest.update(`${path}\0${bytes?.length ?? "deleted"}\0`);
+    if (bytes) digest.update(bytes);
+  }
+  return digest.digest("hex");
 }

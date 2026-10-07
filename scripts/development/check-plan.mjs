@@ -25,6 +25,50 @@ const data =
 const ui = /^src\/(?:app|components)\//;
 const sharedUi =
   /(?:layout\.tsx|globals\.css|app-shell|infinite-list|components\/ui\/)/;
+// Reviewed leaf components/resources have existing tests and no navigation or
+// product-service responsibility. Missing sources/tests fall back to broad rules.
+const focusedUnitScopes = new Map([
+  [
+    "src/components/ui/dataset-badge.tsx",
+    [
+      "tests/unit/dataset-badge.test.tsx",
+      "tests/unit/i18n.test.ts",
+      "tests/unit/i18n-resources.test.ts",
+    ],
+  ],
+  [
+    "src/i18n/en.json",
+    ["tests/unit/i18n.test.ts", "tests/unit/i18n-resources.test.ts"],
+  ],
+  [
+    "src/i18n/zh-CN.json",
+    ["tests/unit/i18n.test.ts", "tests/unit/i18n-resources.test.ts"],
+  ],
+  [
+    "src/i18n/official-terms.json",
+    ["tests/unit/i18n.test.ts", "tests/unit/i18n-resources.test.ts"],
+  ],
+  [
+    "scripts/development/check-plan.mjs",
+    ["tests/unit/development-check-plan.test.ts"],
+  ],
+  [
+    "scripts/development/check-plan.d.mts",
+    ["tests/unit/development-check-plan.test.ts"],
+  ],
+]);
+const journeyPatterns = {
+  heroes: "heroes:",
+  abilities: "abilities:",
+  tooltips: "heroes and abilities:",
+  units: "units:",
+  items: "items:",
+  attributes: "attributes:",
+  releases: "heroes releases:",
+  changes: "heroes changes:",
+  locale: "heroes global (?:language|locale) ",
+  names: "abilities, units, items names:",
+};
 const engine = /^src\/(?:importers|domain|lib)\/|^tests\/fixtures\/vpk\//;
 const environment =
   /^src\/(?:server\/environment|config\/|testing\/)|^docker|^drizzle\//;
@@ -177,10 +221,16 @@ export function createPlan(inputPaths) {
       database: false,
       summary: "文档或说明变更，无需产品数据库和浏览器",
     };
-  const wide = runtimePaths.some((path) => toolchain.test(path));
-  const nonMap = runtimePaths.filter((path) => !mapOnly.test(path));
-  const hasMap = runtimePaths.some((path) => mapScope.test(path));
-  const hasUnits = runtimePaths.some((path) => unitScope.test(path));
+  const focused = runtimePaths.filter(
+    (path) =>
+      existsSync(path) &&
+      focusedUnitScopes.get(path)?.every((test) => existsSync(test)),
+  );
+  const flowPaths = runtimePaths.filter((path) => !focused.includes(path));
+  const wide = flowPaths.some((path) => toolchain.test(path));
+  const nonMap = flowPaths.filter((path) => !mapOnly.test(path));
+  const hasMap = flowPaths.some((path) => mapScope.test(path));
+  const hasUnits = flowPaths.some((path) => unitScope.test(path));
   const catalogData =
     wide ||
     nonMap.some(
@@ -190,7 +240,9 @@ export function createPlan(inputPaths) {
   const hasData =
     wide || nonMap.some((path) => data.test(path) || foundation.test(path));
   const hasUi =
-    wide || nonMap.some((path) => !unitScope.test(path) && ui.test(path));
+    wide ||
+    flowPaths.some((path) => /^src\/(?:i18n\/|proxy\.ts$)/.test(path)) ||
+    nonMap.some((path) => !unitScope.test(path) && ui.test(path));
   const hasEngine = nonMap.some((path) => engine.test(path));
   const dbContract = runtimePaths.some((path) => environment.test(path));
   if (
@@ -233,8 +285,15 @@ export function createPlan(inputPaths) {
       [...allRuntime, "tests/unit", "vitest.config.ts"],
     );
   else {
-    const unitFiles = new Set(explicitUnit);
-    if (hasMap || paths.some((path) => sharedUi.test(path)))
+    const unitFiles = new Set([
+      ...explicitUnit,
+      ...focused.flatMap((path) => focusedUnitScopes.get(path)),
+    ]);
+    if (hasUi || hasMap || hasUnits) {
+      unitFiles.add("tests/unit/i18n.test.ts");
+      unitFiles.add("tests/unit/i18n-resources.test.ts");
+    }
+    if (hasMap || flowPaths.some((path) => sharedUi.test(path)))
       mapTests.forEach((path) => unitFiles.add(path));
     if (hasUnits) unitTests.forEach((path) => unitFiles.add(path));
     if (hasEngine) parserTests.forEach((path) => unitFiles.add(path));
@@ -267,41 +326,96 @@ export function createPlan(inputPaths) {
       );
   }
   const journeys = new Set();
-  if (
-    catalogData ||
-    (hasUi && (wide || paths.some((path) => sharedUi.test(path))))
-  ) {
+  const shared = flowPaths.some((path) => sharedUi.test(path));
+  const localeRuntime = flowPaths.some((path) =>
+    /^src\/(?:i18n\/|proxy\.ts$)/.test(path),
+  );
+  if (catalogData || (hasUi && (wide || shared || localeRuntime))) {
     journeys.add("heroes");
     journeys.add("abilities");
   } else if (hasUi) {
-    if (paths.some((path) => /abilit/.test(path))) journeys.add("abilities");
-    if (paths.some((path) => /hero/.test(path))) journeys.add("heroes");
-    if (!journeys.size) {
+    if (flowPaths.some((path) => /abilit/.test(path)))
+      journeys.add("abilities");
+    if (flowPaths.some((path) => /hero/.test(path))) journeys.add("heroes");
+    if (
+      !journeys.size &&
+      !flowPaths.some((path) => /items|attributes|changes|release/.test(path))
+    ) {
       journeys.add("heroes");
       journeys.add("abilities");
     }
   }
-  if (paths.some((path) => /^tests\/journeys\//.test(path))) {
-    journeys.add("heroes");
-    journeys.add("abilities");
-  }
+  if (journeys.has("heroes") || journeys.has("abilities"))
+    journeys.add("tooltips");
+  if (wide || shared || localeRuntime || hasUnits) journeys.add("units");
   if (
     wide ||
-    hasUnits ||
-    paths.some((path) => sharedUi.test(path) || /(?:units|unit-)/.test(path))
+    shared ||
+    localeRuntime ||
+    flowPaths.some((path) => /(?:items|item-)/.test(path))
   )
-    journeys.add("units");
-  if (journeys.size)
+    journeys.add("items");
+  if (
+    wide ||
+    shared ||
+    localeRuntime ||
+    flowPaths.some((path) =>
+      /attribute|item-adapter|unit-adapter|ability-tooltip|unit-stats/.test(
+        path,
+      ),
+    )
+  )
+    journeys.add("attributes");
+  if (
+    wide ||
+    shared ||
+    localeRuntime ||
+    catalogData ||
+    flowPaths.some((path) => /releases?|version-link/.test(path))
+  )
+    journeys.add("releases");
+  if (
+    wide ||
+    shared ||
+    localeRuntime ||
+    catalogData ||
+    flowPaths.some((path) =>
+      /changes|entity-version-diff|patch-notes/.test(path),
+    )
+  )
+    journeys.add("changes");
+  if (wide || shared || localeRuntime) journeys.add("locale");
+  if (
+    wide ||
+    catalogData ||
+    flowPaths.some((path) => /entity-names/.test(path))
+  )
+    journeys.add("names");
+  // Editing a journey must execute the test even if its title is new or renamed.
+  const changedJourneys = paths.some((path) =>
+    path.startsWith("tests/journeys/"),
+  );
+  if (journeys.size || changedJourneys)
     add(
       "journeys",
-      "受影响的目录、筛选、详情与查询流程",
+      changedJourneys
+        ? "浏览流程测试变更，执行全部旅程以覆盖新增、改名与删除"
+        : `受影响的使用流程：${[...journeys].join("、")}；失败用例单独重试一次`,
       [
         "exec",
         "tsx",
         "src/workers/run-shared-tests.ts",
         "journeys",
-        "--grep",
-        [...journeys].join("|"),
+        // Playwright retries only the failed case in a fresh worker/context.
+        // Passed cases remain valid within this run; source/data drift is still
+        // rejected by run-shared-tests and run-check after the entire run.
+        "--retries=1",
+        ...(changedJourneys
+          ? []
+          : [
+              "--grep",
+              `(?:^|\\s)(?:${[...journeys].map((name) => journeyPatterns[name]).join("|")})`,
+            ]),
       ],
       [...allRuntime, "tests/journeys", "playwright.shared.config.ts"],
       "browser",
@@ -316,6 +430,7 @@ export function createPlan(inputPaths) {
       "直接执行改动的既有浏览器测试；测试被删除时验证剩余流程",
       [
         "test:e2e",
+        "--retries=1",
         ...existing.filter((path) =>
           /^tests\/e2e\/.*\.spec\.[jt]sx?$/.test(path),
         ),

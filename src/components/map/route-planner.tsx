@@ -1,4 +1,10 @@
 "use client";
+import { diagnosticText } from "@/i18n/diagnostics";
+import { useLocale } from "@/i18n/provider";
+import { mapPointLabel } from "@/presentation/map-labels";
+import { formatNumber } from "@/i18n/format";
+import { Message, useTranslations } from "@/i18n/provider";
+
 import { HoverTooltip } from "@/components/ui/hover-tooltip";
 import { Info, Plus } from "lucide-react";
 import { CompactSelect } from "@/components/ui/compact-select";
@@ -17,7 +23,12 @@ import {
 import { RouteClient } from "./route-client";
 import type { MapViewData } from "@/domain/map/schema";
 type Mode = "ground" | "current";
-type SavedRoute = { id: number; points: Position[]; speed: string; mode: Mode };
+type SavedRoute = {
+  id: number;
+  points: Position[];
+  speed: string;
+  mode: Mode;
+};
 const emptyPoints: Position[] = [];
 export function useRoutePlanner(data: MapViewData) {
   const [enabled, setEnabled] = useState(false);
@@ -105,7 +116,7 @@ export function useRoutePlanner(data: MapViewData) {
             key,
             result: {
               routes: [],
-              error: `寻路计算失败：${error.message}`,
+              error: "寻路计算失败",
               close: false,
             },
             progress: null,
@@ -343,69 +354,84 @@ export function RoutePanel({
   planner: RoutePlanner;
   data: MapViewData;
 }) {
+  const t = useTranslations();
+  const locale = useLocale();
   if (!p.enabled) return null;
   return (
     <section
-      aria-label="寻路设置与结果"
+      aria-label={t("寻路设置与结果")}
       className="map-route-panel mb-2 rounded bg-[#14212b] p-2 text-[11px]"
     >
       <div className="flex flex-col items-stretch gap-1.5">
         <div className="flex items-center justify-between gap-1">
           <strong>
-            {p.activeId === null ? "新建路线" : `路线 ${p.activeId}`}
+            {p.activeId === null
+              ? t("新建路线")
+              : t("路线 {value0}", {
+                  value0: p.activeId,
+                })}
           </strong>
           <div className="flex items-center gap-2">
             <span className="text-[9px] text-[var(--text-muted)]">
-              静态估算
+              {t("静态估算")}
             </span>
             <HoverTooltip
               className="grid size-5 place-items-center rounded text-[var(--text-muted)] hover:bg-white/10"
               content={
                 <div className="max-w-xs space-y-2 text-[11px] leading-5">
-                  <strong>寻路估算与操作说明</strong>
+                  <strong>{t("寻路估算与操作说明")}</strong>
                   <p>
-                    选择地图上的起点 A、终点
-                    B，也可选择地标。点击路线切换方案，重合处重复点击轮换；Delete
-                    删除，右键或 Esc 退出工具。
+                    {t(
+                      "选择地图上的起点 A、终点 B，也可选择地标。点击路线切换方案，重合处重复点击轮换；Delete 删除，右键或 Esc 退出工具。",
+                    )}
                   </p>
                   <p>
-                    仅显示最快及相差不超过3秒或10%的方案。陆地最短距离与湍流最短耗时均计算沿途顺流加速：最大
-                    +150，逆流不减速，斜向按正向投影；尚未经引擎验证。
+                    {t(
+                      "仅显示最快及相差不超过3秒或10%的方案。陆地最短距离与湍流最短耗时均计算沿途顺流加速：最大 +150，逆流不减速，斜向按正向投影；尚未经引擎验证。",
+                    )}
                   </p>
                   <p>
-                    陆地使用64单位导航格和初始树木／建筑阻挡，禁止穿越阻挡及斜切墙角；最短指八方向网格路径，首尾连接所在格中心。选点与路径坐标对齐1单位，地形数据精度仍为64单位。
+                    {t(
+                      "陆地使用64单位导航格和初始树木／建筑阻挡，禁止穿越阻挡及斜切墙角；最短指八方向网格路径，首尾连接所在格中心。选点与路径坐标对齐1单位，地形数据精度仍为64单位。",
+                    )}
                   </p>
                   <p>
-                    未模拟转身、动态单位碰撞、建筑变化及技能效果；双生门落点按门旁可行走格估算。路线尚未在同版本游戏引擎逐点验证。
+                    {t(
+                      "未模拟转身、动态单位碰撞、建筑变化及技能效果；双生门落点按门旁可行走格估算。路线尚未在同版本游戏引擎逐点验证。",
+                    )}
                   </p>
                 </div>
               }
             >
               <Info aria-hidden="true" size={14} />
-              <span className="sr-only">寻路估算与操作说明</span>
+              <span className="sr-only">{t("寻路估算与操作说明")}</span>
             </HoverTooltip>
             <button
               className="flex h-6 items-center gap-0.5 rounded bg-white/5 px-1 hover:bg-white/10"
-              aria-label="新建路线"
+              aria-label={t("新建路线")}
               onClick={p.clear}
             >
-              <Plus aria-hidden="true" size={12} />
-              新建
+              <Message
+                id="{value0}新建"
+                values={{
+                  value0: <Plus aria-hidden="true" size={12} />,
+                }}
+              />
             </button>
           </div>
           {p.activeId !== null && (
             <button
               className="px-1 text-red-200"
               onClick={p.remove}
-              title="删除路线（Delete）"
-              aria-label="删除路线"
+              title={t("删除路线（Delete）")}
+              aria-label={t("删除路线")}
             >
               ×
             </button>
           )}
         </div>
         {!!p.records.length && (
-          <ul aria-label="已创建路线" className="flex flex-wrap gap-1">
+          <ul aria-label={t("已创建路线")} className="flex flex-wrap gap-1">
             {p.records.map((r) => (
               <li key={r.id}>
                 <button
@@ -413,7 +439,12 @@ export function RoutePanel({
                   aria-pressed={p.activeId === r.id}
                   onClick={() => p.selectRoute(r.id)}
                 >
-                  路线 {r.id}
+                  <Message
+                    id="路线 {value0}"
+                    values={{
+                      value0: r.id,
+                    }}
+                  />
                 </button>
               </li>
             ))}
@@ -422,35 +453,40 @@ export function RoutePanel({
 
         <CompactSelect
           hideLabel
-          label="移动方式"
+          label={t("移动方式")}
           className="map-select"
           value={p.mode}
           onValueChange={(value) => p.setMode(value as Mode)}
         >
-          <option value="ground">陆地行走</option>
+          <option value="ground">{t("陆地行走")}</option>
           <option value="current" disabled={!data.routing?.currents?.length}>
-            湍流 · 陆地加速估算
+            {t("湍流 · 陆地加速估算")}
           </option>
         </CompactSelect>
         <label className="flex items-center gap-1.5">
-          移速{" "}
-          <input
-            aria-label="英雄移动速度"
-            className={`${control} min-w-0 flex-1 tabular-nums`}
-            type="number"
-            min="1"
-            step="1"
-            value={p.speed}
-            onChange={(e) => p.setSpeed(e.target.value)}
-          />{" "}
-          单位/秒
+          <Message
+            id="移速 {value0} 单位/秒"
+            values={{
+              value0: (
+                <input
+                  aria-label={t("英雄移动速度")}
+                  className={`${control} min-w-0 flex-1 tabular-nums`}
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={p.speed}
+                  onChange={(e) => p.setSpeed(e.target.value)}
+                />
+              ),
+            }}
+          />
         </label>
         <span role="status" className="text-[10px] leading-4 text-[#b9dce7]">
           {p.points.length === 0
-            ? "点击地图选择起点 A"
+            ? t("点击地图选择起点 A")
             : p.points.length === 1
-              ? "点击地图选择终点 B"
-              : "路线已创建 · 点击路径切换"}
+              ? t("点击地图选择终点 B")
+              : t("路线已创建 · 点击路径切换")}
         </span>
       </div>
       <div className="mt-1.5 grid gap-1">
@@ -459,7 +495,9 @@ export function RoutePanel({
             {label}
             <CompactSelect
               hideLabel
-              label={`${label === "A" ? "起点" : "终点"}地标`}
+              label={t("{value0}地标", {
+                value0: label === "A" ? t("起点") : t("终点"),
+              })}
               className="map-select min-w-0 flex-1"
               value=""
               onValueChange={(value) => {
@@ -471,7 +509,7 @@ export function RoutePanel({
               <option value="">
                 {p.points[i]
                   ? `${Math.round(p.points[i].x)}, ${Math.round(p.points[i].y)}`
-                  : "也可选择地标"}
+                  : t("也可选择地标")}
               </option>
               {data.points
                 .filter((v) =>
@@ -479,8 +517,9 @@ export function RoutePanel({
                 )
                 .map((v) => (
                   <option key={v.id} value={v.id} disabled={!p.canPick(v)}>
-                    {v.label} ({Math.round(v.x)}, {Math.round(v.y)})
-                    {!p.canPick(v) ? " · 中心不可行走" : ""}
+                    {mapPointLabel(v, locale)} ({Math.round(v.x)},{" "}
+                    {Math.round(v.y)})
+                    {!p.canPick(v) ? t(" · 中心不可行走") : ""}
                   </option>
                 ))}
             </CompactSelect>
@@ -488,34 +527,51 @@ export function RoutePanel({
         ))}
       </div>
       {!p.flying && !data.routing?.grid && (
-        <p className="mt-2 text-amber-200">此版本没有导航数据，暂不可寻路。</p>
+        <p className="mt-2 text-amber-200">
+          {t("此版本没有导航数据，暂不可寻路。")}
+        </p>
       )}
       {p.pickError && (
         <p role="alert" className="mt-2 text-amber-200">
-          {p.pickError}
+          {t(p.pickError)}
         </p>
       )}
       {p.computing && (
-        <div role="status" className="mt-2 space-y-1" aria-label="寻路计算状态">
-          <p>{p.progress?.stage ?? "正在启动后台寻路"}…</p>
+        <div
+          role="status"
+          className="mt-2 space-y-1"
+          aria-label={t("寻路计算状态")}
+        >
+          <p>
+            {p.progress?.stage
+              ? diagnosticText(locale, p.progress.stage)
+              : t("正在启动后台寻路")}
+            …
+          </p>
           <progress
             className="w-full accent-[#89eaff]"
-            aria-label="寻路计算进度"
+            aria-label={t("寻路计算进度")}
             max={p.progress?.total ?? 1}
             value={p.progress?.completed ?? 0}
           />
           <p className="text-[10px] text-[var(--text-muted)]">
-            已完成 {p.progress?.completed ?? 0}/{p.progress?.total ?? 1} 阶段 ·
-            已检查 {(p.progress?.expanded ?? 0).toLocaleString()} 格
+            <Message
+              id="已完成 {value0}/{value1} 阶段 · 已检查 {value2} 格"
+              values={{
+                value0: p.progress?.completed ?? 0,
+                value1: p.progress?.total ?? 1,
+                value2: formatNumber(locale, p.progress?.expanded ?? 0),
+              }}
+            />
           </p>
           <button className={control} onClick={p.clear}>
-            取消计算
+            {t("取消计算")}
           </button>
         </div>
       )}
       {p.result?.error && (
         <p role="alert" className="mt-2 text-amber-200">
-          {p.result.error}
+          {diagnosticText(locale, p.result.error)}
         </p>
       )}
       {!!p.result?.routes.length && (
@@ -530,18 +586,32 @@ export function RoutePanel({
               >
                 <span style={{ color: routeColor(r) }}>
                   {r.mode === "flying"
-                    ? "飞行"
+                    ? t("飞行")
                     : r.mode === "current"
-                      ? "湍流最短耗时"
-                      : "陆地最短距离"}{" "}
-                  · {r.kind === "gate" ? "经双生门" : "直达"}
+                      ? t("湍流最短耗时")
+                      : t("陆地最短距离")}{" "}
+                  · {r.kind === "gate" ? t("经双生门") : t("直达")}
                 </span>
                 <strong className="ml-1 text-[13px] tabular-nums">
-                  {r.seconds.toFixed(1)} 秒
+                  <Message
+                    id="{value0} 秒"
+                    values={{
+                      value0: r.seconds.toFixed(1),
+                    }}
+                  />
                 </strong>
                 <span className="mt-1 block text-[10px]">
-                  {Math.round(r.distance)} 单位
-                  {r.delay ? ` + ${r.delay}秒持续施法` : ""}
+                  <Message
+                    id="{value0} 单位{value1}"
+                    values={{
+                      value0: Math.round(r.distance),
+                      value1: r.delay
+                        ? t(" + {value0}秒持续施法", {
+                            value0: r.delay,
+                          })
+                        : "",
+                    }}
+                  />
                 </span>
               </button>
             ))}
@@ -549,14 +619,14 @@ export function RoutePanel({
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <button className={control} onClick={p.play}>
               {p.playing
-                ? "暂停移动"
+                ? t("暂停移动")
                 : p.elapsed >= p.duration
-                  ? "重新模拟"
-                  : "模拟移动"}
+                  ? t("重新模拟")
+                  : t("模拟移动")}
             </button>
             <CompactSelect
               hideLabel
-              label="模拟倍速"
+              label={t("模拟倍速")}
               className="map-select"
               value={p.rate}
               onValueChange={(value) => p.setRate(Number(value))}
@@ -566,22 +636,34 @@ export function RoutePanel({
               <option value={8}>8×</option>
             </CompactSelect>
             <span className="tabular-nums">
-              {p.elapsed.toFixed(1)} / {p.duration.toFixed(1)} 秒
-              {p.playing && p.markers.some((m) => m.channeling)
-                ? " · 双生之门持续施法中"
-                : ""}
+              <Message
+                id="{value0} / {value1} 秒{value2}"
+                values={{
+                  value0: p.elapsed.toFixed(1),
+                  value1: p.duration.toFixed(1),
+                  value2:
+                    p.playing && p.markers.some((m) => m.channeling)
+                      ? t(" · 双生之门持续施法中")
+                      : "",
+                }}
+              />
             </span>
           </div>
         </>
       )}
       {!!p.result?.routes.length && (
         <p className="mt-2 text-[10px] text-[var(--text-muted)]">
-          {p.flying
-            ? "飞行直线"
-            : p.mode === "current"
-              ? "A* 湍流最短耗时估算"
-              : "A* 网格最短路径"}{" "}
-          · 计算 {p.calculationMs?.toFixed(1)} ms
+          <Message
+            id="{value0} · 计算 {value1} ms"
+            values={{
+              value0: p.flying
+                ? t("飞行直线")
+                : p.mode === "current"
+                  ? t("A* 湍流最短耗时估算")
+                  : t("A* 网格最短路径"),
+              value1: p.calculationMs?.toFixed(1),
+            }}
+          />
         </p>
       )}
     </section>

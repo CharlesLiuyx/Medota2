@@ -17,6 +17,7 @@ export interface UnitDefinition {
   summonAbility?: string | null;
   zhName: string;
   enName: string;
+  nameLocales?: { zh: "zh-CN" | "en" | null; en: "zh-CN" | "en" | null };
   category: UnitCategory;
   team: string;
   variant: string;

@@ -5,7 +5,7 @@ import type { AbilityFilters } from "@/server/services/ability-filters";
 import { searchDocuments, type SearchDocument } from "./search/query";
 import type { VersionedListSlice } from "./infinite-list";
 
-export const REPLICA_SCHEMA = 2;
+export const REPLICA_SCHEMA = 3;
 export const REPLICA_BUCKETS = 16;
 export type ReplicaEntity = "heroes" | "abilities";
 export type ReplicaLocale = "zh-CN" | "en";

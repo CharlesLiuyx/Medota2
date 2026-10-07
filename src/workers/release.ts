@@ -217,7 +217,7 @@ async function main(): Promise<void> {
               );
               if (developmentApi.status !== 404)
                 throw new Error(
-                  "Production artifact exposed the development API.",
+                  `Production development endpoint ${developmentPath} returned ${developmentApi.status}; expected 404.`,
                 );
             }
           } finally {

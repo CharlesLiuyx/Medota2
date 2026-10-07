@@ -731,6 +731,81 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
     }
   });
 
+  it("keeps item image versions complete, prevents downgrade and preserves hero asset heads", async () => {
+    const client = await worker.connect();
+    try {
+      await client.query("BEGIN");
+      const catalog = await insertVersion(client, "green");
+      const before = await client.query(
+        "SELECT asset_dataset_version_id FROM asset_dataset_heads WHERE catalog_dataset_version_id=$1",
+        [catalog],
+      );
+      const object = await insertAssetDataset(client, catalog, {
+        objectSourceType: "exact",
+      });
+      const create = async (label: string) =>
+        (
+          await client.query<{ id: string }>(
+            `INSERT INTO item_asset_dataset_versions (catalog_dataset_version_id,manifest_sha256,expected_keys,provenance) VALUES ($1,$2,ARRAY['item_blink'],'{}') RETURNING id`,
+            [catalog, sha256(label + catalog)],
+          )
+        ).rows[0].id;
+      const version = await create("item-complete");
+      await client.query("SAVEPOINT missing_item");
+      await expect(
+        client.query("SELECT promote_item_asset_dataset($1)", [version]),
+      ).rejects.toThrow(/coverage/);
+      await client.query("ROLLBACK TO SAVEPOINT missing_item");
+      await client.query(
+        "INSERT INTO item_asset_bindings VALUES ($1,'item_blink',$2,'icon','{}')",
+        [version, object.objectId],
+      );
+      await client.query("SELECT promote_item_asset_dataset($1)", [version]);
+      const lower = await create("item-missing");
+      await client.query(
+        "INSERT INTO item_asset_bindings VALUES ($1,'item_blink',$2,'shared_icon','{}')",
+        [lower, object.objectId],
+      );
+      await client.query("SAVEPOINT downgrade_item");
+      await expect(
+        client.query("SELECT promote_item_asset_dataset($1)", [lower]),
+      ).rejects.toThrow(/downgrade/);
+      await client.query("ROLLBACK TO SAVEPOINT downgrade_item");
+      const partial = await insertAssetDataset(client, catalog, {
+        lods: ["original", "w64", "w128"],
+      });
+      const partialVersion = await create("item-partial");
+      await client.query(
+        "INSERT INTO item_asset_bindings VALUES ($1,'item_blink',$2,'icon','{}')",
+        [partialVersion, partial.objectId],
+      );
+      await client.query("SAVEPOINT partial_item");
+      await expect(
+        client.query("SELECT promote_item_asset_dataset($1)", [partialVersion]),
+      ).rejects.toThrow(/LoDs/);
+      await client.query("ROLLBACK TO SAVEPOINT partial_item");
+      expect(
+        (
+          await client.query(
+            "SELECT dataset_version_id FROM item_asset_heads WHERE catalog_dataset_version_id=$1",
+            [catalog],
+          )
+        ).rows[0].dataset_version_id,
+      ).toBe(version);
+      expect(
+        (
+          await client.query(
+            "SELECT asset_dataset_version_id FROM asset_dataset_heads WHERE catalog_dataset_version_id=$1",
+            [catalog],
+          )
+        ).rows,
+      ).toEqual(before.rows);
+      await client.query("ROLLBACK");
+    } finally {
+      client.release();
+    }
+  });
+
   it("requires the asset lock while atomically checking a catalog promotion", async () => {
     const client = await worker.connect();
     try {
@@ -1143,7 +1218,12 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
           `stream_new_${identity + 1}`,
           120,
         );
-        fixtures.push(oldFixture, newFixture);
+        const thirdFixture = await insertStreamFixture(
+          fixtureClient,
+          `stream_third_${identity + 1}`,
+          12,
+        );
+        fixtures.push(oldFixture, newFixture, thirdFixture);
         await fixtureClient.query(
           "SELECT promote_hero_catalog_version($1, true)",
           [oldFixture.catalogDatasetVersionId],
@@ -1156,7 +1236,30 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
         fixtureClient.release();
       }
 
-      const [oldFixture, newFixture] = fixtures;
+      const [oldFixture, newFixture, thirdFixture] = fixtures;
+      const { getCatalogMeta, getHeroProfile } =
+        await import("@/server/repositories/heroes");
+      const { getAbilityByInternalName } =
+        await import("@/server/repositories/abilities");
+      const { getReleaseIndex } = await import("@/server/services/releases");
+      const firstIndex = await getReleaseIndex();
+      expect(firstIndex.defaultRelease).toBe(
+        `c:${oldFixture.catalogDatasetVersionId}`,
+      );
+      expect(
+        firstIndex.releases.some(
+          (r) => r.catalogId === newFixture.catalogDatasetVersionId,
+        ),
+      ).toBe(false);
+      expect(
+        await getCatalogMeta(newFixture.catalogDatasetVersionId),
+      ).toBeNull();
+      await expect(
+        getHeroCatalogSlice(defaultHeroFilters(), {
+          catalogDatasetVersionId: newFixture.catalogDatasetVersionId,
+          assetDatasetVersionId: newFixture.assetDatasetVersionId,
+        }),
+      ).rejects.toThrow();
       const abilityFilters = defaultAbilityFilters();
       const heroFilters = defaultHeroFilters();
       const abilityTraversal = await traverseCatalog(
@@ -1329,6 +1432,59 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
           item.internalName.includes(oldFixture.label),
         ),
       ).toBe(true);
+      const thirdPromotion = await worker.connect();
+      try {
+        await thirdPromotion.query("BEGIN");
+        await lockCatalogPromotion(thirdPromotion);
+        await thirdPromotion.query(
+          "SELECT promote_hero_catalog_version($1, true)",
+          [thirdFixture.catalogDatasetVersionId],
+        );
+        await thirdPromotion.query("COMMIT");
+      } catch (error) {
+        await thirdPromotion.query("ROLLBACK");
+        throw error;
+      } finally {
+        thirdPromotion.release();
+      }
+      expect((await getCatalogMeta())?.datasetVersionId).toBe(
+        thirdFixture.catalogDatasetVersionId,
+      );
+      const finalIndex = await getReleaseIndex();
+      expect(finalIndex.defaultRelease).toBe(
+        `c:${thirdFixture.catalogDatasetVersionId}`,
+      );
+      expect(finalIndex.releases.every((r) => r.catalogId !== null)).toBe(true);
+      for (const fixture of fixtures) {
+        expect(
+          finalIndex.releases.some(
+            (r) => r.catalogId === fixture.catalogDatasetVersionId,
+          ),
+        ).toBe(true);
+        expect(
+          (await getCatalogMeta(fixture.catalogDatasetVersionId))
+            ?.datasetVersionId,
+        ).toBe(fixture.catalogDatasetVersionId);
+        const hero = await getHeroProfile(
+          `${fixture.label}_010`,
+          fixture.catalogDatasetVersionId,
+        );
+        expect(hero?.meta.datasetVersionId).toBe(
+          fixture.catalogDatasetVersionId,
+        );
+        expect(hero?.hero.internal_name).toBe(
+          `npc_dota_hero_${fixture.label}_010`,
+        );
+        const ability = await getAbilityByInternalName(
+          `${fixture.label}_ability_010`,
+          "zh-CN",
+          fixture.catalogDatasetVersionId,
+        );
+        expect(ability?.meta.datasetVersionId).toBe(
+          fixture.catalogDatasetVersionId,
+        );
+        expect(ability?.bindings[0].slug).toBe(`${fixture.label}_010`);
+      }
     } finally {
       await cleanupStreamFixtures(fixtures, previousHead);
     }

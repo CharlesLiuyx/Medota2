@@ -1,12 +1,13 @@
+import { readUnitSnapshot } from "@/server/repositories/units";
+import { pinnedVpkRoots } from "@/importers/dota-vpk/source-roots";
 import "server-only";
-import { resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readRoutingData } from "./navigation";
 import { loadLocalEnv } from "@/config/env";
 import { parseOverview } from "@/importers/dota-map/adapter";
-import { getActiveCatalogMeta } from "@/server/repositories/heroes";
+import { getCatalogMeta } from "@/server/repositories/heroes";
 import { getGameplayVersion } from "@/server/services/gameplay-version";
 import { getWebDatabase } from "@/server/db/client";
 import { loadMapAsset, loadMapPackage, readCollection } from "./packages";
@@ -48,7 +49,7 @@ export async function getMapVersions() {
     })),
   };
 }
-export async function getMapPageData(id?: string) {
+export async function getMapPageData(id?: string, catalogId?: string | null) {
   try {
     const pkg = await readMapPackage(id);
     if (pkg) {
@@ -56,13 +57,28 @@ export async function getMapPageData(id?: string) {
         pkg.root,
         pkg.map,
       );
-      const meta = await getActiveCatalogMeta().catch(() => null);
+      const meta =
+        catalogId === null
+          ? null
+          : await getCatalogMeta(catalogId).catch(() => null);
       const catalogPatch = meta
         ? await getGameplayVersion(
             meta.datasetVersionId,
             meta.sourceCommit,
           ).catch(() => null)
         : null;
+      const unitSnapshot =
+        meta && meta.clientVersion === pkg.map.economy?.clientVersion
+          ? await readUnitSnapshot(meta).catch(() => null)
+          : null;
+      const unitNames = unitSnapshot
+        ? Object.fromEntries(
+            unitSnapshot.units.map((unit) => [
+              unit.internalName,
+              { "zh-CN": unit.zhName, en: unit.enName },
+            ]),
+          )
+        : undefined;
       const assetUrl = (name: string) =>
         `/map/assets/${name}?v=${pkg.revision}${pkg.id ? `&version=${encodeURIComponent(pkg.id)}` : ""}`;
       return {
@@ -73,6 +89,7 @@ export async function getMapPageData(id?: string) {
         catalogPatch,
         catalogClient: meta?.clientVersion ?? null,
         data: {
+          unitNames,
           routing,
           watcherRules,
           visions,
@@ -111,7 +128,7 @@ export async function getMapPageData(id?: string) {
   if (id || process.env.DOTA_MAP_COLLECTION_PATH)
     return { data: null, error: "所选地图版本未收录，请选择已收录的版本。" };
   // Only read the immutable overview matching the selected catalog's steam.inf.
-  const meta = await getActiveCatalogMeta();
+  const meta = catalogId === null ? null : await getCatalogMeta(catalogId);
   if (!meta || !/^[a-f0-9]{40}$/.test(meta.sourceCommit))
     return { data: null, error: null };
   const db = await getWebDatabase();
@@ -122,13 +139,7 @@ export async function getMapPageData(id?: string) {
   const record = result.rows[0];
   if (!record || record.source_commit !== meta.sourceCommit)
     return { data: null, error: null };
-  const roots = [
-    resolve(
-      process.env.DOTA_VPK_WORKTREE_ROOT || ".medota2/cache/worktrees",
-      meta.sourceCommit,
-    ),
-    process.env.DOTA_VPK_UPDATES_PATH,
-  ].filter((r): r is string => Boolean(r));
+  const roots = pinnedVpkRoots(meta.sourceCommit);
   for (const root of roots) {
     try {
       const read = async (path: string) =>

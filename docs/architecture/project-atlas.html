@@ -1365,25 +1365,28 @@
               <div><b>127</b><span>英雄定义〔高〕</span></div>
               <div><b>2,703</b><span>技能定义〔高〕</span></div>
               <div><b>339</b><span>命石定义〔高〕</span></div>
-              <div><b>一致</b><span>目标与实际业务快照〔高〕</span></div>
+              <div><b>两版</b><span>本机7.41e／7.41f（2026-10-07）</span></div>
             </div>
             <p class="note">
               数量来自页首所标时间的
-              <code>pnpm data:status</code> 核验。库中只有一个 Catalog
-              版本；技能定义包含天赋、辅助、隐藏及历史定义，不能解读为当前英雄可用技能数。
+              <code>pnpm data:status</code> 核验。2026-10-07
+              7.41f／6944已记录用户Review并成为本机默认，7.41e／6918历史保留；两版各127英雄、2703技能、339命石、343单位及匹配地图。远端快照未发布，来源与字段Diff见<a
+                href="../work/7.41f-update.md"
+                >更新报告</a
+              >。技能定义包含天赋、辅助、隐藏及历史定义，不能解读为当前英雄可用技能数。
             </p>
             <p class="quiet-note">
-              <b>待实施：实体版本化与语义 Diff。</b
-              >先盘点全部实体，再将实体状态关联游戏／客户端等版本，让前端按版本筛选，并表达实体、属性、关系与机制的渐进变化。下面的
-              head 与发布流程描述现有实现；目标模型和验收见
-              <a href="../work/entity-version-diff.md">系统优化 Todo</a
-              >，尚未实施。
+              <b>实体版本与Diff第一阶段架构已落地。</b
+              >顶栏Release固定完整版本，列表、详情、关系与缓存保持URL上下文；两个端点比较属性、关系、已解析机制与原始结构，并明确缺少覆盖或身份依据的原因。真实三版数据、单位持久化与完整机制验收仍待后续，见<a
+                href="../specs/entity-versions.md"
+                >实体版本合同</a
+              >和<a href="../work/entity-version-diff.md">实施任务</a>。
             </p>
             <div class="statusgrid">
               <div>
                 <h3>已形成产品闭环</h3>
                 <p>
-                  英雄、技能、单位图鉴；版本化地图与静态寻路；图片入库；英雄／技能目录浏览器缓存；共享开发工作台；完整业务快照同步。
+                  英雄、技能、单位、物品、属性图鉴；版本化地图与静态寻路；图片入库；英雄／技能目录浏览器缓存；共享开发工作台；完整业务快照同步。
                 </p>
               </div>
               <div>
@@ -1432,7 +1435,7 @@
                 这些路径分别保留来源与版本，既能查清内容来历，也能避免将不同版本的资料拼在一起。
               </p>
               <div class="reading-rule">
-                数据流图：沿箭头读“什么输入，经什么处理，保存在哪里，最后给谁使用”。五行代表五条不同资料路径。
+                数据流图：沿箭头读“什么输入，经什么处理，保存在哪里，最后给谁使用”。六行代表六条不同资料路径。
               </div>
               <div class="legend">
                 <small>节点类型 · 悬停高亮</small
@@ -1495,8 +1498,8 @@
                     data-name="解析并检查候选"
                     data-definition="提取字段、关系和文本，检查完整性与差异。"
                     data-why="阻止解析错误或不完整内容成为当前图鉴。"
-                    data-detail="导入过程还准备绑定的图片资产。是否提升当前版本由图 3-2 的门禁及数据库约束决定。"
-                    data-files='["src/workers/import-catalog.ts", "src/domain/catalog-diff.ts"]'
+                    data-detail="导入兼容旧内联英雄表和新版#base／AbilityDefinitions；只读取已锁定文件，实际路径与行号保留。候选准备对应英雄、技能、单位与物品图片；是否提升当前Catalog仍由图3-2门禁决定。"
+                    data-files='["src/workers/import-catalog.ts", "src/importers/dota-vpk/hero-source.ts", "src/domain/catalog-diff.ts", "docs/work/7.41f-update.md"]'
                     data-node-id="data-graph-import"
                     aria-pressed="false"
                   >
@@ -1517,8 +1520,8 @@
                     data-name="Hero Catalog"
                     data-definition="数据库内的一份不可变英雄／技能目录。"
                     data-why="英雄、技能与关系使用同一版本，保持相互一致。"
-                    data-detail="current head 决定当前查询的 Catalog。候选、历史与当前版本不能混为一谈。"
-                    data-files='["src/server/db/schema.ts", "src/server/repositories/heroes.ts"]'
+                    data-detail="head仅选择默认入口；Release显式查询曾发布且审阅通过的历史Catalog，完整原子状态及对应来源保留。候选不进入公共版本索引。"
+                    data-files='["src/server/db/schema.ts", "src/server/repositories/heroes.ts", "src/server/services/releases.ts", "docs/specs/entity-versions.md"]'
                     data-node-id="data-graph-catalog"
                     aria-pressed="false"
                   >
@@ -1540,8 +1543,8 @@
                     data-name="英雄／技能页面"
                     data-definition="读取所选版本，组织为可搜索、可浏览的资料。"
                     data-why="把数据定义变成用户能读懂的属性与关系。"
-                    data-detail=""
-                    data-files='["src/app/heroes/page.tsx", "src/app/abilities/page.tsx", "src/server/services/game-localization.ts"]'
+                    data-detail="技能与命石名称优先读取同版校验文本，缺名时使用固定来源范围的研究补充。历史证据只恢复名称，不提供当前玩法；非正式名称标注用途名。目录协议3重新同步旧缓存与双语搜索词。"
+                    data-files='["src/app/heroes/page.tsx", "src/app/abilities/page.tsx", "src/server/services/game-localization.ts", "src/domain/entity-names.ts", "src/domain/catalog-replica.ts"]'
                     data-node-id="data-graph-pages"
                     aria-pressed="false"
                   >
@@ -1565,7 +1568,7 @@
                     data-definition="Valve 图片及已声明、固定版本的补充来源。"
                     data-why="为实体找到可追溯的真实图像。"
                     data-detail="图片来源的客户端版本可能未知，不能借用英雄目录的构建号。"
-                    data-files='["src/importers/valve-assets/catalog-assets.ts", "src/importers/valve-assets/unit-assets.ts"]'
+                    data-files='["src/importers/valve-assets/catalog-assets.ts", "src/importers/valve-assets/unit-assets.ts", "src/importers/valve-assets/item-assets.ts", "drizzle/0011_item_asset_datasets.sql"]'
                     data-node-id="data-graph-images"
                     aria-pressed="false"
                   >
@@ -1587,7 +1590,7 @@
                     data-definition="生成多尺寸图片，绑定实体并检查覆盖情况。"
                     data-why="让列表和详情取到合适尺寸，也暴露缺图问题。"
                     data-detail=""
-                    data-files='["src/importers/valve-assets/catalog-assets.ts", "src/server/assets/asset-store.ts"]'
+                    data-files='["src/importers/valve-assets/catalog-assets.ts", "src/importers/valve-assets/item-assets.ts", "src/workers/import-item-assets.ts", "src/server/assets/asset-store.ts"]'
                     data-node-id="data-graph-imagebuild"
                     aria-pressed="false"
                   >
@@ -1633,7 +1636,7 @@
                     data-definition="资源路由读取数据库，页面按版本显示图像。"
                     data-why="浏览图鉴时不必临时依赖外部图片站点。"
                     data-detail=""
-                    data-files='["src/server/repositories/assets.ts", "src/server/repositories/units.ts"]'
+                    data-files='["src/server/repositories/assets.ts", "src/server/repositories/units.ts", "src/server/repositories/items.ts"]'
                     data-node-id="data-graph-imageview"
                     aria-pressed="false"
                   >
@@ -1648,49 +1651,72 @@
                 </div>
               </div>
               <div class="graph-lane">
-                <div class="lane-label">C · 单位定义和补充文本</div>
+                <div class="lane-label">C · 单位／物品定义和补充文本</div>
                 <p class="lane-desc">
                   当前 Catalog 的 source commit
-                  决定读哪份文件；单位定义尚未独立持久化。
+                  决定读哪份文件和哪些名称补充；单位与物品定义尚未独立持久化。
                 </p>
                 <div class="chain">
-                  <button
-                    class="node"
-                    data-key="source"
-                    data-name="与 Catalog 匹配的文件"
-                    data-definition="同一来源提交中的单位定义与本地化文件。"
-                    data-why="防止单位属性和关联技能来自不同版本。"
-                    data-detail=""
-                    data-files='["src/importers/dota-vpk/unit-snapshot.ts", "src/server/repositories/units.ts"]'
-                    data-node-id="data-graph-unitinput"
-                    aria-pressed="false"
-                  >
-                    <span class="node-type">外部输入</span
-                    ><strong>与 Catalog 匹配的文件</strong
-                    ><span class="node-summary"
-                      >同一来源提交中的单位定义与本地化文件。</span
-                    ><span class="node-why"
-                      ><b>作用</b> 防止单位属性和关联技能来自不同版本。</span
+                  <div class="input-stack">
+                    <button
+                      class="node"
+                      data-key="source"
+                      data-name="与 Catalog 匹配的文件"
+                      data-definition="同一来源提交中的单位、物品定义与本地化文件。"
+                      data-why="防止单位、物品属性和关联对象来自不同版本。"
+                      data-detail=""
+                      data-files='["src/importers/dota-vpk/unit-snapshot.ts", "src/importers/dota-vpk/item-snapshot.ts", "src/server/repositories/units.ts", "src/server/repositories/items.ts"]'
+                      data-node-id="data-graph-unitinput"
+                      aria-pressed="false"
                     >
-                  </button>
-                  <div class="edge" data-relation="核对后解析">
-                    <span>核对后解析</span><b aria-hidden="true">→</b>
+                      <span class="node-type">外部输入</span
+                      ><strong>与 Catalog 匹配的文件</strong
+                      ><span class="node-summary"
+                        >同一来源提交中的单位、物品定义与本地化文件。</span
+                      ><span class="node-why"
+                        ><b>作用</b>
+                        防止单位、物品属性和关联对象来自不同版本。</span
+                      >
+                    </button>
+                    <button
+                      class="node"
+                      data-key="source"
+                      data-name="名称研究补充"
+                      data-definition="按实体身份审阅的双语名称、来源证据和用途名标记。"
+                      data-why="恢复可确认的名称，并让无正式名称的定义保持可辨识。"
+                      data-detail="资源保留URL、固定commit、文件SHA、客户端版本与内容摘要；当前530个身份仅适用于7.41e/f两个来源提交。340项依据本地化或明确关联恢复，190项标注用途名。同版名称优先；历史证据不覆盖数值、行为、状态或不可变Catalog。"
+                      data-files='["src/data/entity-names/supplement.v1.json", "src/domain/entity-names.ts", "docs/specs/semantic-game-ui.md", "docs/history/2026-10-07-name-enrichment.md"]'
+                      data-node-id="data-graph-namesupplement"
+                      aria-pressed="false"
+                    >
+                      <span class="node-type">审阅输入</span
+                      ><strong>名称研究补充</strong
+                      ><span class="node-summary"
+                        >按实体身份审阅的双语名称、来源证据和用途名标记。</span
+                      ><span class="node-why"
+                        ><b>作用</b>
+                        恢复可确认的名称，并让无正式名称的定义保持可辨识。</span
+                      >
+                    </button>
+                  </div>
+                  <div class="edge" data-relation="核对来源范围后解析">
+                    <span>核对来源范围后解析</span><b aria-hidden="true">→</b>
                   </div>
                   <button
                     class="node"
                     data-key="task"
-                    data-name="解析单位与补充文本"
-                    data-definition="校验来源并构建只读模型，保留无法解释的字段。"
+                    data-name="解析单位／物品与补充文本"
+                    data-definition="校验原始定义，按来源范围补充名称并构建只读模型。"
                     data-why="把原始文件转换成页面能够查询的定义。"
-                    data-detail=""
-                    data-files='["src/importers/dota-vpk/unit-adapter.ts", "src/server/services/game-localization.ts"]'
+                    data-detail="名称读取识别Valve的:n键，保留原始键及明确无后缀键的优先级。只读模型provenance记录名称资源ID／内容摘要；未审阅身份仍提示缺名，不自动拆解内部代码。"
+                    data-files='["src/importers/dota-vpk/unit-adapter.ts", "src/importers/dota-vpk/item-adapter.ts", "src/server/services/game-localization.ts", "src/domain/entity-names.ts"]'
                     data-node-id="data-graph-unitparse"
                     aria-pressed="false"
                   >
                     <span class="node-type">程序处理</span
-                    ><strong>解析单位与补充文本</strong
+                    ><strong>解析单位／物品与补充文本</strong
                     ><span class="node-summary"
-                      >校验来源并构建只读模型，保留无法解释的字段。</span
+                      >校验原始定义，按来源范围补充名称并构建只读模型。</span
                     ><span class="node-why"
                       ><b>作用</b> 把原始文件转换成页面能够查询的定义。</span
                     >
@@ -1704,8 +1730,8 @@
                     data-name="进程内只读副本"
                     data-definition="服务器在内存保留已解析结果。"
                     data-why="避免每次浏览都重复读取、解析相同文件。"
-                    data-detail="单位定义尚未成为独立数据库 Dataset；进程结束后缓存消失，重新读取仍需要匹配的来源文件。"
-                    data-files='["src/importers/dota-vpk/unit-snapshot.ts"]'
+                    data-detail="单位和物品定义尚未成为独立数据库 Dataset；进程结束后缓存消失，重新读取仍需要匹配的来源文件。"
+                    data-files='["src/importers/dota-vpk/unit-snapshot.ts", "src/importers/dota-vpk/item-snapshot.ts"]'
                     data-node-id="data-graph-unitcache"
                     aria-pressed="false"
                   >
@@ -1723,18 +1749,18 @@
                   <button
                     class="node"
                     data-key="page"
-                    data-name="单位页面与补充说明"
-                    data-definition="展示基础定义、缺项提示及同目录技能链接。"
+                    data-name="单位／物品页面与补充说明"
+                    data-definition="展示单位技能与物品效果、价格、配方及缺项提示。"
                     data-why="让用户知道哪些内容已确认、哪些资料还缺失。"
                     data-detail=""
-                    data-files='["src/app/units/page.tsx", "src/server/repositories/units.ts"]'
+                    data-files='["src/app/units/page.tsx", "src/app/items/page.tsx", "src/components/item-catalog.tsx", "src/server/repositories/units.ts", "src/server/repositories/items.ts"]'
                     data-node-id="data-graph-unitview"
                     aria-pressed="false"
                   >
                     <span class="node-type">页面／报告</span
-                    ><strong>单位页面与补充说明</strong
+                    ><strong>单位／物品页面与补充说明</strong
                     ><span class="node-summary"
-                      >展示基础定义、缺项提示及同目录技能链接。</span
+                      >展示单位技能与物品效果、价格、配方及缺项提示。</span
                     ><span class="node-why"
                       ><b>作用</b>
                       让用户知道哪些内容已确认、哪些资料还缺失。</span
@@ -1796,8 +1822,8 @@
                     data-name="Map Dataset 文件包"
                     data-definition="磁盘上的一份不可变地图版本。"
                     data-why="多个地图版本可并存，逐文件验证完整性。"
-                    data-detail="Collection 登记可用地图和默认项；页面显式 version 选择未知版本时拒绝，不替换成其他地图。"
-                    data-files='["src/domain/map/schema.ts", "src/server/map/packages.ts"]'
+                    data-detail="Collection登记地图，顶栏Release选择有依据的对应地图；旧version URL转换到release。没有覆盖或关联歧义时明确提示，不代用其他补丁。"
+                    data-files='["src/domain/map/schema.ts", "src/server/map/packages.ts", "src/server/services/releases.ts"]'
                     data-node-id="data-graph-mapdata"
                     aria-pressed="false"
                   >
@@ -1818,8 +1844,8 @@
                     data-name="地图浏览与静态寻路"
                     data-definition="加载所选地图，在浏览器绘制并估算路线。"
                     data-why="支持查看空间关系、测距和比较路线。"
-                    data-detail="紧凑地图工作区：28px顶栏显示版本核验状态，时间与版本共用控制行；64px右侧工具轨以两条分隔线区分三组，缩放紧凑横排；地图操作问号位于视口左上角。增高视口配200px属性栏，指示文字限制在底图左下留白，选中营地保留悬停时的边界、名称、经验与高度范围；寻路参数紧凑，估算口径与操作说明通过信息图标展开。当前仍为静态网格估算，动态碰撞、战争迷雾及引擎语义一致性仍有限制。"
-                    data-files='["src/components/map/map-viewer.tsx", "src/components/map/route-planner.tsx", "src/components/map/header-status.tsx", "src/components/map/route-client.ts", "src/domain/map/routing.ts", "docs/specs/map-explorer.md"]'
+                    data-detail="紧凑地图工作区：28px顶栏统一Release版本与核验状态，时间行保留来源说明；右侧64px三组工具轨、横排缩放和视口左上问号；200px属性栏，选中营地持续显示边界、名称、经验和高度。地图各自构建号保留，缺全局版本覆盖不混用其他地图；静态估算及引擎语义限制继续适用。"
+                    data-files='["src/components/map/map-viewer.tsx", "src/components/map/route-planner.tsx", "src/components/map/header-status.tsx", "src/components/release-navigation.tsx", "src/app/map/page.tsx", "src/domain/map/routing.ts", "docs/specs/map-explorer.md"]'
                     data-node-id="data-graph-mapview"
                     aria-pressed="false"
                   >
@@ -1926,6 +1952,53 @@
                 本图展示已实现的处理与读取路径，不表示后台任务此刻正在运行。页首数据核验时，参考快照和比较结果表尚无记录；E
                 行是可运行的核对能力。
               </div>
+              <div class="graph-lane">
+                <div class="lane-label">F · 属性机制与引用投影</div>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="source"
+                    data-name="同版定义与机制文本"
+                    data-definition="Catalog与固定Git来源、审阅过的文本摘录。"
+                    data-why="保留commit、hash、行号与客户端版本。"
+                    data-detail="官方旧提示和面板文本冲突并列记录；社区公式保留待引擎复核标记。"
+                    data-files='["src/data/attributes/evidence.v1.json", "src/domain/attribute-mechanics.ts"]'
+                    data-node-id="data-graph-attribute-evidence"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">来源／投影</span
+                    ><strong>同版定义与机制文本</strong
+                    ><span class="node-summary"
+                      >Catalog与固定Git来源、审阅过的文本摘录。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 保留commit、hash、行号与客户端版本。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="构建引用索引">
+                    <span>构建引用索引</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="cache"
+                    data-name="属性只读模型"
+                    data-definition="按所选Catalog关联四类对象。"
+                    data-why="支持分页搜索、枚举筛选、机制阅读与双向跳转。"
+                    data-detail="最多缓存两版，无独立数据库head；来源缺失不永久缓存。普通卡片每批48项，首批额外携带匹配的基础三属性，2／3／4列布局跨批保持整行；公式不能跨未审阅提交套用。"
+                    data-files='["src/server/repositories/attributes.ts", "src/server/services/attribute-catalog.ts", "docs/specs/attribute-catalog.md"]'
+                    data-node-id="data-graph-attribute-projection"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">来源／投影</span
+                    ><strong>属性只读模型</strong
+                    ><span class="node-summary"
+                      >按所选Catalog关联四类对象。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      支持分页搜索、枚举筛选、机制阅读与双向跳转。</span
+                    >
+                  </button>
+                </div>
+              </div>
               <div class="inspector" aria-live="polite">
                 点击节点查看具体实现文件及边界。图例只突出同类节点，不筛选代码或执行命令。
               </div>
@@ -1933,6 +2006,7 @@
                 <b>核对依据</b>
                 <a href="../../docs/architecture/data-flow.md">数据流合同</a> ·
                 <a href="../../docs/specs/unit-catalog.md">单位边界</a> ·
+                <a href="../../docs/specs/item-catalog.md">物品与配方边界</a> ·
                 <a href="../../docs/specs/map-explorer.md">地图边界</a>
               </div>
             </figure>
@@ -1980,7 +2054,7 @@
                     class="node"
                     data-key="page"
                     data-name="服务端首屏"
-                    data-definition="服务器先返回当前版本的可读目录。"
+                    data-definition="服务器先返回所选版本的可读目录。"
                     data-why="让用户不必等待整份本机缓存下载完成。"
                     data-detail=""
                     data-files='["src/app/heroes/page.tsx", "src/app/abilities/page.tsx"]'
@@ -1990,7 +2064,7 @@
                     <span class="node-type">页面／报告</span
                     ><strong>服务端首屏</strong
                     ><span class="node-summary"
-                      >服务器先返回当前版本的可读目录。</span
+                      >服务器先返回所选版本的可读目录。</span
                     ><span class="node-why"
                       ><b>作用</b> 让用户不必等待整份本机缓存下载完成。</span
                     >
@@ -2120,20 +2194,19 @@
                     class="node"
                     data-key="task"
                     data-name="检查当前版本指针"
-                    data-definition="可见目录定期、恢复焦点或恢复网络时核对 head。"
-                    data-why="及时发现版本变化，普通搜索不反复查版本。"
-                    data-detail=""
-                    data-files='["src/app/api/catalog/head/route.ts", "src/components/use-live-catalog.ts"]'
+                    data-definition="显式Release固定副本，兼容默认路径才轮询head。"
+                    data-why="历史页面保持版本，用户在顶栏选择更新。"
+                    data-detail="显式release不执行head自动切换；搜索、清空、详情、语言与预取保留URL版本。浏览器缓存仍按Catalog、asset、语言和环境隔离。"
+                    data-files='["src/components/use-live-catalog.ts", "src/components/release-navigation.tsx", "src/app/api/catalog/head/route.ts", "docs/specs/browser-catalog-cache.md"]'
                     data-node-id="cache-graph-headcheck"
                     aria-pressed="false"
                   >
                     <span class="node-type">程序处理</span
                     ><strong>检查当前版本指针</strong
                     ><span class="node-summary"
-                      >可见目录定期、恢复焦点或恢复网络时核对 head。</span
+                      >显式Release固定副本，兼容默认路径才轮询head。</span
                     ><span class="node-why"
-                      ><b>作用</b>
-                      及时发现版本变化，普通搜索不反复查版本。</span
+                      ><b>作用</b> 历史页面保持版本，用户在顶栏选择更新。</span
                     >
                   </button>
                   <div class="edge" data-relation="发现版本变化才执行">
@@ -2306,17 +2379,17 @@
                     class="node"
                     data-key="task"
                     data-name="4 · 按改动范围检查"
-                    data-definition="pnpm check --plan 展示范围，pnpm check 执行。"
+                    data-definition="按任务文件规划，专项检查与有效结果增量复用。"
                     data-why="用相关检查验证结果；输入变动会使旧结果过期。"
-                    data-detail="规划器匹配实际改动路径；图中的颜色与图例不参与选检查。"
-                    data-files='["scripts/development/check-plan.mjs", "src/workers/run-check.ts"]'
+                    data-detail="局部任务用相同的--files集合规划和执行。登记的展示组件／翻译资源走已有专项，未知／删除／新增职责保守扩大；浏览按目录、版本、变化、语言等明确流程选择。纯静态任务不等待全局检查锁，类型缓存仍单独加锁。同轮只重试失败用例一次并保留flaky，持续失败阻塞；代码、数据或完整计划变化使结果过期。组合交付检查完整范围。"
+                    data-files='["scripts/development/check-plan.mjs", "src/workers/run-check.ts", "tests/unit/development-check-plan.test.ts", "docs/specs/development-workbench.md"]'
                     data-node-id="work-graph-check"
                     aria-pressed="false"
                   >
                     <span class="node-type">程序处理</span
                     ><strong>4 · 按改动范围检查</strong
                     ><span class="node-summary"
-                      >pnpm check --plan 展示范围，pnpm check 执行。</span
+                      >按任务文件规划，专项检查与有效结果增量复用。</span
                     ><span class="node-why"
                       ><b>作用</b>
                       用相关检查验证结果；输入变动会使旧结果过期。</span
@@ -2480,7 +2553,7 @@
                   data-definition="解析定义与关系、准备图片，并比较当前目录。"
                   data-why="识别未知变化与完整性问题，再决定能否采用。"
                   data-detail="准备过程可能提前失败，不保证每次失败都有完整持久化候选。"
-                  data-files='["src/workers/import-catalog.ts", "src/domain/catalog-diff.ts"]'
+                  data-files='["src/workers/import-catalog.ts", "src/importers/dota-vpk/hero-source.ts", "src/domain/catalog-diff.ts", "docs/work/7.41f-update.md"]'
                   data-node-id="gates-graph-candidate"
                   aria-pressed="false"
                 >
@@ -2507,9 +2580,9 @@
                     class="node"
                     data-key="task"
                     data-name="程序尝试提升当前版本"
-                    data-definition="绿色且未指定 --no-promote 时调用提升函数。"
+                    data-definition="绿色、全部实体就绪且未指定 --no-promote 时调用提升函数。"
                     data-why="允许已识别的正常变化自动进入图鉴。"
-                    data-detail="数据库仍检查完整图片绑定、覆盖率和其他约束；绿色结论本身不保证提升成功。"
+                    data-detail="统一核对固定来源、英雄／技能／命石／关系／双语文本、单位定义与图片状态、物品定义、地图及资源后，数据库再检查图片覆盖率；绿色结论本身不保证提升成功。"
                     data-files='["src/workers/import-catalog.ts", "drizzle/0006_cross_catalog_asset_coverage_guard.sql"]'
                     data-node-id="gates-graph-green"
                     aria-pressed="false"
@@ -2517,7 +2590,8 @@
                     <span class="node-type">程序处理</span
                     ><strong>程序尝试提升当前版本</strong
                     ><span class="node-summary"
-                      >绿色且未指定 --no-promote 时调用提升函数。</span
+                      >绿色、全部实体就绪且未指定 --no-promote
+                      时调用提升函数。</span
                     ><span class="node-why"
                       ><b>作用</b> 允许已识别的正常变化自动进入图鉴。</span
                     >
@@ -2525,7 +2599,7 @@
                   <div class="down-arrow">↓ 图片完整性等约束也通过</div>
                   <div class="visible-result">
                     <b>用户看到新版图鉴</b
-                    ><span>英雄、技能和关系一起切换。</span>
+                    ><span>英雄、技能、单位、物品、地图和关系一起切换。</span>
                   </div>
                   <p class="footnote">显式使用 --no-promote 则只准备候选。</p>
                 </div>
@@ -2559,8 +2633,8 @@
                     data-name="批准后执行提升"
                     data-definition="通过提升入口再次检查候选与资产约束。"
                     data-why="让审阅决定经过数据库保护后才影响页面。"
-                    data-detail="data:review:catalog 记录审阅；data:promote:catalog 执行提升。两者是独立动作，均需按命令合同提供参数。"
-                    data-files='["src/workers/promote-catalog.ts"]'
+                    data-detail="data:review:catalog记录审阅；data:promote:catalog核对完整Release后提升，包括本地化、单位、物品与地图资源。两者均需按命令合同提供参数。"
+                    data-files='["src/workers/promote-catalog.ts", "src/server/release-readiness.ts"]'
                     data-node-id="gates-graph-promote"
                     aria-pressed="false"
                   >
@@ -2587,7 +2661,7 @@
                     data-definition="查看来源、失败阶段或程序错误，再重建／重试。"
                     data-why="防止不完整或无法解释的数据成为当前版。"
                     data-detail="红色候选不能提升；解析、来源或数据库异常也可能在候选保存前中断。"
-                    data-files='["src/workers/import-catalog.ts", "src/domain/catalog-diff.ts"]'
+                    data-files='["src/workers/import-catalog.ts", "src/importers/dota-vpk/hero-source.ts", "src/domain/catalog-diff.ts", "docs/work/7.41f-update.md"]'
                     data-node-id="gates-graph-repair"
                     aria-pressed="false"
                   >
@@ -2910,10 +2984,10 @@
             <figure
               class="semantic-figure"
               id="entity-graph"
-              data-toc="图 4-1 · 英雄、技能与命石的关系"
+              data-toc="图 4-1 · 英雄、技能、命石、物品与属性关系"
               data-diagram-kind="semantic"
             >
-              <figcaption>图 4-1 · 英雄、技能与命石的关系</figcaption>
+              <figcaption>图 4-1 · 英雄、技能、命石、物品与属性关系</figcaption>
               <div class="story-title">
                 为什么技能要有独立身份，还需要单独保存“关系”？
               </div>
@@ -3121,6 +3195,146 @@
                   </p>
                 </div>
               </div>
+              <div class="graph-lane">
+                <div class="lane-label">C · 同版本物品合成</div>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="entity"
+                    data-name="Item · 物品组件"
+                    data-definition="独立internal_name，属性由所选Catalog固定来源确定。"
+                    data-why="物品可独立搜索、阅读效果并浏览升级路径。"
+                    data-detail="图纸、中立物品与附魔都是物品分类；存在于来源不等于当前对局可获得。"
+                    data-files='["src/domain/items.ts", "src/importers/dota-vpk/item-snapshot.ts"]'
+                    data-node-id="entity-graph-item"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">领域实体</span
+                    ><strong>Item · 物品组件</strong
+                    ><span class="node-summary"
+                      >独立internal_name，属性由所选Catalog固定来源确定。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      物品可独立搜索、阅读效果并浏览升级路径。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="作为配方组件">
+                    <span>作为配方组件</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="relation"
+                    data-name="物品合成关系"
+                    data-definition="图纸关联可选组件方案与一个合成结果。"
+                    data-why="保留重复组件、替代方案、图纸价格和特殊条件提示。"
+                    data-detail="ItemRequirements与ItemResult来自同一固定版本；未知目标不生成链接，不推测星号条件。"
+                    data-files='["src/importers/dota-vpk/item-adapter.ts", "src/app/items/[internal-name]/page.tsx"]'
+                    data-node-id="entity-graph-recipe"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">关系记录</span
+                    ><strong>物品合成关系</strong
+                    ><span class="node-summary"
+                      >图纸关联可选组件方案与一个合成结果。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      保留重复组件、替代方案、图纸价格和特殊条件提示。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="合成为">
+                    <span>合成为</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="entity"
+                    data-name="Item · 物品成品"
+                    data-definition="与组件共用物品身份和版本规则。"
+                    data-why="详情提供配方与反向合成跳转，并保持Release。"
+                    data-detail="顶栏物品位于单位之后；独立物品图片批次绑定Catalog，列表、悬停、详情与配方链接使用原生图标；通用物品Diff待接入。"
+                    data-files='["src/app/items/page.tsx", "src/components/item-catalog.tsx", "docs/specs/item-catalog.md"]'
+                    data-node-id="entity-graph-itemresult"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">领域实体</span
+                    ><strong>Item · 物品成品</strong
+                    ><span class="node-summary"
+                      >与组件共用物品身份和版本规则。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      详情提供配方与反向合成跳转，并保持Release。</span
+                    >
+                  </button>
+                </div>
+              </div>
+              <div class="graph-lane">
+                <div class="lane-label">D · 同版本属性与对象引用</div>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="entity"
+                    data-name="英雄／技能／单位／物品"
+                    data-definition="保留基础值、成长、技能参数与条件。"
+                    data-why="数值与枚举标签可进入对应属性，完整引用补足未在摘要展示的字段。"
+                    data-detail="来源值不自动求和；对象专属参数按类型、对象、字段隔离。"
+                    data-files='["src/components/attribute-link.tsx", "src/server/repositories/attributes.ts"]'
+                    data-node-id="entity-graph-attribute-owners"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">领域实体</span
+                    ><strong>英雄／技能／单位／物品</strong
+                    ><span class="node-summary"
+                      >保留基础值、成长、技能参数与条件。</span
+                    ><span class="node-why"
+                      ><b>作用</b>
+                      数值与枚举标签可进入对应属性，完整引用补足未在摘要展示的字段。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="通过字段引用">
+                    <span>通过字段引用</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="relation"
+                    data-name="属性引用"
+                    data-definition="对象＋字段＋值＋条件＋来源。"
+                    data-why="从属性查到使用它的对象，再返回详情。"
+                    data-detail="全部链接保持Release和语言；不同版本的引用不混合。"
+                    data-files='["src/domain/attributes.ts", "src/components/attribute-catalog.tsx"]'
+                    data-node-id="entity-graph-attribute-reference"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">关系记录</span
+                    ><strong>属性引用</strong
+                    ><span class="node-summary"
+                      >对象＋字段＋值＋条件＋来源。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 从属性查到使用它的对象，再返回详情。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="关联到">
+                    <span>关联到</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="entity"
+                    data-name="Attribute · 属性"
+                    data-definition="稳定语义ID或对象专属参数ID；数值、枚举与组合标记分别建模。"
+                    data-why="独立阅读含义、适用范围、机制及证据。"
+                    data-detail="顶栏属性位于物品之后；力量、敏捷、智力同组，施法后摇紧随施法前摇。属性包括数值、枚举和组合标记，枚举逐值解释并筛选关联对象。描述与VPK说明中的属性词链接到同版实体，保留原文和证据等级。字段审计与缺项入口保留，通用机器Diff尚未接入。"
+                    data-files='["src/app/attributes/page.tsx", "src/app/attributes/[id]/page.tsx", "src/components/attribute-text.tsx", "src/presentation/attribute-text.ts", "docs/specs/attribute-catalog.md"]'
+                    data-node-id="entity-graph-attribute"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">领域实体</span
+                    ><strong>Attribute · 属性</strong
+                    ><span class="node-summary"
+                      >稳定语义ID或对象专属参数ID；数值、枚举与组合标记分别建模。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 独立阅读含义、适用范围、机制及证据。</span
+                    >
+                  </button>
+                </div>
+              </div>
               <div class="inspector" aria-live="polite">
                 点击节点查看具体实现文件及边界。图例只突出同类节点，不筛选代码或执行命令。
               </div>
@@ -3132,11 +3346,11 @@
               </div>
             </figure>
             <p class="quiet-note">
-              <b>待实施：实体版本化与语义 Diff。</b
-              >先盘点全部实体，再将实体状态关联游戏／客户端等版本，让前端按版本筛选，并表达实体、属性、关系与机制的渐进变化。下面的
-              head 与发布流程描述现有实现；目标模型和验收见
-              <a href="../work/entity-version-diff.md">系统优化 Todo</a
-              >，尚未实施。
+              <b>实体版本与Diff第一阶段架构已落地。</b
+              >顶栏Release固定完整版本，列表、详情、关系与缓存保持URL上下文；两个端点比较属性、关系、已解析机制与原始结构，并明确缺少覆盖或身份依据的原因。真实三版数据、单位持久化与完整机制验收仍待后续，见<a
+                href="../specs/entity-versions.md"
+                >实体版本合同</a
+              >和<a href="../work/entity-version-diff.md">实施任务</a>。
             </p>
             <figure
               class="semantic-figure"
@@ -3156,6 +3370,74 @@
                 的箭头全部表示“选择／指向”。同名 Catalog
                 表示同一类版本对象，不是额外复制一份。
               </div>
+              <div class="graph-lane">
+                <div class="lane-label">C · 用户版本与端点比较</div>
+                <div class="chain">
+                  <button
+                    class="node"
+                    data-key="choice"
+                    data-name="全局Release切换器"
+                    data-definition="URL固定Catalog／地图读上下文，覆盖独立声明。"
+                    data-why="顶栏切换影响列表、详情、关系和缓存。"
+                    data-detail="游戏补丁、客户端、来源commit和dataset保持独立；同补丁唯一地图可关联，缺项不补猜。"
+                    data-files='["src/domain/releases.ts", "src/server/services/releases.ts", "src/components/release-navigation.tsx", "docs/specs/entity-versions.md"]'
+                    data-node-id="versions-graph-release"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">版本选择</span
+                    ><strong>全局Release切换器</strong
+                    ><span class="node-summary"
+                      >URL固定Catalog／地图读上下文，覆盖独立声明。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 顶栏切换影响列表、详情、关系和缓存。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="读取两个完整端点">
+                    <span>读取两个完整端点</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="task"
+                    data-name="结构化实体Diff"
+                    data-definition="按稳定身份比较属性、关系、已解析机制和原文。"
+                    data-why="A→C直接比较终点，撤回或还原不会累积。"
+                    data-detail="KV比较去除行号与唯一键顺序，文件声明搬迁按同英雄／技能匹配；真实天赋槽位变化保留。缺来源、未知结构、地图身份歧义与实现升级分别报告；原始VPK报告可单独核对物品与完整单位定义。"
+                    data-files='["src/domain/entity-version-diff.ts", "src/server/services/entity-version-diff.ts", "src/workers/report-vpk-diff.ts", "docs/specs/entity-versions.md"]'
+                    data-node-id="versions-graph-diff"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">程序处理</span
+                    ><strong>结构化实体Diff</strong
+                    ><span class="node-summary"
+                      >按稳定身份比较属性、关系、已解析机制和原文。</span
+                    ><span class="node-why"
+                      ><b>作用</b> A→C直接比较终点，撤回或还原不会累积。</span
+                    >
+                  </button>
+                  <div class="edge" data-relation="变化与来源可审阅">
+                    <span>变化与来源可审阅</span><b aria-hidden="true">→</b>
+                  </div>
+                  <button
+                    class="node"
+                    data-key="page"
+                    data-name="版本变化页"
+                    data-definition="按英雄、技能、物品显示中文变化与前后值。"
+                    data-why="对应官方说明并列数值，原始证据可展开。"
+                    data-detail="7.41e／7.41f完整端点按同版本地化命名、技能归属和天赋等级分组，数值重复投影合并。官方说明及补充物品KV绑定固定提交对；反向／同版／其他端点不套用。未知字段与地图身份保留待核验，跨机器往返仍待验收。"
+                    data-files='["src/app/changes/page.tsx", "src/presentation/entity-changes.ts", "src/server/services/release-changes.ts", "src/data/patch-notes/7.41f.json", "src/app/api/releases/diff/route.ts", "tests/unit/entity-changes.test.ts", "tests/journeys/releases.spec.ts"]'
+                    data-node-id="versions-graph-diffview"
+                    aria-pressed="false"
+                  >
+                    <span class="node-type">页面／报告</span
+                    ><strong>版本变化页</strong
+                    ><span class="node-summary"
+                      >按英雄、技能、物品显示中文变化与前后值。</span
+                    ><span class="node-why"
+                      ><b>作用</b> 对应官方说明并列数值，原始证据可展开。</span
+                    >
+                  </button>
+                </div>
+              </div>
               <div class="legend">
                 <small>节点类型 · 悬停高亮</small
                 ><span
@@ -3173,6 +3455,16 @@
                   data-key="evidence"
                   data-tip="帮助解释某份数据从哪里来、如何得到和是否通过检查。"
                   ><i></i>来源／执行证据</span
+                >
+                <span data-key="page"
+                  ><i aria-hidden="true"></i>页面／报告</span
+                >
+                <span data-key="task"
+                  ><span
+                    class="legend-sample node-sample"
+                    aria-hidden="true"
+                  ></span
+                  >程序处理</span
                 >
               </div>
               <div class="graph-lane">
@@ -3256,9 +3548,9 @@
                     class="node"
                     data-key="choice"
                     data-name="Catalog current head"
-                    data-definition="当前英雄／技能目录的数据库指针。"
-                    data-why="整体切换目录版本，支持受约束的提升与回滚。"
-                    data-detail=""
+                    data-definition="默认英雄／技能入口的数据库指针。"
+                    data-why="提升与回滚改变默认入口，保留显式历史查询。"
+                    data-detail="head管理选择与浏览器页面选择职责独立；公共Release只包含已发布且通过审阅的Catalog。"
                     data-files='["src/server/db/schema.ts", "src/workers/promote-catalog.ts", "src/workers/rollback-catalog.ts"]'
                     data-node-id="versions-graph-head"
                     aria-pressed="false"
@@ -3266,10 +3558,10 @@
                     <span class="node-type">版本选择</span
                     ><strong>Catalog current head</strong
                     ><span class="node-summary"
-                      >当前英雄／技能目录的数据库指针。</span
+                      >默认英雄／技能入口的数据库指针。</span
                     ><span class="node-why"
                       ><b>作用</b>
-                      整体切换目录版本，支持受约束的提升与回滚。</span
+                      提升与回滚改变默认入口，保留显式历史查询。</span
                     >
                   </button>
                   <div class="edge" data-relation="指向 1 个目录版本">
@@ -3279,19 +3571,19 @@
                     class="node"
                     data-key="dataset"
                     data-name="被选中的 Catalog"
-                    data-definition="已经保存、可以被页面读取的目录版本。"
-                    data-why="为同一页面及关系提供一致的数据基线。"
-                    data-detail=""
-                    data-files='["src/server/repositories/heroes.ts"]'
+                    data-definition="Release显式选择已发布完整Catalog。"
+                    data-why="同一页面与跨页面关联都携带固定版本。"
+                    data-detail="URL release支持恢复和分享，两个标签页可分别读取不同版本；顶栏只公开完整Catalog，历史地图URL转换为唯一对应完整版本。新版本先核对全部实体。"
+                    data-files='["src/server/services/releases.ts", "src/server/repositories/heroes.ts", "src/components/release-navigation.tsx"]'
                     data-node-id="versions-graph-chosen"
                     aria-pressed="false"
                   >
                     <span class="node-type">版本化数据</span
                     ><strong>被选中的 Catalog</strong
                     ><span class="node-summary"
-                      >已经保存、可以被页面读取的目录版本。</span
+                      >Release显式选择已发布完整Catalog。</span
                     ><span class="node-why"
-                      ><b>作用</b> 为同一页面及关系提供一致的数据基线。</span
+                      ><b>作用</b> 同一页面与跨页面关联都携带固定版本。</span
                     >
                   </button>
                 </div>
@@ -3301,7 +3593,7 @@
                   class="node"
                   data-key="choice"
                   data-name="按 Catalog 保存的资产 head"
-                  data-definition="英雄／技能与单位图片各有独立选择指针。"
+                  data-definition="英雄／技能、单位与物品图片各有独立选择指针。"
                   data-why="更新图片时保留明确的 Catalog 绑定。"
                   data-detail=""
                   data-files='["src/server/db/schema.ts"]'
@@ -3311,7 +3603,7 @@
                   <span class="node-type">版本选择</span
                   ><strong>按 Catalog 保存的资产 head</strong
                   ><span class="node-summary"
-                    >英雄／技能与单位图片各有独立选择指针。</span
+                    >英雄／技能、单位与物品图片各有独立选择指针。</span
                   ><span class="node-why"
                     ><b>作用</b> 更新图片时保留明确的 Catalog 绑定。</span
                   >
@@ -3482,7 +3774,7 @@
                   data-definition="按来源读取、解析和转换原始定义或资源。"
                   data-why="把不同来源格式映射到项目能够使用的结构。"
                   data-detail=""
-                  data-files='["src/importers/dota-vpk/hero-adapter.ts", "src/importers/dota-vpk/unit-adapter.ts", "src/importers/valve-assets/catalog-assets.ts", "src/importers/dota-map/native.ts"]'
+                  data-files='["src/importers/dota-vpk/hero-adapter.ts", "src/importers/dota-vpk/unit-adapter.ts", "src/importers/dota-vpk/item-adapter.ts", "src/importers/valve-assets/catalog-assets.ts", "src/importers/dota-map/native.ts"]'
                   data-node-id="layers-graph-importers"
                   aria-pressed="false"
                 >
@@ -3500,7 +3792,7 @@
                   data-definition="定义实体、关系、数据协议和计算规则。"
                   data-why="让导入、查询与交互复用同一业务语义。"
                   data-detail=""
-                  data-files='["src/domain/heroes.ts", "src/domain/abilities.ts", "src/domain/units.ts", "src/domain/map/routing.ts"]'
+                  data-files='["src/domain/heroes.ts", "src/domain/abilities.ts", "src/domain/units.ts", "src/domain/items.ts", "src/domain/attributes.ts", "src/domain/attribute-mechanics.ts", "src/domain/map/routing.ts"]'
                   data-node-id="layers-graph-domain"
                   aria-pressed="false"
                 >
@@ -3517,8 +3809,8 @@
                   data-name="数据访问与展示服务 · server"
                   data-definition="读取数据库或文件，并组织过滤、搜索和语义资料。"
                   data-why="页面不必自己理解数据库表与每一种来源格式。"
-                  data-detail="repositories 主要承担读取；services 组织搜索、过滤与展示投影。地图服务读取文件包，单位读取仍需匹配固定来源。"
-                  data-files='["src/server/repositories/heroes.ts", "src/server/repositories/units.ts", "src/server/services/catalog-replica.ts", "src/server/map/store.ts"]'
+                  data-detail="repositories 承担读取；services 组织搜索、过滤与展示投影。属性索引合并同版Catalog、单位和物品字段，并由分页API供目录读取；机制证据与公式固定来源提交。地图服务读取文件包。"
+                  data-files='["src/server/repositories/heroes.ts", "src/server/repositories/units.ts", "src/server/repositories/items.ts", "src/server/repositories/attributes.ts", "src/server/services/attribute-catalog.ts", "src/server/services/catalog-replica.ts", "src/server/map/store.ts"]'
                   data-node-id="layers-graph-query"
                   aria-pressed="false"
                 >
@@ -3554,8 +3846,8 @@
                   data-name="页面与浏览器交互 · app／components"
                   data-definition="处理页面路由、展示、筛选和地图交互。"
                   data-why="将领域资料转成用户能够理解和操作的界面。"
-                  data-detail="浏览器目录缓存位于 src/browser/；地图寻路可在浏览器 Worker 中运行，并按需使用领域算法。"
-                  data-files='["src/app/heroes/page.tsx", "src/components/live-catalog.tsx", "src/browser/catalog-replica.ts", "src/components/map/route-client.ts"]'
+                  data-detail="顶栏语言与Release共用所有页面。src/i18n统一注册语种、消息、Intl格式化和来源映射；应用游戏术语由official-terms.json绑定官方VPK token及精确版本/文件哈希，按所选Catalog读取的资料优先；proxy与Provider按URL→cookie→默认解析。应用语言独立于资料locale，Canvas与DOM同步，寻路计算保持语言无关。单选下拉复用CompactSelect，目录副本仍按Catalog、asset和资料locale隔离。"
+                  data-files='["src/app/heroes/page.tsx", "src/components/live-catalog.tsx", "src/i18n/config.ts", "src/i18n/provider.tsx", "src/i18n/messages.ts", "src/i18n/official-terms.json", "src/i18n/zh-CN.json", "src/proxy.ts", "docs/specs/global-i18n.md", "src/components/ui/compact-select.tsx", "src/app/changes/page.tsx", "src/browser/catalog-replica.ts", "src/components/map/route-client.ts"]'
                   data-node-id="layers-graph-web"
                   aria-pressed="false"
                 >
@@ -3570,6 +3862,14 @@
               </div>
               <div class="lane-label">主要依赖关系 · 箭头表示调用或使用</div>
               <div class="dependency-list">
+                <div class="dependency-row">
+                  <b>页面与Canvas</b><span class="dependency-verb">读取 →</span
+                  ><b>全局语言上下文</b
+                  ><small
+                    >URL与偏好选择应用消息；注册表映射同版本游戏资料语言。</small
+                  >
+                </div>
+
                 <div class="dependency-row">
                   <b>任务入口</b><span class="dependency-verb">调用 →</span
                   ><b>来源适配</b><small>导入任务组织输入读取和解析。</small>
@@ -3972,7 +4272,7 @@
           "数据集。一次完整、可定位的业务版本；已保存的内容不原地覆盖，通过选择指针切换使用版本。",
         Collection:
           "地图集合。列出可用地图版本及默认项，不把不同地图的数据合并。",
-        head: "当前版本指针。内容保持不变，指针决定用户此刻读哪一版；回滚就是指向已验证的旧版。",
+        head: "默认版本指针。显式Release独立选择历史内容；回滚改变默认入口。",
         commit:
           "Git 提交标识。精确指向一份代码或来源内容；分支名和“最新”不能代替它。",
         Git: "记录文件历史的版本管理系统。项目用固定提交锁定代码与来源，便于追溯和复现。",
@@ -4005,7 +4305,7 @@
         "Import Run":
           "一次导入执行。记录实现版本、输入、校验和错误等证据，可生成或复用一个业务版本。",
         "Current head":
-          "当前版本选择指针。它与不可变内容分开保存，负责安全提升和回滚。",
+          "默认版本选择指针。它与用户页面Release独立，负责受门禁控制的提升和回滚。",
         Green: "绿色门禁。变化符合已识别规则，允许既有数据流程原子提升候选。",
         Yellow:
           "黄色门禁。数据可能有效，但存在需要人工判断的变化，保留候选等待审阅。",

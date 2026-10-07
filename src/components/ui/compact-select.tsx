@@ -1,4 +1,5 @@
 "use client";
+import { ChevronDown } from "lucide-react";
 import {
   Children,
   isValidElement,
@@ -15,6 +16,7 @@ export function CompactSelect({
   name = "selection",
   label,
   value,
+  defaultValue,
   children,
   onChange,
   onValueChange,
@@ -24,7 +26,8 @@ export function CompactSelect({
 }: {
   name?: string;
   label: string;
-  value: string | number;
+  value?: string | number;
+  defaultValue?: string | number;
   children: ReactNode;
   onChange?: (data: FormData, composing: boolean) => void;
   onValueChange?: (value: string) => void;
@@ -47,6 +50,10 @@ export function CompactSelect({
         ]
       : [],
   );
+  const [formValue, setFormValue] = useState(
+    defaultValue ?? options[0]?.value ?? "",
+  );
+  const currentValue = value ?? formValue;
   const id = useId();
   const details = useRef<HTMLDetailsElement>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -54,7 +61,7 @@ export function CompactSelect({
   const typeahead = useRef({ text: "", time: 0 });
   const selected = Math.max(
     0,
-    options.findIndex((option) => option.value === String(value)),
+    options.findIndex((option) => option.value === String(currentValue)),
   );
   const focusOption = (index: number) => {
     const option =
@@ -68,6 +75,7 @@ export function CompactSelect({
   };
   const choose = (next: string) => {
     if (disabled || options.find((o) => o.value === next)?.disabled) return;
+    if (value === undefined) setFormValue(next);
     onValueChange?.(next);
     if (onChange && input.current?.form) {
       const data = new FormData(input.current.form);
@@ -171,7 +179,7 @@ export function CompactSelect({
         }
       }}
     >
-      <input ref={input} type="hidden" name={name} value={value} />
+      <input ref={input} type="hidden" name={name} value={currentValue} />
       <summary
         role="combobox"
         aria-disabled={disabled}
@@ -192,9 +200,11 @@ export function CompactSelect({
         <span className="min-w-0 flex-1 truncate">
           {options[selected]?.label}
         </span>
-        <span aria-hidden="true" className="compact-menu-chevron">
-          ⌄
-        </span>
+        <ChevronDown
+          aria-hidden="true"
+          className="compact-menu-chevron"
+          strokeWidth={2.5}
+        />
       </summary>
       <div
         id={id}
@@ -206,7 +216,7 @@ export function CompactSelect({
           <div
             key={option.value}
             role="option"
-            aria-selected={option.value === String(value)}
+            aria-selected={option.value === String(currentValue)}
             aria-disabled={option.disabled || undefined}
             tabIndex={-1}
             className="compact-menu-option"
@@ -219,7 +229,7 @@ export function CompactSelect({
             }}
           >
             <span className="w-3 shrink-0" aria-hidden="true">
-              {option.value === String(value) ? "✓" : ""}
+              {option.value === String(currentValue) ? "✓" : ""}
             </span>
             {option.label}
           </div>

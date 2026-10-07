@@ -1,0 +1,856 @@
+{
+  "schema_version": "official-ui-terms-v1",
+  "importer_version": "reviewed-vpk-token-extract-v1",
+  "imported_at": "2026-10-07T06:19:50.153920+00:00",
+  "normalization": "Strip Valve font/HTML markup, trim whitespace and trailing label colons; preserve wording and capitalization. Reviewed semantic mapping only.",
+  "sources": [
+    {
+      "locale": "zh-CN",
+      "source_repository": "spirit-bear-productions/dota_vpk_updates",
+      "source_commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+      "source_path": "resource/localization/dota_schinese.txt",
+      "client_version": "6944",
+      "url": "https://raw.githubusercontent.com/spirit-bear-productions/dota_vpk_updates/f4c45719314754567cb4ef4fe343bbc790a311f4/resource/localization/dota_schinese.txt",
+      "raw_sha256": "ac4b6582aa639b66a76efc7ce02d05675e2bcec554c1af52945ef4d6dcf82f6b"
+    },
+    {
+      "locale": "en",
+      "source_repository": "spirit-bear-productions/dota_vpk_updates",
+      "source_commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+      "source_path": "resource/localization/dota_english.txt",
+      "client_version": "6944",
+      "url": "https://raw.githubusercontent.com/spirit-bear-productions/dota_vpk_updates/f4c45719314754567cb4ef4fe343bbc790a311f4/resource/localization/dota_english.txt",
+      "raw_sha256": "19132a0d5dfee808942d81370abc2ca2814b9ed75c20fd295923fd0c9bdf2307"
+    },
+    {
+      "locale": "zh-CN",
+      "source_repository": "spirit-bear-productions/dota_vpk_updates",
+      "source_commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+      "source_path": "resource/localization/abilities_schinese.txt",
+      "client_version": "6944",
+      "url": "https://raw.githubusercontent.com/spirit-bear-productions/dota_vpk_updates/f4c45719314754567cb4ef4fe343bbc790a311f4/resource/localization/abilities_schinese.txt",
+      "raw_sha256": "3467d35dab20b9ad50df60fa55c3f0aac574c1360947f310530419d5857d7fe3"
+    },
+    {
+      "locale": "en",
+      "source_repository": "spirit-bear-productions/dota_vpk_updates",
+      "source_commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+      "source_path": "resource/localization/abilities_english.txt",
+      "client_version": "6944",
+      "url": "https://raw.githubusercontent.com/spirit-bear-productions/dota_vpk_updates/f4c45719314754567cb4ef4fe343bbc790a311f4/resource/localization/abilities_english.txt",
+      "raw_sha256": "562494850a6a660994fcfe7ea39ce0b04ada85f30311a34635fa4a4e7e0cc5d0"
+    }
+  ],
+  "entries": [
+    {
+      "message": "力量",
+      "token": "dota_heroselectorcategory_primaryattribute_strength",
+      "values": {
+        "zh-CN": "力量",
+        "en": "Strength"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "敏捷",
+      "token": "dota_heroselectorcategory_primaryattribute_agility",
+      "values": {
+        "zh-CN": "敏捷",
+        "en": "Agility"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "智力",
+      "token": "dota_heroselectorcategory_primaryattribute_intelligence",
+      "values": {
+        "zh-CN": "智力",
+        "en": "Intelligence"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "全才",
+      "token": "dota_heroselectorcategory_primaryattribute_all",
+      "values": {
+        "zh-CN": "全才",
+        "en": "Universal"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "核心",
+      "token": "dota_herorole_carry",
+      "values": {
+        "zh-CN": "核心",
+        "en": "Carry"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "辅助",
+      "token": "dota_herorole_support",
+      "values": {
+        "zh-CN": "辅助",
+        "en": "Support"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "爆发",
+      "token": "dota_herorole_nuker",
+      "values": {
+        "zh-CN": "爆发",
+        "en": "Nuker"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "控制",
+      "token": "dota_herorole_disabler",
+      "values": {
+        "zh-CN": "控制",
+        "en": "Disabler"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "耐久",
+      "token": "dota_herorole_durable",
+      "values": {
+        "zh-CN": "耐久",
+        "en": "Durable"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "逃生",
+      "token": "dota_herorole_escape",
+      "values": {
+        "zh-CN": "逃生",
+        "en": "Escape"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "推进",
+      "token": "dota_herorole_pusher",
+      "values": {
+        "zh-CN": "推进",
+        "en": "Pusher"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "先手",
+      "token": "dota_herorole_initiator",
+      "values": {
+        "zh-CN": "先手",
+        "en": "Initiator"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "近战",
+      "token": "dota_heroselectorcategory_attackrange_melee",
+      "values": {
+        "zh-CN": "近战",
+        "en": "Melee"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "远程",
+      "token": "dota_heroselectorcategory_attackrange_ranged",
+      "values": {
+        "zh-CN": "远程",
+        "en": "Ranged"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "被动",
+      "token": "dota_tooltip_ability_passive",
+      "values": {
+        "zh-CN": "被动",
+        "en": "Passive"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "无目标",
+      "token": "dota_tooltip_ability_notarget",
+      "values": {
+        "zh-CN": "无目标",
+        "en": "No Target"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "单位目标",
+      "token": "dota_tooltip_ability_target",
+      "values": {
+        "zh-CN": "单位目标",
+        "en": "Unit Target"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "点目标",
+      "token": "dota_tooltip_ability_point",
+      "values": {
+        "zh-CN": "点目标",
+        "en": "Point Target"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "持续施法",
+      "token": "dota_tooltip_ability_channeled",
+      "values": {
+        "zh-CN": "持续施法",
+        "en": "Channeled"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "切换",
+      "token": "dota_tooltip_ability_toggle",
+      "values": {
+        "zh-CN": "切换",
+        "en": "Toggle"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "自动施法",
+      "token": "dota_tooltip_ability_autocast",
+      "values": {
+        "zh-CN": "自动施放",
+        "en": "Auto-Cast"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "魔法",
+      "token": "dota_tooltip_damage_magical",
+      "values": {
+        "zh-CN": "<font color=\"#5b93d1\">魔法</font>",
+        "en": "<font color=\"#5b93d1\">Magical</font>"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "物理",
+      "token": "dota_tooltip_damage_physical",
+      "values": {
+        "zh-CN": "<font color=\"#ae2f28\">物理</font>",
+        "en": "<font color=\"#ae2f28\">Physical</font>"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "纯粹",
+      "token": "dota_tooltip_damage_pure",
+      "values": {
+        "zh-CN": "<font color=\"#d8ae53\">纯粹</font>",
+        "en": "<font color=\"#d8ae53\">Pure</font>"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "敌方",
+      "token": "dota_tooltip_targeting_enemy",
+      "values": {
+        "zh-CN": "敌方",
+        "en": "Enemies"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "友方",
+      "token": "dota_tooltip_targeting_allies",
+      "values": {
+        "zh-CN": "友方",
+        "en": "Allies"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "树木",
+      "token": "dota_tooltip_targeting_trees",
+      "values": {
+        "zh-CN": "树",
+        "en": "Trees"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "英雄",
+      "token": "dota_tooltip_targeting_all_heroes",
+      "values": {
+        "zh-CN": "英雄",
+        "en": "Heroes"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "单位",
+      "token": "dota_tooltip_targeting_units",
+      "values": {
+        "zh-CN": "单位",
+        "en": "Units"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "不可驱散",
+      "token": "dota_tooltip_dispellable_no_2",
+      "values": {
+        "zh-CN": "无法驱散",
+        "en": "Cannot be dispelled"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "仅强驱散",
+      "token": "dota_tooltip_dispellable_yes_strong_2",
+      "values": {
+        "zh-CN": "仅强驱散",
+        "en": "Strong Dispels Only"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "护甲",
+      "token": "dota_derivedstatshelp_tooltip_armor",
+      "values": {
+        "zh-CN": "护甲",
+        "en": "Armor"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "攻击速度",
+      "token": "dota_derivedstatshelp_tooltip_attackspeed",
+      "values": {
+        "zh-CN": "攻击速度",
+        "en": "Attack Speed"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "攻击距离",
+      "token": "dota_derivedstatshelp_tooltip_attackrange",
+      "values": {
+        "zh-CN": "攻击距离",
+        "en": "Attack Range"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "基础攻击间隔",
+      "token": "dota_derivedstatshelp_tooltip_baseattacktime",
+      "values": {
+        "zh-CN": "基础攻击间隔",
+        "en": "Base Attack Time"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "移动速度",
+      "token": "dota_derivedstatshelp_tooltip_movespeed",
+      "values": {
+        "zh-CN": "移动速度",
+        "en": "Movement Speed"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "天辉",
+      "token": "dota_workshop_couriericonradiant",
+      "values": {
+        "zh-CN": "天辉",
+        "en": "Radiant"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "夜魇",
+      "token": "dota_workshop_couriericondire",
+      "values": {
+        "zh-CN": "夜魇",
+        "en": "Dire"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "中立",
+      "token": "dota_location_name_neutral",
+      "values": {
+        "zh-CN": "中立",
+        "en": "Neutral"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "技能",
+      "token": "dota_heroguide_abilitylabel",
+      "values": {
+        "zh-CN": "技能",
+        "en": "Abilities"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "物品",
+      "token": "dota_combatlog_items",
+      "values": {
+        "zh-CN": "物品",
+        "en": "Items"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "技能征召",
+      "token": "dota_gamemode_abilitydraft",
+      "values": {
+        "zh-CN": "技能征召",
+        "en": "Ability Draft"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "先天技能",
+      "token": "dota_innateabilitytag",
+      "values": {
+        "zh-CN": "先天技能",
+        "en": "Innate Ability"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "命石",
+      "token": "dota_facetdropdown_title",
+      "values": {
+        "zh-CN": "命石",
+        "en": "Facet"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "天赋",
+      "token": "dota_abilitybuild_talent_title",
+      "values": {
+        "zh-CN": "天赋",
+        "en": "Talents"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "天赋树",
+      "token": "dota_page_match_details_legend_tt_tooltip",
+      "values": {
+        "zh-CN": "天赋树",
+        "en": "Talent Tree"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "中立物品",
+      "token": "dota_heroguide_neutralitemlabel",
+      "values": {
+        "zh-CN": "中立物品",
+        "en": "Neutral Items"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "中立附魔",
+      "token": "dota_heroguide_neutralenhancementlabel",
+      "values": {
+        "zh-CN": "中立物品附魔",
+        "en": "Neutral Enchantments"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "图纸",
+      "token": "dota_shop_recipe",
+      "values": {
+        "zh-CN": "图纸",
+        "en": "Recipe"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "中立生物",
+      "token": "dota_glossary_neutralcreeps",
+      "values": {
+        "zh-CN": "中立生物",
+        "en": "Neutral Creeps"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "守卫",
+      "token": "dota_globalitems_wards",
+      "values": {
+        "zh-CN": "守卫",
+        "en": "Wards"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "信使",
+      "token": "dota_globalitems_couriers",
+      "values": {
+        "zh-CN": "信使",
+        "en": "Couriers"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "遗迹",
+      "token": "dota_globalitems_ancient",
+      "values": {
+        "zh-CN": "遗迹",
+        "en": "Ancient"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "防御塔",
+      "token": "dota_showcase_itemtype_tower",
+      "values": {
+        "zh-CN": "防御塔",
+        "en": "Tower"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "兵营",
+      "token": "dota_glossary_map_structures_barracks",
+      "values": {
+        "zh-CN": "兵营",
+        "en": "Barracks"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "近战兵营",
+      "token": "dota_glossary_meleebarracks",
+      "values": {
+        "zh-CN": "近战兵营",
+        "en": "Melee Barracks"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "远程兵营",
+      "token": "dota_glossary_rangedbarracks",
+      "values": {
+        "zh-CN": "远程兵营",
+        "en": "Ranged Barracks"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "泉水",
+      "token": "dota_glossary_map_structures_fountain",
+      "values": {
+        "zh-CN": "泉水",
+        "en": "Fountain"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "前哨",
+      "token": "dota_outpostname_default",
+      "values": {
+        "zh-CN": "前哨",
+        "en": "Outpost"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "监视者",
+      "token": "dota_mapupdate2023tooltip_header_watcher",
+      "values": {
+        "zh-CN": "观察者",
+        "en": "Watcher"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "莲花池",
+      "token": "dota_mapupdate2023tooltip_header_tree",
+      "values": {
+        "zh-CN": "莲花池",
+        "en": "Lotus Pool"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "肉山",
+      "token": "dota_globalitems_roshan",
+      "values": {
+        "zh-CN": "肉山",
+        "en": "Roshan"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "魔方",
+      "token": "dota_globalitems_tormentor",
+      "values": {
+        "zh-CN": "痛苦魔方",
+        "en": "Tormentor"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "赏金神符",
+      "token": "dota_location_name_bountyrune",
+      "values": {
+        "zh-CN": "赏金神符",
+        "en": "Bounty Rune"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "肉山巢穴",
+      "token": "dota_mapupdate2023tooltip_header_roshan",
+      "values": {
+        "zh-CN": "肉山巢穴",
+        "en": "Roshan Pit"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "伤害",
+      "token": "dota_shop_tag_damage",
+      "values": {
+        "zh-CN": "伤害",
+        "en": "Damage"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "小型野怪营地",
+      "token": "dota_neutralcamp_name_small",
+      "values": {
+        "zh-CN": "小型野怪营地",
+        "en": "Small Camp"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "中型野怪营地",
+      "token": "dota_neutralcamp_name_medium",
+      "values": {
+        "zh-CN": "中型野怪营地",
+        "en": "Medium Camp"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "大型野怪营地",
+      "token": "dota_neutralcamp_name_large",
+      "values": {
+        "zh-CN": "大型野怪营地",
+        "en": "Large Camp"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "远古野怪营地",
+      "token": "dota_neutralcamp_name_ancient",
+      "values": {
+        "zh-CN": "远古野怪营地",
+        "en": "Ancient Camp"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "远古营地",
+      "token": "dota_neutralcamp_name_ancient",
+      "values": {
+        "zh-CN": "远古野怪营地",
+        "en": "Ancient Camp"
+      },
+      "source_family": "dota"
+    },
+    {
+      "message": "生命值",
+      "source_family": "abilities",
+      "token": "dota_ability_variable_health",
+      "values": {
+        "zh-CN": "生命值",
+        "en": "Health"
+      }
+    },
+    {
+      "message": "魔法值",
+      "source_family": "abilities",
+      "token": "dota_ability_variable_mana",
+      "values": {
+        "zh-CN": "魔法值",
+        "en": "Mana"
+      }
+    },
+    {
+      "message": "生命恢复",
+      "source_family": "abilities",
+      "token": "dota_ability_variable_hp_regen",
+      "values": {
+        "zh-CN": "生命恢复",
+        "en": "Health Regeneration"
+      }
+    },
+    {
+      "message": "魔法恢复",
+      "source_family": "abilities",
+      "token": "dota_ability_variable_mana_regen",
+      "values": {
+        "zh-CN": "魔法恢复",
+        "en": "Mana Regeneration"
+      }
+    },
+    {
+      "message": "施法距离",
+      "source_family": "abilities",
+      "token": "dota_ability_variable_cast_range",
+      "values": {
+        "zh-CN": "施法距离",
+        "en": "Cast Range"
+      }
+    },
+    {
+      "message": "弹道速度",
+      "source_family": "abilities",
+      "token": "dota_ability_variable_projectile_speed",
+      "values": {
+        "zh-CN": "弹道速度",
+        "en": "Projectile Speed"
+      }
+    },
+    {
+      "message": "冷却时间减少",
+      "source_family": "abilities",
+      "token": "dota_ability_variable_cooldown_reduction",
+      "values": {
+        "zh-CN": "冷却时间减少",
+        "en": "Cooldown Reduction"
+      }
+    },
+    {
+      "message": "持续时间",
+      "source_family": "abilities",
+      "token": "dota_tooltip_ability_antimage_counterspell_ally_duration",
+      "values": {
+        "zh-CN": "持续时间：",
+        "en": "DURATION:"
+      }
+    },
+    {
+      "message": "作用范围",
+      "source_family": "abilities",
+      "token": "dota_tooltip_ability_antimage_mana_void_mana_void_aoe_radius",
+      "values": {
+        "zh-CN": "作用范围：",
+        "en": "RADIUS:"
+      }
+    },
+    {
+      "message": "眩晕时间",
+      "source_family": "abilities",
+      "token": "dota_tooltip_ability_antimage_mana_void_mana_void_ministun",
+      "values": {
+        "zh-CN": "<font color='#2dd5e4'>眩晕</font>时间：",
+        "en": "STUN DURATION:"
+      }
+    },
+    {
+      "message": "减速时间",
+      "source_family": "abilities",
+      "token": "dota_tooltip_ability_antimage_persectur_slow_duration",
+      "values": {
+        "zh-CN": "减速持续时间：",
+        "en": "SLOW DURATION:"
+      }
+    },
+    {
+      "message": "治疗量",
+      "source_family": "abilities",
+      "token": "dota_tooltip_ability_snapfire_firesnap_cookie_target_heal",
+      "values": {
+        "zh-CN": "<font color='#07d738'>治疗</font>量：",
+        "en": "HEAL AMOUNT:"
+      }
+    },
+    {
+      "message": "技能类型",
+      "source_family": "dota",
+      "token": "dota_tooltip_ability",
+      "values": {
+        "zh-CN": "技能：",
+        "en": "ABILITY:"
+      }
+    },
+    {
+      "message": "影响单位",
+      "source_family": "dota",
+      "token": "dota_tooltip_targeting",
+      "values": {
+        "zh-CN": "影响：",
+        "en": "AFFECTS:"
+      }
+    },
+    {
+      "message": "伤害类型",
+      "source_family": "dota",
+      "token": "dota_tooltip_damage",
+      "values": {
+        "zh-CN": "伤害类型：",
+        "en": "DAMAGE TYPE:"
+      }
+    },
+    {
+      "message": "减益免疫",
+      "source_family": "dota",
+      "token": "dota_tooltip_piercesspellimmunity",
+      "values": {
+        "zh-CN": "无视减益免疫：",
+        "en": "PIERCES DEBUFF IMMUNITY:"
+      }
+    },
+    {
+      "message": "驱散方式",
+      "source_family": "dota",
+      "token": "dota_tooltip_dispellable",
+      "values": {
+        "zh-CN": "能否驱散：",
+        "en": "DISPELLABLE:"
+      }
+    },
+    {
+      "message": "冷却时间",
+      "source_family": "dota",
+      "token": "dota_glossary_cooldown",
+      "values": {
+        "zh-CN": "冷却时间",
+        "en": "Cooldown"
+      }
+    },
+    {
+      "message": "操作难度",
+      "source_family": "dota",
+      "token": "dota_herocomplexity",
+      "values": {
+        "zh-CN": "复杂程度",
+        "en": "Complexity"
+      }
+    }
+  ]
+}

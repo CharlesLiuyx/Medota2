@@ -8,7 +8,7 @@ afterEach(cleanup);
 
 describe("DatasetBadge", () => {
   it.each([
-    ["green", "收录版本"],
+    ["green", "游戏版本"],
     ["yellow", "部分资料仍待核对"],
     ["red", "资料暂不可用"],
   ] as const)("renders the %s catalog gate", (gateStatus, label) => {

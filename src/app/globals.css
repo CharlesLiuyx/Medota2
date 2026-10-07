@@ -458,7 +458,7 @@ textarea:focus {
 
 /* Dense hero detail preserves full text; fixed offsets clear both navigation bars. */
 .hero-detail [id] {
-  /* Leave a pixel of clearance for fractional section positions. */
+  /* Root scroll padding adds 28px; together they clear the sticky bars by 77px. */
   scroll-margin-top: 49px;
 }
 .hero-detail .game-heading {
@@ -589,6 +589,7 @@ textarea:focus {
 }
 .compact-menu-trigger {
   display: flex;
+  line-height: 16px;
   height: 32px;
   align-items: center;
   gap: 6px;
@@ -607,8 +608,11 @@ textarea:focus {
   background: var(--surface-focus);
 }
 .compact-menu-chevron {
-  font-size: 9px;
-  color: var(--text-muted);
+  display: block;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  color: inherit;
 }
 .compact-menu-popup {
   position: absolute;
@@ -742,4 +746,187 @@ textarea:focus {
   .map-corner-info .map-ruler {
     margin-top: 0;
   }
+}
+
+.release-select .compact-menu-trigger {
+  height: 24px;
+  min-height: 24px;
+  max-width: 230px;
+  padding: 0 6px;
+  font-size: 10px;
+}
+.release-select .compact-menu-popup {
+  min-width: 230px;
+  font-size: 11px;
+}
+@media (max-width: 640px) {
+  .release-select .compact-menu-trigger {
+    max-width: 110px;
+  }
+}
+
+/* Version changes keep player labels and endpoint values together. */
+.change-search {
+  min-width: 160px;
+  flex: 1 1 180px;
+  max-width: 280px;
+  padding: 7px 10px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+}
+.change-search:focus-visible {
+  outline: 1px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+.change-overview {
+  margin-top: 20px;
+  padding-block: 12px;
+  border-block: 1px solid var(--border-subtle);
+}
+.change-group {
+  background: var(--surface-panel);
+  padding: 16px;
+}
+.change-group-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+.change-group-heading h2 {
+  font-size: 16px;
+  font-weight: 650;
+}
+.change-group-heading > span {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.change-section {
+  padding-top: 10px;
+}
+.change-section + .change-section {
+  margin-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+.change-section-heading {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.change-section-body {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.change-notes {
+  font-size: 12px;
+  line-height: 1.8;
+}
+.change-notes ul {
+  display: grid;
+  gap: 4px;
+}
+.change-column-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.change-upgrade {
+  color: var(--text-secondary);
+}
+.change-values {
+  min-width: 0;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.change-value-head,
+.change-value-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+.change-value-head {
+  font-size: 10px;
+  color: var(--text-muted);
+  padding-bottom: 6px;
+}
+.change-value-row {
+  padding-block: 3px;
+  align-items: baseline;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.change-value-row > :first-child {
+  color: var(--text-secondary);
+}
+.change-before {
+  color: var(--text-muted);
+}
+.change-after {
+  color: var(--text-primary);
+  font-weight: 600;
+  position: relative;
+}
+.change-arrow {
+  position: absolute;
+  left: -13px;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.change-evidence {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+.change-evidence summary {
+  width: fit-content;
+  cursor: pointer;
+}
+.change-value-entry + .change-value-entry {
+  margin-top: 6px;
+}
+.change-appendix {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.change-appendix > summary {
+  cursor: pointer;
+}
+@media (min-width: 900px) {
+  .change-with-notes {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr);
+    gap: 24px;
+  }
+}
+@media (max-width: 480px) {
+  .change-group {
+    padding: 12px;
+  }
+  .change-value-head,
+  .change-value-row {
+    gap: 10px;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .change-values {
+    font-size: 11px;
+  }
+  .change-arrow {
+    left: -10px;
+  }
+}
+
+/* Global locale shares the 28px navigation bar. */
+.language-select .compact-menu-trigger {
+  min-height: 26px;
+  height: 26px;
+  padding: 0 4px;
+  font-size: 10px;
+}
+.language-select .compact-menu-popup {
+  min-width: 110px;
 }

@@ -1,6 +1,6 @@
 "use client";
+import { useTranslations } from "@/i18n/provider";
 import { useEffect, useRef, useState } from "react";
-
 const sections = [
   ["abilities", "技能"],
   ["talents", "天赋树"],
@@ -8,18 +8,34 @@ const sections = [
   ["stats", "属性"],
   ["lore", "英雄故事"],
 ] as const;
-
 export function HeroSectionNav() {
+  const t = useTranslations();
   const nav = useRef<HTMLElement>(null);
   const chosen = useRef("abilities");
   const clicked = useRef<string | null>(null);
   const [active, setActive] = useState("abilities");
   useEffect(() => {
-    const nodes = sections.map(([id]) => document.getElementById(id));
     let frame = 0;
     const update = () => {
       frame = 0;
-      const line = (nav.current?.getBoundingClientRect().bottom ?? 76) + 20;
+      // Later server-rendered sections may arrive after the nav hydrates.
+      const nodes = sections.map(([id]) => document.getElementById(id));
+      const scrollPadding =
+        parseFloat(
+          getComputedStyle(document.documentElement).scrollPaddingTop,
+        ) || 0;
+      // Hash anchors stop at their CSS scroll margin, below the sticky nav.
+      // Include that position so the scroll observer retains the clicked tab.
+      const line =
+        Math.max(
+          (nav.current?.getBoundingClientRect().bottom ?? 76) + 20,
+          ...nodes.map((node) =>
+            node
+              ? (parseFloat(getComputedStyle(node).scrollMarginTop) || 0) +
+                scrollPadding
+              : 0,
+          ),
+        ) + 2;
       const visible = nodes.map((node, index) => ({
         id: sections[index][0],
         top: node?.getBoundingClientRect().top ?? Infinity,
@@ -34,21 +50,23 @@ export function HeroSectionNav() {
         row.find((section) => section.id === chosen.current)?.id ??
         row[0]?.id ??
         "abilities";
+      const target = visible.find((section) => section.id === clicked.current);
       if (
+        target &&
+        target.top >= (nav.current?.getBoundingClientRect().bottom ?? 76) - 2 &&
+        target.top < window.innerHeight
+      ) {
+        // Native hash scrolling can stop short near the page end or as streamed
+        // content settles. Keep the visible requested heading selected until
+        // the reader scrolls, rather than selecting the preceding section.
+        next = target.id;
+      } else if (
         window.scrollY > 0 &&
         window.scrollY + window.innerHeight >=
           document.documentElement.scrollHeight - 2
       ) {
-        // A short final section cannot align with the top; honor an explicit
-        // click while its heading is visible, until the reader scrolls again.
-        const target = visible.find(
-          (section) => section.id === clicked.current,
-        );
-        next =
-          target && target.top >= line && target.top < window.innerHeight
-            ? target.id
-            : "lore";
-      } else clicked.current = null;
+        next = "lore";
+      }
       chosen.current = next;
       setActive(next);
     };
@@ -102,7 +120,7 @@ export function HeroSectionNav() {
     };
   }, []);
   return (
-    <nav ref={nav} aria-label="英雄详情" className="game-tabs">
+    <nav ref={nav} aria-label={t("英雄详情")} className="game-tabs">
       {sections.map(([id, title]) => (
         <a
           key={id}
@@ -114,7 +132,7 @@ export function HeroSectionNav() {
             setActive(id);
           }}
         >
-          {title}
+          {t(title)}
         </a>
       ))}
     </nav>

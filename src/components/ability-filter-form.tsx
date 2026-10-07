@@ -1,10 +1,11 @@
 "use client";
+import { useLocale } from "@/i18n/provider";
+import { useTranslations } from "@/i18n/provider";
 import { CompactSelect } from "./ui/compact-select";
 import { relationLabel } from "@/presentation/dota";
 import { useFilterEvents } from "./use-live-catalog";
 import { Search, X } from "lucide-react";
 import type { AbilityFilters } from "@/server/services/ability-filters";
-
 export function AbilityFilterForm({
   filters,
   onChange,
@@ -14,8 +15,14 @@ export function AbilityFilterForm({
   filters: AbilityFilters;
   onChange: (data: FormData, composing: boolean) => void;
   onClear: () => void;
-  heroes?: Array<{ slug: string; zhName: string; enName: string }>;
+  heroes?: Array<{
+    slug: string;
+    zhName: string;
+    enName: string;
+  }>;
 }) {
+  const locale = useLocale();
+  const t = useTranslations();
   const events = useFilterEvents(onChange);
   return (
     <form
@@ -27,11 +34,12 @@ export function AbilityFilterForm({
       className="flex flex-wrap items-center gap-1.5"
     >
       <div className="contents">
+        <input type="hidden" name="lang" value={locale} />
         <input type="hidden" name="behavior" value={filters.behavior} />
         <input type="hidden" name="damage" value={filters.damage} />
         <label className="relative min-w-0 basis-full sm:min-w-44 sm:flex-1 sm:basis-44">
           <Search className="absolute left-1.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--text-muted)]" />
-          <span className="sr-only">搜索技能</span>
+          <span className="sr-only">{t("搜索技能")}</span>
           <input
             name="q"
             autoComplete="off"
@@ -41,30 +49,30 @@ export function AbilityFilterForm({
             value={filters.q}
             onChange={events.onFieldChange}
             maxLength={100}
-            placeholder="搜索技能名称、拼音或别称…"
+            placeholder={t("搜索技能名称、拼音或别称…")}
             className="h-8 w-full bg-transparent pl-7 pr-2 text-xs placeholder:text-[var(--text-muted)]"
           />
         </label>
         <CompactSelect
           onChange={onChange}
           name="status"
-          label="状态"
+          label={t("状态")}
           value={filters.status}
         >
-          <option value="current">当前技能</option>
-          <option value="indirect">关联技能</option>
-          <option value="defined_unbound">其他技能</option>
-          <option value="template">技能模板</option>
-          <option value="deprecated">历史技能</option>
-          <option value="all">全部</option>
+          <option value="current">{t("当前技能")}</option>
+          <option value="indirect">{t("关联技能")}</option>
+          <option value="defined_unbound">{t("其他技能")}</option>
+          <option value="template">{t("技能模板")}</option>
+          <option value="deprecated">{t("历史技能")}</option>
+          <option value="all">{t("全部")}</option>
         </CompactSelect>
         <CompactSelect
           onChange={onChange}
           name="relation"
-          label="关系"
+          label={t("关系")}
           value={filters.relation}
         >
-          <option value="all">全部关系</option>
+          <option value="all">{t("全部关系")}</option>
           {[
             "loadout",
             "talent",
@@ -76,42 +84,33 @@ export function AbilityFilterForm({
             "declared_in_hero_file",
           ].map((value) => (
             <option key={value} value={value}>
-              {relationLabel(value)}
+              {relationLabel(value, locale)}
             </option>
           ))}
         </CompactSelect>
         <CompactSelect
           onChange={onChange}
           name="upgrade"
-          label="升级"
+          label={t("升级")}
           value={filters.upgrade}
         >
-          <option value="all">全部</option>
-          <option value="scepter">阿哈利姆神杖</option>
-          <option value="shard">阿哈利姆魔晶</option>
-          <option value="granted">升级解锁技能</option>
+          <option value="all">{t("全部")}</option>
+          <option value="scepter">{t("阿哈利姆神杖")}</option>
+          <option value="shard">{t("阿哈利姆魔晶")}</option>
+          <option value="granted">{t("升级解锁技能")}</option>
         </CompactSelect>
         <CompactSelect
           onChange={onChange}
           name="hero"
-          label="英雄"
+          label={t("英雄")}
           value={filters.hero}
         >
-          <option value="">全部英雄</option>
+          <option value="">{t("全部英雄")}</option>
           {heroes.map((hero) => (
             <option key={hero.slug} value={hero.slug}>
               {filters.lang === "en" ? hero.enName : hero.zhName}
             </option>
           ))}
-        </CompactSelect>
-        <CompactSelect
-          onChange={onChange}
-          name="lang"
-          label="语言"
-          value={filters.lang}
-        >
-          <option value="zh-CN">简体中文</option>
-          <option value="en">English</option>
         </CompactSelect>
       </div>
       {(filters.q ||
@@ -120,15 +119,14 @@ export function AbilityFilterForm({
         filters.behavior ||
         filters.damage ||
         filters.relation !== "all" ||
-        filters.upgrade !== "all" ||
-        filters.lang !== "zh-CN") && (
+        filters.upgrade !== "all") && (
         <div className="flex h-7 items-center px-1.5">
           <button
             type="button"
             onClick={onClear}
             className="inline-flex items-center gap-1 text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
           >
-            <X className="size-3.5" /> 清除全部
+            <X className="size-3.5" /> {t("清除全部")}
           </button>
         </div>
       )}

@@ -1,7 +1,7 @@
 import "server-only";
 import { getGameLocalization } from "@/server/services/game-localization";
 import { getWebDatabase } from "@/server/db/client";
-import { getActiveCatalogMeta, type ActiveDatasetMeta } from "./heroes";
+import { getCatalogMeta, type ActiveDatasetMeta } from "./heroes";
 import { readPinnedUnitSnapshot } from "@/importers/dota-vpk/unit-snapshot";
 export async function readUnitSnapshot(meta: ActiveDatasetMeta) {
   const db = await getWebDatabase();
@@ -12,8 +12,8 @@ export async function readUnitSnapshot(meta: ActiveDatasetMeta) {
   const record = result.rows[0];
   return readPinnedUnitSnapshot(meta, record);
 }
-export async function getUnitOverview() {
-  const meta = await getActiveCatalogMeta();
+export async function getUnitOverview(datasetVersionId?: string) {
+  const meta = await getCatalogMeta(datasetVersionId);
   return { meta, snapshot: meta ? await readUnitSnapshot(meta) : null };
 }
 export async function getUnitAbilities(

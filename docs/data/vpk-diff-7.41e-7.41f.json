@@ -1,0 +1,4957 @@
+{
+  "schemaVersion": "vpk-diff-report-v1",
+  "sourceRepository": "spirit-bear-productions/dota_vpk_updates",
+  "from": {
+    "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+    "clientVersion": "6918"
+  },
+  "to": {
+    "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+    "clientVersion": "6944"
+  },
+  "summary": {
+    "hero": {
+      "entities": 20,
+      "fields": 27
+    },
+    "ability": {
+      "entities": 63,
+      "fields": 85
+    },
+    "item": {
+      "entities": 22,
+      "fields": 24
+    },
+    "unit": {
+      "entities": 0,
+      "fields": 0
+    },
+    "mechanism": {
+      "entities": 0,
+      "fields": 0
+    }
+  },
+  "changes": [
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_bane",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ArmorPhysical",
+      "before": {
+        "status": "value",
+        "value": "1"
+      },
+      "after": {
+        "status": "value",
+        "value": "0"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 931,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_bane.txt",
+          "line": 6,
+          "sha256": "08156714cc63132d9beb80f54237b687652603e543658ae173fc2314b35d51d8",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_batrider",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AttributeIntelligenceGain",
+      "before": {
+        "status": "value",
+        "value": "2.9"
+      },
+      "after": {
+        "status": "value",
+        "value": "3.2"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 19202,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_batrider.txt",
+          "line": 3,
+          "sha256": "8d253dc40baad8501940fbf185e99f91ed242256a7931bca589fd0265b1b0313",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_bounty_hunter",
+      "category": "property",
+      "operation": "modified",
+      "path": "/Ability14",
+      "before": {
+        "status": "value",
+        "value": "special_bonus_unique_bounty_hunter_8"
+      },
+      "after": {
+        "status": "value",
+        "value": "special_bonus_unique_bounty_hunter_2"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 18331,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_bounty_hunter.txt",
+          "line": 3,
+          "sha256": "92e67485426f711ee9c1563e9d4675b34f0cebed416267de616d2894f6b2eb3e",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_bounty_hunter",
+      "category": "property",
+      "operation": "modified",
+      "path": "/Ability16",
+      "before": {
+        "status": "value",
+        "value": "special_bonus_unique_bounty_hunter_2"
+      },
+      "after": {
+        "status": "value",
+        "value": "special_bonus_unique_bounty_hunter_8"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 18331,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_bounty_hunter.txt",
+          "line": 3,
+          "sha256": "92e67485426f711ee9c1563e9d4675b34f0cebed416267de616d2894f6b2eb3e",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_centaur",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AttackDamageMax",
+      "before": {
+        "status": "value",
+        "value": "38"
+      },
+      "after": {
+        "status": "value",
+        "value": "36"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 26777,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_centaur.txt",
+          "line": 3,
+          "sha256": "33c8ac9381898217373bea1d5deea95c33504e9e40505d64c64f3b8f0bac6404",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_centaur",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AttackDamageMin",
+      "before": {
+        "status": "value",
+        "value": "36"
+      },
+      "after": {
+        "status": "value",
+        "value": "34"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 26777,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_centaur.txt",
+          "line": 3,
+          "sha256": "33c8ac9381898217373bea1d5deea95c33504e9e40505d64c64f3b8f0bac6404",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_centaur",
+      "category": "property",
+      "operation": "modified",
+      "path": "/MovementSpeed",
+      "before": {
+        "status": "value",
+        "value": "300"
+      },
+      "after": {
+        "status": "value",
+        "value": "295"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 26777,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_centaur.txt",
+          "line": 3,
+          "sha256": "33c8ac9381898217373bea1d5deea95c33504e9e40505d64c64f3b8f0bac6404",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_chen",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AttributeStrengthGain",
+      "before": {
+        "status": "value",
+        "value": "2.00000"
+      },
+      "after": {
+        "status": "value",
+        "value": "2.2"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 19410,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_chen.txt",
+          "line": 3,
+          "sha256": "81f0702a568829e578a059acc18a7982c1e42728940507c6b57ba9e06f3e7383",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_disruptor",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AttributeBaseIntelligence",
+      "before": {
+        "status": "value",
+        "value": "20"
+      },
+      "after": {
+        "status": "value",
+        "value": "21"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 24752,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_disruptor.txt",
+          "line": 3,
+          "sha256": "cdb3a0cd22ba230b6114f0de07e35afd74dd292f8b71a49896b9d0bf13947b52",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_drow_ranger",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemSlots/12/SlotIndex",
+      "before": {
+        "status": "value",
+        "value": "12"
+      },
+      "after": {
+        "status": "value",
+        "value": "13"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 1974,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_drow_ranger.txt",
+          "line": 3,
+          "sha256": "6b39eaee2c9b731438cb89105a6edfc254c38b56286bb0e6ca17d72ede3afd7b",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_earth_spirit",
+      "category": "property",
+      "operation": "modified",
+      "path": "/Ability15",
+      "before": {
+        "status": "value",
+        "value": "special_bonus_unique_earth_spirit"
+      },
+      "after": {
+        "status": "value",
+        "value": "special_bonus_unique_earth_spirit_5"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 29541,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "line": 3,
+          "sha256": "c2aebda190fbc46d113e26cfd11517c218da8f89df0db1a3890c2336c9ea9f65",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_earth_spirit",
+      "category": "property",
+      "operation": "modified",
+      "path": "/Ability17",
+      "before": {
+        "status": "value",
+        "value": "special_bonus_unique_earth_spirit_5"
+      },
+      "after": {
+        "status": "value",
+        "value": "special_bonus_unique_earth_spirit"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 29541,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "line": 3,
+          "sha256": "c2aebda190fbc46d113e26cfd11517c218da8f89df0db1a3890c2336c9ea9f65",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_earth_spirit",
+      "category": "property",
+      "operation": "added",
+      "path": "/BaseAttackSpeed",
+      "before": {
+        "status": "absent"
+      },
+      "after": {
+        "status": "value",
+        "value": "95"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 29541,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "line": 3,
+          "sha256": "c2aebda190fbc46d113e26cfd11517c218da8f89df0db1a3890c2336c9ea9f65",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_ember_spirit",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AttributeBaseAgility",
+      "before": {
+        "status": "value",
+        "value": "22"
+      },
+      "after": {
+        "status": "value",
+        "value": "21"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 29316,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_ember_spirit.txt",
+          "line": 3,
+          "sha256": "00c8e8281c82609ad774b05197c1ff354f11df953de1bc197dacd5fa91eea650",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_hoodwink",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AttributeBaseStrength",
+      "before": {
+        "status": "value",
+        "value": "17"
+      },
+      "after": {
+        "status": "value",
+        "value": "16"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 33416,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_hoodwink.txt",
+          "line": 3,
+          "sha256": "812803376feade46b4dbde73e7141f738f938a39917cd5cf84e5dc2c83d6191a",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_huskar",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AttributeBaseStrength",
+      "before": {
+        "status": "value",
+        "value": "23"
+      },
+      "after": {
+        "status": "value",
+        "value": "22"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 17581,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_huskar.txt",
+          "line": 3,
+          "sha256": "08a9a56368395aa482cf4bb69b5b1d87e01b0e9ea0a3795e9ed2ef3ef809b308",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_huskar",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AttributeStrengthGain",
+      "before": {
+        "status": "value",
+        "value": "3.3"
+      },
+      "after": {
+        "status": "value",
+        "value": "3.4"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 17581,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_huskar.txt",
+          "line": 3,
+          "sha256": "08a9a56368395aa482cf4bb69b5b1d87e01b0e9ea0a3795e9ed2ef3ef809b308",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_keeper_of_the_light",
+      "category": "property",
+      "operation": "added",
+      "path": "/BaseAttackSpeed",
+      "before": {
+        "status": "absent"
+      },
+      "after": {
+        "status": "value",
+        "value": "90"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 25449,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_keeper_of_the_light.txt",
+          "line": 3,
+          "sha256": "1c5a920a22c5f0c16c4d58430b0ae34504a241be27cbabbd824eecdd738f367b",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_kez",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AttackDamageMax",
+      "before": {
+        "status": "value",
+        "value": "29"
+      },
+      "after": {
+        "status": "value",
+        "value": "28"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 34837,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 3,
+          "sha256": "24928e5081473724824eec0381f4404c44cc7bf069ab86d1cc1259bc13d73f7f",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_kez",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AttackDamageMin",
+      "before": {
+        "status": "value",
+        "value": "23"
+      },
+      "after": {
+        "status": "value",
+        "value": "22"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 34837,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 3,
+          "sha256": "24928e5081473724824eec0381f4404c44cc7bf069ab86d1cc1259bc13d73f7f",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_life_stealer",
+      "category": "property",
+      "operation": "modified",
+      "path": "/Ability11",
+      "before": {
+        "status": "value",
+        "value": "special_bonus_movement_speed_20"
+      },
+      "after": {
+        "status": "value",
+        "value": "special_bonus_movement_speed_15"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 16253,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_life_stealer.txt",
+          "line": 3,
+          "sha256": "719ac762a3a40c9d5c99ada3b38759b9a0bc6666497f9938e9e8928c215fafe9",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_lina",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AttributeBaseIntelligence",
+      "before": {
+        "status": "value",
+        "value": "30"
+      },
+      "after": {
+        "status": "value",
+        "value": "28"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 7734,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_lina.txt",
+          "line": 3,
+          "sha256": "f360660bedce58d9561e0bd92422b1ecef48ba9b9a5c152793f3670b9430c504",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_mars",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ArmorPhysical",
+      "before": {
+        "status": "value",
+        "value": "-1"
+      },
+      "after": {
+        "status": "value",
+        "value": "0"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 32711,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_mars.txt",
+          "line": 3,
+          "sha256": "56f70cf9f7b6086ee1155d3868113b65ab310b1567326ff80c2aa36deaf89423",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_slardar",
+      "category": "property",
+      "operation": "modified",
+      "path": "/StatusHealthRegen",
+      "before": {
+        "status": "value",
+        "value": "0.5"
+      },
+      "after": {
+        "status": "value",
+        "value": "0.25"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 8965,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_slardar.txt",
+          "line": 3,
+          "sha256": "06b818604122f6e18c88cd01a52ce9c766aa5b0b1b2e622897ba49a6388c0619",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_treant",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AttributeBaseIntelligence",
+      "before": {
+        "status": "value",
+        "value": "20"
+      },
+      "after": {
+        "status": "value",
+        "value": "17"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 23831,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "line": 3,
+          "sha256": "00c26fea42a34dad6a22d7d88d65dc1a9662d80dcbdabb6d24f24730cdae18cf",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_undying",
+      "category": "property",
+      "operation": "modified",
+      "path": "/StatusHealthRegen",
+      "before": {
+        "status": "value",
+        "value": "-0.25"
+      },
+      "after": {
+        "status": "value",
+        "value": "-0.5"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 24296,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_undying.txt",
+          "line": 3,
+          "sha256": "1fb91721511593859efa376bd6adc7bc90ff9e0033dd6e6607ca8bd743628deb",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "hero",
+      "entityKey": "npc_dota_hero_warlock",
+      "category": "property",
+      "operation": "modified",
+      "path": "/BaseAttackSpeed",
+      "before": {
+        "status": "value",
+        "value": "90"
+      },
+      "after": {
+        "status": "value",
+        "value": "95"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/npc_heroes.txt",
+          "line": 11292,
+          "sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_warlock.txt",
+          "line": 3,
+          "sha256": "175304bf3cb299f8dd67429f44a44ad411e2005e827c3eddd8c7317f3b77553c",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "abyssal_underlord_dark_portal",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/AbilityCooldown/special_bonus_scepter",
+      "before": {
+        "status": "value",
+        "value": "-10"
+      },
+      "after": {
+        "status": "value",
+        "value": "-20"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_abyssal_underlord.txt",
+          "line": 277,
+          "sha256": "6bce8a0f3b4d00feb803c6a88b3369025b0cbaf1228313cd81af0d1258bbd401",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_abyssal_underlord.txt",
+          "line": 510,
+          "sha256": "31060e5fdf53b01592b172f9f40a1113f9b8af09b3494750bbe881f34461a5d8",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "abyssal_underlord_pit_of_malice",
+      "category": "property",
+      "operation": "removed",
+      "path": "/AbilityValues/radius/special_bonus_scepter",
+      "before": {
+        "status": "value",
+        "value": "+100"
+      },
+      "after": {
+        "status": "absent"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_abyssal_underlord.txt",
+          "line": 77,
+          "sha256": "6bce8a0f3b4d00feb803c6a88b3369025b0cbaf1228313cd81af0d1258bbd401",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_abyssal_underlord.txt",
+          "line": 313,
+          "sha256": "31060e5fdf53b01592b172f9f40a1113f9b8af09b3494750bbe881f34461a5d8",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "abyssal_underlord_pit_of_malice",
+      "category": "property",
+      "operation": "removed",
+      "path": "/HasScepterUpgrade",
+      "before": {
+        "status": "value",
+        "value": "1"
+      },
+      "after": {
+        "status": "absent"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_abyssal_underlord.txt",
+          "line": 77,
+          "sha256": "6bce8a0f3b4d00feb803c6a88b3369025b0cbaf1228313cd81af0d1258bbd401",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_abyssal_underlord.txt",
+          "line": 313,
+          "sha256": "31060e5fdf53b01592b172f9f40a1113f9b8af09b3494750bbe881f34461a5d8",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "antimage_mana_break",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/percent_damage_per_burn/value",
+      "before": {
+        "status": "value",
+        "value": "60"
+      },
+      "after": {
+        "status": "value",
+        "value": "65"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_antimage.txt",
+          "line": 8,
+          "sha256": "6f0f524498c12cdb2bf875fbeef6530cd0236c9eb97447c7570a47e22cc49071",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_antimage.txt",
+          "line": 376,
+          "sha256": "b70ba50c837db7379329dc1c515847dfa25a256b6252a115f39d2d7530579b11",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "bounty_hunter_shuriken_toss",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/bonus_damage/special_bonus_unique_bounty_hunter_2",
+      "before": {
+        "status": "value",
+        "value": "+250"
+      },
+      "after": {
+        "status": "value",
+        "value": "+190"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_bounty_hunter.txt",
+          "line": 8,
+          "sha256": "79d24bfbbd31a9ef9f4574bd6d05dc622a4de4ebac667da65de1db1491d9a9f6",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_bounty_hunter.txt",
+          "line": 327,
+          "sha256": "92e67485426f711ee9c1563e9d4675b34f0cebed416267de616d2894f6b2eb3e",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "bounty_hunter_shuriken_toss",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/slow_duration/special_bonus_unique_bounty_hunter_5",
+      "before": {
+        "status": "value",
+        "value": "+0.6"
+      },
+      "after": {
+        "status": "value",
+        "value": "+0.35"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_bounty_hunter.txt",
+          "line": 8,
+          "sha256": "79d24bfbbd31a9ef9f4574bd6d05dc622a4de4ebac667da65de1db1491d9a9f6",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_bounty_hunter.txt",
+          "line": 327,
+          "sha256": "92e67485426f711ee9c1563e9d4675b34f0cebed416267de616d2894f6b2eb3e",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "bounty_hunter_track",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/bonus_gold/value",
+      "before": {
+        "status": "value",
+        "value": "50 90 130"
+      },
+      "after": {
+        "status": "value",
+        "value": "40 80 120"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_bounty_hunter.txt",
+          "line": 224,
+          "sha256": "79d24bfbbd31a9ef9f4574bd6d05dc622a4de4ebac667da65de1db1491d9a9f6",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_bounty_hunter.txt",
+          "line": 543,
+          "sha256": "92e67485426f711ee9c1563e9d4675b34f0cebed416267de616d2894f6b2eb3e",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "bounty_hunter_track",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/bonus_gold_self/value",
+      "before": {
+        "status": "value",
+        "value": "130 225 320"
+      },
+      "after": {
+        "status": "value",
+        "value": "80 160 240"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_bounty_hunter.txt",
+          "line": 224,
+          "sha256": "79d24bfbbd31a9ef9f4574bd6d05dc622a4de4ebac667da65de1db1491d9a9f6",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_bounty_hunter.txt",
+          "line": 543,
+          "sha256": "92e67485426f711ee9c1563e9d4675b34f0cebed416267de616d2894f6b2eb3e",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "broodmother_insatiable_hunger",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityManaCost",
+      "before": {
+        "status": "value",
+        "value": "80"
+      },
+      "after": {
+        "status": "value",
+        "value": "70"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_broodmother.txt",
+          "line": 333,
+          "sha256": "f5486677432ecf6a477ce9c7d7dea4d9e20a0ec31381b9de40737817b1952045",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_broodmother.txt",
+          "line": 552,
+          "sha256": "5a4b3b2d76847fffc9256e96af16ecb43caef698eef7b0649ed0b74032f56627",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "centaur_mount",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityCastRange",
+      "before": {
+        "status": "value",
+        "value": "250"
+      },
+      "after": {
+        "status": "value",
+        "value": "200"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_centaur.txt",
+          "line": 286,
+          "sha256": "6e3040eb6272c1b5bf1edd5133c3e2fb5c995b28feba3762b3f84851d63295eb",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_centaur.txt",
+          "line": 561,
+          "sha256": "33c8ac9381898217373bea1d5deea95c33504e9e40505d64c64f3b8f0bac6404",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "chen_zealot",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/zealot_respawn_time",
+      "before": {
+        "status": "value",
+        "value": "60"
+      },
+      "after": {
+        "status": "value",
+        "value": {
+          "value": "60",
+          "hero_levelup": "-1"
+        }
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_chen.txt",
+          "line": 388,
+          "sha256": "c194acf17392d8aa1cacc55b42a8af5473dea032938564a79c9c74185d0c75ce",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_chen.txt",
+          "line": 658,
+          "sha256": "81f0702a568829e578a059acc18a7982c1e42728940507c6b57ba9e06f3e7383",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "earth_spirit_geomagnetic_grip",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/rock_damage/special_bonus_unique_earth_spirit_5",
+      "before": {
+        "status": "value",
+        "value": "+250"
+      },
+      "after": {
+        "status": "value",
+        "value": "+200"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "line": 159,
+          "sha256": "54449906959f362067655810c18e94e8124b10983ee70104a670a1223781ca40",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "line": 406,
+          "sha256": "c2aebda190fbc46d113e26cfd11517c218da8f89df0db1a3890c2336c9ea9f65",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "earth_spirit_magnetize",
+      "category": "property",
+      "operation": "removed",
+      "path": "/AbilityValues/damage_duration/special_bonus_unique_earth_spirit_8",
+      "before": {
+        "status": "value",
+        "value": "+25%"
+      },
+      "after": {
+        "status": "absent"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "line": 355,
+          "sha256": "54449906959f362067655810c18e94e8124b10983ee70104a670a1223781ca40",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "line": 602,
+          "sha256": "c2aebda190fbc46d113e26cfd11517c218da8f89df0db1a3890c2336c9ea9f65",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "earth_spirit_magnetize",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/damage_per_second/special_bonus_unique_earth_spirit_8",
+      "before": {
+        "status": "value",
+        "value": "+25%"
+      },
+      "after": {
+        "status": "value",
+        "value": "+35"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "line": 355,
+          "sha256": "54449906959f362067655810c18e94e8124b10983ee70104a670a1223781ca40",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "line": 602,
+          "sha256": "c2aebda190fbc46d113e26cfd11517c218da8f89df0db1a3890c2336c9ea9f65",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "earth_spirit_rolling_boulder",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/damage_str/special_bonus_unique_earth_spirit",
+      "before": {
+        "status": "value",
+        "value": "+175"
+      },
+      "after": {
+        "status": "value",
+        "value": "+250"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "line": 90,
+          "sha256": "54449906959f362067655810c18e94e8124b10983ee70104a670a1223781ca40",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "line": 337,
+          "sha256": "c2aebda190fbc46d113e26cfd11517c218da8f89df0db1a3890c2336c9ea9f65",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "earth_spirit_stone_caller",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/AbilityCharges/levelup_interval",
+      "before": {
+        "status": "value",
+        "value": "4"
+      },
+      "after": {
+        "status": "value",
+        "value": "5"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "line": 225,
+          "sha256": "54449906959f362067655810c18e94e8124b10983ee70104a670a1223781ca40",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "line": 472,
+          "sha256": "c2aebda190fbc46d113e26cfd11517c218da8f89df0db1a3890c2336c9ea9f65",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "enigma_black_hole",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/scepter_drag_speed/special_bonus_scepter",
+      "before": {
+        "status": "value",
+        "value": "175"
+      },
+      "after": {
+        "status": "value",
+        "value": "150"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_enigma.txt",
+          "line": 202,
+          "sha256": "51b37dcadd80b8a28168352a560cca45a4e33fc259931bc4781cf64481a2608b",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_enigma.txt",
+          "line": 441,
+          "sha256": "82b1997cef2722aed8a519723a1379d6cf90ca4fc3c07c4202aa992a350d643a",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "enigma_demonic_conversion",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/eidolon_attack_range",
+      "before": {
+        "status": "value",
+        "value": "425 450 475 500"
+      },
+      "after": {
+        "status": "value",
+        "value": "380 420 460 500"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_enigma.txt",
+          "line": 76,
+          "sha256": "51b37dcadd80b8a28168352a560cca45a4e33fc259931bc4781cf64481a2608b",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_enigma.txt",
+          "line": 315,
+          "sha256": "82b1997cef2722aed8a519723a1379d6cf90ca4fc3c07c4202aa992a350d643a",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "enigma_demonic_conversion",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/eidolon_bonus_damage/special_bonus_unique_enigma_3",
+      "before": {
+        "status": "value",
+        "value": "+40"
+      },
+      "after": {
+        "status": "value",
+        "value": "+30"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_enigma.txt",
+          "line": 76,
+          "sha256": "51b37dcadd80b8a28168352a560cca45a4e33fc259931bc4781cf64481a2608b",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_enigma.txt",
+          "line": 315,
+          "sha256": "82b1997cef2722aed8a519723a1379d6cf90ca4fc3c07c4202aa992a350d643a",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "invoker_alacrity",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_UNIT_TARGET | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_DONT_RESUME_ATTACK | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_UNIT_TARGET | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_DONT_RESUME_ATTACK | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 708,
+          "sha256": "fa737dda89a3afc35b0422c0ac025d00c35d2f10b4f24815e2b6ed6de4ee1ce3",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 1151,
+          "sha256": "72046fa3d6f49ce24e6c126ff93983ae859900039799b30895c95df9a8b17229",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "invoker_chaos_meteor",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 796,
+          "sha256": "fa737dda89a3afc35b0422c0ac025d00c35d2f10b4f24815e2b6ed6de4ee1ce3",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 1239,
+          "sha256": "72046fa3d6f49ce24e6c126ff93983ae859900039799b30895c95df9a8b17229",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "invoker_cold_snap",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_UNIT_TARGET | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_UNIT_TARGET | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 281,
+          "sha256": "fa737dda89a3afc35b0422c0ac025d00c35d2f10b4f24815e2b6ed6de4ee1ce3",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 724,
+          "sha256": "72046fa3d6f49ce24e6c126ff93983ae859900039799b30895c95df9a8b17229",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "invoker_cold_snap",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/AbilityCooldown/value",
+      "before": {
+        "status": "value",
+        "value": "18"
+      },
+      "after": {
+        "status": "value",
+        "value": "19"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 281,
+          "sha256": "fa737dda89a3afc35b0422c0ac025d00c35d2f10b4f24815e2b6ed6de4ee1ce3",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 724,
+          "sha256": "72046fa3d6f49ce24e6c126ff93983ae859900039799b30895c95df9a8b17229",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "invoker_deafening_blast",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 1315,
+          "sha256": "fa737dda89a3afc35b0422c0ac025d00c35d2f10b4f24815e2b6ed6de4ee1ce3",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 1758,
+          "sha256": "72046fa3d6f49ce24e6c126ff93983ae859900039799b30895c95df9a8b17229",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "invoker_emp",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_AOE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_AOE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 609,
+          "sha256": "fa737dda89a3afc35b0422c0ac025d00c35d2f10b4f24815e2b6ed6de4ee1ce3",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 1052,
+          "sha256": "72046fa3d6f49ce24e6c126ff93983ae859900039799b30895c95df9a8b17229",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "invoker_forge_spirit",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 1032,
+          "sha256": "fa737dda89a3afc35b0422c0ac025d00c35d2f10b4f24815e2b6ed6de4ee1ce3",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 1475,
+          "sha256": "72046fa3d6f49ce24e6c126ff93983ae859900039799b30895c95df9a8b17229",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "invoker_ghost_walk",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IMMEDIATE | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_IGNORE_CHANNEL | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IMMEDIATE | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_IGNORE_CHANNEL | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 370,
+          "sha256": "fa737dda89a3afc35b0422c0ac025d00c35d2f10b4f24815e2b6ed6de4ee1ce3",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 813,
+          "sha256": "72046fa3d6f49ce24e6c126ff93983ae859900039799b30895c95df9a8b17229",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "invoker_ice_wall",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 1172,
+          "sha256": "fa737dda89a3afc35b0422c0ac025d00c35d2f10b4f24815e2b6ed6de4ee1ce3",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 1615,
+          "sha256": "72046fa3d6f49ce24e6c126ff93983ae859900039799b30895c95df9a8b17229",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "invoker_sun_strike",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_AOE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_AOE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 917,
+          "sha256": "fa737dda89a3afc35b0422c0ac025d00c35d2f10b4f24815e2b6ed6de4ee1ce3",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 1360,
+          "sha256": "72046fa3d6f49ce24e6c126ff93983ae859900039799b30895c95df9a8b17229",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "invoker_tornado",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_OVERSHOOT"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_OVERSHOOT | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 466,
+          "sha256": "fa737dda89a3afc35b0422c0ac025d00c35d2f10b4f24815e2b6ed6de4ee1ce3",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "line": 909,
+          "sha256": "72046fa3d6f49ce24e6c126ff93983ae859900039799b30895c95df9a8b17229",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_bfury",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityCooldown",
+      "before": {
+        "status": "value",
+        "value": "4.0"
+      },
+      "after": {
+        "status": "value",
+        "value": "3.0"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 7758,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 7758,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_dragon_lance",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "1900"
+      },
+      "after": {
+        "status": "value",
+        "value": "2000"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 7954,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 7954,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_enhancement_greedy",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/bonus_damage",
+      "before": {
+        "status": "value",
+        "value": "-30 -60"
+      },
+      "after": {
+        "status": "value",
+        "value": "-35 -70"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 15841,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 15841,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_essence_distiller",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/mana_regen",
+      "before": {
+        "status": "value",
+        "value": "1.75"
+      },
+      "after": {
+        "status": "value",
+        "value": "1.5"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 6813,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 6813,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_greater_crit",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "5100"
+      },
+      "after": {
+        "status": "value",
+        "value": "5200"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 7646,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 7646,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_heart",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "5200"
+      },
+      "after": {
+        "status": "value",
+        "value": "5300"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 5955,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 5955,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_heavens_halberd",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "3400"
+      },
+      "after": {
+        "status": "value",
+        "value": "3300"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 10660,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 10660,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_hurricane_pike",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "4450"
+      },
+      "after": {
+        "status": "value",
+        "value": "4550"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 4993,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 4993,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_infused_raindrop",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/mana_regen",
+      "before": {
+        "status": "value",
+        "value": "0.8"
+      },
+      "after": {
+        "status": "value",
+        "value": "0.6"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 597,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 597,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_manta",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/images_do_damage_percent_ranged",
+      "before": {
+        "status": "value",
+        "value": "-72"
+      },
+      "after": {
+        "status": "value",
+        "value": "-75"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 7834,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 7834,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_manta",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/tooltip_damage_outgoing_ranged",
+      "before": {
+        "status": "value",
+        "value": "28"
+      },
+      "after": {
+        "status": "value",
+        "value": "25"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 7834,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 7834,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_mask_of_madness",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/lifesteal_percent",
+      "before": {
+        "status": "value",
+        "value": "24"
+      },
+      "after": {
+        "status": "value",
+        "value": "22"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 8998,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 8998,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_mjollnir",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/static_duration",
+      "before": {
+        "status": "value",
+        "value": "15.0"
+      },
+      "after": {
+        "status": "value",
+        "value": "12.0"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 8426,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 8426,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_octarine_core",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "4900"
+      },
+      "after": {
+        "status": "value",
+        "value": "5100"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 9421,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 9421,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_recipe_dragon_lance",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "450"
+      },
+      "after": {
+        "status": "value",
+        "value": "550"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 7930,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 7930,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_recipe_greater_crit",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "900"
+      },
+      "after": {
+        "status": "value",
+        "value": "1000"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 7622,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 7622,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_recipe_heart",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "700"
+      },
+      "after": {
+        "status": "value",
+        "value": "800"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 5931,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 5931,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_recipe_heavens_halberd",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "450"
+      },
+      "after": {
+        "status": "value",
+        "value": "350"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 10636,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 10636,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_recipe_hydras_breath",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "1100"
+      },
+      "after": {
+        "status": "value",
+        "value": "1000"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 17027,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 17027,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_recipe_octarine_core",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "200"
+      },
+      "after": {
+        "status": "value",
+        "value": "400"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 9398,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 9398,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_satanic",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/lifesteal_percent",
+      "before": {
+        "status": "value",
+        "value": "30"
+      },
+      "after": {
+        "status": "value",
+        "value": "25"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 8366,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 8366,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_shivas_guard",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/blast_damage",
+      "before": {
+        "status": "value",
+        "value": "260"
+      },
+      "after": {
+        "status": "value",
+        "value": "225"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 6108,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 6108,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_silver_edge",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityCooldown",
+      "before": {
+        "status": "value",
+        "value": "22.0"
+      },
+      "after": {
+        "status": "value",
+        "value": "23.0"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 8127,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 8127,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_silver_edge",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/windwalk_movement_speed",
+      "before": {
+        "status": "value",
+        "value": "22"
+      },
+      "after": {
+        "status": "value",
+        "value": "20"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 8127,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 8127,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "keeper_of_the_light_chakra_magic",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/cooldown_reduction",
+      "before": {
+        "status": "value",
+        "value": "3 4 5 6"
+      },
+      "after": {
+        "status": "value",
+        "value": "2.5 3.5 4.5 5.5"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_keeper_of_the_light.txt",
+          "line": 250,
+          "sha256": "d6988257f8cae786dcf1c44491b538ba97235c118907973fc8d01ae433e91465",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_keeper_of_the_light.txt",
+          "line": 485,
+          "sha256": "1c5a920a22c5f0c16c4d58430b0ae34504a241be27cbabbd824eecdd738f367b",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "keeper_of_the_light_spirit_form",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/illuminate_heal/special_bonus_shard",
+      "before": {
+        "status": "value",
+        "value": "+30"
+      },
+      "after": {
+        "status": "value",
+        "value": "+40"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_keeper_of_the_light.txt",
+          "line": 327,
+          "sha256": "d6988257f8cae786dcf1c44491b538ba97235c118907973fc8d01ae433e91465",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_keeper_of_the_light.txt",
+          "line": 562,
+          "sha256": "1c5a920a22c5f0c16c4d58430b0ae34504a241be27cbabbd824eecdd738f367b",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "keeper_of_the_light_spirit_form",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/illuminate_heal/value",
+      "before": {
+        "status": "value",
+        "value": "70"
+      },
+      "after": {
+        "status": "value",
+        "value": "60"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_keeper_of_the_light.txt",
+          "line": 327,
+          "sha256": "d6988257f8cae786dcf1c44491b538ba97235c118907973fc8d01ae433e91465",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_keeper_of_the_light.txt",
+          "line": 562,
+          "sha256": "1c5a920a22c5f0c16c4d58430b0ae34504a241be27cbabbd824eecdd738f367b",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "kez_falcon_rush",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IMMEDIATE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IMMEDIATE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 319,
+          "sha256": "5043f9bb9c7849f7ae636bc0e921121c613682f6d39a9f7930460e247d56c39f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 521,
+          "sha256": "24928e5081473724824eec0381f4404c44cc7bf069ab86d1cc1259bc13d73f7f",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "kez_kazurai_katana",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/katana_bleed_attack_damage_pct/special_bonus_unique_kez_kazura_katana_bleed_damage",
+      "before": {
+        "status": "value",
+        "value": "+4.0"
+      },
+      "after": {
+        "status": "value",
+        "value": "+3.5"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 176,
+          "sha256": "5043f9bb9c7849f7ae636bc0e921121c613682f6d39a9f7930460e247d56c39f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 378,
+          "sha256": "24928e5081473724824eec0381f4404c44cc7bf069ab86d1cc1259bc13d73f7f",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "kez_ravens_veil",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 519,
+          "sha256": "5043f9bb9c7849f7ae636bc0e921121c613682f6d39a9f7930460e247d56c39f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 722,
+          "sha256": "24928e5081473724824eec0381f4404c44cc7bf069ab86d1cc1259bc13d73f7f",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "kez_ravens_veil",
+      "category": "property",
+      "operation": "added",
+      "path": "/AbilityValues/mark_only_heroes",
+      "before": {
+        "status": "absent"
+      },
+      "after": {
+        "status": "value",
+        "value": "1"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 519,
+          "sha256": "5043f9bb9c7849f7ae636bc0e921121c613682f6d39a9f7930460e247d56c39f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 722,
+          "sha256": "24928e5081473724824eec0381f4404c44cc7bf069ab86d1cc1259bc13d73f7f",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "kez_shodo_sai",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_IMMEDIATE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_DONT_CANCEL_MOVEMENT | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_IMMEDIATE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_DONT_CANCEL_MOVEMENT | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 438,
+          "sha256": "5043f9bb9c7849f7ae636bc0e921121c613682f6d39a9f7930460e247d56c39f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 640,
+          "sha256": "24928e5081473724824eec0381f4404c44cc7bf069ab86d1cc1259bc13d73f7f",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "kez_shodo_sai",
+      "category": "property",
+      "operation": "added",
+      "path": "/AbilityValues/parry_only_heroes",
+      "before": {
+        "status": "absent"
+      },
+      "after": {
+        "status": "value",
+        "value": "1"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 438,
+          "sha256": "5043f9bb9c7849f7ae636bc0e921121c613682f6d39a9f7930460e247d56c39f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 640,
+          "sha256": "24928e5081473724824eec0381f4404c44cc7bf069ab86d1cc1259bc13d73f7f",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "kez_talon_toss",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_UNIT_TARGET | DOTA_ABILITY_BEHAVIOR_AOE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_UNIT_TARGET | DOTA_ABILITY_BEHAVIOR_AOE | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 382,
+          "sha256": "5043f9bb9c7849f7ae636bc0e921121c613682f6d39a9f7930460e247d56c39f",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "line": 584,
+          "sha256": "24928e5081473724824eec0381f4404c44cc7bf069ab86d1cc1259bc13d73f7f",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "largo_song_double_time",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IMMEDIATE | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IMMEDIATE | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_largo.txt",
+          "line": 153,
+          "sha256": "9cbc27b06b9335ba4e048f6796f91e29864fde7203a445f6c0d9af9f458b3cf7",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_largo.txt",
+          "line": 379,
+          "sha256": "df497f4f7f5ead7bdd9ce28902006ed117ca0872ddc40c754d745c7dd633438e",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "largo_song_fight_song",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IMMEDIATE | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IMMEDIATE | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_largo.txt",
+          "line": 75,
+          "sha256": "9cbc27b06b9335ba4e048f6796f91e29864fde7203a445f6c0d9af9f458b3cf7",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_largo.txt",
+          "line": 301,
+          "sha256": "df497f4f7f5ead7bdd9ce28902006ed117ca0872ddc40c754d745c7dd633438e",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "largo_song_good_vibrations",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityBehavior",
+      "before": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IMMEDIATE | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES"
+      },
+      "after": {
+        "status": "value",
+        "value": "DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_IMMEDIATE | DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE | DOTA_ABILITY_BEHAVIOR_SHOW_IN_GUIDES | DOTA_ABILITY_BEHAVIOR_DIRECT_KEYBIND"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_largo.txt",
+          "line": 219,
+          "sha256": "9cbc27b06b9335ba4e048f6796f91e29864fde7203a445f6c0d9af9f458b3cf7",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_largo.txt",
+          "line": 445,
+          "sha256": "df497f4f7f5ead7bdd9ce28902006ed117ca0872ddc40c754d745c7dd633438e",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "largo_song_good_vibrations",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/heal_burst/value",
+      "before": {
+        "status": "value",
+        "value": "34 56 78"
+      },
+      "after": {
+        "status": "value",
+        "value": "30 55 80"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_largo.txt",
+          "line": 219,
+          "sha256": "9cbc27b06b9335ba4e048f6796f91e29864fde7203a445f6c0d9af9f458b3cf7",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_largo.txt",
+          "line": 445,
+          "sha256": "df497f4f7f5ead7bdd9ce28902006ed117ca0872ddc40c754d745c7dd633438e",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "life_stealer_infest",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/infest_duration_enemy/special_bonus_scepter",
+      "before": {
+        "status": "value",
+        "value": "+5"
+      },
+      "after": {
+        "status": "value",
+        "value": "+4"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_life_stealer.txt",
+          "line": 262,
+          "sha256": "761fb98ec9f48af6deffe24b883a1c96f4bc6460495400181515a1e148a34261",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_life_stealer.txt",
+          "line": 543,
+          "sha256": "719ac762a3a40c9d5c99ada3b38759b9a0bc6666497f9938e9e8928c215fafe9",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "life_stealer_rage",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityCooldown",
+      "before": {
+        "status": "value",
+        "value": "20 19 18 17"
+      },
+      "after": {
+        "status": "value",
+        "value": "21 20 19 18"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_life_stealer.txt",
+          "line": 7,
+          "sha256": "761fb98ec9f48af6deffe24b883a1c96f4bc6460495400181515a1e148a34261",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_life_stealer.txt",
+          "line": 288,
+          "sha256": "719ac762a3a40c9d5c99ada3b38759b9a0bc6666497f9938e9e8928c215fafe9",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "lina_fiery_soul",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/fiery_soul_attack_speed_bonus/value",
+      "before": {
+        "status": "value",
+        "value": "8 16 24 32"
+      },
+      "after": {
+        "status": "value",
+        "value": "7 14 21 28"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_lina.txt",
+          "line": 118,
+          "sha256": "99dc00fc83a0306266f8a5420c57cc934cf8bac169bd076814f9ceef5a911a58",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_lina.txt",
+          "line": 408,
+          "sha256": "f360660bedce58d9561e0bd92422b1ecef48ba9b9a5c152793f3670b9430c504",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "lina_fiery_soul",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/fiery_soul_stack_duration",
+      "before": {
+        "status": "value",
+        "value": "18"
+      },
+      "after": {
+        "status": "value",
+        "value": "16"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_lina.txt",
+          "line": 118,
+          "sha256": "99dc00fc83a0306266f8a5420c57cc934cf8bac169bd076814f9ceef5a911a58",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_lina.txt",
+          "line": 408,
+          "sha256": "f360660bedce58d9561e0bd92422b1ecef48ba9b9a5c152793f3670b9430c504",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "lone_druid_entangle",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/counter_duration",
+      "before": {
+        "status": "value",
+        "value": "10"
+      },
+      "after": {
+        "status": "value",
+        "value": "7 8 9 10"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_lone_druid.txt",
+          "line": 609,
+          "sha256": "bd9ab5a5660a0555454551874a6f934d4e9204a6785b47ad9f8260d540282900",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_lone_druid.txt",
+          "line": 873,
+          "sha256": "22c9b0cc64dc7a9036fb905ef1f22e58973e987a4e694e565c3b8ea45ffeb926",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "lone_druid_spirit_bear_entangle",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/counter_duration",
+      "before": {
+        "status": "value",
+        "value": "10"
+      },
+      "after": {
+        "status": "value",
+        "value": "7 8 9 10"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_lone_druid.txt",
+          "line": 562,
+          "sha256": "bd9ab5a5660a0555454551874a6f934d4e9204a6785b47ad9f8260d540282900",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_lone_druid.txt",
+          "line": 826,
+          "sha256": "22c9b0cc64dc7a9036fb905ef1f22e58973e987a4e694e565c3b8ea45ffeb926",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "marci_companion_run",
+      "category": "property",
+      "operation": "removed",
+      "path": "/AbilityValues/ally_movespeed_pct/special_bonus_unique_marci_lunge_movespeed",
+      "before": {
+        "status": "value",
+        "value": "+10"
+      },
+      "after": {
+        "status": "absent"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_marci.txt",
+          "line": 159,
+          "sha256": "c4e9312dee8e2ae1da36ffe622b8e7b6c59c430609956fa501c26e78d36e9eb4",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_marci.txt",
+          "line": 401,
+          "sha256": "40ab8769ae90c5e68d6dabb52a9fb7205ccfa620540ca0cc537e72bec7471a10",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "marci_companion_run",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/ally_movespeed_pct/value",
+      "before": {
+        "status": "value",
+        "value": "15 20 25 30"
+      },
+      "after": {
+        "status": "value",
+        "value": "25"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_marci.txt",
+          "line": 159,
+          "sha256": "c4e9312dee8e2ae1da36ffe622b8e7b6c59c430609956fa501c26e78d36e9eb4",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_marci.txt",
+          "line": 401,
+          "sha256": "40ab8769ae90c5e68d6dabb52a9fb7205ccfa620540ca0cc537e72bec7471a10",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "mirana_arrow",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/arrow_max_stun",
+      "before": {
+        "status": "value",
+        "value": "2.6 3.4 4.2 5.0"
+      },
+      "after": {
+        "status": "value",
+        "value": "2.3 3.2 4.1 5.0"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_mirana.txt",
+          "line": 8,
+          "sha256": "c7fb1cb45efa207ee13f858ef7de687e6eb4e85cf9903b10d4759d93521c5583",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_mirana.txt",
+          "line": 463,
+          "sha256": "e73af694e0b980fdcbfbf15c6c47379069be062b39eb9c09956f37beb22748b8",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "mirana_arrow",
+      "category": "property",
+      "operation": "added",
+      "path": "/AbilityValues/pierce_units",
+      "before": {
+        "status": "absent"
+      },
+      "after": {
+        "status": "value",
+        "value": "0"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_mirana.txt",
+          "line": 8,
+          "sha256": "c7fb1cb45efa207ee13f858ef7de687e6eb4e85cf9903b10d4759d93521c5583",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_mirana.txt",
+          "line": 463,
+          "sha256": "e73af694e0b980fdcbfbf15c6c47379069be062b39eb9c09956f37beb22748b8",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "mirana_celestial_quiver",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityChargeRestoreTime",
+      "before": {
+        "status": "value",
+        "value": "6.0"
+      },
+      "after": {
+        "status": "value",
+        "value": "7.0"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_mirana.txt",
+          "line": 355,
+          "sha256": "c7fb1cb45efa207ee13f858ef7de687e6eb4e85cf9903b10d4759d93521c5583",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_mirana.txt",
+          "line": 815,
+          "sha256": "e73af694e0b980fdcbfbf15c6c47379069be062b39eb9c09956f37beb22748b8",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "mirana_solar_flare",
+      "category": "property",
+      "operation": "removed",
+      "path": "/SpellImmunityType",
+      "before": {
+        "status": "value",
+        "value": "SPELL_IMMUNITY_ALLIES_YES"
+      },
+      "after": {
+        "status": "absent"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_mirana.txt",
+          "line": 143,
+          "sha256": "c7fb1cb45efa207ee13f858ef7de687e6eb4e85cf9903b10d4759d93521c5583",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_mirana.txt",
+          "line": 600,
+          "sha256": "e73af694e0b980fdcbfbf15c6c47379069be062b39eb9c09956f37beb22748b8",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "mirana_starfall",
+      "category": "property",
+      "operation": "added",
+      "path": "/AbilityValues/secondary_targets",
+      "before": {
+        "status": "absent"
+      },
+      "after": {
+        "status": "value",
+        "value": {
+          "value": "1"
+        }
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_mirana.txt",
+          "line": 243,
+          "sha256": "c7fb1cb45efa207ee13f858ef7de687e6eb4e85cf9903b10d4759d93521c5583",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_mirana.txt",
+          "line": 699,
+          "sha256": "e73af694e0b980fdcbfbf15c6c47379069be062b39eb9c09956f37beb22748b8",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "necrolyte_ghost_shroud",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/heal_bonus/value",
+      "before": {
+        "status": "value",
+        "value": "55 65 75 85"
+      },
+      "after": {
+        "status": "value",
+        "value": "45 55 65 75"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_necrolyte.txt",
+          "line": 196,
+          "sha256": "6ebfc13fc4e7de778e2f7d199b4f06713ec959c3cd2a5ea38865636267b14b5b",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_necrolyte.txt",
+          "line": 521,
+          "sha256": "bf947f0cd4fbf34360751a57ba0196dcb5ac22ece9e52456822d55c41111854c",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "necrolyte_sadist",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/hero_multiplier",
+      "before": {
+        "status": "value",
+        "value": "6"
+      },
+      "after": {
+        "status": "value",
+        "value": "4"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_necrolyte.txt",
+          "line": 163,
+          "sha256": "6ebfc13fc4e7de778e2f7d199b4f06713ec959c3cd2a5ea38865636267b14b5b",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_necrolyte.txt",
+          "line": 488,
+          "sha256": "bf947f0cd4fbf34360751a57ba0196dcb5ac22ece9e52456822d55c41111854c",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "nevermore_dark_lord",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/presence_armor_reduction/special_bonus_unique_nevermore_3",
+      "before": {
+        "status": "value",
+        "value": "-2"
+      },
+      "after": {
+        "status": "value",
+        "value": "-1.5"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "line": 300,
+          "sha256": "4a1e4ee2ed67e9f7bccd6f271412a1629bf9f35b1fe119365ed5bb28b7b0ce00",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "line": 596,
+          "sha256": "67de2fc73b3bddf8c2b3bf7943aa1c9c10d3de5e8c9e219a6762cbe37dae3371",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "nevermore_necromastery",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/necromastery_damage_per_soul/hero_levelup",
+      "before": {
+        "status": "value",
+        "value": "+0.15"
+      },
+      "after": {
+        "status": "value",
+        "value": "+0.8"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "line": 241,
+          "sha256": "4a1e4ee2ed67e9f7bccd6f271412a1629bf9f35b1fe119365ed5bb28b7b0ce00",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "line": 536,
+          "sha256": "67de2fc73b3bddf8c2b3bf7943aa1c9c10d3de5e8c9e219a6762cbe37dae3371",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "nevermore_necromastery",
+      "category": "property",
+      "operation": "added",
+      "path": "/AbilityValues/necromastery_damage_per_soul/levelup_interval",
+      "before": {
+        "status": "absent"
+      },
+      "after": {
+        "status": "value",
+        "value": "6"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "line": 241,
+          "sha256": "4a1e4ee2ed67e9f7bccd6f271412a1629bf9f35b1fe119365ed5bb28b7b0ce00",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "line": 536,
+          "sha256": "67de2fc73b3bddf8c2b3bf7943aa1c9c10d3de5e8c9e219a6762cbe37dae3371",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "nevermore_necromastery",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/necromastery_damage_per_soul/value",
+      "before": {
+        "status": "value",
+        "value": "1.35"
+      },
+      "after": {
+        "status": "value",
+        "value": "1"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "line": 241,
+          "sha256": "4a1e4ee2ed67e9f7bccd6f271412a1629bf9f35b1fe119365ed5bb28b7b0ce00",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "line": 536,
+          "sha256": "67de2fc73b3bddf8c2b3bf7943aa1c9c10d3de5e8c9e219a6762cbe37dae3371",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "nevermore_shadowraze1",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/damage_per_soul",
+      "before": {
+        "status": "value",
+        "value": "3"
+      },
+      "after": {
+        "status": "value",
+        "value": "2"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "line": 8,
+          "sha256": "4a1e4ee2ed67e9f7bccd6f271412a1629bf9f35b1fe119365ed5bb28b7b0ce00",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "line": 303,
+          "sha256": "67de2fc73b3bddf8c2b3bf7943aa1c9c10d3de5e8c9e219a6762cbe37dae3371",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "nevermore_shadowraze2",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/damage_per_soul",
+      "before": {
+        "status": "value",
+        "value": "3"
+      },
+      "after": {
+        "status": "value",
+        "value": "2"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "line": 88,
+          "sha256": "4a1e4ee2ed67e9f7bccd6f271412a1629bf9f35b1fe119365ed5bb28b7b0ce00",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "line": 383,
+          "sha256": "67de2fc73b3bddf8c2b3bf7943aa1c9c10d3de5e8c9e219a6762cbe37dae3371",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "nevermore_shadowraze3",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/damage_per_soul",
+      "before": {
+        "status": "value",
+        "value": "3"
+      },
+      "after": {
+        "status": "value",
+        "value": "2"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "line": 164,
+          "sha256": "4a1e4ee2ed67e9f7bccd6f271412a1629bf9f35b1fe119365ed5bb28b7b0ce00",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "line": 459,
+          "sha256": "67de2fc73b3bddf8c2b3bf7943aa1c9c10d3de5e8c9e219a6762cbe37dae3371",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "rattletrap_power_cogs",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityManaCost",
+      "before": {
+        "status": "value",
+        "value": "75"
+      },
+      "after": {
+        "status": "value",
+        "value": "90"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_rattletrap.txt",
+          "line": 215,
+          "sha256": "6d800cdf344079c8c56488744ee1d91287290508df05c33f9cdc54a3e83a2645",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_rattletrap.txt",
+          "line": 453,
+          "sha256": "f02ec8cb68002dd8f95b8b01c16f70748148cce1e93f2e08459e2f1f3f4f1980",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "rattletrap_power_cogs",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/push_duration",
+      "before": {
+        "status": "value",
+        "value": "0.8"
+      },
+      "after": {
+        "status": "value",
+        "value": "0.7"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_rattletrap.txt",
+          "line": 215,
+          "sha256": "6d800cdf344079c8c56488744ee1d91287290508df05c33f9cdc54a3e83a2645",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_rattletrap.txt",
+          "line": 453,
+          "sha256": "f02ec8cb68002dd8f95b8b01c16f70748148cce1e93f2e08459e2f1f3f4f1980",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "slardar_slithereen_crush",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/crush_damage/value",
+      "before": {
+        "status": "value",
+        "value": "75 150 225 300"
+      },
+      "after": {
+        "status": "value",
+        "value": "60 140 220 300"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_slardar.txt",
+          "line": 124,
+          "sha256": "1a83c6bb42add2ba603e61a9e3f23201010d3e9f6403b468f766134d956c9dd3",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_slardar.txt",
+          "line": 353,
+          "sha256": "06b818604122f6e18c88cd01a52ce9c766aa5b0b1b2e622897ba49a6388c0619",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "spectre_desolate",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/bonus_damage/hero_levelup",
+      "before": {
+        "status": "value",
+        "value": "+2"
+      },
+      "after": {
+        "status": "value",
+        "value": "+1.5"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_spectre.txt",
+          "line": 83,
+          "sha256": "acb1d0f19bcf2ca849088160adbe165aad529586cbd4a1c27ea86b1267d8a89d",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_spectre.txt",
+          "line": 312,
+          "sha256": "9584e0d51320a6032595c8b808593815dcc7591f350e060d6c0b70a08048daba",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "spectre_desolate",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/bonus_damage/value",
+      "before": {
+        "status": "value",
+        "value": "23"
+      },
+      "after": {
+        "status": "value",
+        "value": "23.5"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_spectre.txt",
+          "line": 83,
+          "sha256": "acb1d0f19bcf2ca849088160adbe165aad529586cbd4a1c27ea86b1267d8a89d",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_spectre.txt",
+          "line": 312,
+          "sha256": "9584e0d51320a6032595c8b808593815dcc7591f350e060d6c0b70a08048daba",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "treant_leech_seed",
+      "category": "property",
+      "operation": "added",
+      "path": "/AbilityManaCost",
+      "before": {
+        "status": "absent"
+      },
+      "after": {
+        "status": "value",
+        "value": "35"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "line": 128,
+          "sha256": "833171cf02cb6a67197ccd38a4762a8561d103c5ff401389c766b877df06f9a2",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "line": 352,
+          "sha256": "00c26fea42a34dad6a22d7d88d65dc1a9662d80dcbdabb6d24f24730cdae18cf",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "treant_leech_seed",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/leech_heal/value",
+      "before": {
+        "status": "value",
+        "value": "20"
+      },
+      "after": {
+        "status": "value",
+        "value": "10 15 20 25"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "line": 128,
+          "sha256": "833171cf02cb6a67197ccd38a4762a8561d103c5ff401389c766b877df06f9a2",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "line": 352,
+          "sha256": "00c26fea42a34dad6a22d7d88d65dc1a9662d80dcbdabb6d24f24730cdae18cf",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "treant_living_armor",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/damage_block_threshold",
+      "before": {
+        "status": "value",
+        "value": "20"
+      },
+      "after": {
+        "status": "value",
+        "value": "10"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "line": 186,
+          "sha256": "833171cf02cb6a67197ccd38a4762a8561d103c5ff401389c766b877df06f9a2",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "line": 411,
+          "sha256": "00c26fea42a34dad6a22d7d88d65dc1a9662d80dcbdabb6d24f24730cdae18cf",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "treant_living_armor",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/duration",
+      "before": {
+        "status": "value",
+        "value": "12"
+      },
+      "after": {
+        "status": "value",
+        "value": {
+          "value": "12",
+          "special_bonus_unique_treant_8": "+3"
+        }
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "line": 186,
+          "sha256": "833171cf02cb6a67197ccd38a4762a8561d103c5ff401389c766b877df06f9a2",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "line": 411,
+          "sha256": "00c26fea42a34dad6a22d7d88d65dc1a9662d80dcbdabb6d24f24730cdae18cf",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "treant_living_armor",
+      "category": "property",
+      "operation": "removed",
+      "path": "/AbilityValues/heal_per_second/special_bonus_unique_treant_8",
+      "before": {
+        "status": "value",
+        "value": "+3"
+      },
+      "after": {
+        "status": "absent"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "line": 186,
+          "sha256": "833171cf02cb6a67197ccd38a4762a8561d103c5ff401389c766b877df06f9a2",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "line": 411,
+          "sha256": "00c26fea42a34dad6a22d7d88d65dc1a9662d80dcbdabb6d24f24730cdae18cf",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "treant_natures_guise",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/grace_time",
+      "before": {
+        "status": "value",
+        "value": "2"
+      },
+      "after": {
+        "status": "value",
+        "value": "1"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "line": 8,
+          "sha256": "833171cf02cb6a67197ccd38a4762a8561d103c5ff401389c766b877df06f9a2",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "line": 232,
+          "sha256": "00c26fea42a34dad6a22d7d88d65dc1a9662d80dcbdabb6d24f24730cdae18cf",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "undying_decay",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityManaCost",
+      "before": {
+        "status": "value",
+        "value": "100"
+      },
+      "after": {
+        "status": "value",
+        "value": "110"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_undying.txt",
+          "line": 8,
+          "sha256": "4adf4f27c0af737da4f758ef8aa4bf4b3ef42b871d98698e2f6851c917735c17",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_undying.txt",
+          "line": 240,
+          "sha256": "1fb91721511593859efa376bd6adc7bc90ff9e0033dd6e6607ca8bd743628deb",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "ursa_maul",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/health_as_damage_pct/value",
+      "before": {
+        "status": "value",
+        "value": "1.25"
+      },
+      "after": {
+        "status": "value",
+        "value": "1.75"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_ursa.txt",
+          "line": 237,
+          "sha256": "725d049e916aea8c8b997d95849185dd7c3c09fa1abd562c0eda9e3a15f9f4af",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_ursa.txt",
+          "line": 446,
+          "sha256": "613c2cefe0a70e0a5582c5dd9def317fb93da2a346d0da650070a147b4faad9a",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "venomancer_plague_ward",
+      "category": "property",
+      "operation": "removed",
+      "path": "/AbilityUnitTargetTeam",
+      "before": {
+        "status": "value",
+        "value": "DOTA_UNIT_TARGET_TEAM_FRIENDLY"
+      },
+      "after": {
+        "status": "absent"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_venomancer.txt",
+          "line": 193,
+          "sha256": "9caaf007ccdf64263b2cf5c652fa8ce4bafdc5d6f44e2fc3ac039042330df0ec",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_venomancer.txt",
+          "line": 442,
+          "sha256": "f2255c29b367754b84424d560763568f9688d8453711b8f19aec028ee766f4a7",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "venomancer_plague_ward",
+      "category": "property",
+      "operation": "removed",
+      "path": "/AbilityUnitTargetType",
+      "before": {
+        "status": "value",
+        "value": "DOTA_UNIT_TARGET_HERO"
+      },
+      "after": {
+        "status": "absent"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_venomancer.txt",
+          "line": 193,
+          "sha256": "9caaf007ccdf64263b2cf5c652fa8ce4bafdc5d6f44e2fc3ac039042330df0ec",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_venomancer.txt",
+          "line": 442,
+          "sha256": "f2255c29b367754b84424d560763568f9688d8453711b8f19aec028ee766f4a7",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "winter_wyvern_arctic_burn",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityCooldown",
+      "before": {
+        "status": "value",
+        "value": "26 24 22 20"
+      },
+      "after": {
+        "status": "value",
+        "value": "29 26 23 20"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_winter_wyvern.txt",
+          "line": 8,
+          "sha256": "4f3790062068407ba4bf469ec733472f283f3f2312ca830fe1eecbb01e083233",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_winter_wyvern.txt",
+          "line": 258,
+          "sha256": "fc42a7c61ac296cfa85936c12b8402aa6d23c85dd4e1edd071523db41fff6f4f",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "winter_wyvern_cold_embrace",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/heal_percentage",
+      "before": {
+        "status": "value",
+        "value": "2.25 3 3.75 4.5"
+      },
+      "after": {
+        "status": "value",
+        "value": "1.5 2.5 3.5 4.5"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_winter_wyvern.txt",
+          "line": 133,
+          "sha256": "4f3790062068407ba4bf469ec733472f283f3f2312ca830fe1eecbb01e083233",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_winter_wyvern.txt",
+          "line": 383,
+          "sha256": "fc42a7c61ac296cfa85936c12b8402aa6d23c85dd4e1edd071523db41fff6f4f",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "wisp_spirits",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/creep_damage/special_bonus_unique_wisp",
+      "before": {
+        "status": "value",
+        "value": "+50%"
+      },
+      "after": {
+        "status": "value",
+        "value": "+40%"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_wisp.txt",
+          "line": 90,
+          "sha256": "97242305e4ba9442ac2a4688da31bd56c15adecb6ea4f07f5d91b479738e780a",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_wisp.txt",
+          "line": 273,
+          "sha256": "8686a091ec2739935175691a8606fbf75ffb0b67dfb6d2d620c02530cc2dfdab",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "wisp_spirits",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/hero_damage/special_bonus_unique_wisp",
+      "before": {
+        "status": "value",
+        "value": "+50%"
+      },
+      "after": {
+        "status": "value",
+        "value": "+40%"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/heroes/npc_dota_hero_wisp.txt",
+          "line": 90,
+          "sha256": "97242305e4ba9442ac2a4688da31bd56c15adecb6ea4f07f5d91b479738e780a",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/heroes/npc_dota_hero_wisp.txt",
+          "line": 273,
+          "sha256": "8686a091ec2739935175691a8606fbf75ffb0b67dfb6d2d620c02530cc2dfdab",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    }
+  ],
+  "postRelease": {
+    "from": "adebf50af72775f0be4b4e0b2e0175d33017ad30",
+    "to": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+    "summary": {
+      "hero": {
+        "entities": 0,
+        "fields": 0
+      },
+      "ability": {
+        "entities": 0,
+        "fields": 0
+      },
+      "item": {
+        "entities": 0,
+        "fields": 0
+      },
+      "unit": {
+        "entities": 0,
+        "fields": 0
+      },
+      "mechanism": {
+        "entities": 0,
+        "fields": 0
+      }
+    },
+    "fileChanges": [
+      "resource/localization/abilities_schinese.txt",
+      "resource/localization/dota_english.txt",
+      "resource/localization/dota_schinese.txt",
+      "scripts/change_log.txt",
+      "steam.inf"
+    ]
+  }
+}

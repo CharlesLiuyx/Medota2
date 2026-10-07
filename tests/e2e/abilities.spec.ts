@@ -6,17 +6,21 @@ test("registry defaults to current and restores canonical filter URL", async ({
 }) => {
   await page.goto("/abilities");
   await expect(page.getByRole("heading", { name: "技能图鉴" })).toBeVisible();
+  const release = new URL(page.url()).searchParams.get("release")!;
+  expect(release).toMatch(/^c:/u);
   await expect(page.getByRole("heading", { name: "闪烁" })).toBeVisible();
   await expect(
-    page.getByRole("img", { name: "闪烁 icon", exact: true }),
+    page.getByRole("img", { name: "闪烁 图标", exact: true }),
   ).toBeVisible();
   await expect(page.getByText("fixture_unbound", { exact: true })).toHaveCount(
     0,
   );
 
-  const blink = page.locator('a[href="/abilities/antimage_blink"]');
+  const blink = page.locator('a[href^="/abilities/antimage_blink?"]');
   await expect(
-    page.locator('a[href="/abilities/special_bonus_unique_antimage_fixture"]'),
+    page.locator(
+      'a[href^="/abilities/special_bonus_unique_antimage_fixture?"]',
+    ),
   ).toContainText("10 级天赋");
   for (const width of [1280, 390]) {
     await page.setViewportSize({ width, height: 840 });
@@ -41,15 +45,23 @@ test("registry defaults to current and restores canonical filter URL", async ({
   await page.getByRole("combobox", { name: "语言" }).click();
   await page.getByRole("option", { name: "English", exact: true }).click();
   await page
-    .getByPlaceholder("搜索技能名称、拼音或别称…")
+    .getByPlaceholder("Search ability names, pinyin or aliases…")
     .fill(" fixture_unbound ");
 
   await expect(page).toHaveURL(
-    "/abilities?q=fixture_unbound&status=defined_unbound&lang=en",
+    `/abilities?q=fixture_unbound&status=defined_unbound&lang=en&release=${encodeURIComponent(release)}`,
   );
+  await expect(page.locator("[data-live-results]")).toHaveAttribute(
+    "aria-busy",
+    "false",
+  );
+  const filtered = page.locator('a[href^="/abilities/fixture_unbound?"]');
   await expect(
-    page.getByRole("heading", { name: "技能名称待补充" }),
+    filtered.getByRole("heading", { name: "Ability name unavailable" }),
   ).toBeVisible();
+  await expect(
+    page.locator('a[href^="/abilities/fixture_duplicate?"]'),
+  ).toHaveCount(0);
 });
 
 test("ability registry continuously loads 4+ chunks, bounds its DOM, and restores the first item", async ({
@@ -157,7 +169,7 @@ test("missing abilities are exact 404s and stored icons remain accessible", asyn
 
   await page.goto("/abilities/antimage_blink");
   await expect(
-    page.getByRole("img", { name: "闪烁 icon", exact: true }),
+    page.getByRole("img", { name: "闪烁 图标", exact: true }),
   ).toBeVisible();
 });
 
@@ -215,8 +227,16 @@ test("online ability fallback is bilingual and ignores superseded responses", as
     ).toContain("antimage_blink");
   }
   await page.route("**/api/catalog/replica", (route) => route.abort());
+  // The fallback scenario requires the client to attempt replica sync first.
+  // Server-rendered input visibility alone does not prove hydration has finished.
+  const replicaAttempt = page.waitForRequest(
+    (request) => new URL(request.url()).pathname === "/api/catalog/replica",
+  );
   await page.goto("/abilities");
-  const input = page.getByRole("textbox", { name: "搜索技能" });
+  await replicaAttempt;
+  const input = page.getByRole("textbox", {
+    name: /搜索技能|Search abilities/,
+  });
   await expect(input).toBeVisible();
   await expect(page.getByRole("button", { name: "应用筛选" })).toHaveCount(0);
   let release: () => void = () => {};

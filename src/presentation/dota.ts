@@ -1,3 +1,6 @@
+import { formatNumber } from "@/i18n/format";
+import { translate } from "@/i18n/messages";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 /** Player-facing vocabulary. Unknown engine metadata never becomes a label. */
 export const labels: Record<string, string> = {
   strength: "力量",
@@ -47,7 +50,7 @@ export const labels: Record<string, string> = {
   SPELL_IMMUNITY_ALLIES_YES: "可对减益免疫友军施放",
   SPELL_IMMUNITY_ALLIES_NO: "不可对减益免疫友军施放",
   SPELL_DISPELLABLE_YES: "可驱散",
-  SPELL_DISPELLABLE_NO: "不可驱散",
+  SPELL_DISPELLABLE_NO: "无法驱散",
   SPELL_DISPELLABLE_YES_STRONG: "仅强驱散",
 };
 const behaviors: Record<string, string> = {
@@ -65,20 +68,28 @@ const behaviors: Record<string, string> = {
   OPTIONAL_POINT: "可选点目标",
   OPTIONAL_NO_TARGET: "可无目标施放",
 };
-export function behaviorLabels(value: unknown): string[] {
+export function behaviorLabels(
+  value: unknown,
+  locale: Locale = DEFAULT_LOCALE,
+): string[] {
   return (Array.isArray(value) ? value : String(value ?? "").split("|"))
     .map(
       (v) => behaviors[String(v).trim().replace("DOTA_ABILITY_BEHAVIOR_", "")],
     )
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((label) => translate(locale, label));
 }
-export function enumText(value: unknown): string {
+export function enumText(
+  value: unknown,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
   const values = Array.isArray(value) ? value : String(value ?? "").split("|");
   return (
     values
       .map((v) => labels[String(v).trim()])
+      .map((label) => (label ? translate(locale, label) : ""))
       .filter(Boolean)
-      .join("、") || "未提供"
+      .join(locale === "zh-CN" ? "、" : ", ") || translate(locale, "未提供")
   );
 }
 export interface ValueRow {
@@ -87,28 +98,38 @@ export interface ValueRow {
   scalar_value?: string | null;
   modifiers?: Array<{ key: string; value: unknown }>;
 }
-export function numbers(value: unknown): string {
+export function numbers(
+  value: unknown,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
   const raw = Array.isArray(value)
     ? value.map(String)
     : String(value ?? "")
         .trim()
         .split(/\s+/u);
   if (!raw.length || raw.some((v) => !/^[+-]?(?:\d+\.?\d*|\.\d+)%?$/u.test(v)))
-    return "未提供";
+    return translate(locale, "未提供");
   return raw
     .map((v) =>
-      v.endsWith("%") ? `${Number(v.slice(0, -1))}%` : String(Number(v)),
+      v.endsWith("%")
+        ? `${formatNumber(locale, Number(v.slice(0, -1)), { useGrouping: false, maximumFractionDigits: 20 })}%`
+        : formatNumber(locale, Number(v), {
+            useGrouping: false,
+            maximumFractionDigits: 20,
+          }),
     )
     .join(" / ");
 }
 export function textValues(
   values: ValueRow[],
   ability: Record<string, unknown> = {},
+  locale: Locale = DEFAULT_LOCALE,
 ): Record<string, string> {
   const result: Record<string, string> = {};
   for (const row of values)
     result[row.value_key.toLowerCase()] = numbers(
       row.level_values.length ? row.level_values : row.scalar_value,
+      locale,
     );
   for (const [token, key] of Object.entries({
     abilitycastrange: "cast_range",
@@ -123,7 +144,7 @@ export function textValues(
     abilitycastpoint: "cast_point",
   })) {
     if (ability[key] != null && result[token] === undefined)
-      result[token] = numbers(ability[key]);
+      result[token] = numbers(ability[key], locale);
   }
   return result;
 }
@@ -131,6 +152,7 @@ export function textValues(
 export function gameText(
   input: string | null | undefined,
   values: Record<string, string> = {},
+  locale: Locale = DEFAULT_LOCALE,
 ): string {
   return (input ?? "")
     .replace(/<br\s*\/?\s*>|<\/p>/giu, "\n")
@@ -138,31 +160,34 @@ export function gameText(
     .replace(/\\n/gu, "\n")
     .replace(
       /%([\w]+)%/gu,
-      (_, key: string) => values[key.toLowerCase()] ?? "（数值待补充）",
+      (_, key: string) =>
+        values[key.toLowerCase()] ?? translate(locale, "（数值待补充）"),
     )
     .replace(
       /\{[sdf]:([\w]+)\}/gu,
-      (_, key: string) => values[key.toLowerCase()] ?? "（数值待补充）",
+      (_, key: string) =>
+        values[key.toLowerCase()] ?? translate(locale, "（数值待补充）"),
     )
     .replace(/%%/gu, "%")
     .replace(/&nbsp;/gu, " ")
     .replace(/&amp;/gu, "&")
     .replace(/&quot;/gu, '"')
     .replace(/&#39;/gu, "'")
-    .replace(/#[A-Za-z][\w]+/gu, "（说明待补充）")
+    .replace(/#[A-Za-z][\w]+/gu, translate(locale, "（说明待补充）"))
     .trim();
 }
 export function displayName(
   value: string | null | undefined,
   fallback = "名称待补充",
   values: Record<string, string> = {},
+  locale: Locale = DEFAULT_LOCALE,
 ): string {
   if (
     !value ||
     /^(?:npc_|special_bonus_|DOTA_)|^[a-z0-9]+(?:_[a-z0-9]+)+$/u.test(value)
   )
-    return fallback;
-  return gameText(value, values) || fallback;
+    return translate(locale, fallback);
+  return gameText(value, values, locale) || translate(locale, fallback);
 }
 const valueLabels: Record<string, string> = {
   damage: "伤害",
@@ -208,21 +233,37 @@ const valueLabels: Record<string, string> = {
   min_damage: "最低伤害",
   max_damage: "最高伤害",
 };
-export function valueLabel(key: string, localized?: string): string | null {
+export function valueLabel(
+  key: string,
+  localized?: string,
+  locale: Locale = DEFAULT_LOCALE,
+  tokens: Record<string, string> = {},
+): string | null {
+  localized = localized?.replace(
+    /\$([a-zA-Z_][a-zA-Z0-9_]*)/gu,
+    (raw, name: string) =>
+      tokens[`dota_ability_variable_${name.toLowerCase()}`] ?? raw,
+  );
   if (localized)
     return (
-      gameText(localized)
+      gameText(localized, {}, locale)
         .replace(/^[%+$]+|[:：]+$/gu, "")
         .trim() || null
     );
-  return valueLabels[key] ?? null;
+  return valueLabels[key] ? translate(locale, valueLabels[key]) : null;
 }
 export function tooltipValue(
   formatted: string,
   row: ValueRow,
   localized?: string,
+  locale: Locale = DEFAULT_LOCALE,
 ): string {
-  if (formatted === "未提供" || formatted.includes("待补充")) return formatted;
+  if (
+    formatted === translate(locale, "未提供") ||
+    formatted.includes("待补充") ||
+    formatted.includes(translate(locale, "（数值待补充）"))
+  )
+    return formatted;
   const type = row.modifiers?.find((m) => m.key === "display_type")?.value;
   const percentages = [
     "kBuffPercentage",
@@ -235,11 +276,14 @@ export function tooltipValue(
   if (localized?.startsWith("%") || percentages.includes(String(type)))
     return formatted.includes("%") ? formatted : `${formatted}%`;
   if (type === "kDuration" || type === "kDebuffDuration")
-    return `${formatted} 秒`;
+    return translate(locale, "{value0} 秒", { value0: formatted });
   return formatted;
 }
-export function relationLabel(value: string): string {
-  return labels[value] ?? "关联技能";
+export function relationLabel(
+  value: string,
+  locale: Locale = DEFAULT_LOCALE,
+): string {
+  return translate(locale, labels[value] ?? "关联技能");
 }
 
 /** AbilityValues overrides inherited top-level defaults in current game data. */
@@ -303,8 +347,9 @@ function parseModifier(
 export function upgradedValues(
   values: ValueRow[],
   kind: "scepter" | "shard",
+  locale: Locale = DEFAULT_LOCALE,
 ): Record<string, string> {
-  const result = textValues(values);
+  const result = textValues(values, {}, locale);
   for (const row of values) {
     const modifier = row.modifiers?.find(
       (m) => m.key === `special_bonus_${kind}`,
@@ -312,7 +357,7 @@ export function upgradedValues(
     if (modifier === undefined) continue;
     const change = parseModifier(modifier);
     if (!change) {
-      result[row.value_key.toLowerCase()] = "（数值待补充）";
+      result[row.value_key.toLowerCase()] = translate(locale, "（数值待补充）");
       continue;
     }
     const base = row.level_values.length
@@ -333,6 +378,7 @@ export function upgradedValues(
               : amount;
         return String(Number(value.toFixed(6)));
       }),
+      locale,
     );
   }
   return result;
@@ -354,6 +400,16 @@ export function talentValues(name: string, source: ValueRow[]): ValueRow[] {
 }
 
 export interface TooltipAbility {
+  sourceLocales?: Partial<
+    Record<
+      | "display_name"
+      | "description"
+      | "lore"
+      | "scepter_description"
+      | "shard_description",
+      string
+    >
+  >;
   internal_name: string;
   display_name: string | null;
   description: string | null;

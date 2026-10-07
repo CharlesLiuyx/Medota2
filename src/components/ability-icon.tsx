@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "@/i18n/provider";
 
 import Image from "next/image";
 import { Sparkles } from "lucide-react";
@@ -18,20 +19,21 @@ export function AbilityIcon({
   large?: boolean;
   compact?: boolean;
 }) {
+  const t = useTranslations();
   const [failed, setFailed] = useState(false);
   const size = compact ? "size-9" : large ? "size-16 sm:size-20" : "size-14";
   return (
     <span
       className={`relative grid shrink-0 place-items-center overflow-hidden bg-[linear-gradient(145deg,var(--surface-elevated),var(--surface-sunken))] text-[var(--text-muted)] ${size}`}
       role={failed ? "img" : undefined}
-      aria-label={failed ? `${name} icon unavailable` : undefined}
+      aria-label={failed ? t("{name} 图标未提供", { name }) : undefined}
     >
       <Sparkles className={large ? "size-8" : "size-5"} aria-hidden="true" />
       {!failed && (
         <Image
           loader={valveAssetImageLoader}
           src={`/valve-assets/ability/${internalName}?v=${encodeURIComponent(assetVersion)}`}
-          alt={`${name} icon`}
+          alt={t("{name} 图标", { name })}
           fill
           sizes={
             compact ? "36px" : large ? "(min-width: 640px) 80px, 64px" : "56px"

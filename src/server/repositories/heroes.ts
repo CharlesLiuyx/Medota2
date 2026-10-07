@@ -162,10 +162,14 @@ async function ensureReady(): Promise<VerifiedDatabase> {
 
 export async function getHeroOverview(
   filters: HeroFilters | null,
+  datasetVersionId?: string,
 ): Promise<HeroOverview> {
   await ensureReady();
-  const meta = await getActiveCatalogMeta();
-  const latestFailure = await getLatestFailure(meta?.promotedAt ?? null);
+  const meta = await getCatalogMeta(datasetVersionId);
+  const latestFailure = await getLatestFailure(
+    meta?.promotedAt ?? null,
+    meta?.datasetVersionId ?? null,
+  );
   if (!meta) {
     return {
       meta,
@@ -542,9 +546,10 @@ type HeroProfile = Pick<
  * request cache shares this read between metadata and the page, never across requests. */
 export const getHeroProfile = cache(async function getHeroProfile(
   slug: string,
+  datasetVersionId?: string,
 ): Promise<HeroProfile | null> {
   const database = await ensureReady();
-  const meta = await getActiveCatalogMeta();
+  const meta = await getCatalogMeta(datasetVersionId);
   if (!meta) return null;
   const result = await database.query<Omit<HeroProfile, "meta">>(
     `SELECT to_jsonb(h) AS hero,
@@ -560,9 +565,12 @@ export const getHeroProfile = cache(async function getHeroProfile(
   return result.rows[0] ? { meta, ...result.rows[0] } : null;
 });
 
-export async function getHeroBySlug(slug: string): Promise<HeroDetail | null> {
+export async function getHeroBySlug(
+  slug: string,
+  datasetVersionId?: string,
+): Promise<HeroDetail | null> {
   const pool = await ensureReady();
-  const meta = await getActiveCatalogMeta();
+  const meta = await getCatalogMeta(datasetVersionId);
   if (!meta) return null;
   const heroResult = await pool.query<HeroDetail["hero"]>(
     `SELECT h.*, sr.source_key, sr.source_dto_sha256, sr.inherited_fields
@@ -657,28 +665,31 @@ export async function getHeroBySlug(slug: string): Promise<HeroDetail | null> {
   };
 }
 
-export const getActiveCatalogMeta = cache(
-  async function getActiveCatalogMeta(): Promise<ActiveDatasetMeta | null> {
-    const database = await ensureReady();
-    const result = await database.query<{
-      dataset_version_id: string;
-      asset_dataset_version_id: string;
-      client_version: string;
-      source_revision: string;
-      source_commit: string;
-      imported_at: Date;
-      promoted_at: Date;
-      importer_version: string;
-      target_schema_version: string;
-      source_repository: string;
-      source_remote_url: string;
-      issues: Array<{ severity?: string }>;
-      total_heroes: number;
-      total_abilities: number;
-      gate_status: ActiveDatasetMeta["gateStatus"];
-      review_status: ActiveDatasetMeta["reviewStatus"];
-    }>(
-      `SELECT v.id AS dataset_version_id,
+export const getActiveCatalogMeta = () => getCatalogMeta();
+
+export const getCatalogMeta = cache(async function getCatalogMeta(
+  datasetVersionId?: string,
+): Promise<ActiveDatasetMeta | null> {
+  const database = await ensureReady();
+  const result = await database.query<{
+    dataset_version_id: string;
+    asset_dataset_version_id: string;
+    client_version: string;
+    source_revision: string;
+    source_commit: string;
+    imported_at: Date;
+    promoted_at: Date;
+    importer_version: string;
+    target_schema_version: string;
+    source_repository: string;
+    source_remote_url: string;
+    issues: Array<{ severity?: string }>;
+    total_heroes: number;
+    total_abilities: number;
+    gate_status: ActiveDatasetMeta["gateStatus"];
+    review_status: ActiveDatasetMeta["reviewStatus"];
+  }>(
+    `SELECT v.id AS dataset_version_id,
        asset_head.asset_dataset_version_id,
        s.client_version, s.source_revision, s.source_commit,
        s.imported_at, v.promoted_at, v.importer_version, v.target_schema_version,
@@ -686,37 +697,39 @@ export const getActiveCatalogMeta = cache(
        s.source_repository, s.source_remote_url, r.issues,
        (SELECT count(*)::int FROM heroes hero WHERE hero.dataset_version_id = v.id) AS total_heroes,
        (SELECT count(*)::int FROM abilities ability WHERE ability.dataset_version_id = v.id) AS total_abilities
-     FROM dataset_heads h
-     JOIN hero_catalog_dataset_versions v ON v.id = h.catalog_dataset_version_id
+     FROM hero_catalog_dataset_versions v
+     LEFT JOIN dataset_heads h ON v.id = h.catalog_dataset_version_id AND h.dataset_key = 'hero_catalog'
      JOIN asset_dataset_heads asset_head
        ON asset_head.catalog_dataset_version_id = v.id
      JOIN source_snapshots s ON s.id = v.source_snapshot_id
      JOIN import_runs r ON r.id = v.import_run_id
-     WHERE h.dataset_key = 'hero_catalog'`,
-    );
-    if (!result.rowCount) return null;
-    const row = result.rows[0];
-    return {
-      datasetVersionId: row.dataset_version_id,
-      assetDatasetVersionId: row.asset_dataset_version_id,
-      clientVersion: row.client_version,
-      sourceRevision: row.source_revision,
-      sourceCommit: row.source_commit,
-      importedAt: row.imported_at,
-      promotedAt: row.promoted_at,
-      importerVersion: row.importer_version,
-      schemaVersion: row.target_schema_version,
-      sourceRepository: row.source_repository,
-      sourceRemoteUrl: row.source_remote_url,
-      warningCount: row.issues.filter((issue) => issue.severity === "warning")
-        .length,
-      totalHeroes: row.total_heroes,
-      totalAbilities: row.total_abilities,
-      gateStatus: row.gate_status,
-      reviewStatus: row.review_status,
-    };
-  },
-);
+     WHERE (($1::uuid IS NULL AND h.dataset_key = 'hero_catalog') OR v.id = $1)
+       AND v.promoted_at IS NOT NULL
+       AND v.gate_status <> 'red' AND v.review_status IN ('not_required', 'approved')`,
+    [datasetVersionId ?? null],
+  );
+  if (!result.rowCount) return null;
+  const row = result.rows[0];
+  return {
+    datasetVersionId: row.dataset_version_id,
+    assetDatasetVersionId: row.asset_dataset_version_id,
+    clientVersion: row.client_version,
+    sourceRevision: row.source_revision,
+    sourceCommit: row.source_commit,
+    importedAt: row.imported_at,
+    promotedAt: row.promoted_at,
+    importerVersion: row.importer_version,
+    schemaVersion: row.target_schema_version,
+    sourceRepository: row.source_repository,
+    sourceRemoteUrl: row.source_remote_url,
+    warningCount: row.issues.filter((issue) => issue.severity === "warning")
+      .length,
+    totalHeroes: row.total_heroes,
+    totalAbilities: row.total_abilities,
+    gateStatus: row.gate_status,
+    reviewStatus: row.review_status,
+  };
+});
 
 export async function assertCatalogDatasetPairAvailable(
   catalogDatasetVersionId: string,
@@ -730,6 +743,8 @@ export async function assertCatalogDatasetPairAvailable(
        JOIN asset_dataset_versions assets
          ON assets.catalog_dataset_version_id = catalog.id
        WHERE catalog.id = $1 AND assets.id = $2
+         AND catalog.promoted_at IS NOT NULL
+         AND catalog.gate_status <> 'red' AND catalog.review_status IN ('not_required', 'approved')
      ) AS available`,
     [catalogDatasetVersionId, assetDatasetVersionId],
   );
@@ -738,6 +753,7 @@ export async function assertCatalogDatasetPairAvailable(
 
 async function getLatestFailure(
   promotedAt: Date | null,
+  catalogId: string | null,
 ): Promise<LatestImportFailure | null> {
   const database = await ensureReady();
   const result = await database.query<{
@@ -750,8 +766,9 @@ async function getLatestFailure(
      FROM import_runs
      WHERE source_kind = 'vpk' AND status = 'failed' AND finished_at IS NOT NULL
        AND ($1::timestamptz IS NULL OR finished_at > $1)
+       AND ($2::uuid IS NULL OR EXISTS (SELECT 1 FROM dataset_heads h WHERE h.dataset_key='hero_catalog' AND h.catalog_dataset_version_id=$2))
      ORDER BY finished_at DESC LIMIT 1`,
-    [promotedAt],
+    [promotedAt, catalogId],
   );
   if (!result.rowCount) return null;
   return {

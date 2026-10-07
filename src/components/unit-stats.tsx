@@ -1,3 +1,6 @@
+"use client";
+import { useTranslations } from "@/i18n/provider";
+import { AttributeLink } from "./attribute-link";
 import { UNIT_STATS, type UnitDefinition } from "@/domain/units";
 export function UnitStats({
   unit,
@@ -6,6 +9,7 @@ export function UnitStats({
   unit: UnitDefinition;
   compact?: boolean;
 }) {
+  const t = useTranslations();
   const keys = compact
     ? ["StatusHealth", "AttackDamageMin", "ArmorPhysical", "MovementSpeed"]
     : Object.keys(UNIT_STATS);
@@ -16,10 +20,12 @@ export function UnitStats({
       {keys.map((key) => (
         <div key={key}>
           <dt className="text-[var(--text-muted)]">
-            {UNIT_STATS[key as keyof typeof UNIT_STATS]}
+            <AttributeLink kind="unit" owner={unit.internalName} field={key}>
+              {t(UNIT_STATS[key as keyof typeof UNIT_STATS])}
+            </AttributeLink>
           </dt>
           <dd className="mt-1 font-data text-[var(--text-primary)]">
-            {unit.stats[key] ?? "待确认"}
+            {unit.stats[key] ?? t("待确认")}
           </dd>
         </div>
       ))}

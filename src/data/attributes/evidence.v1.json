@@ -1,0 +1,2165 @@
+{
+  "schema_version": "attribute-evidence-v1",
+  "importer_version": "reviewed-vpk-tokens-v1",
+  "imported_at": "2026-10-07T06:40:43.463364+00:00",
+  "snapshots": [
+    {
+      "source_commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+      "client_version": "6918",
+      "source_repository": "https://github.com/spirit-bear-productions/dota_vpk_updates",
+      "files": [
+        {
+          "locale": "zh-CN",
+          "source_path": "resource/localization/dota_schinese.txt",
+          "raw_sha256": "632ce222342910da7a279b0ab415542f47a303161b49cc53771cd332be9488ba",
+          "tokens": [
+            {
+              "token": "DOTA_StatTooltip_StrengthBonus",
+              "text": "- 每点增加20点生命值\n- 每点提升0.03点/秒生命恢复\n",
+              "line": 168
+            },
+            {
+              "token": "DOTA_StatTooltip_AgilityBonus",
+              "text": "- 每7点增加1点护甲\n- 每点提升1攻击速度\n",
+              "line": 169
+            },
+            {
+              "token": "DOTA_StatTooltip_IntelligenceBonus",
+              "text": "- 每点增加12点魔法值上限\n- 每点提升0.04点/秒魔法恢复\n- 每16点增加1%技能伤害\n",
+              "line": 170
+            },
+            {
+              "token": "DOTA_HUD_StrengthDetails",
+              "text": "= {d:strength_hp}点生命值和{s:strength_hp_regen}点/秒生命恢复",
+              "line": 30358
+            },
+            {
+              "token": "DOTA_HUD_AgilityDetails",
+              "text": "= {s:agility_armor}点护甲和{d:agility_attack_speed}攻击速度",
+              "line": 30359
+            },
+            {
+              "token": "DOTA_HUD_IntelligenceDetails",
+              "text": "={d:intelligence_mana}点魔法，{s:intelligence_mana_regen}点/秒魔法恢复和{s:intelligence_magic_resist}%基础魔法抗性",
+              "line": 30360
+            },
+            {
+              "token": "DOTA_HeroStats_Strength_Name",
+              "text": "力量",
+              "line": 30383
+            },
+            {
+              "token": "DOTA_HeroStats_Strength_Desc",
+              "text": "每点力量提供22点生命和0.1点/秒生命恢复。",
+              "line": 30384
+            },
+            {
+              "token": "DOTA_HeroStats_Agility_Name",
+              "text": "敏捷",
+              "line": 30385
+            },
+            {
+              "token": "DOTA_HeroStats_Agility_Desc",
+              "text": "每点敏捷提供1攻击速度和0.16点护甲。",
+              "line": 30386
+            },
+            {
+              "token": "DOTA_HeroStats_Intelligence_Name",
+              "text": "智力",
+              "line": 30387
+            },
+            {
+              "token": "DOTA_HeroStats_Intelligence_Desc",
+              "text": "每点智力提供12点魔法，0.05点/秒魔法恢复和0.1%魔法抗性。",
+              "line": 30388
+            },
+            {
+              "token": "DOTA_HeroStats_Damage_Name",
+              "text": "攻击力",
+              "line": 30390
+            },
+            {
+              "token": "DOTA_HeroStats_Damage_Desc",
+              "text": "每次物理攻击造成的伤害",
+              "line": 30391
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRate_Name",
+              "text": "攻击频率",
+              "line": 30392
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRate_Desc",
+              "text": "英雄发动物理攻击的速度",
+              "line": 30393
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRange_Name",
+              "text": "攻击距离",
+              "line": 30394
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRange_Desc",
+              "text": "英雄发动物理攻击的最远距离",
+              "line": 30395
+            },
+            {
+              "token": "DOTA_HeroStats_ProjectileSpeed_Name",
+              "text": "弹道速度",
+              "line": 30396
+            },
+            {
+              "token": "DOTA_HeroStats_ProjectileSpeed_Desc",
+              "text": "远程英雄的物理攻击弹道行进速度",
+              "line": 30397
+            },
+            {
+              "token": "DOTA_HeroStats_Armor_Name",
+              "text": "护甲",
+              "line": 30399
+            },
+            {
+              "token": "DOTA_HeroStats_Armor_Desc",
+              "text": "护甲决定了英雄受到<font color=\"#FC6A62\">物理</font>攻击时减少的伤害。",
+              "line": 30400
+            },
+            {
+              "token": "DOTA_HeroStats_MagicResistance_Name",
+              "text": "魔法抗性",
+              "line": 30401
+            },
+            {
+              "token": "DOTA_HeroStats_MagicResistance_Desc",
+              "text": "魔法抗性决定了英雄受到<font color=\"#80BDFF\">魔法</font>攻击时减少的伤害。",
+              "line": 30402
+            },
+            {
+              "token": "DOTA_HeroStats_MovementSpeed_Name",
+              "text": "移动速度",
+              "line": 30404
+            },
+            {
+              "token": "DOTA_HeroStats_MovementSpeed_Desc",
+              "text": "英雄在地图上移动时的速度",
+              "line": 30405
+            },
+            {
+              "token": "DOTA_HeroStats_TurnRate_Name",
+              "text": "转身速率",
+              "line": 30406
+            },
+            {
+              "token": "DOTA_HeroStats_TurnRate_Desc",
+              "text": "英雄转身的速度",
+              "line": 30407
+            },
+            {
+              "token": "DOTA_HeroStats_SightRange_Name",
+              "text": "视野距离",
+              "line": 30408
+            },
+            {
+              "token": "DOTA_HeroStats_SightRange_Desc",
+              "text": "没有障碍物阻挡的情况下英雄所见的距离 -- 数值一般会随白天／夜晚而变化",
+              "line": 30409
+            },
+            {
+              "token": "DOTA_HeroStats_MaxHealth_Name",
+              "text": "生命值上限",
+              "line": 30411
+            },
+            {
+              "token": "DOTA_HeroStats_HealthRegen_Name",
+              "text": "生命恢复",
+              "line": 30412
+            },
+            {
+              "token": "DOTA_HeroStats_Health_Desc",
+              "text": "生命值决定了英雄承受多少伤害才会死亡。每点力量均会提升英雄的生命值上限和生命恢复。",
+              "line": 30413
+            },
+            {
+              "token": "DOTA_HeroStats_MaxMana_Name",
+              "text": "魔法值上限",
+              "line": 30414
+            },
+            {
+              "token": "DOTA_HeroStats_ManaRegen_Name",
+              "text": "魔法恢复",
+              "line": 30415
+            },
+            {
+              "token": "DOTA_HeroStats_Mana_Desc",
+              "text": "魔法值决定了英雄可以使用多少次技能。每点智力均会提升英雄的魔法值上限和魔法恢复。",
+              "line": 30416
+            },
+            {
+              "token": "DOTA_Glossary_Advanced_CommonBuffs_CriticalStrike_Desc",
+              "text": "攻击拥有一定几率造成数倍于普通攻击的伤害。",
+              "line": 37111
+            },
+            {
+              "token": "DOTA_Glossary_Advanced_CommonBuffs_LifeSteal_Desc",
+              "text": "攻击者每次攻击都会回复造成伤害的一定百分比。",
+              "line": 37115
+            },
+            {
+              "token": "DOTA_Glossary_Damage_Armor_Desc",
+              "text": "护甲（有时被称为物理抗性）会降低单位受到的物理伤害。护甲值越高，减少的物理伤害越多。每个英雄都具有基础护甲值，物品和相关天赋能直接提升护甲。技能和效果能降低一个单位的护甲值，甚至为负值，使其受到物理攻击时承受的伤害增加。<child id=\"ArmorTooltip\">",
+              "line": 37304
+            },
+            {
+              "token": "DOTA_Glossary_Damage_MagicResistance_Desc",
+              "text": "魔法抗性为百分比数值，可以降低一个单位受到的魔法伤害。英雄默认的魔法抗性为{d:hero_default_MagicalResistance}%",
+              "line": 37307
+            },
+            {
+              "token": "DOTA_Glossary_Evasion_Desc",
+              "text": "闪避能使英雄受到物理攻击时让攻击落空，为百分比数值。",
+              "line": 37315
+            },
+            {
+              "token": "DOTA_Glossary_StatusResistance_Desc",
+              "text": "状态抗性能减少负面状态效果，如眩晕和沉默的持续时间。",
+              "line": 37317
+            },
+            {
+              "token": "DOTA_Glossary_SlowResistance_Desc",
+              "text": "减速抗性会降低减速的施加效果。",
+              "line": 37319
+            },
+            {
+              "token": "DOTA_Glossary_Cooldown_Desc",
+              "text": "几乎所有主动（和部分被动）技能都具有冷却时间，以秒为单位。技能在使用后进入失效状态，直到冷却时间结束。",
+              "line": 37341
+            },
+            {
+              "token": "DOTA_Glossary_Channeled_Desc",
+              "text": "持续施法技能为主动技能，需要单位在持续施法期间不执行其他动作。技能可能需要完成持续施法才能达到施放效果，或者会在整个持续施法期间生效。持续施法技能可以被眩晕、恐惧和沉默打断。",
+              "line": 37347
+            },
+            {
+              "token": "DOTA_Glossary_CastAnimation_Desc",
+              "text": "每个技能都具有施法前摇的延迟，也就是技能开始施放/点击到完成施法需要一段时间。施法前摇期间，停止/固守原地指令会取消执行技能，而且技能不会进入冷却状态。值得一提的是，施法前摇可以为零。",
+              "line": 37351
+            },
+            {
+              "token": "DOTA_ToolTip_Dispellable_Yes_Strong_2",
+              "text": "仅强驱散",
+              "line": 4125
+            },
+            {
+              "token": "DOTA_ToolTip_Dispellable_Yes_Soft_2",
+              "text": "是",
+              "line": 4126
+            },
+            {
+              "token": "DOTA_ToolTip_Dispellable_No_2",
+              "text": "无法驱散",
+              "line": 4127
+            }
+          ]
+        },
+        {
+          "locale": "en",
+          "source_path": "resource/localization/dota_english.txt",
+          "raw_sha256": "41b585ac235dcc8f986010a05e56875736a03d452ac71798bf8c3b6935cde3e3",
+          "tokens": [
+            {
+              "token": "DOTA_StatTooltip_StrengthBonus",
+              "text": "- Each point increases hit points by 20\n- Each point increases hit point regen by 0.03\n",
+              "line": 168
+            },
+            {
+              "token": "DOTA_StatTooltip_AgilityBonus",
+              "text": "- Every 7 points increase armor by 1\n- Each point increases attack speed by 1\n",
+              "line": 169
+            },
+            {
+              "token": "DOTA_StatTooltip_IntelligenceBonus",
+              "text": "- Each point increases mana by 12\n- Each point increases mana regen by 0.04\n- Every 16 points increases spell damage by 1%\n",
+              "line": 170
+            },
+            {
+              "token": "DOTA_HUD_StrengthDetails",
+              "text": "= {d:strength_hp} HP and {s:strength_hp_regen} HP Regen",
+              "line": 30521
+            },
+            {
+              "token": "DOTA_HUD_AgilityDetails",
+              "text": "= {s:agility_armor} Armor and {d:agility_attack_speed} Attack Speed",
+              "line": 30522
+            },
+            {
+              "token": "DOTA_HUD_IntelligenceDetails",
+              "text": "= {d:intelligence_mana} Mana, {s:intelligence_mana_regen} Mana Regen and {s:intelligence_magic_resist}% Base Magic Resistance",
+              "line": 30523
+            },
+            {
+              "token": "DOTA_HeroStats_Strength_Name",
+              "text": "Strength",
+              "line": 30546
+            },
+            {
+              "token": "DOTA_HeroStats_Strength_Desc",
+              "text": "Each point of Strength grants 22 Health and 0.1 Health Regen.",
+              "line": 30547
+            },
+            {
+              "token": "DOTA_HeroStats_Agility_Name",
+              "text": "Agility",
+              "line": 30548
+            },
+            {
+              "token": "DOTA_HeroStats_Agility_Desc",
+              "text": "Each point of Agility grants 1 Attack Speed and 0.16 Armor.",
+              "line": 30549
+            },
+            {
+              "token": "DOTA_HeroStats_Intelligence_Name",
+              "text": "Intelligence",
+              "line": 30550
+            },
+            {
+              "token": "DOTA_HeroStats_Intelligence_Desc",
+              "text": "Each point of Intelligence grants 12 Mana, 0.05 Mana Regen, and 0.1% Magic Resistance.",
+              "line": 30551
+            },
+            {
+              "token": "DOTA_HeroStats_Damage_Name",
+              "text": "Damage",
+              "line": 30553
+            },
+            {
+              "token": "DOTA_HeroStats_Damage_Desc",
+              "text": "Amount of damage a hero does per attack",
+              "line": 30554
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRate_Name",
+              "text": "Attack Rate",
+              "line": 30555
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRate_Desc",
+              "text": "Speed at which the hero attacks",
+              "line": 30556
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRange_Name",
+              "text": "Attack Range",
+              "line": 30557
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRange_Desc",
+              "text": "Distance from which the hero can attack",
+              "line": 30558
+            },
+            {
+              "token": "DOTA_HeroStats_ProjectileSpeed_Name",
+              "text": "Projectile Speed",
+              "line": 30559
+            },
+            {
+              "token": "DOTA_HeroStats_ProjectileSpeed_Desc",
+              "text": "Travel speed of attack projectile used by ranged heroes",
+              "line": 30560
+            },
+            {
+              "token": "DOTA_HeroStats_Armor_Name",
+              "text": "Armor",
+              "line": 30562
+            },
+            {
+              "token": "DOTA_HeroStats_Armor_Desc",
+              "text": "Armor determines how much damage a hero deflects from <font color=\"#FC6A62\">Physical</font> attacks.",
+              "line": 30563
+            },
+            {
+              "token": "DOTA_HeroStats_MagicResistance_Name",
+              "text": "Magic Resistance",
+              "line": 30564
+            },
+            {
+              "token": "DOTA_HeroStats_MagicResistance_Desc",
+              "text": "Magic Resistance determines how much damage a hero deflects from <font color=\"#80BDFF\">Magical</font> attacks.",
+              "line": 30565
+            },
+            {
+              "token": "DOTA_HeroStats_MovementSpeed_Name",
+              "text": "Movement Speed",
+              "line": 30567
+            },
+            {
+              "token": "DOTA_HeroStats_MovementSpeed_Desc",
+              "text": "Speed at which a hero moves across the map",
+              "line": 30568
+            },
+            {
+              "token": "DOTA_HeroStats_TurnRate_Name",
+              "text": "Turn Rate",
+              "line": 30569
+            },
+            {
+              "token": "DOTA_HeroStats_TurnRate_Desc",
+              "text": "Speed at which a hero turns in place",
+              "line": 30570
+            },
+            {
+              "token": "DOTA_HeroStats_SightRange_Name",
+              "text": "Vision Range",
+              "line": 30571
+            },
+            {
+              "token": "DOTA_HeroStats_SightRange_Desc",
+              "text": "Distance a hero can see if not blocked by an obstacle -- values normally differ during Daytime / Nighttime",
+              "line": 30572
+            },
+            {
+              "token": "DOTA_HeroStats_MaxHealth_Name",
+              "text": "Max Health",
+              "line": 30574
+            },
+            {
+              "token": "DOTA_HeroStats_HealthRegen_Name",
+              "text": "Health Regen",
+              "line": 30575
+            },
+            {
+              "token": "DOTA_HeroStats_Health_Desc",
+              "text": "Health determines how much damage a hero can take before dying. Each point of strength increases a hero's max health and health regen.",
+              "line": 30576
+            },
+            {
+              "token": "DOTA_HeroStats_MaxMana_Name",
+              "text": "Max Mana",
+              "line": 30577
+            },
+            {
+              "token": "DOTA_HeroStats_ManaRegen_Name",
+              "text": "Mana Regen",
+              "line": 30578
+            },
+            {
+              "token": "DOTA_HeroStats_Mana_Desc",
+              "text": "Mana determines how many abilities a hero can use. Each point of intelligence increases a hero's max mana and mana regen.",
+              "line": 30579
+            },
+            {
+              "token": "DOTA_Glossary_Advanced_CommonBuffs_CriticalStrike_Desc",
+              "text": "Attacks have a percentage chance to deal a multiplier of their normal Damage.",
+              "line": 37295
+            },
+            {
+              "token": "DOTA_Glossary_Advanced_CommonBuffs_LifeSteal_Desc",
+              "text": "The Attacker heals a percentage of the Damage dealt by each attack.",
+              "line": 37299
+            },
+            {
+              "token": "DOTA_Glossary_Damage_Armor_Desc",
+              "text": "Armor (sometimes called Physical Resistance) reduces the amount of Physical Damage received by a Unit.  The higher the Armor value, the higher the reduction in Physical Damage.  Every Hero has a Base Armor value, which can be increased Directly by Items or Talents, or inDirectly by increasing the Agility attribute of a Hero.  Abilities and Effects can reduce a Unit's Armor value, potentially going negative, making them take increased Damage from Physical attacks. <child id=\"ArmorTooltip\">",
+              "line": 37488
+            },
+            {
+              "token": "DOTA_Glossary_Damage_MagicResistance_Desc",
+              "text": "Magic Resistance is a flat percentage value that reduces incoming Magic Damage to a Unit.  Heroes have a default Magic Resistance of {d:hero_default_MagicalResistance}%",
+              "line": 37491
+            },
+            {
+              "token": "DOTA_Glossary_Evasion_Desc",
+              "text": "Evasion is the percentage chance that an attack against a Hero will miss.",
+              "line": 37499
+            },
+            {
+              "token": "DOTA_Glossary_StatusResistance_Desc",
+              "text": "Status Resistance reduces the duration of negative Status Effects such as Stuns and Silence.",
+              "line": 37501
+            },
+            {
+              "token": "DOTA_Glossary_SlowResistance_Desc",
+              "text": "Slow Resistance reduces the impact of Slows.",
+              "line": 37503
+            },
+            {
+              "token": "DOTA_Glossary_Cooldown_Desc",
+              "text": "Almost all active (and some passive) Abilites have a Cooldown period, measured in seconds. The Ability is inactive after being used until the Cooldown period has expired.",
+              "line": 37525
+            },
+            {
+              "token": "DOTA_Glossary_Channeled_Desc",
+              "text": "Channeled Abilities are Active Abilities that require the Unit to perform no other Actions during the Channel duration. The Ability may require a Channeling period leading up to the casted Effect, or it may be active during the entire Channel period. Channeled Abilities can be interrupted by Stuns, Fears and Silences.",
+              "line": 37531
+            },
+            {
+              "token": "DOTA_Glossary_CastAnimation_Desc",
+              "text": "Every Ability has a Cast Animation delay, which is the time period between when an Ability is cast/clicked and when the cast is complete. During the Cast Animation, the Stop/Hold command will cancel executing the Ability and it will not go into a Cooldown state. Keep in mind that a Cast Animation dely could be zero.",
+              "line": 37535
+            },
+            {
+              "token": "DOTA_ToolTip_Dispellable_Yes_Strong_2",
+              "text": "Strong Dispels Only",
+              "line": 4131
+            },
+            {
+              "token": "DOTA_ToolTip_Dispellable_Yes_Soft_2",
+              "text": "Yes",
+              "line": 4132
+            },
+            {
+              "token": "DOTA_ToolTip_Dispellable_No_2",
+              "text": "Cannot be dispelled",
+              "line": 4133
+            }
+          ]
+        },
+        {
+          "locale": "zh-CN",
+          "source_path": "resource/localization/abilities_schinese.txt",
+          "raw_sha256": "9d2cff9c5fd992baf2375994c289d8cd2c5f57fbeda9d427175e8a0a7bb7be1f",
+          "tokens": [
+            {
+              "token": "dota_ability_variable_health",
+              "text": "生命值",
+              "line": 7
+            },
+            {
+              "token": "dota_ability_variable_mana",
+              "text": "魔法值",
+              "line": 8
+            },
+            {
+              "token": "dota_ability_variable_armor",
+              "text": "护甲",
+              "line": 9
+            },
+            {
+              "token": "dota_ability_variable_damage",
+              "text": "攻击力",
+              "line": 10
+            },
+            {
+              "token": "dota_ability_variable_str",
+              "text": "力量",
+              "line": 11
+            },
+            {
+              "token": "dota_ability_variable_int",
+              "text": "智力",
+              "line": 12
+            },
+            {
+              "token": "dota_ability_variable_agi",
+              "text": "敏捷",
+              "line": 13
+            },
+            {
+              "token": "dota_ability_variable_all",
+              "text": "全属性",
+              "line": 14
+            },
+            {
+              "token": "dota_ability_variable_primary_attribute",
+              "text": "主属性",
+              "line": 15
+            },
+            {
+              "token": "dota_ability_variable_attack",
+              "text": "攻击速度",
+              "line": 16
+            },
+            {
+              "token": "dota_ability_variable_attack_pct",
+              "text": "基础攻击速度",
+              "line": 17
+            },
+            {
+              "token": "dota_ability_variable_hp_regen",
+              "text": "生命恢复",
+              "line": 18
+            },
+            {
+              "token": "dota_ability_variable_lifesteal",
+              "text": "吸血",
+              "line": 19
+            },
+            {
+              "token": "dota_ability_variable_mana_regen",
+              "text": "魔法恢复",
+              "line": 20
+            },
+            {
+              "token": "dota_ability_variable_mana_regen_aura",
+              "text": "魔法恢复光环",
+              "line": 21
+            },
+            {
+              "token": "dota_ability_variable_spell_amp",
+              "text": "技能伤害",
+              "line": 22
+            },
+            {
+              "token": "dota_ability_variable_debuff_amp",
+              "text": "负面状态持续时间",
+              "line": 23
+            },
+            {
+              "token": "dota_ability_variable_move_speed",
+              "text": "移动速度",
+              "line": 24
+            },
+            {
+              "token": "dota_ability_variable_evasion",
+              "text": "闪避",
+              "line": 25
+            },
+            {
+              "token": "dota_ability_variable_spell_resist",
+              "text": "魔法抗性",
+              "line": 26
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal",
+              "text": "技能吸血",
+              "line": 27
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_hero_attacks",
+              "text": "对英雄的攻击",
+              "line": 28
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_hero_spells",
+              "text": "对英雄的技能",
+              "line": 29
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_creep_attacks",
+              "text": "对非英雄的攻击",
+              "line": 30
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_creep_spells",
+              "text": "对非英雄的技能",
+              "line": 31
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_hero_attacks",
+              "text": "对英雄的攻击",
+              "line": 32
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_hero_spells",
+              "text": "对英雄的技能",
+              "line": 33
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_creep_attacks",
+              "text": "对非英雄的攻击",
+              "line": 34
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_creep_spells",
+              "text": "对非英雄的技能",
+              "line": 35
+            },
+            {
+              "token": "dota_ability_variable_selected_attrib",
+              "text": "所选属性",
+              "line": 36
+            },
+            {
+              "token": "dota_ability_variable_attack_range",
+              "text": "攻击距离<font color='#7d7d7d'>（仅对远程有效）</font>",
+              "line": 37
+            },
+            {
+              "token": "dota_ability_variable_attack_range_melee",
+              "text": "攻击距离<font color='#7d7d7d'>（仅对近战有效）</font>",
+              "line": 38
+            },
+            {
+              "token": "dota_ability_variable_attack_range_all",
+              "text": "攻击距离<font color='#7d7d7d'>（近战/远程）</font>",
+              "line": 39
+            },
+            {
+              "token": "dota_ability_variable_cast_range",
+              "text": "施法距离",
+              "line": 40
+            },
+            {
+              "token": "dota_ability_variable_status_resist",
+              "text": "状态抗性",
+              "line": 41
+            },
+            {
+              "token": "dota_ability_variable_projectile_speed",
+              "text": "弹道速度",
+              "line": 42
+            },
+            {
+              "token": "dota_ability_variable_manacost_reduction",
+              "text": "魔法消耗降低",
+              "line": 43
+            },
+            {
+              "token": "dota_ability_variable_cooldown_reduction",
+              "text": "冷却时间减少",
+              "line": 44
+            },
+            {
+              "token": "dota_ability_variable_max_mana_percentage",
+              "text": "最大魔法值",
+              "line": 45
+            },
+            {
+              "token": "dota_ability_variable_slow_resistance",
+              "text": "减速抗性",
+              "line": 46
+            },
+            {
+              "token": "dota_ability_variable_aoe_bonus",
+              "text": "作用范围",
+              "line": 47
+            },
+            {
+              "token": "dota_ability_variable_exclusive_movespeed",
+              "text": "移动速度加成",
+              "line": 48
+            },
+            {
+              "token": "dota_ability_variable_healing_amp",
+              "text": "治疗增强",
+              "line": 49
+            },
+            {
+              "token": "dota_ability_variable_restoration_amp",
+              "text": "生命回复",
+              "line": 50
+            },
+            {
+              "token": "dota_ability_variable_damage_int_hero",
+              "text": "攻击力（智力英雄）",
+              "line": 51
+            },
+            {
+              "token": "dota_ability_variable_damage_agi_hero",
+              "text": "攻击力（敏捷英雄）",
+              "line": 52
+            },
+            {
+              "token": "dota_ability_variable_damage_str_hero",
+              "text": "攻击力（力量英雄）",
+              "line": 53
+            },
+            {
+              "token": "dota_ability_variable_damage_universal_hero",
+              "text": "攻击力（全才英雄）",
+              "line": 54
+            },
+            {
+              "token": "DOTA_Tooltip_ability_special_bonus_day_vision_400",
+              "text": "+{s:value} 白天视野",
+              "line": 12706
+            },
+            {
+              "token": "DOTA_Tooltip_ability_special_bonus_night_vision_400",
+              "text": "+{s:value} 夜间视野",
+              "line": 12707
+            },
+            {
+              "token": "DOTA_Tooltip_ability_item_lifesteal_Description",
+              "text": "<h1>被动：吸血</h1>攻击者每次攻击都将根据造成伤害的一定百分比回复生命值。",
+              "line": 16496
+            },
+            {
+              "token": "DOTA_Tooltip_ability_item_voodoo_mask_Description",
+              "text": "<h1>被动：技能吸血</h1>佩戴者每次对敌人造成技能伤害都将根据造成伤害的一定百分比回复生命值。",
+              "line": 16501
+            },
+            {
+              "token": "DOTA_Tooltip_ability_item_voodoo_mask_Note0",
+              "text": "纯粹伤害或反弹伤害不会进行治疗。",
+              "line": 16503
+            }
+          ]
+        },
+        {
+          "locale": "en",
+          "source_path": "resource/localization/abilities_english.txt",
+          "raw_sha256": "d5fe70141b9ef7898f5db59fba522e403fe03dc7baf7726a113045ed114b9d5a",
+          "tokens": [
+            {
+              "token": "dota_ability_variable_health",
+              "text": "Health",
+              "line": 7
+            },
+            {
+              "token": "dota_ability_variable_mana",
+              "text": "Mana",
+              "line": 8
+            },
+            {
+              "token": "dota_ability_variable_armor",
+              "text": "Armor",
+              "line": 9
+            },
+            {
+              "token": "dota_ability_variable_damage",
+              "text": "Damage",
+              "line": 10
+            },
+            {
+              "token": "dota_ability_variable_str",
+              "text": "Strength",
+              "line": 11
+            },
+            {
+              "token": "dota_ability_variable_int",
+              "text": "Intelligence",
+              "line": 12
+            },
+            {
+              "token": "dota_ability_variable_agi",
+              "text": "Agility",
+              "line": 13
+            },
+            {
+              "token": "dota_ability_variable_all",
+              "text": "All Attributes",
+              "line": 14
+            },
+            {
+              "token": "dota_ability_variable_primary_attribute",
+              "text": "Primary Attribute",
+              "line": 15
+            },
+            {
+              "token": "dota_ability_variable_attack",
+              "text": "Attack Speed",
+              "line": 16
+            },
+            {
+              "token": "dota_ability_variable_attack_pct",
+              "text": "Base Attack Speed Percentage",
+              "line": 17
+            },
+            {
+              "token": "dota_ability_variable_hp_regen",
+              "text": "Health Regeneration",
+              "line": 18
+            },
+            {
+              "token": "dota_ability_variable_lifesteal",
+              "text": "Lifesteal",
+              "line": 19
+            },
+            {
+              "token": "dota_ability_variable_mana_regen",
+              "text": "Mana Regeneration",
+              "line": 20
+            },
+            {
+              "token": "dota_ability_variable_mana_regen_aura",
+              "text": "Mana Regeneration Aura",
+              "line": 21
+            },
+            {
+              "token": "dota_ability_variable_spell_amp",
+              "text": "Spell Damage",
+              "line": 22
+            },
+            {
+              "token": "dota_ability_variable_debuff_amp",
+              "text": "Debuff Duration",
+              "line": 23
+            },
+            {
+              "token": "dota_ability_variable_move_speed",
+              "text": "Movement Speed",
+              "line": 24
+            },
+            {
+              "token": "dota_ability_variable_evasion",
+              "text": "Evasion",
+              "line": 25
+            },
+            {
+              "token": "dota_ability_variable_spell_resist",
+              "text": "Magic Resistance",
+              "line": 26
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal",
+              "text": "Spell Lifesteal",
+              "line": 27
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_hero_attacks",
+              "text": "Attacks on Heroes",
+              "line": 28
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_hero_spells",
+              "text": "Abilities on Heroes",
+              "line": 29
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_creep_attacks",
+              "text": "Attacks on Creeps",
+              "line": 30
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_creep_spells",
+              "text": "Abilities on Creeps",
+              "line": 31
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_hero_attacks",
+              "text": "Attacks on Heroes",
+              "line": 32
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_hero_spells",
+              "text": "Abilities on Heroes",
+              "line": 33
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_creep_attacks",
+              "text": "Attacks on Creeps",
+              "line": 34
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_creep_spells",
+              "text": "Abilities on Creeps",
+              "line": 35
+            },
+            {
+              "token": "dota_ability_variable_selected_attrib",
+              "text": "Selected Attribute",
+              "line": 36
+            },
+            {
+              "token": "dota_ability_variable_attack_range",
+              "text": "Attack Range <font color='#7d7d7d'>(Ranged Only)</font>",
+              "line": 37
+            },
+            {
+              "token": "dota_ability_variable_attack_range_melee",
+              "text": "Attack Range <font color='#7d7d7d'>(Melee Only)</font>",
+              "line": 38
+            },
+            {
+              "token": "dota_ability_variable_attack_range_all",
+              "text": "Attack Range <font color='#7d7d7d'>(Melee & Ranged)</font>",
+              "line": 39
+            },
+            {
+              "token": "dota_ability_variable_cast_range",
+              "text": "Cast Range",
+              "line": 40
+            },
+            {
+              "token": "dota_ability_variable_status_resist",
+              "text": "Status Resistance",
+              "line": 41
+            },
+            {
+              "token": "dota_ability_variable_projectile_speed",
+              "text": "Projectile Speed",
+              "line": 42
+            },
+            {
+              "token": "dota_ability_variable_manacost_reduction",
+              "text": "Manacost Reduction",
+              "line": 43
+            },
+            {
+              "token": "dota_ability_variable_cooldown_reduction",
+              "text": "Cooldown Reduction",
+              "line": 44
+            },
+            {
+              "token": "dota_ability_variable_max_mana_percentage",
+              "text": "Max Mana",
+              "line": 45
+            },
+            {
+              "token": "dota_ability_variable_slow_resistance",
+              "text": "Slow Resistance",
+              "line": 46
+            },
+            {
+              "token": "dota_ability_variable_aoe_bonus",
+              "text": "Area of Effect",
+              "line": 47
+            },
+            {
+              "token": "dota_ability_variable_exclusive_movespeed",
+              "text": "Boot Movement Speed",
+              "line": 48
+            },
+            {
+              "token": "dota_ability_variable_healing_amp",
+              "text": "Heal Amplification",
+              "line": 49
+            },
+            {
+              "token": "dota_ability_variable_restoration_amp",
+              "text": "Health Restoration",
+              "line": 50
+            },
+            {
+              "token": "dota_ability_variable_damage_int_hero",
+              "text": "Damage (Intelligence Heroes)",
+              "line": 51
+            },
+            {
+              "token": "dota_ability_variable_damage_agi_hero",
+              "text": "Damage (Agility Heroes)",
+              "line": 52
+            },
+            {
+              "token": "dota_ability_variable_damage_str_hero",
+              "text": "Damage (Strength Heroes)",
+              "line": 53
+            },
+            {
+              "token": "dota_ability_variable_damage_universal_hero",
+              "text": "Damage (Universal Heroes)",
+              "line": 54
+            },
+            {
+              "token": "DOTA_Tooltip_ability_special_bonus_day_vision_400",
+              "text": "+{s:value} Day Vision",
+              "line": 12721
+            },
+            {
+              "token": "DOTA_Tooltip_ability_special_bonus_night_vision_400",
+              "text": "+{s:value} Night Vision",
+              "line": 12722
+            },
+            {
+              "token": "DOTA_Tooltip_ability_item_lifesteal_Description",
+              "text": "<h1>Passive: Lifesteal</h1>Heals the attacker for a percentage of physical damage dealt.",
+              "line": 16549
+            },
+            {
+              "token": "DOTA_Tooltip_ability_item_voodoo_mask_Description",
+              "text": "<h1>Passive: Spell Lifesteal</h1>Heals the wearer for a percentage of spell damage dealt to enemies.",
+              "line": 16554
+            },
+            {
+              "token": "DOTA_Tooltip_ability_item_voodoo_mask_Note0",
+              "text": "Does not heal from Pure or Reflected damage.",
+              "line": 16556
+            }
+          ]
+        },
+        {
+          "locale": "zh-CN",
+          "source_path": "scripts/npc/npc_abilities.txt",
+          "raw_sha256": "040b8075832a8c5767bb2ad50ca5eb1dfda024a9c45d1d5b857d2911f2d97ab8",
+          "tokens": [
+            {
+              "token": "courier_autodeliver.AbilityBehavior",
+              "text": "\"AbilityBehavior\"\t\t\t\t\"DOTA_ABILITY_BEHAVIOR_IGNORE_SILENCE | DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_AUTOCAST | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_TOGGLE\"",
+              "line": 598
+            }
+          ]
+        },
+        {
+          "locale": "en",
+          "source_path": "scripts/npc/npc_abilities.txt",
+          "raw_sha256": "040b8075832a8c5767bb2ad50ca5eb1dfda024a9c45d1d5b857d2911f2d97ab8",
+          "tokens": [
+            {
+              "token": "courier_autodeliver.AbilityBehavior",
+              "text": "\"AbilityBehavior\"\t\t\t\t\"DOTA_ABILITY_BEHAVIOR_IGNORE_SILENCE | DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_AUTOCAST | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_TOGGLE\"",
+              "line": 598
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source_commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+      "client_version": "6944",
+      "source_repository": "https://github.com/spirit-bear-productions/dota_vpk_updates",
+      "files": [
+        {
+          "locale": "zh-CN",
+          "source_path": "resource/localization/dota_schinese.txt",
+          "raw_sha256": "ac4b6582aa639b66a76efc7ce02d05675e2bcec554c1af52945ef4d6dcf82f6b",
+          "tokens": [
+            {
+              "token": "DOTA_StatTooltip_StrengthBonus",
+              "text": "- 每点增加20点生命值\n- 每点提升0.03点/秒生命恢复\n",
+              "line": 168
+            },
+            {
+              "token": "DOTA_StatTooltip_AgilityBonus",
+              "text": "- 每7点增加1点护甲\n- 每点提升1攻击速度\n",
+              "line": 169
+            },
+            {
+              "token": "DOTA_StatTooltip_IntelligenceBonus",
+              "text": "- 每点增加12点魔法值上限\n- 每点提升0.04点/秒魔法恢复\n- 每16点增加1%技能伤害\n",
+              "line": 170
+            },
+            {
+              "token": "DOTA_HUD_StrengthDetails",
+              "text": "= {d:strength_hp}点生命值和{s:strength_hp_regen}点/秒生命恢复",
+              "line": 30367
+            },
+            {
+              "token": "DOTA_HUD_AgilityDetails",
+              "text": "= {s:agility_armor}点护甲和{d:agility_attack_speed}攻击速度",
+              "line": 30368
+            },
+            {
+              "token": "DOTA_HUD_IntelligenceDetails",
+              "text": "={d:intelligence_mana}点魔法，{s:intelligence_mana_regen}点/秒魔法恢复和{s:intelligence_magic_resist}%基础魔法抗性",
+              "line": 30369
+            },
+            {
+              "token": "DOTA_HeroStats_Strength_Name",
+              "text": "力量",
+              "line": 30392
+            },
+            {
+              "token": "DOTA_HeroStats_Strength_Desc",
+              "text": "每点力量提供22点生命和0.1点/秒生命恢复。",
+              "line": 30393
+            },
+            {
+              "token": "DOTA_HeroStats_Agility_Name",
+              "text": "敏捷",
+              "line": 30394
+            },
+            {
+              "token": "DOTA_HeroStats_Agility_Desc",
+              "text": "每点敏捷提供1攻击速度和0.16点护甲。",
+              "line": 30395
+            },
+            {
+              "token": "DOTA_HeroStats_Intelligence_Name",
+              "text": "智力",
+              "line": 30396
+            },
+            {
+              "token": "DOTA_HeroStats_Intelligence_Desc",
+              "text": "每点智力提供12点魔法，0.05点/秒魔法恢复和0.1%魔法抗性。",
+              "line": 30397
+            },
+            {
+              "token": "DOTA_HeroStats_Damage_Name",
+              "text": "攻击力",
+              "line": 30399
+            },
+            {
+              "token": "DOTA_HeroStats_Damage_Desc",
+              "text": "每次物理攻击造成的伤害",
+              "line": 30400
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRate_Name",
+              "text": "攻击频率",
+              "line": 30401
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRate_Desc",
+              "text": "英雄发动物理攻击的速度",
+              "line": 30402
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRange_Name",
+              "text": "攻击距离",
+              "line": 30403
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRange_Desc",
+              "text": "英雄发动物理攻击的最远距离",
+              "line": 30404
+            },
+            {
+              "token": "DOTA_HeroStats_ProjectileSpeed_Name",
+              "text": "弹道速度",
+              "line": 30405
+            },
+            {
+              "token": "DOTA_HeroStats_ProjectileSpeed_Desc",
+              "text": "远程英雄的物理攻击弹道行进速度",
+              "line": 30406
+            },
+            {
+              "token": "DOTA_HeroStats_Armor_Name",
+              "text": "护甲",
+              "line": 30408
+            },
+            {
+              "token": "DOTA_HeroStats_Armor_Desc",
+              "text": "护甲决定了英雄受到<font color=\"#FC6A62\">物理</font>攻击时减少的伤害。",
+              "line": 30409
+            },
+            {
+              "token": "DOTA_HeroStats_MagicResistance_Name",
+              "text": "魔法抗性",
+              "line": 30410
+            },
+            {
+              "token": "DOTA_HeroStats_MagicResistance_Desc",
+              "text": "魔法抗性决定了英雄受到<font color=\"#80BDFF\">魔法</font>攻击时减少的伤害。",
+              "line": 30411
+            },
+            {
+              "token": "DOTA_HeroStats_MovementSpeed_Name",
+              "text": "移动速度",
+              "line": 30413
+            },
+            {
+              "token": "DOTA_HeroStats_MovementSpeed_Desc",
+              "text": "英雄在地图上移动时的速度",
+              "line": 30414
+            },
+            {
+              "token": "DOTA_HeroStats_TurnRate_Name",
+              "text": "转身速率",
+              "line": 30415
+            },
+            {
+              "token": "DOTA_HeroStats_TurnRate_Desc",
+              "text": "英雄转身的速度",
+              "line": 30416
+            },
+            {
+              "token": "DOTA_HeroStats_SightRange_Name",
+              "text": "视野距离",
+              "line": 30417
+            },
+            {
+              "token": "DOTA_HeroStats_SightRange_Desc",
+              "text": "没有障碍物阻挡的情况下英雄所见的距离 -- 数值一般会随白天／夜晚而变化",
+              "line": 30418
+            },
+            {
+              "token": "DOTA_HeroStats_MaxHealth_Name",
+              "text": "生命值上限",
+              "line": 30420
+            },
+            {
+              "token": "DOTA_HeroStats_HealthRegen_Name",
+              "text": "生命恢复",
+              "line": 30421
+            },
+            {
+              "token": "DOTA_HeroStats_Health_Desc",
+              "text": "生命值决定了英雄承受多少伤害才会死亡。每点力量均会提升英雄的生命值上限和生命恢复。",
+              "line": 30422
+            },
+            {
+              "token": "DOTA_HeroStats_MaxMana_Name",
+              "text": "魔法值上限",
+              "line": 30423
+            },
+            {
+              "token": "DOTA_HeroStats_ManaRegen_Name",
+              "text": "魔法恢复",
+              "line": 30424
+            },
+            {
+              "token": "DOTA_HeroStats_Mana_Desc",
+              "text": "魔法值决定了英雄可以使用多少次技能。每点智力均会提升英雄的魔法值上限和魔法恢复。",
+              "line": 30425
+            },
+            {
+              "token": "DOTA_Glossary_Advanced_CommonBuffs_CriticalStrike_Desc",
+              "text": "攻击拥有一定几率造成数倍于普通攻击的伤害。",
+              "line": 37125
+            },
+            {
+              "token": "DOTA_Glossary_Advanced_CommonBuffs_LifeSteal_Desc",
+              "text": "攻击者每次攻击都会回复造成伤害的一定百分比。",
+              "line": 37129
+            },
+            {
+              "token": "DOTA_Glossary_Damage_Armor_Desc",
+              "text": "护甲（有时被称为物理抗性）会降低单位受到的物理伤害。护甲值越高，减少的物理伤害越多。每个英雄都具有基础护甲值，物品和相关天赋能直接提升护甲。技能和效果能降低一个单位的护甲值，甚至为负值，使其受到物理攻击时承受的伤害增加。<child id=\"ArmorTooltip\">",
+              "line": 37318
+            },
+            {
+              "token": "DOTA_Glossary_Damage_MagicResistance_Desc",
+              "text": "魔法抗性为百分比数值，可以降低一个单位受到的魔法伤害。英雄默认的魔法抗性为{d:hero_default_MagicalResistance}%",
+              "line": 37321
+            },
+            {
+              "token": "DOTA_Glossary_Evasion_Desc",
+              "text": "闪避能使英雄受到物理攻击时让攻击落空，为百分比数值。",
+              "line": 37329
+            },
+            {
+              "token": "DOTA_Glossary_StatusResistance_Desc",
+              "text": "状态抗性能减少负面状态效果，如眩晕和沉默的持续时间。",
+              "line": 37331
+            },
+            {
+              "token": "DOTA_Glossary_SlowResistance_Desc",
+              "text": "减速抗性会降低减速的施加效果。",
+              "line": 37333
+            },
+            {
+              "token": "DOTA_Glossary_Cooldown_Desc",
+              "text": "几乎所有主动（和部分被动）技能都具有冷却时间，以秒为单位。技能在使用后进入失效状态，直到冷却时间结束。",
+              "line": 37355
+            },
+            {
+              "token": "DOTA_Glossary_Channeled_Desc",
+              "text": "持续施法技能为主动技能，需要单位在持续施法期间不执行其他动作。技能可能需要完成持续施法才能达到施放效果，或者会在整个持续施法期间生效。持续施法技能可以被眩晕、恐惧和沉默打断。",
+              "line": 37361
+            },
+            {
+              "token": "DOTA_Glossary_CastAnimation_Desc",
+              "text": "每个技能都具有施法前摇的延迟，也就是技能开始施放/点击到完成施法需要一段时间。施法前摇期间，停止/固守原地指令会取消执行技能，而且技能不会进入冷却状态。值得一提的是，施法前摇可以为零。",
+              "line": 37365
+            },
+            {
+              "token": "DOTA_ToolTip_Dispellable_Yes_Strong_2",
+              "text": "仅强驱散",
+              "line": 4128
+            },
+            {
+              "token": "DOTA_ToolTip_Dispellable_Yes_Soft_2",
+              "text": "是",
+              "line": 4129
+            },
+            {
+              "token": "DOTA_ToolTip_Dispellable_No_2",
+              "text": "无法驱散",
+              "line": 4130
+            }
+          ]
+        },
+        {
+          "locale": "en",
+          "source_path": "resource/localization/dota_english.txt",
+          "raw_sha256": "19132a0d5dfee808942d81370abc2ca2814b9ed75c20fd295923fd0c9bdf2307",
+          "tokens": [
+            {
+              "token": "DOTA_StatTooltip_StrengthBonus",
+              "text": "- Each point increases hit points by 20\n- Each point increases hit point regen by 0.03\n",
+              "line": 168
+            },
+            {
+              "token": "DOTA_StatTooltip_AgilityBonus",
+              "text": "- Every 7 points increase armor by 1\n- Each point increases attack speed by 1\n",
+              "line": 169
+            },
+            {
+              "token": "DOTA_StatTooltip_IntelligenceBonus",
+              "text": "- Each point increases mana by 12\n- Each point increases mana regen by 0.04\n- Every 16 points increases spell damage by 1%\n",
+              "line": 170
+            },
+            {
+              "token": "DOTA_HUD_StrengthDetails",
+              "text": "= {d:strength_hp} HP and {s:strength_hp_regen} HP Regen",
+              "line": 30530
+            },
+            {
+              "token": "DOTA_HUD_AgilityDetails",
+              "text": "= {s:agility_armor} Armor and {d:agility_attack_speed} Attack Speed",
+              "line": 30531
+            },
+            {
+              "token": "DOTA_HUD_IntelligenceDetails",
+              "text": "= {d:intelligence_mana} Mana, {s:intelligence_mana_regen} Mana Regen and {s:intelligence_magic_resist}% Base Magic Resistance",
+              "line": 30532
+            },
+            {
+              "token": "DOTA_HeroStats_Strength_Name",
+              "text": "Strength",
+              "line": 30555
+            },
+            {
+              "token": "DOTA_HeroStats_Strength_Desc",
+              "text": "Each point of Strength grants 22 Health and 0.1 Health Regen.",
+              "line": 30556
+            },
+            {
+              "token": "DOTA_HeroStats_Agility_Name",
+              "text": "Agility",
+              "line": 30557
+            },
+            {
+              "token": "DOTA_HeroStats_Agility_Desc",
+              "text": "Each point of Agility grants 1 Attack Speed and 0.16 Armor.",
+              "line": 30558
+            },
+            {
+              "token": "DOTA_HeroStats_Intelligence_Name",
+              "text": "Intelligence",
+              "line": 30559
+            },
+            {
+              "token": "DOTA_HeroStats_Intelligence_Desc",
+              "text": "Each point of Intelligence grants 12 Mana, 0.05 Mana Regen, and 0.1% Magic Resistance.",
+              "line": 30560
+            },
+            {
+              "token": "DOTA_HeroStats_Damage_Name",
+              "text": "Damage",
+              "line": 30562
+            },
+            {
+              "token": "DOTA_HeroStats_Damage_Desc",
+              "text": "Amount of damage a hero does per attack",
+              "line": 30563
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRate_Name",
+              "text": "Attack Rate",
+              "line": 30564
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRate_Desc",
+              "text": "Speed at which the hero attacks",
+              "line": 30565
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRange_Name",
+              "text": "Attack Range",
+              "line": 30566
+            },
+            {
+              "token": "DOTA_HeroStats_AttackRange_Desc",
+              "text": "Distance from which the hero can attack",
+              "line": 30567
+            },
+            {
+              "token": "DOTA_HeroStats_ProjectileSpeed_Name",
+              "text": "Projectile Speed",
+              "line": 30568
+            },
+            {
+              "token": "DOTA_HeroStats_ProjectileSpeed_Desc",
+              "text": "Travel speed of attack projectile used by ranged heroes",
+              "line": 30569
+            },
+            {
+              "token": "DOTA_HeroStats_Armor_Name",
+              "text": "Armor",
+              "line": 30571
+            },
+            {
+              "token": "DOTA_HeroStats_Armor_Desc",
+              "text": "Armor determines how much damage a hero deflects from <font color=\"#FC6A62\">Physical</font> attacks.",
+              "line": 30572
+            },
+            {
+              "token": "DOTA_HeroStats_MagicResistance_Name",
+              "text": "Magic Resistance",
+              "line": 30573
+            },
+            {
+              "token": "DOTA_HeroStats_MagicResistance_Desc",
+              "text": "Magic Resistance determines how much damage a hero deflects from <font color=\"#80BDFF\">Magical</font> attacks.",
+              "line": 30574
+            },
+            {
+              "token": "DOTA_HeroStats_MovementSpeed_Name",
+              "text": "Movement Speed",
+              "line": 30576
+            },
+            {
+              "token": "DOTA_HeroStats_MovementSpeed_Desc",
+              "text": "Speed at which a hero moves across the map",
+              "line": 30577
+            },
+            {
+              "token": "DOTA_HeroStats_TurnRate_Name",
+              "text": "Turn Rate",
+              "line": 30578
+            },
+            {
+              "token": "DOTA_HeroStats_TurnRate_Desc",
+              "text": "Speed at which a hero turns in place",
+              "line": 30579
+            },
+            {
+              "token": "DOTA_HeroStats_SightRange_Name",
+              "text": "Vision Range",
+              "line": 30580
+            },
+            {
+              "token": "DOTA_HeroStats_SightRange_Desc",
+              "text": "Distance a hero can see if not blocked by an obstacle -- values normally differ during Daytime / Nighttime",
+              "line": 30581
+            },
+            {
+              "token": "DOTA_HeroStats_MaxHealth_Name",
+              "text": "Max Health",
+              "line": 30583
+            },
+            {
+              "token": "DOTA_HeroStats_HealthRegen_Name",
+              "text": "Health Regen",
+              "line": 30584
+            },
+            {
+              "token": "DOTA_HeroStats_Health_Desc",
+              "text": "Health determines how much damage a hero can take before dying. Each point of strength increases a hero's max health and health regen.",
+              "line": 30585
+            },
+            {
+              "token": "DOTA_HeroStats_MaxMana_Name",
+              "text": "Max Mana",
+              "line": 30586
+            },
+            {
+              "token": "DOTA_HeroStats_ManaRegen_Name",
+              "text": "Mana Regen",
+              "line": 30587
+            },
+            {
+              "token": "DOTA_HeroStats_Mana_Desc",
+              "text": "Mana determines how many abilities a hero can use. Each point of intelligence increases a hero's max mana and mana regen.",
+              "line": 30588
+            },
+            {
+              "token": "DOTA_Glossary_Advanced_CommonBuffs_CriticalStrike_Desc",
+              "text": "Attacks have a percentage chance to deal a multiplier of their normal Damage.",
+              "line": 37309
+            },
+            {
+              "token": "DOTA_Glossary_Advanced_CommonBuffs_LifeSteal_Desc",
+              "text": "The Attacker heals a percentage of the Damage dealt by each attack.",
+              "line": 37313
+            },
+            {
+              "token": "DOTA_Glossary_Damage_Armor_Desc",
+              "text": "Armor (sometimes called Physical Resistance) reduces the amount of Physical Damage received by a Unit.  The higher the Armor value, the higher the reduction in Physical Damage.  Every Hero has a Base Armor value, which can be increased Directly by Items or Talents, or inDirectly by increasing the Agility attribute of a Hero.  Abilities and Effects can reduce a Unit's Armor value, potentially going negative, making them take increased Damage from Physical attacks. <child id=\"ArmorTooltip\">",
+              "line": 37502
+            },
+            {
+              "token": "DOTA_Glossary_Damage_MagicResistance_Desc",
+              "text": "Magic Resistance is a flat percentage value that reduces incoming Magic Damage to a Unit.  Heroes have a default Magic Resistance of {d:hero_default_MagicalResistance}%",
+              "line": 37505
+            },
+            {
+              "token": "DOTA_Glossary_Evasion_Desc",
+              "text": "Evasion is the percentage chance that an attack against a Hero will miss.",
+              "line": 37513
+            },
+            {
+              "token": "DOTA_Glossary_StatusResistance_Desc",
+              "text": "Status Resistance reduces the duration of negative Status Effects such as Stuns and Silence.",
+              "line": 37515
+            },
+            {
+              "token": "DOTA_Glossary_SlowResistance_Desc",
+              "text": "Slow Resistance reduces the impact of Slows.",
+              "line": 37517
+            },
+            {
+              "token": "DOTA_Glossary_Cooldown_Desc",
+              "text": "Almost all active (and some passive) Abilites have a Cooldown period, measured in seconds. The Ability is inactive after being used until the Cooldown period has expired.",
+              "line": 37539
+            },
+            {
+              "token": "DOTA_Glossary_Channeled_Desc",
+              "text": "Channeled Abilities are Active Abilities that require the Unit to perform no other Actions during the Channel duration. The Ability may require a Channeling period leading up to the casted Effect, or it may be active during the entire Channel period. Channeled Abilities can be interrupted by Stuns, Fears and Silences.",
+              "line": 37545
+            },
+            {
+              "token": "DOTA_Glossary_CastAnimation_Desc",
+              "text": "Every Ability has a Cast Animation delay, which is the time period between when an Ability is cast/clicked and when the cast is complete. During the Cast Animation, the Stop/Hold command will cancel executing the Ability and it will not go into a Cooldown state. Keep in mind that a Cast Animation dely could be zero.",
+              "line": 37549
+            },
+            {
+              "token": "DOTA_ToolTip_Dispellable_Yes_Strong_2",
+              "text": "Strong Dispels Only",
+              "line": 4134
+            },
+            {
+              "token": "DOTA_ToolTip_Dispellable_Yes_Soft_2",
+              "text": "Yes",
+              "line": 4135
+            },
+            {
+              "token": "DOTA_ToolTip_Dispellable_No_2",
+              "text": "Cannot be dispelled",
+              "line": 4136
+            }
+          ]
+        },
+        {
+          "locale": "zh-CN",
+          "source_path": "resource/localization/abilities_schinese.txt",
+          "raw_sha256": "3467d35dab20b9ad50df60fa55c3f0aac574c1360947f310530419d5857d7fe3",
+          "tokens": [
+            {
+              "token": "dota_ability_variable_health",
+              "text": "生命值",
+              "line": 7
+            },
+            {
+              "token": "dota_ability_variable_mana",
+              "text": "魔法值",
+              "line": 8
+            },
+            {
+              "token": "dota_ability_variable_armor",
+              "text": "护甲",
+              "line": 9
+            },
+            {
+              "token": "dota_ability_variable_damage",
+              "text": "攻击力",
+              "line": 10
+            },
+            {
+              "token": "dota_ability_variable_str",
+              "text": "力量",
+              "line": 11
+            },
+            {
+              "token": "dota_ability_variable_int",
+              "text": "智力",
+              "line": 12
+            },
+            {
+              "token": "dota_ability_variable_agi",
+              "text": "敏捷",
+              "line": 13
+            },
+            {
+              "token": "dota_ability_variable_all",
+              "text": "全属性",
+              "line": 14
+            },
+            {
+              "token": "dota_ability_variable_primary_attribute",
+              "text": "主属性",
+              "line": 15
+            },
+            {
+              "token": "dota_ability_variable_attack",
+              "text": "攻击速度",
+              "line": 16
+            },
+            {
+              "token": "dota_ability_variable_attack_pct",
+              "text": "基础攻击速度",
+              "line": 17
+            },
+            {
+              "token": "dota_ability_variable_hp_regen",
+              "text": "生命恢复",
+              "line": 18
+            },
+            {
+              "token": "dota_ability_variable_lifesteal",
+              "text": "吸血",
+              "line": 19
+            },
+            {
+              "token": "dota_ability_variable_mana_regen",
+              "text": "魔法恢复",
+              "line": 20
+            },
+            {
+              "token": "dota_ability_variable_mana_regen_aura",
+              "text": "魔法恢复光环",
+              "line": 21
+            },
+            {
+              "token": "dota_ability_variable_spell_amp",
+              "text": "技能伤害",
+              "line": 22
+            },
+            {
+              "token": "dota_ability_variable_debuff_amp",
+              "text": "负面状态持续时间",
+              "line": 23
+            },
+            {
+              "token": "dota_ability_variable_move_speed",
+              "text": "移动速度",
+              "line": 24
+            },
+            {
+              "token": "dota_ability_variable_evasion",
+              "text": "闪避",
+              "line": 25
+            },
+            {
+              "token": "dota_ability_variable_spell_resist",
+              "text": "魔法抗性",
+              "line": 26
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal",
+              "text": "技能吸血",
+              "line": 27
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_hero_attacks",
+              "text": "对英雄的攻击",
+              "line": 28
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_hero_spells",
+              "text": "对英雄的技能",
+              "line": 29
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_creep_attacks",
+              "text": "对非英雄的攻击",
+              "line": 30
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_creep_spells",
+              "text": "对非英雄的技能",
+              "line": 31
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_hero_attacks",
+              "text": "对英雄的攻击",
+              "line": 32
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_hero_spells",
+              "text": "对英雄的技能",
+              "line": 33
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_creep_attacks",
+              "text": "对非英雄的攻击",
+              "line": 34
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_creep_spells",
+              "text": "对非英雄的技能",
+              "line": 35
+            },
+            {
+              "token": "dota_ability_variable_selected_attrib",
+              "text": "所选属性",
+              "line": 36
+            },
+            {
+              "token": "dota_ability_variable_attack_range",
+              "text": "攻击距离<font color='#7d7d7d'>（仅对远程有效）</font>",
+              "line": 37
+            },
+            {
+              "token": "dota_ability_variable_attack_range_melee",
+              "text": "攻击距离<font color='#7d7d7d'>（仅对近战有效）</font>",
+              "line": 38
+            },
+            {
+              "token": "dota_ability_variable_attack_range_all",
+              "text": "攻击距离<font color='#7d7d7d'>（近战/远程）</font>",
+              "line": 39
+            },
+            {
+              "token": "dota_ability_variable_cast_range",
+              "text": "施法距离",
+              "line": 40
+            },
+            {
+              "token": "dota_ability_variable_status_resist",
+              "text": "状态抗性",
+              "line": 41
+            },
+            {
+              "token": "dota_ability_variable_projectile_speed",
+              "text": "弹道速度",
+              "line": 42
+            },
+            {
+              "token": "dota_ability_variable_manacost_reduction",
+              "text": "魔法消耗降低",
+              "line": 43
+            },
+            {
+              "token": "dota_ability_variable_cooldown_reduction",
+              "text": "冷却时间减少",
+              "line": 44
+            },
+            {
+              "token": "dota_ability_variable_max_mana_percentage",
+              "text": "最大魔法值",
+              "line": 45
+            },
+            {
+              "token": "dota_ability_variable_slow_resistance",
+              "text": "减速抗性",
+              "line": 46
+            },
+            {
+              "token": "dota_ability_variable_aoe_bonus",
+              "text": "作用范围",
+              "line": 47
+            },
+            {
+              "token": "dota_ability_variable_exclusive_movespeed",
+              "text": "移动速度加成",
+              "line": 48
+            },
+            {
+              "token": "dota_ability_variable_healing_amp",
+              "text": "治疗增强",
+              "line": 49
+            },
+            {
+              "token": "dota_ability_variable_restoration_amp",
+              "text": "生命回复",
+              "line": 50
+            },
+            {
+              "token": "dota_ability_variable_damage_int_hero",
+              "text": "攻击力（智力英雄）",
+              "line": 51
+            },
+            {
+              "token": "dota_ability_variable_damage_agi_hero",
+              "text": "攻击力（敏捷英雄）",
+              "line": 52
+            },
+            {
+              "token": "dota_ability_variable_damage_str_hero",
+              "text": "攻击力（力量英雄）",
+              "line": 53
+            },
+            {
+              "token": "dota_ability_variable_damage_universal_hero",
+              "text": "攻击力（全才英雄）",
+              "line": 54
+            },
+            {
+              "token": "DOTA_Tooltip_ability_special_bonus_day_vision_400",
+              "text": "+{s:value} 白天视野",
+              "line": 12706
+            },
+            {
+              "token": "DOTA_Tooltip_ability_special_bonus_night_vision_400",
+              "text": "+{s:value} 夜间视野",
+              "line": 12707
+            },
+            {
+              "token": "DOTA_Tooltip_ability_item_lifesteal_Description",
+              "text": "<h1>被动：吸血</h1>攻击者每次攻击都将根据造成伤害的一定百分比回复生命值。",
+              "line": 16496
+            },
+            {
+              "token": "DOTA_Tooltip_ability_item_voodoo_mask_Description",
+              "text": "<h1>被动：技能吸血</h1>佩戴者每次对敌人造成技能伤害都将根据造成伤害的一定百分比回复生命值。",
+              "line": 16501
+            },
+            {
+              "token": "DOTA_Tooltip_ability_item_voodoo_mask_Note0",
+              "text": "纯粹伤害或反弹伤害不会进行治疗。",
+              "line": 16503
+            }
+          ]
+        },
+        {
+          "locale": "en",
+          "source_path": "resource/localization/abilities_english.txt",
+          "raw_sha256": "562494850a6a660994fcfe7ea39ce0b04ada85f30311a34635fa4a4e7e0cc5d0",
+          "tokens": [
+            {
+              "token": "dota_ability_variable_health",
+              "text": "Health",
+              "line": 7
+            },
+            {
+              "token": "dota_ability_variable_mana",
+              "text": "Mana",
+              "line": 8
+            },
+            {
+              "token": "dota_ability_variable_armor",
+              "text": "Armor",
+              "line": 9
+            },
+            {
+              "token": "dota_ability_variable_damage",
+              "text": "Damage",
+              "line": 10
+            },
+            {
+              "token": "dota_ability_variable_str",
+              "text": "Strength",
+              "line": 11
+            },
+            {
+              "token": "dota_ability_variable_int",
+              "text": "Intelligence",
+              "line": 12
+            },
+            {
+              "token": "dota_ability_variable_agi",
+              "text": "Agility",
+              "line": 13
+            },
+            {
+              "token": "dota_ability_variable_all",
+              "text": "All Attributes",
+              "line": 14
+            },
+            {
+              "token": "dota_ability_variable_primary_attribute",
+              "text": "Primary Attribute",
+              "line": 15
+            },
+            {
+              "token": "dota_ability_variable_attack",
+              "text": "Attack Speed",
+              "line": 16
+            },
+            {
+              "token": "dota_ability_variable_attack_pct",
+              "text": "Base Attack Speed Percentage",
+              "line": 17
+            },
+            {
+              "token": "dota_ability_variable_hp_regen",
+              "text": "Health Regeneration",
+              "line": 18
+            },
+            {
+              "token": "dota_ability_variable_lifesteal",
+              "text": "Lifesteal",
+              "line": 19
+            },
+            {
+              "token": "dota_ability_variable_mana_regen",
+              "text": "Mana Regeneration",
+              "line": 20
+            },
+            {
+              "token": "dota_ability_variable_mana_regen_aura",
+              "text": "Mana Regeneration Aura",
+              "line": 21
+            },
+            {
+              "token": "dota_ability_variable_spell_amp",
+              "text": "Spell Damage",
+              "line": 22
+            },
+            {
+              "token": "dota_ability_variable_debuff_amp",
+              "text": "Debuff Duration",
+              "line": 23
+            },
+            {
+              "token": "dota_ability_variable_move_speed",
+              "text": "Movement Speed",
+              "line": 24
+            },
+            {
+              "token": "dota_ability_variable_evasion",
+              "text": "Evasion",
+              "line": 25
+            },
+            {
+              "token": "dota_ability_variable_spell_resist",
+              "text": "Magic Resistance",
+              "line": 26
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal",
+              "text": "Spell Lifesteal",
+              "line": 27
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_hero_attacks",
+              "text": "Attacks on Heroes",
+              "line": 28
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_hero_spells",
+              "text": "Abilities on Heroes",
+              "line": 29
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_creep_attacks",
+              "text": "Attacks on Creeps",
+              "line": 30
+            },
+            {
+              "token": "dota_ability_variable_spell_lifesteal_creep_spells",
+              "text": "Abilities on Creeps",
+              "line": 31
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_hero_attacks",
+              "text": "Attacks on Heroes",
+              "line": 32
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_hero_spells",
+              "text": "Abilities on Heroes",
+              "line": 33
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_creep_attacks",
+              "text": "Attacks on Creeps",
+              "line": 34
+            },
+            {
+              "token": "dota_ability_variable_lifesteal_creep_spells",
+              "text": "Abilities on Creeps",
+              "line": 35
+            },
+            {
+              "token": "dota_ability_variable_selected_attrib",
+              "text": "Selected Attribute",
+              "line": 36
+            },
+            {
+              "token": "dota_ability_variable_attack_range",
+              "text": "Attack Range <font color='#7d7d7d'>(Ranged Only)</font>",
+              "line": 37
+            },
+            {
+              "token": "dota_ability_variable_attack_range_melee",
+              "text": "Attack Range <font color='#7d7d7d'>(Melee Only)</font>",
+              "line": 38
+            },
+            {
+              "token": "dota_ability_variable_attack_range_all",
+              "text": "Attack Range <font color='#7d7d7d'>(Melee & Ranged)</font>",
+              "line": 39
+            },
+            {
+              "token": "dota_ability_variable_cast_range",
+              "text": "Cast Range",
+              "line": 40
+            },
+            {
+              "token": "dota_ability_variable_status_resist",
+              "text": "Status Resistance",
+              "line": 41
+            },
+            {
+              "token": "dota_ability_variable_projectile_speed",
+              "text": "Projectile Speed",
+              "line": 42
+            },
+            {
+              "token": "dota_ability_variable_manacost_reduction",
+              "text": "Manacost Reduction",
+              "line": 43
+            },
+            {
+              "token": "dota_ability_variable_cooldown_reduction",
+              "text": "Cooldown Reduction",
+              "line": 44
+            },
+            {
+              "token": "dota_ability_variable_max_mana_percentage",
+              "text": "Max Mana",
+              "line": 45
+            },
+            {
+              "token": "dota_ability_variable_slow_resistance",
+              "text": "Slow Resistance",
+              "line": 46
+            },
+            {
+              "token": "dota_ability_variable_aoe_bonus",
+              "text": "Area of Effect",
+              "line": 47
+            },
+            {
+              "token": "dota_ability_variable_exclusive_movespeed",
+              "text": "Boot Movement Speed",
+              "line": 48
+            },
+            {
+              "token": "dota_ability_variable_healing_amp",
+              "text": "Heal Amplification",
+              "line": 49
+            },
+            {
+              "token": "dota_ability_variable_restoration_amp",
+              "text": "Health Restoration",
+              "line": 50
+            },
+            {
+              "token": "dota_ability_variable_damage_int_hero",
+              "text": "Damage (Intelligence Heroes)",
+              "line": 51
+            },
+            {
+              "token": "dota_ability_variable_damage_agi_hero",
+              "text": "Damage (Agility Heroes)",
+              "line": 52
+            },
+            {
+              "token": "dota_ability_variable_damage_str_hero",
+              "text": "Damage (Strength Heroes)",
+              "line": 53
+            },
+            {
+              "token": "dota_ability_variable_damage_universal_hero",
+              "text": "Damage (Universal Heroes)",
+              "line": 54
+            },
+            {
+              "token": "DOTA_Tooltip_ability_special_bonus_day_vision_400",
+              "text": "+{s:value} Day Vision",
+              "line": 12721
+            },
+            {
+              "token": "DOTA_Tooltip_ability_special_bonus_night_vision_400",
+              "text": "+{s:value} Night Vision",
+              "line": 12722
+            },
+            {
+              "token": "DOTA_Tooltip_ability_item_lifesteal_Description",
+              "text": "<h1>Passive: Lifesteal</h1>Heals the attacker for a percentage of physical damage dealt.",
+              "line": 16549
+            },
+            {
+              "token": "DOTA_Tooltip_ability_item_voodoo_mask_Description",
+              "text": "<h1>Passive: Spell Lifesteal</h1>Heals the wearer for a percentage of spell damage dealt to enemies.",
+              "line": 16554
+            },
+            {
+              "token": "DOTA_Tooltip_ability_item_voodoo_mask_Note0",
+              "text": "Does not heal from Pure or Reflected damage.",
+              "line": 16556
+            }
+          ]
+        },
+        {
+          "locale": "zh-CN",
+          "source_path": "scripts/npc/npc_abilities.txt",
+          "raw_sha256": "040b8075832a8c5767bb2ad50ca5eb1dfda024a9c45d1d5b857d2911f2d97ab8",
+          "tokens": [
+            {
+              "token": "courier_autodeliver.AbilityBehavior",
+              "text": "\"AbilityBehavior\"\t\t\t\t\"DOTA_ABILITY_BEHAVIOR_IGNORE_SILENCE | DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_AUTOCAST | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_TOGGLE\"",
+              "line": 598
+            }
+          ]
+        },
+        {
+          "locale": "en",
+          "source_path": "scripts/npc/npc_abilities.txt",
+          "raw_sha256": "040b8075832a8c5767bb2ad50ca5eb1dfda024a9c45d1d5b857d2911f2d97ab8",
+          "tokens": [
+            {
+              "token": "courier_autodeliver.AbilityBehavior",
+              "text": "\"AbilityBehavior\"\t\t\t\t\"DOTA_ABILITY_BEHAVIOR_IGNORE_SILENCE | DOTA_ABILITY_BEHAVIOR_NO_TARGET | DOTA_ABILITY_BEHAVIOR_AUTOCAST | DOTA_ABILITY_BEHAVIOR_IGNORE_BACKSWING | DOTA_ABILITY_BEHAVIOR_TOGGLE\"",
+              "line": 598
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

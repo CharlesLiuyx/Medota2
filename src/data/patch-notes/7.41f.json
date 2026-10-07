@@ -1,0 +1,1830 @@
+{
+  "schemaVersion": "patch-context-v1",
+  "fromPatch": "7.41e",
+  "toPatch": "7.41f",
+  "fromCommit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+  "toCommit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+  "source": {
+    "url": "https://www.dota2.com/datafeed/patchnotes?version=7.41f&language=schinese",
+    "page": "https://www.dota2.com/patches/7.41f?l=schinese",
+    "sha256": "6d8f6754b286391dd68008a656cf516f731aa4470dae569d6c7a57380c774a95",
+    "sourceCommit": null,
+    "importedAt": "2026-10-07T04:46:22.706Z"
+  },
+  "nameSources": [
+    {
+      "path": "scripts/npc/npc_ability_ids.txt",
+      "sha256": "a4709374a249dcd9e98b1d996d53e44a944581c04b5d65c5afd36d40973de598",
+      "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4"
+    },
+    {
+      "path": "resource/localization/abilities_schinese.txt",
+      "sha256": "3467d35dab20b9ad50df60fa55c3f0aac574c1360947f310530419d5857d7fe3",
+      "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4"
+    }
+  ],
+  "heroes": [
+    {
+      "heroId": 1,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "antimage_mana_break",
+          "name": "法力损毁",
+          "notes": [
+            {
+              "text": "损毁魔法值的伤害系数：60% → 65%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 3,
+      "notes": [
+        {
+          "text": "基础护甲：降低1点"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 9,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "mirana_celestial_quiver",
+          "name": "天界箭袋",
+          "notes": [
+            {
+              "text": "基础充能时间：6秒 → 7秒"
+            }
+          ]
+        },
+        {
+          "key": "mirana_arrow",
+          "name": "月神之箭",
+          "notes": [
+            {
+              "text": "最长眩晕时间：2.6/3.4/4.2/5秒 → 2.3/3.2/4.1/5秒"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 11,
+      "notes": [],
+      "talents": [
+        {
+          "text": "15级天赋：+2 魔王降临护甲降低 → +1.5"
+        }
+      ],
+      "abilities": [
+        {
+          "key": "nevermore_necromastery",
+          "name": "支配死灵",
+          "notes": [
+            {
+              "text": "每个灵魂的攻击力：1.35 + 0.15 * 等级 → 1 + 每6级0.8",
+              "detail": "：1.5-5.85 → 1-5"
+            }
+          ]
+        },
+        {
+          "key": "nevermore_shadowraze1",
+          "name": "毁灭阴影",
+          "notes": [
+            {
+              "text": "每个灵魂提供额外伤害：3点 → 2点"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 25,
+      "notes": [
+        {
+          "text": "基础智力：30 → 28"
+        },
+        {
+          "text": "1级攻击力：51-59 → 49-57"
+        }
+      ],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "lina_fiery_soul",
+          "name": "炽魂",
+          "notes": [
+            {
+              "text": "攻击速度加成：8/16/24/32 → 7/14/21/28"
+            },
+            {
+              "text": "持续时间：18秒 → 16秒"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 28,
+      "notes": [
+        {
+          "text": "基础生命恢复减少0.25"
+        }
+      ],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "slardar_slithereen_crush",
+          "name": "鱼人碎击",
+          "notes": [
+            {
+              "text": "伤害：75/150/225/300点 → 60/140/220/300点"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 33,
+      "notes": [],
+      "talents": [
+        {
+          "text": "20级天赋：+40 虚灵体攻击力 → +30"
+        }
+      ],
+      "abilities": [
+        {
+          "key": "enigma_demonic_conversion",
+          "name": "恶魔召唤",
+          "notes": [
+            {
+              "text": "虚灵体的攻击距离：425/450/475/500 → 380/420/460/500"
+            }
+          ]
+        },
+        {
+          "key": "enigma_black_hole",
+          "name": "黑洞",
+          "notes": [
+            {
+              "text": "阿哈利姆神杖升级牵引速度：175 → 150",
+              "upgrade": "scepter"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 36,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "necrolyte_sadist",
+          "name": "施虐之心",
+          "notes": [
+            {
+              "text": "击杀英雄提供的倍数：6 → 4"
+            }
+          ]
+        },
+        {
+          "key": "necrolyte_ghost_shroud",
+          "name": "幽魂护罩",
+          "notes": [
+            {
+              "text": "恢复效果增强：55/65/75/85% → 45/55/65/75%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 37,
+      "notes": [
+        {
+          "text": "基础攻击速度：90 → 95"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 51,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "rattletrap_power_cogs",
+          "name": "能量齿轮",
+          "notes": [
+            {
+              "text": "魔法消耗：75 → 90点"
+            },
+            {
+              "text": "击退持续时间：0.8秒 → 0.7秒"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 54,
+      "notes": [],
+      "talents": [
+        {
+          "text": "10级天赋：+20 移动速度 → +15"
+        }
+      ],
+      "abilities": [
+        {
+          "key": "life_stealer_rage",
+          "name": "狂暴",
+          "notes": [
+            {
+              "text": "冷却时间：20/19/18/17秒 → 21/20/19/18秒"
+            }
+          ]
+        },
+        {
+          "key": "life_stealer_infest",
+          "name": "感染",
+          "notes": [
+            {
+              "text": "阿哈利姆神杖升级对敌方英雄的持续时间：5秒 → 4秒",
+              "upgrade": "scepter"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 59,
+      "notes": [
+        {
+          "text": "基础力量：23 → 22"
+        },
+        {
+          "text": "1级攻击力：44-49 → 43-48"
+        },
+        {
+          "text": "力量成长：3.3 → 3.4"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 61,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "broodmother_insatiable_hunger",
+          "name": "极度饥渴",
+          "notes": [
+            {
+              "text": "魔法消耗：80点 → 70点"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 62,
+      "notes": [],
+      "talents": [
+        {
+          "text": "10级天赋：+0.6秒 投掷飞镖减速 → +0.35秒"
+        },
+        {
+          "text": "20级天赋：追踪术提供共享视野 → +190 投掷飞镖伤害"
+        },
+        {
+          "text": "25级天赋：+250 投掷飞镖伤害 → 追踪术提供共享视野"
+        }
+      ],
+      "abilities": [
+        {
+          "key": "bounty_hunter_track",
+          "name": "追踪术",
+          "notes": [
+            {
+              "text": "自身的金钱奖励：130/225/320 → 80/160/240"
+            },
+            {
+              "text": "友军的金钱奖励：50/90/130 → 40/80/120"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 65,
+      "notes": [
+        {
+          "text": "智力成长：2.9 → 3.2"
+        },
+        {
+          "text": "每级攻击力成长：+3.5 → +3.6"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 66,
+      "notes": [
+        {
+          "text": "力量成长：2.0 → 2.2"
+        }
+      ],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "chen_zealot",
+          "name": "狂热者",
+          "notes": [
+            {
+              "text": "狂热者的复活时间：60秒 → 60秒 - 1秒 * 英雄等级"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 67,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "spectre_desolate",
+          "name": "荒芜",
+          "notes": [
+            {
+              "text": "伤害：23 + 2 * 等级 → 23.5 + 1.5 * 等级",
+              "detail": "：25-83 → 25-68.5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 70,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "ursa_maul",
+          "name": "暴烈之爪",
+          "notes": [
+            {
+              "text": "生命值转为攻击力：1.25% → 1.75%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 74,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "invoker_cold_snap",
+          "name": "急速冷却",
+          "notes": [
+            {
+              "text": "冷却时间：18秒 → 19秒"
+            }
+          ]
+        },
+        {
+          "key": "invoker_ghost_walk",
+          "name": "幽灵漫步",
+          "notes": [
+            {
+              "text": "阿哈利姆魔晶不再对非英雄单位造成伤害",
+              "upgrade": "shard"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 80,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "lone_druid_entangle",
+          "name": "缠绕之根",
+          "notes": [
+            {
+              "text": "叠加效果的持续时间：10秒 → 7/8/9/10秒"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 83,
+      "notes": [
+        {
+          "text": "基础智力：20 → 17"
+        }
+      ],
+      "talents": [
+        {
+          "text": "10级天赋：+3 活体护甲每秒治疗 → +3秒 活体护甲持续时间"
+        }
+      ],
+      "abilities": [
+        {
+          "key": "treant_natures_guise",
+          "name": "自然蔽护",
+          "notes": [
+            {
+              "text": "离开树木时的隐身粘滞时间：2秒 → 1秒"
+            }
+          ]
+        },
+        {
+          "key": "treant_leech_seed",
+          "name": "寄生种子",
+          "notes": [
+            {
+              "text": "魔法消耗：35点魔法"
+            },
+            {
+              "text": "伤害转为治疗：20% → 10/15/20/25%"
+            }
+          ]
+        },
+        {
+          "key": "treant_living_armor",
+          "name": "活体护甲",
+          "notes": [
+            {
+              "text": "最低伤害格挡：20点 → 10点"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 85,
+      "notes": [
+        {
+          "text": "基础生命恢复减少0.25"
+        }
+      ],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "undying_decay",
+          "name": "腐朽",
+          "notes": [
+            {
+              "text": "魔法消耗：100点 → 110点"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 87,
+      "notes": [
+        {
+          "text": "基础智力：20 → 21"
+        },
+        {
+          "text": "1级攻击力：47-51 → 48-52"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 90,
+      "notes": [
+        {
+          "text": "基础攻击速度：100 → 90"
+        }
+      ],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "keeper_of_the_light_chakra_magic",
+          "name": "查克拉魔法",
+          "notes": [
+            {
+              "text": "冷却时间减少：3/4/5/6秒 → 2.5/3.5/4.5/5.5秒"
+            }
+          ]
+        },
+        {
+          "key": "keeper_of_the_light_spirit_form",
+          "name": "灵魂形态",
+          "notes": [
+            {
+              "text": "冲击波治疗：70% → 60%"
+            },
+            {
+              "text": "拥有阿哈利姆魔晶时冲击波治疗数值不变，还是100%",
+              "upgrade": "shard"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 91,
+      "notes": [],
+      "talents": [
+        {
+          "text": "15级天赋：+50% 幽魂伤害 → +40%"
+        }
+      ],
+      "abilities": []
+    },
+    {
+      "heroId": 96,
+      "notes": [
+        {
+          "text": "基础攻击力减少2点"
+        },
+        {
+          "text": "1级攻击力：64-66 → 62-64"
+        },
+        {
+          "text": "基础移动速度：300 → 295"
+        }
+      ],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "centaur_mount",
+          "name": "便车",
+          "notes": [
+            {
+              "text": "施法距离：250 → 200"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 106,
+      "notes": [
+        {
+          "text": "基础敏捷：22 → 21"
+        },
+        {
+          "text": "1级攻击力：52-56 → 51-55"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 107,
+      "notes": [
+        {
+          "text": "基础攻击速度：100 → 95"
+        }
+      ],
+      "talents": [
+        {
+          "text": "20级天赋：+25% 磁化伤害/持续时间 → +35 磁化每秒伤害"
+        },
+        {
+          "text": "20级天赋：+175% 巨石翻滚力量伤害 → +200 地磁之握残岩伤害"
+        },
+        {
+          "text": "25级天赋：+250 地磁之握残岩伤害 → +250% 巨石翻滚力量伤害"
+        }
+      ],
+      "abilities": [
+        {
+          "key": "earth_spirit_stone_caller",
+          "name": "残岩",
+          "notes": [
+            {
+              "text": "能量点数：7 + 每4级提升1 → 7 + 每5级提升1"
+            },
+            {
+              "text": "最大能量点数：28级时14点 → 30级时13点"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 108,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "abyssal_underlord_pit_of_malice",
+          "name": "怨念深渊",
+          "notes": [
+            {
+              "text": "不再能用阿哈利姆神杖升级"
+            }
+          ]
+        },
+        {
+          "key": "abyssal_underlord_dark_portal",
+          "name": "恶魔之扉",
+          "notes": [
+            {
+              "text": "阿哈利姆神杖升级冷却时间：100/95/90秒 → 90/85/80秒",
+              "upgrade": "scepter"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 112,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "winter_wyvern_arctic_burn",
+          "name": "严寒烧灼",
+          "notes": [
+            {
+              "text": "冷却时间：26/24/22/20秒 → 29/26/23/20秒"
+            }
+          ]
+        },
+        {
+          "key": "winter_wyvern_cold_embrace",
+          "name": "极寒之拥",
+          "notes": [
+            {
+              "text": "每秒最大生命值治疗：2.25/3/3.75/4.5% → 1.5/2.5/3.5/4.5%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 123,
+      "notes": [
+        {
+          "text": "基础力量：17 → 16"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 129,
+      "notes": [
+        {
+          "text": "基础护甲：增加1点"
+        }
+      ],
+      "talents": [],
+      "abilities": []
+    },
+    {
+      "heroId": 136,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "marci_companion_run",
+          "name": "回身踢",
+          "notes": [
+            {
+              "text": "友军的移动速度加成：15/20/25/30% → 25%"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heroId": 145,
+      "notes": [
+        {
+          "text": "基础攻击力减少1点"
+        },
+        {
+          "text": "1级攻击力：50-56 → 49-55"
+        }
+      ],
+      "talents": [
+        {
+          "text": "20级天赋：+4% 影武长刀每秒伤害 → +3.5%"
+        }
+      ],
+      "abilities": []
+    },
+    {
+      "heroId": 155,
+      "notes": [],
+      "talents": [],
+      "abilities": [
+        {
+          "key": "largo_song_good_vibrations",
+          "name": "大屿灵药",
+          "notes": [
+            {
+              "text": "治疗量：34/56/78点 → 30/55/80点"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "key": "item_infused_raindrop",
+      "name": "凝魂之露",
+      "notes": [
+        {
+          "text": "魔法恢复加成：+0.8 → +0.6"
+        }
+      ]
+    },
+    {
+      "key": "item_bfury",
+      "name": "狂战斧",
+      "notes": [
+        {
+          "text": "砍伐的冷却时间：4秒 → 3秒"
+        }
+      ]
+    },
+    {
+      "key": "item_greater_crit",
+      "name": "代达罗斯之殇",
+      "notes": [
+        {
+          "text": "图纸价格：900金 → 1000金。总价从5100金增加至5200金"
+        }
+      ]
+    },
+    {
+      "key": "item_dragon_lance",
+      "name": "魔龙枪",
+      "notes": [
+        {
+          "text": "图纸售价：450金 → 550金。总价从1900金增加至2000金"
+        }
+      ]
+    },
+    {
+      "key": "item_essence_distiller",
+      "name": "精之灵器",
+      "notes": [
+        {
+          "text": "魔法恢复加成：+1.75 → +1.5"
+        }
+      ]
+    },
+    {
+      "key": "item_heart",
+      "name": "恐鳌之心",
+      "notes": [
+        {
+          "text": "图纸价格：700金 → 800金。总价从5200金增加至5300金"
+        }
+      ]
+    },
+    {
+      "key": "item_heavens_halberd",
+      "name": "天堂之戟",
+      "notes": [
+        {
+          "text": "图纸价格：450金 → 350金。总价从3400金减少至3300金"
+        }
+      ]
+    },
+    {
+      "key": "item_hurricane_pike",
+      "name": "飓风长戟",
+      "notes": [
+        {
+          "text": "总价：4450金 → 4550金（由于魔龙枪的售价增加）"
+        }
+      ]
+    },
+    {
+      "key": "item_hydras_breath",
+      "name": "怪蛇之息",
+      "notes": [
+        {
+          "text": "图纸价格：1100金 → 1000金。总价不变，还是5900金（由于魔龙枪的售价增加）"
+        }
+      ]
+    },
+    {
+      "key": "item_manta",
+      "name": "幻影斧",
+      "notes": [
+        {
+          "text": "镜像的远程英雄幻象攻击力：28% → 25%"
+        }
+      ]
+    },
+    {
+      "key": "item_mask_of_madness",
+      "name": "疯狂面具",
+      "notes": [
+        {
+          "text": "吸血加成：+24% → +22%"
+        },
+        {
+          "text": "对非英雄单位的吸血：+14.4% → +13.2%"
+        }
+      ]
+    },
+    {
+      "key": "item_mjollnir",
+      "name": "雷神之锤",
+      "notes": [
+        {
+          "text": "静电冲击的持续时间：15秒 → 12秒"
+        }
+      ]
+    },
+    {
+      "key": "item_octarine_core",
+      "name": "玲珑心",
+      "notes": [
+        {
+          "text": "图纸价格：200金 → 400金。总价从4900金增加至5100金"
+        }
+      ]
+    },
+    {
+      "key": "item_satanic",
+      "name": "撒旦之邪力",
+      "notes": [
+        {
+          "text": "吸血加成：+30% → +25%"
+        },
+        {
+          "text": "对非英雄单位的吸血：+18% → +15%"
+        }
+      ]
+    },
+    {
+      "key": "item_shivas_guard",
+      "name": "希瓦的守护",
+      "notes": [
+        {
+          "text": "极寒冲击的伤害：260点 → 225点"
+        }
+      ]
+    },
+    {
+      "key": "item_silver_edge",
+      "name": "白银之锋",
+      "notes": [
+        {
+          "text": "疾影步的冷却时间：22秒 → 23秒"
+        },
+        {
+          "text": "疾影步的移动速度加成：22% → 20%"
+        }
+      ]
+    },
+    {
+      "key": "item_enhancement_greedy",
+      "name": "贪婪",
+      "notes": [
+        {
+          "text": "攻击力减少：30/60 → 35/70"
+        }
+      ]
+    }
+  ],
+  "itemChanges": [
+    {
+      "entityType": "ability",
+      "entityKey": "item_bfury",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityCooldown",
+      "before": {
+        "status": "value",
+        "value": "4.0"
+      },
+      "after": {
+        "status": "value",
+        "value": "3.0"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 7758,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 7758,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_dragon_lance",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "1900"
+      },
+      "after": {
+        "status": "value",
+        "value": "2000"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 7954,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 7954,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_enhancement_greedy",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/bonus_damage",
+      "before": {
+        "status": "value",
+        "value": "-30 -60"
+      },
+      "after": {
+        "status": "value",
+        "value": "-35 -70"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 15841,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 15841,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_essence_distiller",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/mana_regen",
+      "before": {
+        "status": "value",
+        "value": "1.75"
+      },
+      "after": {
+        "status": "value",
+        "value": "1.5"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 6813,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 6813,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_greater_crit",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "5100"
+      },
+      "after": {
+        "status": "value",
+        "value": "5200"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 7646,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 7646,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_heart",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "5200"
+      },
+      "after": {
+        "status": "value",
+        "value": "5300"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 5955,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 5955,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_heavens_halberd",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "3400"
+      },
+      "after": {
+        "status": "value",
+        "value": "3300"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 10660,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 10660,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_hurricane_pike",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "4450"
+      },
+      "after": {
+        "status": "value",
+        "value": "4550"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 4993,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 4993,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_infused_raindrop",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/mana_regen",
+      "before": {
+        "status": "value",
+        "value": "0.8"
+      },
+      "after": {
+        "status": "value",
+        "value": "0.6"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 597,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 597,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_manta",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/images_do_damage_percent_ranged",
+      "before": {
+        "status": "value",
+        "value": "-72"
+      },
+      "after": {
+        "status": "value",
+        "value": "-75"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 7834,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 7834,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_manta",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/tooltip_damage_outgoing_ranged",
+      "before": {
+        "status": "value",
+        "value": "28"
+      },
+      "after": {
+        "status": "value",
+        "value": "25"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 7834,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 7834,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_mask_of_madness",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/lifesteal_percent",
+      "before": {
+        "status": "value",
+        "value": "24"
+      },
+      "after": {
+        "status": "value",
+        "value": "22"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 8998,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 8998,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_mjollnir",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/static_duration",
+      "before": {
+        "status": "value",
+        "value": "15.0"
+      },
+      "after": {
+        "status": "value",
+        "value": "12.0"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 8426,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 8426,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_octarine_core",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "4900"
+      },
+      "after": {
+        "status": "value",
+        "value": "5100"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 9421,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 9421,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_recipe_dragon_lance",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "450"
+      },
+      "after": {
+        "status": "value",
+        "value": "550"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 7930,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 7930,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_recipe_greater_crit",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "900"
+      },
+      "after": {
+        "status": "value",
+        "value": "1000"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 7622,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 7622,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_recipe_heart",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "700"
+      },
+      "after": {
+        "status": "value",
+        "value": "800"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 5931,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 5931,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_recipe_heavens_halberd",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "450"
+      },
+      "after": {
+        "status": "value",
+        "value": "350"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 10636,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 10636,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_recipe_hydras_breath",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "1100"
+      },
+      "after": {
+        "status": "value",
+        "value": "1000"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 17027,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 17027,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_recipe_octarine_core",
+      "category": "property",
+      "operation": "modified",
+      "path": "/ItemCost",
+      "before": {
+        "status": "value",
+        "value": "200"
+      },
+      "after": {
+        "status": "value",
+        "value": "400"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 9398,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 9398,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_satanic",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/lifesteal_percent",
+      "before": {
+        "status": "value",
+        "value": "30"
+      },
+      "after": {
+        "status": "value",
+        "value": "25"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 8366,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 8366,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_shivas_guard",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/blast_damage",
+      "before": {
+        "status": "value",
+        "value": "260"
+      },
+      "after": {
+        "status": "value",
+        "value": "225"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 6108,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 6108,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_silver_edge",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityCooldown",
+      "before": {
+        "status": "value",
+        "value": "22.0"
+      },
+      "after": {
+        "status": "value",
+        "value": "23.0"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 8127,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 8127,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    },
+    {
+      "entityType": "ability",
+      "entityKey": "item_silver_edge",
+      "category": "property",
+      "operation": "modified",
+      "path": "/AbilityValues/windwalk_movement_speed",
+      "before": {
+        "status": "value",
+        "value": "22"
+      },
+      "after": {
+        "status": "value",
+        "value": "20"
+      },
+      "beforeSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+          "path": "scripts/npc/items.txt",
+          "line": 8127,
+          "sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96",
+          "clientVersion": "6918"
+        }
+      ],
+      "afterSources": [
+        {
+          "repository": "spirit-bear-productions/dota_vpk_updates",
+          "commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+          "path": "scripts/npc/items.txt",
+          "line": 8127,
+          "sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33",
+          "clientVersion": "6944"
+        }
+      ],
+      "review": null
+    }
+  ],
+  "itemNames": {
+    "item_bfury": "狂战斧",
+    "item_dragon_lance": "魔龙枪",
+    "item_enhancement_greedy": "贪婪",
+    "item_essence_distiller": "精之灵器",
+    "item_greater_crit": "代达罗斯之殇",
+    "item_heart": "恐鳌之心",
+    "item_heavens_halberd": "天堂之戟",
+    "item_hurricane_pike": "飓风长戟",
+    "item_infused_raindrop": "凝魂之露",
+    "item_manta": "幻影斧",
+    "item_mask_of_madness": "疯狂面具",
+    "item_mjollnir": "雷神之锤",
+    "item_octarine_core": "玲珑心",
+    "item_recipe_dragon_lance": "魔龙枪",
+    "item_recipe_greater_crit": "代达罗斯之殇",
+    "item_recipe_heart": "恐鳌之心",
+    "item_recipe_heavens_halberd": "天堂之戟",
+    "item_recipe_hydras_breath": "怪蛇之息",
+    "item_recipe_octarine_core": "玲珑心",
+    "item_satanic": "撒旦之邪力",
+    "item_shivas_guard": "希瓦的守护",
+    "item_silver_edge": "白银之锋"
+  },
+  "sourceRepository": "spirit-bear-productions/dota_vpk_updates",
+  "importerVersion": "patch-context-v1",
+  "clientVersions": {
+    "from": "6918",
+    "to": "6944"
+  },
+  "fixesSource": {
+    "url": "https://www.dota2.com/newsentry/677383425371407609?l=schinese",
+    "sourceCommit": null,
+    "sha256": "f902788f7053cb025ad302817d8837f89a43044dd28d173fcd598d1d227ce4ce",
+    "importedAt": "2026-10-07T04:46:22.706Z"
+  },
+  "fixes": [
+    "肉山洞穴北侧的地形藏身漏洞。",
+    "初始回售期内，不可出售物品被标记出售的问题。",
+    "从储藏处分解静谧之鞋时，冷却未触发的问题。",
+    "祸乱之源：噩梦错误移除减益免疫目标的视野。",
+    "赏金猎人：猎头者未提供额外金钱。",
+    "上古巨神：收回星体游魂时仍能施放回音重踏。",
+    "德鲁伊：交换英雄后，熊灵的控制权未跟随转移。",
+    "莉娜：25级致命一击天赋与其他暴击来源的交互。",
+    "裂魂人：位面空洞错误转移炼金术士的神杖和银月之晶的使用。",
+    "裂魂人：位面空洞与林肯法球的交互。",
+    "伐木机：喷火暴露小地图位置。"
+  ]
+}

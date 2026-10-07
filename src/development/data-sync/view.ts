@@ -72,6 +72,7 @@ export async function databaseOverview(): Promise<DatabaseOverview> {
       "dataset_heads",
       "asset_dataset_heads",
       "unit_asset_heads",
+      "item_asset_heads",
     ])
       heads[table] = (
         await reader.query(`SELECT * FROM public.${quote(table)}`)

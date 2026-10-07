@@ -1,4 +1,6 @@
 "use client";
+import { useTranslations } from "@/i18n/provider";
+import type { Translator } from "@/i18n/messages";
 
 import {
   useCallback,
@@ -138,18 +140,20 @@ export interface InfiniteListProps<T> extends UseInfiniteListOptions<T> {
   showComplete?: boolean;
 }
 
-const DEFAULT_MESSAGES: InfiniteListMessages = {
-  loadingBefore: "Loading earlier results…",
-  loadingAfter: "Loading more results…",
-  loadFailed: "Loading failed.",
-  retryBefore: "Retry earlier results",
-  retryAfter: "Retry more results",
-  complete: "All results are shown.",
-  loaded: (shown, total) =>
-    total === undefined
-      ? `${shown} results shown.`
-      : `${shown} / ${total} shown.`,
-};
+function defaultMessages(t: Translator): InfiniteListMessages {
+  return {
+    loadingBefore: t("正在加载更早的结果…"),
+    loadingAfter: t("正在加载更多结果…"),
+    loadFailed: t("加载失败。"),
+    retryBefore: t("重试较早结果"),
+    retryAfter: t("重试更多结果"),
+    complete: t("已显示全部结果。"),
+    loaded: (shown, total) =>
+      total === undefined
+        ? t("已显示 {shown} 项结果。", { shown })
+        : t("已显示 {shown} / {total} 项。", { shown, total }),
+  };
+}
 
 const IDLE_DIRECTION: InfiniteListDirectionStatus = {
   loading: false,
@@ -163,9 +167,10 @@ export function useInfiniteList<T>({
   messages: messageOverrides,
   onStale,
 }: UseInfiniteListOptions<T>): UseInfiniteListResult<T> {
+  const t = useTranslations();
   const messages = useMemo(
-    () => ({ ...DEFAULT_MESSAGES, ...messageOverrides }),
-    [messageOverrides],
+    () => ({ ...defaultMessages(t), ...messageOverrides }),
+    [messageOverrides, t],
   );
   const sourceRef = useRef(source);
   const getKeyRef = useRef(getKey);
@@ -782,6 +787,7 @@ export function InfiniteList<T>({
   showComplete,
   ...options
 }: InfiniteListProps<T>) {
+  const t = useTranslations();
   const stream = useInfiniteList(options);
   if (stream.isEmpty) return <>{emptyFallback}</>;
 
@@ -799,7 +805,7 @@ export function InfiniteList<T>({
       <BoundaryStatus
         direction="before"
         status={stream.before}
-        messages={{ ...DEFAULT_MESSAGES, ...options.messages }}
+        messages={{ ...defaultMessages(t), ...options.messages }}
         retry={stream.retryBefore}
       />
       <div
@@ -865,13 +871,13 @@ export function InfiniteList<T>({
       <BoundaryStatus
         direction="after"
         status={stream.after}
-        messages={{ ...DEFAULT_MESSAGES, ...options.messages }}
+        messages={{ ...defaultMessages(t), ...options.messages }}
         retry={stream.retryAfter}
       />
       {stream.hasReachedEnd &&
         (showComplete ?? options.source.kind === "remote") && (
           <p className="py-5 text-center text-xs text-[var(--text-muted)]">
-            {{ ...DEFAULT_MESSAGES, ...options.messages }.complete}
+            {{ ...defaultMessages(t), ...options.messages }.complete}
           </p>
         )}
     </div>

@@ -1,6 +1,7 @@
 "use client";
+import type { Translator } from "@/i18n/messages";
+import { useTranslations } from "@/i18n/provider";
 import { memo } from "react";
-
 import type { HeroCardRow } from "@/server/repositories/heroes";
 import type { PrimaryAttribute } from "@/domain/heroes";
 import type { VersionedListSlice } from "@/domain/infinite-list";
@@ -10,7 +11,6 @@ import {
   type InfiniteChunkRenderContext,
   type InfiniteListMessages,
 } from "./infinite-list";
-
 export interface InfiniteHeroCatalogProps {
   initialSlice: VersionedListSlice<HeroCardRow>;
   endpoint: string;
@@ -18,14 +18,18 @@ export interface InfiniteHeroCatalogProps {
   paused?: boolean;
   lang: "en" | "zh-CN";
 }
-
-const ATTRIBUTE_NAMES: Record<PrimaryAttribute, { zh: string; en: string }> = {
+const ATTRIBUTE_NAMES: Record<
+  PrimaryAttribute,
+  {
+    zh: string;
+    en: string;
+  }
+> = {
   strength: { zh: "力量", en: "Strength" },
   agility: { zh: "敏捷", en: "Agility" },
   intelligence: { zh: "智力", en: "Intelligence" },
   universal: { zh: "全才", en: "Universal" },
 };
-
 export const InfiniteHeroCatalog = memo(function InfiniteHeroCatalog({
   initialSlice,
   endpoint,
@@ -33,6 +37,7 @@ export const InfiniteHeroCatalog = memo(function InfiniteHeroCatalog({
   paused = false,
   lang,
 }: InfiniteHeroCatalogProps) {
+  const t = useTranslations();
   return (
     <InfiniteList
       paused={paused}
@@ -49,12 +54,12 @@ export const InfiniteHeroCatalog = memo(function InfiniteHeroCatalog({
       showComplete
       getKey={heroKey}
       onStale={reloadCurrentCatalog}
-      messages={heroMessages(lang)}
-      ariaLabel={lang === "en" ? "Hero results" : "英雄结果"}
+      messages={heroMessages(t)}
+      ariaLabel={t("英雄结果")}
       contentRole="group"
       className="hero-catalog-flow mt-5"
       chunkClassName="hero-catalog-chunk"
-      emptyFallback={<HeroCatalogEmpty lang={lang} />}
+      emptyFallback={<HeroCatalogEmpty />}
       renderChunk={(heroes, context) => (
         <HeroChunk
           heroes={heroes}
@@ -67,11 +72,9 @@ export const InfiniteHeroCatalog = memo(function InfiniteHeroCatalog({
     />
   );
 });
-
 function reloadCurrentCatalog() {
   window.location.reload();
 }
-
 function HeroChunk({
   heroes,
   context,
@@ -85,11 +88,11 @@ function HeroChunk({
   assetVersion: string;
   lang: "en" | "zh-CN";
 }) {
+  const t = useTranslations();
   const runs = groupRuns(heroes);
   const previousAttribute = toPrimaryAttribute(
     context.previousItem?.primaryAttribute,
   );
-
   return (
     <div className="hero-catalog-runs">
       {runs.map((run, runIndex) => {
@@ -102,9 +105,7 @@ function HeroChunk({
             className="hero-catalog-run"
             role="group"
             aria-labelledby={showHeading ? headingId : undefined}
-            aria-label={
-              !showHeading ? names[lang === "en" ? "en" : "zh"] : undefined
-            }
+            aria-label={!showHeading ? t(names.zh) : undefined}
           >
             {showHeading && (
               <div
@@ -116,7 +117,7 @@ function HeroChunk({
                   className="text-sm font-semibold"
                   style={{ color: `var(--attribute-${run.attribute})` }}
                 >
-                  {lang === "en" ? names.en : names.zh}
+                  {t(names.zh)}
                 </h2>
                 <span className="font-data text-[11px] text-[var(--text-muted)]">
                   {groupCounts?.[run.attribute]}
@@ -126,7 +127,10 @@ function HeroChunk({
             <div
               className={`catalog-grid hero-catalog-grid ${showHeading ? "mt-2" : ""}`}
               role="list"
-              aria-label={`${names[lang === "en" ? "en" : "zh"]} ${lang === "en" ? "heroes" : "英雄"}`}
+              aria-label={t("{value0} {value1}", {
+                value0: t(names.zh),
+                value1: t("英雄"),
+              })}
             >
               {run.heroes.map((hero) => (
                 <div
@@ -151,7 +155,6 @@ function HeroChunk({
     </div>
   );
 }
-
 function groupRuns(heroes: readonly HeroCardRow[]): Array<{
   attribute: PrimaryAttribute;
   heroes: HeroCardRow[];
@@ -169,7 +172,6 @@ function groupRuns(heroes: readonly HeroCardRow[]): Array<{
   }
   return runs;
 }
-
 function toPrimaryAttribute(
   value: string | undefined,
 ): PrimaryAttribute | undefined {
@@ -180,52 +182,32 @@ function toPrimaryAttribute(
     ? value
     : undefined;
 }
-
 function heroKey(hero: HeroCardRow): number {
   return hero.heroId;
 }
-
-function heroMessages(lang: "en" | "zh-CN"): InfiniteListMessages {
-  if (lang === "en") {
-    return {
-      loadingBefore: "Loading earlier heroes…",
-      loadingAfter: "Loading more heroes…",
-      loadFailed: "Hero loading failed.",
-      retryBefore: "Retry earlier heroes",
-      retryAfter: "Retry more heroes",
-      complete: "All heroes are shown.",
-      loaded: (shown, total) =>
-        total === undefined
-          ? `${shown} heroes shown.`
-          : `${shown} / ${total} heroes shown.`,
-    };
-  }
+function heroMessages(t: Translator): InfiniteListMessages {
   return {
-    loadingBefore: "正在加载更早的英雄…",
-    loadingAfter: "正在加载更多英雄…",
-    loadFailed: "英雄加载失败。",
-    retryBefore: "重试加载更早英雄",
-    retryAfter: "重试加载更多英雄",
-    complete: "已显示全部英雄。",
+    loadingBefore: t("正在加载更早的英雄…"),
+    loadingAfter: t("正在加载更多英雄…"),
+    loadFailed: t("英雄加载失败。"),
+    retryBefore: t("重试加载更早英雄"),
+    retryAfter: t("重试加载更多英雄"),
+    complete: t("已显示全部英雄。"),
     loaded: (shown, total) =>
       total === undefined
-        ? `已显示 ${shown} 个英雄。`
-        : `已显示 ${shown} / ${total} 个英雄。`,
+        ? t("已显示 {shown} 个英雄。", { shown })
+        : t("已显示 {shown} / {total} 个英雄。", { shown, total }),
   };
 }
-
-function HeroCatalogEmpty({ lang }: { lang: "en" | "zh-CN" }) {
+function HeroCatalogEmpty() {
+  const t = useTranslations();
   return (
     <div className="mt-5 py-20 text-center">
       <p className="text-sm text-[var(--text-secondary)]">
-        {lang === "en"
-          ? "No matching heroes in this dataset."
-          : "当前数据集中没有匹配的英雄。"}
+        {t("当前数据集中没有匹配的英雄。")}
       </p>
       <p className="mt-1 text-xs text-[var(--text-muted)]">
-        {lang === "en"
-          ? "Try removing a filter or clearing the search."
-          : "请尝试减少筛选条件或清除搜索词。"}
+        {t("请尝试减少筛选条件或清除搜索词。")}
       </p>
     </div>
   );

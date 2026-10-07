@@ -63,3 +63,41 @@ it("preserves the catalog FormData contract and accepts numeric option values", 
   expect(changed.mock.calls[0][0].get("time")).toBe("60");
   expect(changed.mock.calls[0][0].get("q")).toBe("test");
 });
+it("retains an uncontrolled choice in normal form submission", async () => {
+  HTMLElement.prototype.scrollIntoView = vi.fn();
+  const submitted = vi.fn();
+  render(
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        submitted(new FormData(event.currentTarget));
+      }}
+    >
+      <input type="hidden" name="release" value="c:current" />
+      <CompactSelect name="entity" label="对象" defaultValue="all">
+        <option value="all">全部</option>
+        <option value="map_object">地图对象</option>
+      </CompactSelect>
+      <button type="submit">比较</button>
+    </form>,
+  );
+  const trigger = screen.getByRole("combobox", { name: "对象" });
+  fireEvent.click(trigger);
+  fireEvent.click(screen.getByRole("option", { name: "地图对象" }));
+  expect(trigger.textContent).toContain("地图对象");
+  fireEvent.click(trigger);
+  await waitFor(() =>
+    expect(
+      screen
+        .getByRole("option", { name: "地图对象" })
+        .getAttribute("aria-selected"),
+    ).toBe("true"),
+  );
+  fireEvent.keyDown(screen.getByRole("option", { name: "地图对象" }), {
+    key: "Escape",
+  });
+  expect(document.activeElement).toBe(trigger);
+  fireEvent.click(screen.getByRole("button", { name: "比较" }));
+  expect(submitted.mock.calls[0][0].get("entity")).toBe("map_object");
+  expect(submitted.mock.calls[0][0].get("release")).toBe("c:current");
+});

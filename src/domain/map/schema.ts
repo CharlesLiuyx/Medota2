@@ -208,6 +208,7 @@ export const mapPackageSchema = z
   });
 export type MapPackage = z.infer<typeof mapPackageSchema>;
 export type MapViewData = {
+  unitNames?: Record<string, { "zh-CN": string; en: string }>;
   visions?: Record<
     string,
     { day: number; night: number; unitName: string; conditional?: string }

@@ -27,7 +27,7 @@ test("overview, canonical search URL and CM filter", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "英雄图鉴" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "敌法师" })).toBeVisible();
   await expect(
-    page.getByRole("img", { name: "Anti-Mage icon", exact: true }),
+    page.getByRole("img", { name: "Anti-Mage 图标", exact: true }),
   ).toBeVisible();
   await expect(
     page.getByText("资料更新暂未完成，当前显示上一次可用的游戏资料。", {
@@ -39,7 +39,7 @@ test("overview, canonical search URL and CM filter", async ({ page }) => {
     .getByPlaceholder("搜索英雄名称、拼音或别称…")
     .fill("  Ａnti-Mage  ");
 
-  await expect(page).toHaveURL(/\/heroes\?q=anti-mage$/u);
+  await expect(page).toHaveURL(/\/heroes\?q=anti-mage&release=c%3A/u);
   await expect(page.getByRole("heading", { name: "敌法师" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "测试守卫" })).toHaveCount(0);
 
@@ -97,7 +97,7 @@ test("hero catalog continuously loads five chunks without repeating group headin
   expect(groupHeadingText.get("intelligence")).toContain("96");
   expect(groupHeadingText.get("universal")).toContain("97");
   await expect(list.locator('[data-infinite-list-key="900192"]')).toBeVisible();
-  await expect(page).toHaveURL(/\/heroes$/u);
+  await expect(page).toHaveURL(/\/heroes\?release=c%3A/u);
   await expect
     .poll(() => list.locator("[data-infinite-list-chunk]").count())
     .toBeGreaterThanOrEqual(5);
@@ -157,13 +157,13 @@ test("compact hero previews open immediately and filters stay keyboard accessibl
   for (const width of [1280, 390]) {
     await page.setViewportSize({ width, height: 840 });
     await page.goto("/heroes");
-    const hero = page.locator('a[href="/heroes/antimage"]').last();
+    const hero = page.locator('a[href^="/heroes/antimage?"]').last();
     await expect(hero).toBeVisible();
     await hero.hover();
     const tooltip = page.getByRole("tooltip");
     await expect(tooltip).toBeVisible({ timeout: 500 });
     await expect(tooltip).toContainText("移动速度 310");
-    await expect(tooltip).toContainText("操作难度");
+    await expect(tooltip).toContainText("复杂程度");
     expect(await hero.getAttribute("title")).toBeNull();
     const bounds = await tooltip.boundingBox();
     expect(bounds!.x).toBeGreaterThanOrEqual(8);
@@ -268,15 +268,27 @@ test("locale switch preserves the selected hero and exposes keyboard focus", asy
   page,
 }) => {
   await page.goto("/heroes/antimage");
-  await page.getByRole("link", { name: "English", exact: true }).click();
-  await expect(page).toHaveURL("/heroes/antimage?lang=en");
+  await expect(page).toHaveURL(/\/heroes\/antimage\?release=c%3A/u);
+  const release = new URL(page.url()).searchParams.get("release")!;
+  expect(release).toMatch(/^c:/u);
+  await page.getByRole("combobox", { name: "语言", exact: true }).click();
+  await page.getByRole("option", { name: "English", exact: true }).click();
+  await expect(page).toHaveURL(
+    new RegExp(
+      `/heroes/antimage\\?release=${encodeURIComponent(release)}&lang=en`,
+    ),
+  );
   await expect(
     page.getByRole("heading", { name: "Anti-Mage", level: 1 }),
   ).toBeVisible();
 
   await page.goto("/heroes");
+  await expect(page).toHaveURL(/\/heroes\?release=c%3A/u);
+  await expect(
+    page.getByRole("heading", { name: "Hero Catalog", exact: true }),
+  ).toBeVisible();
   await page.keyboard.press("Tab");
-  const identity = page.getByRole("link", { name: "Medota2 英雄图鉴" });
+  const identity = page.getByRole("link", { name: "Medota2 Hero Catalog" });
   await expect(identity).toBeFocused();
   await expect(identity).toHaveCSS("outline-style", "none");
   await expect
@@ -401,7 +413,7 @@ test("online fallback handles aliases, IME, cache and URL restoration without a 
     "aria-busy",
     "false",
   );
-  await expect(page).toHaveURL(/q=dfs$/u);
+  await expect(page).toHaveURL(/\/heroes\?q=dfs&release=c%3A/u);
   await input.fill("magina");
   await expect(page.locator("[data-live-results]")).toHaveAttribute(
     "aria-busy",
@@ -425,10 +437,10 @@ test("online fallback handles aliases, IME, cache and URL restoration without a 
     "aria-busy",
     "false",
   );
-  await expect(page).toHaveURL(/q=%E6%95%8C%E6%B3%95$/u);
+  await expect(page).toHaveURL(/q=%E6%95%8C%E6%B3%95&release=c%3A/u);
   await expect(input).toBeFocused();
-  await page.locator('a[href="/heroes/antimage"]').last().click();
-  await expect(page).toHaveURL(/\/heroes\/antimage$/u);
+  await page.locator('a[href^="/heroes/antimage?"]').last().click();
+  await expect(page).toHaveURL(/\/heroes\/antimage\?release=c%3A/u);
   await page.goBack();
   await expect(input).toHaveValue("敌法");
   await expect(
@@ -436,7 +448,7 @@ test("online fallback handles aliases, IME, cache and URL restoration without a 
   ).toHaveCount(0);
   await page.getByRole("button", { name: /清除/u }).click();
   await expect(input).toHaveValue("");
-  await expect(page).toHaveURL(/\/heroes$/u);
+  await expect(page).toHaveURL(/\/heroes\?release=c%3A/u);
   await expect(
     page.getByRole("heading", { name: "测试守卫", exact: true }),
   ).toBeVisible();

@@ -118,3 +118,7 @@ Hero/Ability 图标需要区分“规范引用、VPK 索引、真实字节、可
 ## 地图坐标配置（2026-10-06）
 
 沿用上述固定6918基线，新增只读 `resource/overviews/dota.txt`。pos_x=-9472、pos_y=9472、scale=18.5；scale基于1024逻辑像素，不能按解码图片分辨率直接相乘。此仓库提供材质引用与坐标变换，没有可用地图贴图／地形／导航／实体二进制。`scripts/minimap_starting_positions.txt`是选路UI位置，不能冒充实际建筑、野怪和神符世界坐标。原生地图须另从匹配安装的pak01_dir.vpk和maps/dota.vpk提取；当前真实提取仍阻塞于缺少输入。详见[地图 Spec](../specs/map-explorer.md)。
+
+## 7.41f 固定来源审阅（2026-10-07）
+
+新增核验提交 `f4c45719314754567cb4ef4fe343bbc790a311f4`，ClientVersion 6944，steam.inf 日期 2026-10-05；固定 changelog 最新补丁声明为7.41f。新版 npc_heroes.txt 使用 #base 引用129个英雄文件（含 base／target_dummy）；各英雄文件的 DOTAHeroes 对象嵌套 AbilityDefinitions。旧6918仍保留，适配器分别处理两个来源结构。当前所选 KV 范围首发7.41f到6944的数值未变，不能据此推断引擎代码无变化。完整证据及已收录版本见 [更新报告](../work/7.41f-update.md)。

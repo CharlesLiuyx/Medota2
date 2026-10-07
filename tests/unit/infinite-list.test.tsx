@@ -186,7 +186,7 @@ describe("InfiniteList", () => {
     expect(screen.getByText("Alpha")).toBeTruthy();
     expect(screen.queryByText("Alpha duplicate")).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: "Retry more results" }));
+    fireEvent.click(screen.getByRole("button", { name: "重试更多结果" }));
     expect(await screen.findByText("Beta")).toBeTruthy();
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(String(fetchMock.mock.calls[1][0])).toContain("after=after-a");

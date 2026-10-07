@@ -1,6 +1,6 @@
 # 系统优化 Todo：实体版本化与版本间语义 Diff
 
-状态：**待实施**。记录：2026-10-07。需求方向已由用户明确；本轮只登记任务，尚未修改领域模型、数据库、查询接口或前端。任务标识：`SYS-ENTITY-VERSION-DIFF`。
+状态：**架构与7.41e／7.41f两版真实收录已实施**。更新：2026-10-07。任务标识：`SYS-ENTITY-VERSION-DIFF`。合同见[实体版本](../specs/entity-versions.md)，决策见[ADR0009](../adr/0009-entity-release-read-context.md)。
 
 ## 目标与使用场景
 
@@ -12,14 +12,14 @@
 
 ## 当前基础与差距
 
-当前基线为 `a735968`，以下描述是现有实现，后续实施时需重新核对：
+立项基线为 `a735968`，以下记录当时的实现；本轮以 `main / 4fdce38` 重新核对，已落地内容见末节：
 
 - Hero／Ability／Facet 及关系已有 `dataset_version_id`；Catalog 内容按版本保存，现行合同要求产品查询从 current head 进入。已有版本化存储可以复用，但尚未形成面向用户的统一多版本查询与比较体验。
 - 已有 Catalog 差异与导入门禁；当前主要服务“候选相对当前版本是否可采用”。需核对真实差异粒度，扩展为可查询、可解释的跨版本变化模型。
 - 单位定义仍从匹配 Catalog 的固定来源构建只读模型，尚无独立持久化 Unit Dataset；不能遗漏其版本状态与变化记录。
 - 地图已有独立版本包及前端版本选择。图片、来源、客户端构建和 Catalog 各有自己的版本证据，不能把它们当作同一个版本号。
 
-来源：[Catalog 合同](../specs/hero-catalog-v2.md)、[单位合同](../specs/unit-catalog.md)、[地图合同](../specs/map-explorer.md)、[数据流](../architecture/data-flow.md)。现行 Spec 与 ADR 仍描述现有实现；本任务记录新的目标，实施时同步修订受影响合同。
+来源：[Catalog 合同](../specs/hero-catalog-v2.md)、[单位合同](../specs/unit-catalog.md)、[地图合同](../specs/map-explorer.md)、[数据流](../architecture/data-flow.md)。第一阶段已同步修订受影响 Spec、ADR 和图谱；现行版本行为以[实体版本合同](../specs/entity-versions.md)为准。
 
 ## 已确认的目标要求
 
@@ -58,9 +58,9 @@ Diff 以明确的 `from_version` 与 `to_version` 为边界。任意两个已收
 
 ## 待实施清单
 
-- [ ] **实体盘点**：形成对象清单、身份规则、属性与关系定义、版本覆盖范围；列出当前未建模的规则／机制。
-- [ ] **版本与 Diff 设计**：画出实体身份、版本状态、版本标识、关系和 Diff 的概念模型；明确相邻与非相邻比较规则。
-- [ ] **存储与迁移方案**：评估已有不可变数据集可复用的部分，确定完整快照、增量存储或二者结合的方式。用户要求结构化 Diff，不预先等同于必须采用某一种存储技术。补齐新增迁移、旧数据映射和回退方案，不改写已应用迁移。
+- [x] **实体盘点**：形成对象清单、身份规则、属性与关系定义、版本覆盖范围；列出当前未建模的规则／机制。
+- [x] **版本与 Diff 设计**：画出实体身份、版本状态、版本标识、关系和 Diff 的概念模型；明确相邻与非相邻比较规则。
+- [x] **存储与迁移方案**：评估已有不可变数据集可复用的部分，确定完整快照、增量存储或二者结合的方式。用户要求结构化 Diff，不预先等同于必须采用某一种存储技术。补齐新增迁移、旧数据映射和回退方案，不改写已应用迁移。
 - [ ] **导入与差异实现**：保留多版本内容，生成实体／属性／关系／机制级 Diff；核对来源不足、重复导入和实现版本变化时的行为。
 - [ ] **查询与缓存改造**：让指定版本进入服务端查询、版本比较和浏览器缓存身份；支持同时查询不同版本。
 - [ ] **前端版本浏览与比较**：增加版本筛选、跨页面版本保持、实体历史和 Diff 视图，按变化类型及对象筛选；呈现变化的业务含义与来源。
@@ -78,8 +78,14 @@ Diff 以明确的 `from_version` 与 `to_version` 为边界。任意两个已收
 
 ## 后续接手入口
 
-第一步：按上述清单完成实体盘点与版本／Diff 概念模型，核对现有代码后制定实施方案。此次登记不表示数据库或产品行为已经改造完成。
+下一步：在两版真实收录基础上完成跨工作区同步、第三版真实端点及单位／机制扩展验收。
 
 主要实现入口：`src/domain/`、`src/domain/catalog-diff.ts`、`src/server/db/schema.ts`、`src/importers/`、`src/server/repositories/`、`src/server/services/`、`src/server/map/`、`src/browser/catalog-replica.ts`、`src/app/`、`src/components/`、`src/development/data-sync/`、`src/workers/` 和 `drizzle/`。这些是预计影响范围；实施前再按实际依赖收敛。
 
 补读合同：[浏览器缓存](../specs/browser-catalog-cache.md)、[语义 UI](../specs/semantic-game-ui.md)、[同步协议](../specs/development-data-sync.md)、[Catalog 版本边界 ADR](../adr/0001-hero-catalog-version-boundary.md)、[刷新门禁 ADR](../adr/0003-catalog-refresh-gates.md)。这些文件中的版本入口与门禁职责需要结合新目标评估，不能只替换图上的文案。
+
+## 本轮实施与后续
+
+已落地统一Release索引、顶栏选择、显式历史Catalog读取、页面／链接／搜索／缓存版本保持、结构化端点Diff API及筛选浏览页；复用全量不可变存储，无数据库迁移。实体盘点、身份／覆盖模型与存储决定已形成现行合同。本机组合检查、三版合成验证和真实数据范围见[实施记录](../history/2026-10-07-entity-version-foundation.md)。
+
+下一次实际更新按现有导入／Review／资产门禁生成完整新版，保留旧Catalog与固定来源；完成多Catalog历史浏览与跨工作区同步验收。本机已有7.41e／7.41f两版真实完整Catalog及匹配地图，7.41f为默认；完整收录、审阅与真实Diff见[更新报告](7.41f-update.md)。三版真实数据和跨机器验收仍待完成。独立Unit Dataset、完整机制解析、地图区域稳定身份、重命名／拆分／合并映射仍待实施；这些缺项在比较结果中显式返回。原待实施清单后五项仍包含这些工作，不能以基础架构完成整体目标。

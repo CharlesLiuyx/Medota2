@@ -1,9 +1,13 @@
+import { pinnedVpkRoots } from "./source-roots";
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { resolve } from "node:path";
 import { promisify } from "node:util";
 import { loadLocalEnv } from "@/config/env";
 import { adaptUnits, unitTokens, UNIT_ADAPTER_VERSION } from "./unit-adapter";
+import {
+  nameSupplementProvenance,
+  supplementEntityNames,
+} from "@/domain/entity-names";
 export interface UnitSnapshotMeta {
   datasetVersionId: string;
   sourceCommit: string;
@@ -30,13 +34,7 @@ export async function readPinnedUnitSnapshot(
   if (!record || record.source_commit !== meta.sourceCommit) return null;
   const key = `${meta.datasetVersionId}:${meta.sourceCommit}:${record.raw_sha256}`;
   if (cache.has(key)) return cache.get(key)!;
-  const roots = [
-    resolve(
-      process.env.DOTA_VPK_WORKTREE_ROOT || ".medota2/cache/worktrees",
-      meta.sourceCommit,
-    ),
-    process.env.DOTA_VPK_UPDATES_PATH,
-  ].filter((v): v is string => Boolean(v));
+  const roots = pinnedVpkRoots(meta.sourceCommit);
   for (const root of roots) {
     let files: string[];
     try {
@@ -56,8 +54,8 @@ export async function readPinnedUnitSnapshot(
     // Validation failures propagate: never silently accept a malformed snapshot.
     const adapted = adaptUnits(
       files[0],
-      unitTokens(files[1]),
-      unitTokens(files[2]),
+      supplementEntityNames(unitTokens(files[1]), meta.sourceCommit, "zh-CN"),
+      supplementEntityNames(unitTokens(files[2]), meta.sourceCommit, "en"),
     );
     const snapshot = {
       ...adapted,
@@ -69,6 +67,7 @@ export async function readPinnedUnitSnapshot(
         imported_at: new Date().toISOString(),
         importer_version: UNIT_ADAPTER_VERSION,
         schema_version: "unit-read-model-v1",
+        name_supplement: nameSupplementProvenance(meta.sourceCommit),
         files: paths.map((path, i) => ({
           source_path: path,
           raw_sha256: sha(files[i]),

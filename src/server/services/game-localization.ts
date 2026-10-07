@@ -1,10 +1,12 @@
+import { pinnedVpkRoots } from "@/importers/dota-vpk/source-roots";
 import "server-only";
 import { cache as requestCache } from "react";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { loadLocalEnv } from "@/config/env";
-import { parseKeyValues } from "@/importers/keyvalues/parser";
+import { unitTokens } from "@/importers/dota-vpk/unit-adapter";
+import { supplementEntityNames } from "@/domain/entity-names";
 import { getWebDatabase } from "@/server/db/client";
 
 // The supplemental tooltip labels must belong to the SAME immutable snapshot.
@@ -33,42 +35,22 @@ export const getGameLocalization = requestCache(
       (commit && commit !== sourceCommit)
     )
       return {};
-    const roots = [
-      resolve(
-        process.env.DOTA_VPK_WORKTREE_ROOT || ".medota2/cache/worktrees",
-        sourceCommit,
-      ),
-      process.env.DOTA_VPK_UPDATES_PATH,
-    ].filter((v): v is string => Boolean(v));
+    const roots = pinnedVpkRoots(sourceCommit);
     for (const root of roots) {
       try {
         const data = await readFile(resolve(root, path));
         if (createHash("sha256").update(data).digest("hex") !== hash) continue;
-        if (cache.has(hash)) return cache.get(hash)!;
-        const parsed = parseKeyValues(
-          data.toString("utf8").replace(/^\uFEFF/u, ""),
-        );
-        const language = parsed.entries.find(
-          (e) => e.key.toLowerCase() === "lang",
-        )?.value;
-        const tokens =
-          typeof language === "object"
-            ? language.entries.find((e) => e.key.toLowerCase() === "tokens")
-                ?.value
-            : undefined;
-        const index: Record<string, string> = {};
-        if (typeof tokens === "object")
-          for (const entry of tokens.entries)
-            if (typeof entry.value === "string")
-              index[entry.key.toLowerCase()] = entry.value;
+        if (cache.has(hash))
+          return supplementEntityNames(cache.get(hash)!, sourceCommit, locale);
+        const index = unitTokens(data.toString("utf8"));
         if (cache.size >= 4) cache.delete(cache.keys().next().value!);
         cache.set(hash, index);
-        return index;
+        return supplementEntityNames(index, sourceCommit, locale);
       } catch {
         /* Missing optional source: use stored descriptions and known labels. */
       }
     }
-    return {};
+    return supplementEntityNames({}, sourceCommit, locale);
   },
 );
 const cache = new Map<string, Record<string, string>>();

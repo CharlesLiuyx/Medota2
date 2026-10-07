@@ -1,3 +1,12 @@
+import { gameLocale } from "@/i18n/config";
+import { formatDateTime } from "@/i18n/format";
+import { getTranslations } from "@/i18n/server";
+import { getRequestLocale } from "@/i18n/server";
+import { withLocale } from "@/i18n/locale";
+import { LocalizedText } from "@/i18n/provider";
+import { resolvePageRelease } from "@/server/services/releases";
+import { withRelease } from "@/domain/releases";
+import { MissingReleaseCoverage } from "@/components/release-navigation";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LiveHeroCatalog } from "@/components/live-catalog";
@@ -11,29 +20,49 @@ import {
   parseHeroFilters,
   type SearchParams,
 } from "@/server/services/hero-filters";
-
-export const metadata: Metadata = { title: "英雄" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations();
+  return { title: t("英雄") };
+}
 export const dynamic = "force-dynamic";
-
 export default async function HeroesPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>;
 }) {
+  const t = await getTranslations();
+  const locale = await getRequestLocale();
   const rawSearchParams = await searchParams;
-  const parsed = parseHeroFilters(rawSearchParams);
+  const selected = await resolvePageRelease("/heroes", rawSearchParams);
+  if (selected && !selected.catalogId)
+    return <MissingReleaseCoverage kind={t("英雄")} />;
+  const filterParams = { ...rawSearchParams };
+  delete filterParams.release;
+  filterParams.lang = gameLocale(locale);
+  // The default locale may be explicit in a shared global-navigation URL.
+  if (filterParams.lang === "zh-CN") delete filterParams.lang;
+  const parsed = parseHeroFilters(filterParams);
   if (
     parsed.errors.length === 0 &&
-    !isCanonicalHeroQuery(rawSearchParams, parsed.filters)
+    !isCanonicalHeroQuery(filterParams, parsed.filters)
   ) {
     const query = canonicalHeroQuery(parsed.filters);
-    redirect(query ? `/heroes?${query}` : "/heroes");
+    redirect(
+      withLocale(
+        withRelease(
+          query ? `/heroes?${query}` : "/heroes",
+          selected?.id ?? null,
+        ),
+        locale,
+        true,
+      ),
+    );
   }
-
   let overview: Awaited<ReturnType<typeof getHeroOverview>>;
   try {
     overview = await getHeroOverview(
       parsed.errors.length ? null : parsed.filters,
+      selected?.catalogId ?? undefined,
     );
   } catch (error) {
     return (
@@ -44,7 +73,6 @@ export default async function HeroesPage({
       </main>
     );
   }
-
   if (!overview.meta || !overview.slice) {
     return (
       <main className="mx-auto min-h-[70vh] max-w-[var(--content-max)] px-4 py-20 sm:px-7 lg:px-10">
@@ -52,7 +80,6 @@ export default async function HeroesPage({
       </main>
     );
   }
-
   const meta = overview.meta;
   const gameplayVersion = await getGameplayVersion(
     meta.datasetVersionId,
@@ -61,7 +88,9 @@ export default async function HeroesPage({
   return (
     <main className="mx-auto max-w-[var(--content-max)] px-4 py-4 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <h1 className="text-xl font-semibold tracking-wide">英雄图鉴</h1>
+        <h1 className="text-xl font-semibold tracking-wide">
+          <LocalizedText>英雄图鉴</LocalizedText>
+        </h1>
         <DatasetBadge
           clientVersion={meta.clientVersion}
           sourceCommit={meta.sourceCommit}
@@ -85,18 +114,14 @@ export default async function HeroesPage({
         initialFilters={parsed.filters}
         initialErrors={parsed.errors}
         total={meta.totalHeroes}
-        updatedAt={formatDate(meta.importedAt)}
+        updatedAt={formatDateTime(locale, meta.importedAt, {
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })}
       />
     </main>
   );
-}
-
-function formatDate(value: Date): string {
-  return new Intl.DateTimeFormat("zh-CN", {
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(value);
 }

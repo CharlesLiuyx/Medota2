@@ -1946,6 +1946,99 @@
       ]
     },
     {
+      "table_name": "item_asset_bindings",
+      "columns": [
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "item_key",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "asset_object_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "resolution",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "provenance",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "catalog_dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "manifest_sha256",
+          "type": "text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "expected_keys",
+          "type": "_text",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "provenance",
+          "type": "jsonb",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "imported_at",
+          "type": "timestamptz",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
+      "table_name": "item_asset_heads",
+      "columns": [
+        {
+          "name": "catalog_dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        },
+        {
+          "name": "dataset_version_id",
+          "type": "uuid",
+          "nullable": "NO",
+          "identity": "NO"
+        }
+      ]
+    },
+    {
       "table_name": "reference_hero_records",
       "columns": [
         {
@@ -4694,6 +4787,174 @@
       "definition": "NOT NULL transformer_version"
     },
     {
+      "table_name": "item_asset_bindings",
+      "name": "item_asset_bindings_asset_object_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (asset_object_id) REFERENCES asset_objects(id)"
+    },
+    {
+      "table_name": "item_asset_bindings",
+      "name": "item_asset_bindings_asset_object_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL asset_object_id"
+    },
+    {
+      "table_name": "item_asset_bindings",
+      "name": "item_asset_bindings_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (dataset_version_id) REFERENCES item_asset_dataset_versions(id)"
+    },
+    {
+      "table_name": "item_asset_bindings",
+      "name": "item_asset_bindings_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "item_asset_bindings",
+      "name": "item_asset_bindings_item_key_not_null",
+      "type": "n",
+      "definition": "NOT NULL item_key"
+    },
+    {
+      "table_name": "item_asset_bindings",
+      "name": "item_asset_bindings_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (dataset_version_id, item_key)"
+    },
+    {
+      "table_name": "item_asset_bindings",
+      "name": "item_asset_bindings_provenance_check",
+      "type": "c",
+      "definition": "CHECK ((jsonb_typeof(provenance) = 'object'::text))"
+    },
+    {
+      "table_name": "item_asset_bindings",
+      "name": "item_asset_bindings_provenance_not_null",
+      "type": "n",
+      "definition": "NOT NULL provenance"
+    },
+    {
+      "table_name": "item_asset_bindings",
+      "name": "item_asset_bindings_resolution_check",
+      "type": "c",
+      "definition": "CHECK ((resolution = ANY (ARRAY['icon'::text, 'shared_icon'::text])))"
+    },
+    {
+      "table_name": "item_asset_bindings",
+      "name": "item_asset_bindings_resolution_not_null",
+      "type": "n",
+      "definition": "NOT NULL resolution"
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "name": "item_asset_dataset_versions_catalog_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (catalog_dataset_version_id) REFERENCES hero_catalog_dataset_versions(id)"
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "name": "item_asset_dataset_versions_catalog_dataset_version_id_id_key",
+      "type": "u",
+      "definition": "UNIQUE (catalog_dataset_version_id, id)"
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "name": "item_asset_dataset_versions_catalog_dataset_version_id_mani_key",
+      "type": "u",
+      "definition": "UNIQUE (catalog_dataset_version_id, manifest_sha256)"
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "name": "item_asset_dataset_versions_catalog_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL catalog_dataset_version_id"
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "name": "item_asset_dataset_versions_expected_keys_check",
+      "type": "c",
+      "definition": "CHECK ((cardinality(expected_keys) > 0))"
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "name": "item_asset_dataset_versions_expected_keys_not_null",
+      "type": "n",
+      "definition": "NOT NULL expected_keys"
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "name": "item_asset_dataset_versions_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL id"
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "name": "item_asset_dataset_versions_imported_at_not_null",
+      "type": "n",
+      "definition": "NOT NULL imported_at"
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "name": "item_asset_dataset_versions_manifest_sha256_check",
+      "type": "c",
+      "definition": "CHECK ((manifest_sha256 ~ '^[0-9a-f]{64}$'::text))"
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "name": "item_asset_dataset_versions_manifest_sha256_not_null",
+      "type": "n",
+      "definition": "NOT NULL manifest_sha256"
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "name": "item_asset_dataset_versions_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "name": "item_asset_dataset_versions_provenance_check",
+      "type": "c",
+      "definition": "CHECK ((jsonb_typeof(provenance) = 'object'::text))"
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "name": "item_asset_dataset_versions_provenance_not_null",
+      "type": "n",
+      "definition": "NOT NULL provenance"
+    },
+    {
+      "table_name": "item_asset_heads",
+      "name": "item_asset_heads_catalog_dataset_version_id_dataset_versio_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (catalog_dataset_version_id, dataset_version_id) REFERENCES item_asset_dataset_versions(catalog_dataset_version_id, id)"
+    },
+    {
+      "table_name": "item_asset_heads",
+      "name": "item_asset_heads_catalog_dataset_version_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (catalog_dataset_version_id) REFERENCES hero_catalog_dataset_versions(id)"
+    },
+    {
+      "table_name": "item_asset_heads",
+      "name": "item_asset_heads_catalog_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL catalog_dataset_version_id"
+    },
+    {
+      "table_name": "item_asset_heads",
+      "name": "item_asset_heads_dataset_version_id_not_null",
+      "type": "n",
+      "definition": "NOT NULL dataset_version_id"
+    },
+    {
+      "table_name": "item_asset_heads",
+      "name": "item_asset_heads_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (catalog_dataset_version_id)"
+    },
+    {
       "table_name": "reference_hero_records",
       "name": "reference_hero_records_hero_id_check",
       "type": "c",
@@ -5328,6 +5589,18 @@
     {
       "table_name": "import_runs",
       "columns": ["id"]
+    },
+    {
+      "table_name": "item_asset_bindings",
+      "columns": ["dataset_version_id", "item_key"]
+    },
+    {
+      "table_name": "item_asset_dataset_versions",
+      "columns": ["id"]
+    },
+    {
+      "table_name": "item_asset_heads",
+      "columns": ["catalog_dataset_version_id"]
     },
     {
       "table_name": "reference_hero_records",

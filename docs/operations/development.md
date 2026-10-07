@@ -61,9 +61,9 @@ pnpm local
 ## 检查、测试与产物
 
 ```bash
-pnpm check --plan            # 只显示影响范围、理由和准备需求
-pnpm check                   # 运行必要检查，复用仍有效的静态检查结果
-pnpm check --files src/components/hero-card.tsx
+pnpm check --plan --files src/components/hero-card.tsx  # 本任务范围与准备需求
+pnpm check --files src/components/hero-card.tsx         # 执行相同范围
+pnpm check                   # 组合交付：检查全部未提交改动
 pnpm check --base <git-ref>  # 检查指定 Git 状态之后的组合改动
 pnpm check --watch           # 相关内容变化后重跑
 pnpm test:journeys           # 在共享开发页面执行短流程，不重置开发数据
@@ -75,6 +75,10 @@ pnpm bench --input <vpk-directory> --iterations 3
 pnpm release                # 构建并启动检查 Web 产物，相同输入复用
 pnpm test:clean             # 清理本工具持有的可复用测试栈
 ```
+
+小任务先列全本任务改动文件（含测试和负责规则的文档），规划与执行使用同一组 `--files`；新增依赖加入集合。翻译资源与已登记的展示组件选现有专项，无需启动产品数据库或浏览器。普通英雄卡片只选英雄浏览及共用悬停，版本／语言等流程按各自职责选取。规划器映射维护在 `scripts/development/check-plan.mjs`，新增职责时同步更新映射及边界测试。
+
+`check` 选中的浏览流程自动附带 `--retries=1`：首轮通过的用例保持结果，只重试失败项一次，HTML报告与日志保留flaky。直接执行 `pnpm test:journeys` 时仍默认不重试；可显式传 `--retries=1`。持续失败先看具体断言与trace；修复后重新规划受影响文件，避免无输入变化就反复整组重跑。产品检查通过后若只补文档，使用文档文件范围运行check。纯静态任务可直接运行，不排队等待其他任务的浏览检查；类型增量缓存仍由types锁保护。
 
 `check` 按文件与功能选择少量 E2E、已有针对性单测、静态检查和必要构建。纯文档运行格式与 `pnpm docs:check`，不启动产品数据库或浏览器；普通页面改动不跑全量构建。类型检查使用独立的 `tsconfig.check.json` 和 TypeScript 增量缓存，避免开发服务重新生成 `.next` 类型时相互干扰；框架生成的路由约束由正式构建检查。工具链变化会扩大范围，完整验证仍可显式运行：
 

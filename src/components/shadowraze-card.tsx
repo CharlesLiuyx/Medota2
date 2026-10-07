@@ -1,9 +1,9 @@
 "use client";
-
+import { useLocale } from "@/i18n/provider";
+import { useTranslations } from "@/i18n/provider";
 import { useEffect, useState } from "react";
 import { AbilityTooltip } from "./ability-tooltip";
 import { numbers, type TooltipAbility } from "@/presentation/dota";
-
 /** One presentation card, retaining each range's complete ability definition. */
 export function ShadowrazeCard({
   abilities,
@@ -16,6 +16,8 @@ export function ShadowrazeCard({
   assetVersion: string;
   lang: string;
 }) {
+  const locale = useLocale();
+  const t = useTranslations();
   const [selected, setSelected] = useState(0);
   useEffect(() => {
     const restore = () => {
@@ -31,7 +33,6 @@ export function ShadowrazeCard({
       window.removeEventListener("hashchange", restore);
     };
   }, [abilities]);
-
   return (
     <div className="relative min-w-0" data-ability-group="shadowraze">
       {abilities.slice(1).map((ability) => (
@@ -51,7 +52,7 @@ export function ShadowrazeCard({
         controls={
           <div
             role="group"
-            aria-label="毁灭阴影距离"
+            aria-label={t("毁灭阴影距离")}
             className="mt-1 grid grid-cols-3 gap-1"
           >
             {abilities.map((ability, index) => {
@@ -66,12 +67,13 @@ export function ShadowrazeCard({
                   onClick={() => setSelected(index)}
                   className={`flex items-center justify-center gap-1.5 px-2 py-2 text-xs transition-colors ${selected === index ? "bg-[#b8a27e]/15 text-[#e4c584]" : "bg-black/15 text-[var(--text-muted)] hover:bg-white/5"}`}
                 >
-                  <span>{["近距离", "中距离", "远距离"][index]}</span>{" "}
+                  <span>{[t("近距离"), t("中距离"), t("远距离")][index]}</span>{" "}
                   <strong className="tabular-nums">
                     {numbers(
                       range?.level_values.length
                         ? range.level_values
                         : range?.scalar_value,
+                      locale,
                     )}
                   </strong>
                 </button>

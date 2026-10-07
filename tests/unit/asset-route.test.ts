@@ -54,7 +54,7 @@ describe("database asset route", () => {
     );
   });
 
-  it.each(["ability", "unit"])(
+  it.each(["ability", "unit", "item"])(
     "selects the immutable %s asset dataset requested by v",
     async (entity) => {
       const response = await GET(

@@ -11,7 +11,7 @@
 ## Decision
 
 - 使用不可变 `HeroCatalogDatasetVersion` 统一承载 Hero、Ability、Facet、关系和本地化。
-- 产品只通过 `dataset_heads('hero_catalog')` 读取当前版本。
+- `dataset_heads('hero_catalog')` 选择默认版本；显式历史查询按已发布Catalog ID读取。原“仅从head读取”限制由[ADR0009](0009-entity-release-read-context.md)替代。
 - 候选版本完整写入、校验和生成 semantic diff 后才能提升。
 - promotion 和 rollback 都只在事务内移动一个 head；不覆盖或删除历史数据。
 - `dotaconstants` reference snapshot 和 Valve asset cache 保持独立身份，不参与玩法目录的规范值。

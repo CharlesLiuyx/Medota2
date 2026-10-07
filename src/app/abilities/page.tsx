@@ -1,3 +1,11 @@
+import { gameLocale } from "@/i18n/config";
+import { getTranslations } from "@/i18n/server";
+import { getRequestLocale } from "@/i18n/server";
+import { withLocale } from "@/i18n/locale";
+import { LocalizedText } from "@/i18n/provider";
+import { resolvePageRelease } from "@/server/services/releases";
+import { withRelease } from "@/domain/releases";
+import { MissingReleaseCoverage } from "@/components/release-navigation";
 import { getHeroChoices } from "@/server/repositories/heroes";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -12,28 +20,49 @@ import {
   parseAbilityFilters,
 } from "@/server/services/ability-filters";
 import type { SearchParams } from "@/server/services/hero-filters";
-
-export const metadata: Metadata = { title: "技能" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations();
+  return { title: t("技能") };
+}
 export const dynamic = "force-dynamic";
-
 export default async function AbilitiesPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>;
 }) {
+  const t = await getTranslations();
+  const locale = await getRequestLocale();
   const raw = await searchParams;
-  const parsed = parseAbilityFilters(raw);
+  const selected = await resolvePageRelease("/abilities", raw);
+  if (selected && !selected.catalogId)
+    return <MissingReleaseCoverage kind={t("技能")} />;
+  const filterParams = { ...raw };
+  delete filterParams.release;
+  filterParams.lang = gameLocale(locale);
+  // The default locale may be explicit in a shared global-navigation URL.
+  if (filterParams.lang === "zh-CN") delete filterParams.lang;
+  const parsed = parseAbilityFilters(filterParams);
   if (
     parsed.errors.length === 0 &&
-    !isCanonicalAbilityQuery(raw, parsed.filters)
+    !isCanonicalAbilityQuery(filterParams, parsed.filters)
   ) {
     const query = canonicalAbilityQuery(parsed.filters);
-    redirect(query ? `/abilities?${query}` : "/abilities");
+    redirect(
+      withLocale(
+        withRelease(
+          query ? `/abilities?${query}` : "/abilities",
+          selected?.id ?? null,
+        ),
+        locale,
+        true,
+      ),
+    );
   }
   let overview: Awaited<ReturnType<typeof getAbilityOverview>>;
   try {
     overview = await getAbilityOverview(
       parsed.errors.length ? null : parsed.filters,
+      selected?.catalogId ?? undefined,
     );
   } catch (error) {
     return (
@@ -59,7 +88,9 @@ export default async function AbilitiesPage({
   return (
     <main className="mx-auto max-w-[var(--content-max)] px-4 py-4 sm:px-6">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <h1 className="text-xl font-semibold tracking-wide">技能图鉴</h1>
+        <h1 className="text-xl font-semibold tracking-wide">
+          <LocalizedText>技能图鉴</LocalizedText>
+        </h1>
         <DatasetBadge
           gameplayVersion={gameplayVersion}
           clientVersion={meta.clientVersion}

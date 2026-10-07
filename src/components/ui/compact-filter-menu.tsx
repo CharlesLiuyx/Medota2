@@ -1,4 +1,5 @@
 "use client";
+import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 
 export function CompactFilterMenu({
@@ -51,7 +52,11 @@ export function CompactFilterMenu({
         {count > 0 && (
           <span className="text-[var(--accent-hover)]">{count}</span>
         )}
-        <span className="compact-menu-chevron">⌄</span>
+        <ChevronDown
+          aria-hidden="true"
+          className="compact-menu-chevron"
+          strokeWidth={2.5}
+        />
       </summary>
       <div className="compact-menu-popup">{children}</div>
     </details>

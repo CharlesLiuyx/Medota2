@@ -1,3 +1,4 @@
+import { inspectReleaseReadiness } from "@/server/release-readiness";
 import { performance } from "node:perf_hooks";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
@@ -5,6 +6,7 @@ import { from as copyFrom } from "pg-copy-streams";
 import {
   assertSourceImportBuildIsClean,
   readBuildIdentity,
+  readWorkingTreeFingerprint,
 } from "@/config/build-identity";
 import { getEnvironmentDeclaration, getRequiredPath } from "@/config/env";
 import type { VerifiedSession } from "@/server/environment/contract";
@@ -83,7 +85,7 @@ async function main(): Promise<void> {
   const downloadMissingAssets = process.argv.includes("--download-missing");
   const metrics = startMetrics();
   const build = await readBuildIdentity();
-  const importerVersion = `hero-catalog-v2/${build.buildId}${localPreview ? "/local-preview" : ""}`;
+  const importerVersion = `hero-catalog-v2/${build.buildId}${localPreview ? `/local-preview.${await readWorkingTreeFingerprint()}` : ""}`;
 
   if (localPreview) {
     const declaration = getEnvironmentDeclaration();
@@ -348,7 +350,8 @@ async function persistCatalog(
         !input.noPromote &&
         (version.gate_status === "green" ||
           (version.gate_status === "yellow" &&
-            version.review_status === "approved"));
+            version.review_status === "approved")) &&
+        (await inspectReleaseReadiness(client, version.id)).ready;
       if (canPromote) {
         await client.query("SELECT promote_hero_catalog_version($1, $2)", [
           version.id,
@@ -419,7 +422,10 @@ async function persistCatalog(
     await persistDiffs(client, catalogVersionId, gate);
     await validateMaterialization(client, catalogVersionId, input);
 
-    const promoted = gate.gate === "green" && !input.noPromote;
+    const promoted =
+      gate.gate === "green" &&
+      !input.noPromote &&
+      (await inspectReleaseReadiness(client, catalogVersionId)).ready;
     if (promoted) {
       await client.query("SELECT promote_hero_catalog_version($1, $2)", [
         catalogVersionId,
@@ -742,7 +748,8 @@ async function materializeSources(
        dataset_version_id, entity_type, entity_key, occurrence_ordinal, source_path, source_line,
        source_key, declaration_kind, raw_definition, resolved_definition, raw_sha256,
        resolved_sha256, inherited_fields, unknown_fields)
-     SELECT $2, 'hero', payload->>'internalName', 0, 'scripts/npc/npc_heroes.txt', NULL,
+     SELECT $2, 'hero', payload->>'internalName', 0, COALESCE(payload->'source'->>'sourcePath', 'scripts/npc/npc_heroes.txt'),
+       (payload->'source'->>'sourceLine')::integer,
        payload->'source'->>'sourceKey', 'top_level', payload->'source', NULL,
        payload->'source'->>'sourceDtoSha256', NULL,
        ARRAY(SELECT jsonb_array_elements_text(payload->'source'->'inheritedFields')), '{}'

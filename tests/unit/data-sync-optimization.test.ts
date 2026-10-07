@@ -20,7 +20,10 @@ import { tables, schemaDigest } from "@/development/data-sync/schema";
 import { listMigrations } from "@/server/db/migrations";
 import { putFile, chunkPath } from "@/development/data-sync/files";
 import type { VerifiedDatabase } from "@/server/environment/contract";
-import { gitFiles } from "@/development/data-sync/dependencies";
+import {
+  gitFiles,
+  prepareDependencies,
+} from "@/development/data-sync/dependencies";
 
 vi.mock("@/development/data-sync/schema", async (original) => ({
   ...(await original<typeof import("@/development/data-sync/schema")>()),
@@ -274,4 +277,67 @@ it("reads pinned Git files together without changing binary or UTF-8 content, an
   await expect(
     gitFiles(root, commit, ["first.bin", "missing.txt"]),
   ).rejects.toThrow("missing or not a blob");
+});
+
+it("expands a managed sparse source for newly required item files without overwriting corrupted existing bytes", async () => {
+  const root = await temporary();
+  const execute = promisify(execFile);
+  const git = (where: string, args: string[]) =>
+    execute("git", [
+      "-C",
+      where,
+      "-c",
+      `core.hooksPath=${resolve(root, "disabled-hooks")}`,
+      ...args,
+    ]);
+  await git(root, ["init"]);
+  await mkdir(resolve(root, "scripts/npc"), { recursive: true });
+  const files = {
+    "steam.inf": Buffer.from(root),
+    "scripts/npc/items.txt": Buffer.from('"DOTAAbilities" { "item_blink" {} }'),
+  };
+  for (const [path, bytes] of Object.entries(files))
+    await writeFile(resolve(root, path), bytes);
+  await git(root, ["add", "."]);
+  await git(root, [
+    "-c",
+    "user.name=Snapshot fixture",
+    "-c",
+    "user.email=fixture@example.invalid",
+    "commit",
+    "-m",
+    "Sparse item fixture",
+  ]);
+  const commit = (await git(root, ["rev-parse", "HEAD"])).stdout.trim();
+  const cache = resolve(".medota2/data-sync/sources", commit);
+  roots.push(cache);
+  await execute("git", ["clone", "--no-checkout", root, cache]);
+  await git(cache, ["sparse-checkout", "init", "--no-cone"]);
+  await git(cache, ["sparse-checkout", "set", "/steam.inf"]);
+  await git(cache, ["checkout", "--detach", commit]);
+  await expect(
+    readFile(resolve(cache, "scripts/npc/items.txt")),
+  ).rejects.toMatchObject({ code: "ENOENT" });
+  const saved = await manifest();
+  saved.sources = [
+    {
+      repository: "spirit-bear-productions/dota_vpk_updates",
+      url: "https://github.com/spirit-bear-productions/dota_vpk_updates.git",
+      commit,
+      files: Object.entries(files).map(([path, bytes]) => ({
+        path,
+        sha256: sha256(bytes),
+        bytes: bytes.length,
+      })),
+    },
+  ];
+  await prepareDependencies(saved, root, true);
+  expect(await readFile(resolve(cache, "scripts/npc/items.txt"))).toEqual(
+    files["scripts/npc/items.txt"],
+  );
+  await writeFile(resolve(cache, "scripts/npc/items.txt"), "corrupted");
+  await expect(prepareDependencies(saved, root, true)).rejects.toThrow();
+  expect(await readFile(resolve(cache, "scripts/npc/items.txt"), "utf8")).toBe(
+    "corrupted",
+  );
 });

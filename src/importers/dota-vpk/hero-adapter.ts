@@ -24,6 +24,7 @@ import {
 } from "@/importers/keyvalues/parser";
 import { canonicalJsonSha256 } from "@/lib/hash";
 import { HERO_DENYLIST } from "./constants";
+import { readHeroSource } from "./hero-source";
 
 const HEROES_PATH = "scripts/npc/npc_heroes.txt";
 const HERO_NAME = /^npc_dota_hero_[a-z0-9_]+$/u;
@@ -99,8 +100,7 @@ export function parseHeroDataset(
   files: readonly CheckedSourceFile[],
 ): ParsedHeroDataset {
   const byPath = new Map(files.map((file) => [file.path, file]));
-  const heroFile = requiredFile(byPath, HEROES_PATH);
-  const root = uniqueObject(parseKeyValues(heroFile.text), "DOTAHeroes");
+  const { root, origins } = readHeroSource(files);
   const issues: ImportIssue[] = [];
 
   const baseEntries = objectEntries(root, "npc_dota_hero_base");
@@ -179,7 +179,14 @@ export function parseHeroDataset(
     }
 
     const hero = mapHero(entry.key, dto, locales, issues);
-    if (hero) heroes.push(hero);
+    if (hero) {
+      const origin = origins.get(entry.key)!;
+      if (origin.path !== HEROES_PATH) {
+        hero.source.sourcePath = origin.path;
+        hero.source.sourceLine = entry.line;
+      }
+      heroes.push(hero);
+    }
   }
 
   validateUniqueness(heroes, issues);

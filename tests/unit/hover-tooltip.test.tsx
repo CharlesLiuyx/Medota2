@@ -58,10 +58,13 @@ it("updates only the previous and next anchor across a dense catalog", () => {
   );
   renders.clear();
   fireEvent.focus(screen.getByText("Hero 0"));
-  expect([...renders.keys()]).toEqual(["/heroes/0"]);
+  expect([...renders.keys()]).toEqual(["/heroes/0?lang=zh-CN"]);
   renders.clear();
   fireEvent.focus(screen.getByText("Hero 1"));
-  expect([...renders.keys()].sort()).toEqual(["/heroes/0", "/heroes/1"]);
+  expect([...renders.keys()].sort()).toEqual([
+    "/heroes/0?lang=zh-CN",
+    "/heroes/1?lang=zh-CN",
+  ]);
   expect(screen.getAllByRole("tooltip")).toHaveLength(1);
   expect(screen.getByRole("tooltip").textContent).toBe("Details 1");
   fireEvent.keyDown(document, { key: "Escape" });
