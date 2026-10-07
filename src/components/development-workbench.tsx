@@ -17,7 +17,11 @@ export function DevelopmentWorkbench() {
     let stopped = false;
     let timer: ReturnType<typeof setTimeout>;
     const controller = new AbortController();
+    let inFlight = false;
+    let lastStatus = "";
     async function poll() {
+      if (stopped || document.hidden || inFlight) return;
+      inFlight = true;
       try {
         const response = await fetch("/api/development", {
           cache: "no-store",
@@ -26,7 +30,11 @@ export function DevelopmentWorkbench() {
         if (!response.ok) throw new Error(t("工作台暂时不可用"));
         const next = (await response.json()) as WorkbenchStatus;
         if (stopped) return;
-        setStatus(next);
+        const serialized = JSON.stringify(next);
+        if (serialized !== lastStatus) {
+          lastStatus = serialized;
+          setStatus(next);
+        }
         setError("");
         const key = `${next.instance}:${next.resultRevision}`;
         if (next.sample === "passed") {
@@ -36,12 +44,19 @@ export function DevelopmentWorkbench() {
       } catch {
         if (!stopped) setError(t("连接中；服务恢复后会自动继续"));
       } finally {
-        if (!stopped) timer = setTimeout(poll, document.hidden ? 1500 : 350);
+        inFlight = false;
+        if (!stopped && !document.hidden) timer = setTimeout(poll, 350);
       }
     }
+    const onVisibility = () => {
+      clearTimeout(timer);
+      if (!document.hidden) void poll();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     void poll();
     return () => {
       stopped = true;
+      document.removeEventListener("visibilitychange", onVisibility);
       controller.abort();
       clearTimeout(timer);
     };

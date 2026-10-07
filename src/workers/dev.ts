@@ -248,7 +248,7 @@ async function serve(): Promise<void> {
       [
         "node_modules/next/dist/bin/next",
         "dev",
-        "--webpack",
+        "--turbopack",
         "-H",
         "127.0.0.1",
         "-p",

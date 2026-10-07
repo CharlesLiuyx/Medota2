@@ -2352,17 +2352,17 @@
                     class="node"
                     data-key="task"
                     data-name="3 · 页面和小样例更新"
-                    data-definition="页面热更新；相关计算在独立子进程重算。"
+                    data-definition="Turbopack更新页面，样式仅扫描src；后台面板暂停轮询，相关计算在独立子进程重算。"
                     data-why="尽早看见错误，旧任务不能覆盖新输入的结果。"
                     data-detail="运行配置、迁移或脚手架变化需要 pnpm dev:restart，日常数据不会因重启清空。"
-                    data-files='["src/development/sample.ts", "src/components/development-workbench.tsx"]'
+                    data-files='["src/development/sample.ts", "src/components/development-workbench.tsx", "src/workers/dev.ts", "src/app/globals.css"]'
                     data-node-id="work-graph-feedback"
                     aria-pressed="false"
                   >
                     <span class="node-type">程序处理</span
                     ><strong>3 · 页面和小样例更新</strong
                     ><span class="node-summary"
-                      >页面热更新；相关计算在独立子进程重算。</span
+                      >Turbopack热更新；计算独立重跑，后台面板暂停轮询。</span
                     ><span class="node-why"
                       ><b>作用</b>
                       尽早看见错误，旧任务不能覆盖新输入的结果。</span
@@ -2748,20 +2748,20 @@
                   <button
                     class="node"
                     data-key="task"
-                    data-name="1 · 提交本地代码"
-                    data-definition="pnpm push 首先提交可跟踪的本地代码改动。"
-                    data-why="保存这次交接所用的代码基线。"
-                    data-detail="该命令会 git add --all 并提交，执行前需要相应范围的用户授权。"
-                    data-files='["src/workers/push.ts"]'
+                    data-name="1 · 固定候选并验证"
+                    data-definition="固定全部代码和数据候选，按远端基线执行检查。"
+                    data-why="让通过结果对应这次发布的准确内容。"
+                    data-detail="先核对依赖归属和远端；保存候选提交后执行fixture与真实旅程。输入变化停止后续检查；并行编辑应提前使用独立工作区。"
+                    data-files='["src/workers/push.ts", "src/development/publication/candidate.ts", "src/workers/run-check.ts"]'
                     data-node-id="sync-graph-commit"
                     aria-pressed="false"
                   >
                     <span class="node-type">程序处理</span
-                    ><strong>1 · 提交本地代码</strong
+                    ><strong>1 · 固定候选并验证</strong
                     ><span class="node-summary"
-                      >pnpm push 首先提交可跟踪的本地代码改动。</span
+                      >固定全部代码和数据候选，按远端基线执行检查。</span
                     ><span class="node-why"
-                      ><b>作用</b> 保存这次交接所用的代码基线。</span
+                      ><b>作用</b> 让通过结果对应这次发布的准确内容。</span
                     >
                   </button>
                   <div class="down-arrow">↓</div>
@@ -2771,7 +2771,7 @@
                     data-name="2 · 发布完整业务快照"
                     data-definition="一致性导出、上传私有仓库、独立回取核验。"
                     data-why="让另一机器能拿到同一份业务内容。"
-                    data-detail="包含数据库、图片、固定来源、完整地图集合；相同内容可复用，增量回验复用已从远端验证的对象。"
+                    data-detail="包含数据库、图片、固定来源、完整地图集合；发布时内容ID须与验证候选相同。相同快照复用，增量回验只补缺失对象。"
                     data-files='["src/development/data-sync/publish.ts", "src/development/data-sync/snapshot.ts"]'
                     data-node-id="sync-graph-publish"
                     aria-pressed="false"
@@ -2788,18 +2788,18 @@
                   <button
                     class="node"
                     data-key="task"
-                    data-name="3 · 绑定数据并推送代码"
-                    data-definition="更新并提交 dev-data.lock.json，再普通推送代码。"
+                    data-name="3 · 推送并确认CI"
+                    data-definition="检查数据lock，普通推送main，确认该提交CI成功。"
                     data-why="让代码明确指向已核验、可获取的数据快照。"
-                    data-detail=""
-                    data-files='["src/workers/push.ts", "dev-data.lock.json"]'
+                    data-detail="阶段收据记录耗时和失败；推送结果不确定先回读远端，push --resume只续接CI。取消、跳过、失败或缺失均不算完成。"
+                    data-files='["src/workers/push.ts", "src/development/publication/workflow.ts", "dev-data.lock.json"]'
                     data-node-id="sync-graph-lockpush"
                     aria-pressed="false"
                   >
                     <span class="node-type">程序处理</span
-                    ><strong>3 · 绑定数据并推送代码</strong
+                    ><strong>3 · 推送并确认CI</strong
                     ><span class="node-summary"
-                      >更新并提交 dev-data.lock.json，再普通推送代码。</span
+                      >检查数据lock，普通推送main，确认该提交CI成功。</span
                     ><span class="node-why"
                       ><b>作用</b>
                       让代码明确指向已核验、可获取的数据快照。</span

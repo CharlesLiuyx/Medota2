@@ -23,6 +23,36 @@ function selectedJourneys(paths: string[]) {
 }
 
 describe("development check scope", () => {
+  it("checks publication orchestration with its fault tests, while exporter and unknown modules retain dynamic checks", () => {
+    const plan = createPlan([
+      "src/workers/push.ts",
+      "src/development/publication/candidate.ts",
+    ]);
+    expect(plan.tasks.map((task) => task.id)).toEqual([
+      "format",
+      "lint",
+      "docs",
+      "types",
+      "unit",
+    ]);
+    expect(plan.tasks.find((task) => task.id === "unit")?.args).toContain(
+      "tests/unit/publication.test.ts",
+    );
+    expect(createPlan(["src/development/data-sync/publish.ts"]).browser).toBe(
+      true,
+    );
+    expect(createPlan(["src/development/publication/future.ts"]).browser).toBe(
+      true,
+    );
+    hiddenFiles.add("tests/unit/publication.test.ts");
+    expect(createPlan(["src/workers/push.ts"]).browser).toBe(true);
+  });
+  it("checks visibility and refresh behavior when the workbench UI changes", () => {
+    const plan = createPlan(["src/components/development-workbench.tsx"]);
+    expect(plan.tasks.find((task) => task.id === "unit")?.args).toContain(
+      "tests/unit/development-workbench.test.tsx",
+    );
+  });
   it("keeps documentation changes out of product setup and checks", () => {
     const plan = createPlan(["README.md", "docs/current.md"]);
     expect(plan.browser).toBe(false);

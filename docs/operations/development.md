@@ -16,7 +16,9 @@ pnpm dev
 
 打开 [http://127.0.0.1:3000/heroes](http://127.0.0.1:3000/heroes)。该入口默认优先复用已准备的 local-review 真实 Catalog 和资产，启动前检查图片覆盖；已有数据保持原样。没有真实审阅环境时，才使用 development 数据库，空库加载含占位图的小样例，并在开发面板标明。第二个 Session 再运行 `pnpm dev` 会连接同一个后台服务。
 
-保存页面代码后自动热更新。页面右下角“共享开发”显示真实解析器的小样例、运行状态、耗时与错误；连续保存合并重算，旧结果不会覆盖新结果。页面数据与下方计算样例相互独立，计算使用的小 fixture 不替换页面的真实数据。冷启动与首次页面编译会慢一些。
+保存页面代码后自动热更新。页面右下角“共享开发”显示真实解析器的小样例、运行状态、耗时与错误；连续保存合并重算，旧结果不会覆盖新结果。页面数据与下方计算样例相互独立，计算使用的小 fixture 不替换页面的真实数据。冷启动与首次页面编译会慢一些。开发入口统一使用项目锁定的Turbopack，Tailwind扫描范围为`src/`；文档与测试保存不应引起全站CSS热更新。隐藏标签页暂停开发面板轮询，切回后立即同步。
+
+开发浏览器应使用不注入页面内容的配置。若hydration报错显示`data-immersive-translate-page-theme`等服务端不存在的属性，停用该站点的页面改写扩展，或使用无扩展的独立开发配置后完整刷新；不要用全局`suppressHydrationWarning`掩盖。依赖必须由本目录的`pnpm install --frozen-lockfile`建立，不复制其他工作树的`node_modules`或其链接；否则Turbopack可能无法在项目根内解析Next，临时工作树移除也会破坏开发环境。
 
 `.env` 的 `MEDOTA2_WORKBENCH_DATA` 默认为 `auto`；可显式设为 `local-review` 或 `development`，修改后运行 `pnpm dev:restart`。真实数据模式的资产检查不通过时会报错，不会静默切换为占位图。
 
@@ -65,6 +67,7 @@ pnpm check --plan --files src/components/hero-card.tsx  # 本任务范围与准�
 pnpm check --files src/components/hero-card.tsx         # 执行相同范围
 pnpm check                   # 组合交付：检查全部未提交改动
 pnpm check --base <git-ref>  # 检查指定 Git 状态之后的组合改动
+pnpm check --publication --base <git-ref>  # 发布检查：fixture与真实旅程
 pnpm check --watch           # 相关内容变化后重跑
 pnpm test:journeys           # 在共享开发页面执行短流程，不重置开发数据
 pnpm test:journeys --fixture # 在可复用测试库核对已知数据与页面
@@ -135,4 +138,4 @@ pnpm db:environment:doctor:local
 
 OpenDota当前只有服务端秘密配置入口，操作见[OpenDota配置](../specs/opendota-secret.md)。Windows文件权限以项目ACL适配为准，不能机械执行Unix chmod步骤。
 
-跨机器获取／发布完整业务状态使用[同步运行手册](../development-data-sync-runbook.md)。`pnpm push`会提交并上传代码和数据，需用户授权；`pnpm sync`会拉取代码、安装锁定依赖、保存本地业务变更并应用目标数据，必要时重启工作台。
+跨机器获取／发布完整业务状态使用[同步运行手册](../development-data-sync-runbook.md)。`pnpm push`需用户授权，固定候选后验证代码和完整数据、推送main并确认对应CI；`pnpm push --plan`预览，`pnpm push --status`汇总阶段耗时，`pnpm push --resume`只续接CI。依赖过期时脚本停止，协调后显式按锁文件安装；禁止跨工作区共享可写node_modules。`pnpm sync`会拉取代码、安装锁定依赖、保存本地业务变更并应用目标数据，必要时重启工作台。

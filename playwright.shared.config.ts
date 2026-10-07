@@ -1,7 +1,10 @@
+import { getWorkbenchPort } from "./src/config/data-sync-state";
 import { defineConfig, devices } from "@playwright/test";
 
 const shared = process.env.MEDOTA2_SHARED_WEB === "1";
-const port = shared ? 3000 : Number(process.env.MEDOTA2_TEST_WEB_PORT);
+const port = shared
+  ? getWorkbenchPort()
+  : Number(process.env.MEDOTA2_TEST_WEB_PORT);
 const artifacts = process.env.MEDOTA2_ARTIFACT_ROOT;
 if (!artifacts || !Number.isInteger(port) || port < 1)
   throw new Error(
@@ -23,7 +26,7 @@ export default defineConfig({
   webServer: shared
     ? undefined
     : {
-        command: `pnpm exec next dev --webpack -H 127.0.0.1 -p ${port}`,
+        command: `pnpm exec next dev --turbopack -H 127.0.0.1 -p ${port}`,
         url: `${baseURL}/heroes`,
         reuseExistingServer: false,
         timeout: 120_000,

@@ -39,20 +39,39 @@ it("coalesces dense-map pointer input, reuses the scene, and keeps the canvas in
       frames.clear();
       batch.forEach((callback) => callback(nextFrame * 16));
     });
+  let resize = () => {};
   vi.stubGlobal(
     "ResizeObserver",
     class {
+      constructor(callback: () => void) {
+        resize = callback;
+      }
       observe() {}
       disconnect() {}
     },
   );
-  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(600);
-  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(600);
+  let viewportSize = 0;
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(
+    () => viewportSize,
+  );
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockImplementation(
+    () => viewportSize,
+  );
   const context = new Proxy(
     {},
     {
-      get: (_, key) =>
-        key === "measureText" ? () => ({ width: 30 }) : () => {},
+      get: (_, key) => {
+        if (key === "measureText") return () => ({ width: 30 });
+        if (key === "drawImage")
+          return (image: CanvasImageSource) => {
+            if (
+              image instanceof HTMLCanvasElement &&
+              (image.width === 0 || image.height === 0)
+            )
+              throw new DOMException("Zero-sized canvas", "InvalidStateError");
+          };
+        return () => {};
+      },
       set: () => true,
     },
   );
@@ -89,6 +108,25 @@ it("coalesces dense-map pointer input, reuses the scene, and keeps the canvas in
   const canvas = screen.getByLabelText(/交互地图/) as HTMLCanvasElement;
   canvas.setPointerCapture = vi.fn();
   flush();
+  expect(canvas.dataset.paints).toBeUndefined();
+  expect(widthWrites).not.toHaveBeenCalled();
+  expect(heightWrites).not.toHaveBeenCalled();
+  viewportSize = 600;
+  resize();
+  flush();
+  const visiblePaints = canvas.dataset.paints;
+  // Hide after queuing a frame, as happens when navigating away from a map.
+  resize();
+  viewportSize = 0;
+  resize();
+  flush();
+  expect(canvas.dataset.paints).toBe(visiblePaints);
+  expect(canvas.width).toBe(600);
+  expect(canvas.height).toBe(600);
+  viewportSize = 600;
+  resize();
+  flush();
+  expect(Number(canvas.dataset.paints)).toBeGreaterThan(Number(visiblePaints));
   widthWrites.mockClear();
   heightWrites.mockClear();
   const burst = () => {

@@ -16,6 +16,10 @@ export interface CheckPlan {
 }
 export function changedFiles(base?: string): string[];
 export function createPlan(paths: string[]): CheckPlan;
+export function publicationPlan(
+  plan: CheckPlan,
+  fixtureOnly?: boolean,
+): CheckPlan;
 export function parseArguments(args: string[]): {
   base?: string;
   files?: string[];
@@ -23,4 +27,7 @@ export function parseArguments(args: string[]): {
   json: boolean;
   force: boolean;
   watch: boolean;
+  publication: boolean;
 };
+
+export function warmRoutesForScopes(scopes?: string[]): string[];

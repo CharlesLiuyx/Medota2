@@ -8,6 +8,7 @@ const state = vi.hoisted(() => ({
   acquireLock: vi.fn(),
   run: vi.fn(),
   readJson: vi.fn(),
+  input: "unchanged-input",
 }));
 vi.mock("../../scripts/development/check-plan.mjs", () => ({
   parseArguments: () => ({ files: ["example.ts"] }),
@@ -18,7 +19,7 @@ vi.mock("@/development/runtime", () => ({
   acquireLock: state.acquireLock,
   run: state.run,
   readJson: state.readJson,
-  fingerprint: async () => "unchanged-input",
+  fingerprint: async () => state.input,
   writeJson: async (
     _path: string,
     value: { finishedAt?: string; status: string },
@@ -58,6 +59,7 @@ beforeEach(() => {
     ]),
   );
   state.finished = undefined;
+  state.input = "unchanged-input";
   state.readJson.mockResolvedValue(null);
   state.acquireLock.mockResolvedValue(state.release);
   state.run.mockResolvedValue(undefined);
@@ -76,6 +78,22 @@ async function execute() {
   });
 }
 describe("incremental check runner", () => {
+  it("stops after a stale task instead of running the remaining expensive tasks", async () => {
+    state.plan = plan("static");
+    state.plan.tasks.push({
+      ...state.plan.tasks[0],
+      id: "later-browser",
+      kind: "browser",
+    });
+    state.run.mockImplementation(async () => {
+      state.input = "changed-input";
+    });
+    await execute();
+    expect(state.run).toHaveBeenCalledTimes(1);
+    expect(state.finished?.status).toBe("stale");
+    expect(process.exitCode).toBe(1);
+  });
+
   it("runs static checks without waiting for the product checks lock", async () => {
     state.plan = plan("static");
     await execute();

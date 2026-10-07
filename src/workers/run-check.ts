@@ -7,6 +7,7 @@ import { nativeCommand } from "@/development/command";
 import {
   changedFiles,
   createPlan,
+  publicationPlan,
   parseArguments,
   type CheckTask,
 } from "../../scripts/development/check-plan.mjs";
@@ -20,6 +21,12 @@ import {
 
 const exec = promisify(execFile);
 const options = parseArguments(process.argv.slice(2));
+function selectedPlan() {
+  const plan = createPlan(options.files ?? changedFiles(options.base));
+  return options.publication
+    ? publicationPlan(plan, Boolean(process.env.CI))
+    : plan;
+}
 let interrupted = false;
 process.once("SIGINT", () => {
   interrupted = true;
@@ -58,7 +65,7 @@ async function taskKey(task: CheckTask): Promise<string> {
 }
 
 async function check(): Promise<boolean> {
-  let plan = createPlan(options.files ?? changedFiles(options.base));
+  let plan = selectedPlan();
   if (options.plan || options.json) {
     console.log(JSON.stringify(plan, null, 2));
     return true;
@@ -67,7 +74,7 @@ async function check(): Promise<boolean> {
   // TypeScript already holds its own `types` lock for the incremental cache.
   const shared = plan.tasks.some((task) => task.kind !== "static");
   const release = shared ? await acquireLock("checks") : async () => {};
-  if (shared) plan = createPlan(options.files ?? changedFiles(options.base));
+  if (shared) plan = selectedPlan();
   const runId = `${Date.now()}-${randomUUID().slice(0, 8)}`;
   const evidence = resolve(".medota2/checks", runId, "run.json");
   const manifest = {
@@ -92,6 +99,20 @@ async function check(): Promise<boolean> {
     await writeJson(evidence, manifest);
     for (const task of plan.tasks) {
       if (interrupted) throw new Error("Check interrupted.");
+      // Stop before starting another expensive task when completed evidence or scope changed.
+      for (const [index, completed] of plan.tasks
+        .slice(0, manifest.tasks.length)
+        .entries()) {
+        if (manifest.tasks[index].key !== (await taskKey(completed))) {
+          manifest.tasks[index].status = "stale";
+          stale = true;
+        }
+      }
+      if (JSON.stringify(plan) !== JSON.stringify(selectedPlan())) stale = true;
+      if (stale)
+        throw new Error(
+          "Check inputs changed; stop and replan before further checks.",
+        );
       const key = await taskKey(task);
       const cachePath = resolve(".medota2/check-cache", `${key}.json`);
       const cached = options.force
@@ -135,6 +156,9 @@ async function check(): Promise<boolean> {
           console.log(
             `[stale] ${task.id}: 有关输入在检查期间变化，等待稳定后重跑。`,
           );
+          throw new Error(
+            "Check inputs changed; stop and replan before further checks.",
+          );
         } else {
           entry.status = "passed";
           if (reusable)
@@ -155,16 +179,12 @@ async function check(): Promise<boolean> {
         stale = true;
       }
     }
-    if (
-      JSON.stringify(plan) !==
-      JSON.stringify(createPlan(options.files ?? changedFiles(options.base)))
-    )
-      stale = true;
+    if (JSON.stringify(plan) !== JSON.stringify(selectedPlan())) stale = true;
     manifest.status = stale ? "stale" : "passed";
     console.log(`${manifest.status}: ${evidence}`);
     return !stale;
   } catch (error) {
-    manifest.status = interrupted ? "interrupted" : "failed";
+    manifest.status = stale ? "stale" : interrupted ? "interrupted" : "failed";
     throw error;
   } finally {
     try {
@@ -203,7 +223,7 @@ async function main(): Promise<void> {
   }
 }
 async function watchKey(): Promise<string> {
-  const plan = createPlan(options.files ?? changedFiles(options.base));
+  const plan = selectedPlan();
   return fingerprint([
     ...plan.paths,
     ...plan.tasks.flatMap((task) => task.inputs),

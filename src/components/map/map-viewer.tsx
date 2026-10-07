@@ -442,7 +442,9 @@ export function MapViewer({
     };
     function draw() {
       frame = 0;
-      if (!canvas) return;
+      // App Router can retain a page in a hidden Activity during navigation.
+      // A queued paint must not resize its backing canvas to zero while hidden.
+      if (!canvas || width <= 0 || height <= 0) return;
       const started = performance.now();
       if (pendingHover) {
         const p = pendingHover;
@@ -1197,6 +1199,7 @@ export function MapViewer({
     const resize = () => {
       width = host.clientWidth;
       height = host.clientHeight;
+      if (width <= 0 || height <= 0) return;
       // Resize the backing store only inside the next complete paint. Assigning
       // canvas.width/height, even unchanged, clears it and caused state flashes.
       scale = fitScale(data.bounds, width, height);

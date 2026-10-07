@@ -60,7 +60,7 @@ macOS／Linux可在确认文件不存在后运行 `cp .env.example .env`；Windo
 | `pnpm docs:check`               | 文档引用、命令、入口和文档归属检查                             |
 | `pnpm data:status`              | 核验本机代码／数据状态                                         |
 | `pnpm sync`                     | 拉取代码及固定依赖、保存本地业务改动、应用目标数据，必要时重启 |
-| `pnpm push`                     | 经授权提交代码、发布完整数据并推送当前分支                     |
+| `pnpm push`                     | 经授权验证候选、发布完整数据、推送main并确认CI                 |
 | `pnpm release`                  | 构建及独立启动验收，生成本地产物                               |
 | `pnpm storage:clean`            | 预览可再生附件的清理计划；`--apply`执行                        |
 

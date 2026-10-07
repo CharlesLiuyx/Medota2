@@ -27,7 +27,7 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   webServer: {
-    command: `pnpm exec next dev --webpack -H 127.0.0.1 -p ${webPort}`,
+    command: `pnpm exec next dev --turbopack -H 127.0.0.1 -p ${webPort}`,
     url: `${baseURL}/heroes`,
     reuseExistingServer: false,
     timeout: 120_000,

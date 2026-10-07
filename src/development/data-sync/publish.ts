@@ -51,7 +51,7 @@ export async function exportCurrent(root = resolve(syncRoot(), "export")) {
 }
 
 /** Never send assets to a public repository, even if local remote configuration changed. */
-async function assertPrivateRemote(remote: string) {
+export async function assertPrivateRemote(remote: string) {
   const match =
     /^(?:https:\/\/github\.com\/|git@github\.com:)([\w.-]+\/[\w.-]+?)(?:\.git)?$/.exec(
       remote,
@@ -104,7 +104,7 @@ async function assertPrivateRemote(remote: string) {
 }
 
 export async function publishData(
-  options: { fullVerification?: boolean } = {},
+  options: { fullVerification?: boolean; expectedSnapshotId?: string } = {},
 ) {
   const dirty = await codeGit(["status", "--porcelain"]);
   if (
@@ -118,6 +118,13 @@ export async function publishData(
   const remote = await configureRepository();
   await assertPrivateRemote(remote);
   const current = await timed("export current data", () => exportCurrent());
+  if (
+    options.expectedSnapshotId &&
+    current.snapshotId !== options.expectedSnapshotId
+  )
+    throw new Error(
+      "Business data changed after candidate validation; preserve the uploaded candidate and revalidate before publishing.",
+    );
   const previous = await readDataLock();
   if (
     previous?.snapshotId === current.snapshotId &&
@@ -161,8 +168,12 @@ export async function publishData(
       );
     await git(["checkout", ref]);
     commit = localCandidate;
-    await git(["lfs", "push", "origin", ref]);
-    await git(["push", "origin", `${ref}:${ref}`]);
+    await timed("upload LFS objects", () =>
+      git(["lfs", "push", "origin", ref]),
+    );
+    await timed("push data Git ref", () =>
+      git(["push", "origin", `${ref}:${ref}`]),
+    );
   } else {
     if (await hasManagedChanges(git))
       throw new Error(
@@ -232,8 +243,12 @@ export async function publishData(
     commit = await git(["rev-parse", "HEAD"]);
     // Git LFS 3.x needs a named local ref, even when the commit itself is valid.
     await git(["update-ref", ref, commit, "0".repeat(40)]);
-    await git(["lfs", "push", "origin", ref]);
-    await git(["push", "origin", `${ref}:${ref}`]);
+    await timed("upload LFS objects", () =>
+      git(["lfs", "push", "origin", ref]),
+    );
+    await timed("push data Git ref", () =>
+      git(["push", "origin", `${ref}:${ref}`]),
+    );
   }
   // This separate LFS store contains only remotely fetched bytes. A normal update reuses
   // earlier verified remote content; an explicit audit starts with an empty store.

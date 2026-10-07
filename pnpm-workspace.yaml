@@ -1,3 +1,4 @@
+verifyDepsBeforeRun: error
 shellEmulator: true
 allowBuilds:
   esbuild: true

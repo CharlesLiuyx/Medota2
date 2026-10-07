@@ -1,3 +1,4 @@
+import { warmRoutesForScopes } from "../../scripts/development/check-plan.mjs";
 import { LOCALES } from "../../src/i18n/config";
 import type { FullConfig } from "@playwright/test";
 import { warmCatalogRoutes } from "../../src/development/warm-catalog";
@@ -14,25 +15,9 @@ export default async function warmBrowserServer(config: FullConfig) {
     await warmCatalogRoutes(origin);
     // Global navigation includes these modules. Compile their locale payloads
     // before measuring UI behavior, just as the catalog warmup does above.
-    for (const route of [
-      "heroes",
-      "abilities",
-      "units",
-      "items",
-      "map",
-      "changes",
-      "attributes",
-      "heroes/antimage",
-      "abilities/antimage_blink",
-      "units/npc_dota_roshan",
-      "items/item_blink",
-      "attributes/armor",
-      "attributes/dispel-type",
-      "attributes/strength",
-      "attributes/health",
-      "design-system",
-      "dev/database",
-    ]) {
+    for (const route of warmRoutesForScopes(
+      process.env.MEDOTA2_BROWSER_WARM_SCOPES?.split(","),
+    )) {
       for (const locale of LOCALES) {
         const response = await fetch(`${origin}/${route}?lang=${locale}`, {
           signal: AbortSignal.timeout(30_000),

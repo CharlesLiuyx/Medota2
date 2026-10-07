@@ -1,5 +1,5 @@
 /** Compile the shared catalog routes before marking the dev workbench ready.
- * Cold webpack HMR during an in-flight navigation can reload the old URL. This
+ * Cold compilation during an in-flight navigation can delay the first visit. This
  * is bounded, read-only warmup; it never creates or publishes game data. */
 export async function warmCatalogRoutes(origin: string): Promise<void> {
   const read = async (path: string, init?: RequestInit) => {

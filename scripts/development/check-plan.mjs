@@ -57,6 +57,20 @@ const focusedUnitScopes = new Map([
     ["tests/unit/development-check-plan.test.ts"],
   ],
 ]);
+// These CLI orchestration modules do not run in the product or change the data protocol.
+// Fault-injection tests cover publication boundaries; unknown/new modules remain broad.
+for (const path of [
+  "src/workers/push.ts",
+  "src/development/publication/candidate.ts",
+  "src/development/publication/ci.ts",
+  "src/development/publication/receipt.ts",
+  "src/development/publication/workflow.ts",
+])
+  focusedUnitScopes.set(path, [
+    "tests/unit/publication.test.ts",
+    "tests/unit/publication-data.test.ts",
+  ]);
+
 const journeyPatterns = {
   heroes: "heroes:",
   abilities: "abilities:",
@@ -296,6 +310,8 @@ export function createPlan(inputPaths) {
     if (hasMap || flowPaths.some((path) => sharedUi.test(path)))
       mapTests.forEach((path) => unitFiles.add(path));
     if (hasUnits) unitTests.forEach((path) => unitFiles.add(path));
+    if (paths.includes("src/components/development-workbench.tsx"))
+      unitFiles.add("tests/unit/development-workbench.test.tsx");
     if (hasEngine) parserTests.forEach((path) => unitFiles.add(path));
     if (
       paths.some((path) => /filters|catalog-cursor|catalog-stream/.test(path))
@@ -413,6 +429,7 @@ export function createPlan(inputPaths) {
         ...(changedJourneys
           ? []
           : [
+              `--warm-scopes=${[...journeys].join(",")}`,
               "--grep",
               `(?:^|\\s)(?:${[...journeys].map((name) => journeyPatterns[name]).join("|")})`,
             ]),
@@ -498,6 +515,71 @@ export function createPlan(inputPaths) {
   };
 }
 
+const allWarmRoutes = [
+  "heroes",
+  "abilities",
+  "units",
+  "items",
+  "map",
+  "changes",
+  "attributes",
+  "heroes/antimage",
+  "abilities/antimage_blink",
+  "units/npc_dota_roshan",
+  "items/item_blink",
+  "attributes/armor",
+  "attributes/dispel-type",
+  "attributes/strength",
+  "attributes/health",
+  "design-system",
+  "dev/database",
+];
+/** Keep route warmup tied to the same selected journey scopes; unknown scopes stay conservative. */
+export function warmRoutesForScopes(scopes) {
+  if (
+    !scopes?.length ||
+    scopes.some((scope) => !Object.hasOwn(journeyPatterns, scope)) ||
+    scopes.some((scope) => ["locale", "names", "releases"].includes(scope))
+  )
+    return allWarmRoutes;
+  const modules = new Set(["heroes", "abilities"]);
+  for (const scope of scopes) {
+    if (scope === "units" || scope === "items" || scope === "changes")
+      modules.add(scope);
+    if (scope === "attributes")
+      for (const name of [
+        "attributes",
+        "heroes",
+        "abilities",
+        "units",
+        "items",
+      ])
+        modules.add(name);
+  }
+  return allWarmRoutes.filter((route) => modules.has(route.split("/")[0]));
+}
+
+/** Publication exercises the selected fixture journeys before the real-data journeys. */
+export function publicationPlan(plan, fixtureOnly = false) {
+  if (fixtureOnly) return plan;
+  return {
+    ...plan,
+    tasks: plan.tasks.flatMap((task) =>
+      task.id === "journeys"
+        ? [
+            {
+              ...task,
+              id: "journeys-fixture",
+              reason: "发布前核对CI小样例路径；随后仍验证真实数据",
+              args: [...task.args, "--fixture"],
+            },
+            task,
+          ]
+        : [task],
+    ),
+  };
+}
+
 export function parseArguments(args) {
   const result = {
     base: undefined,
@@ -506,6 +588,7 @@ export function parseArguments(args) {
     json: false,
     force: false,
     watch: false,
+    publication: false,
   };
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
@@ -518,7 +601,9 @@ export function parseArguments(args) {
         result.files.push(args[++index]);
       if (!result.files.length)
         throw new Error("--files requires at least one path.");
-    } else if (["--plan", "--json", "--force", "--watch"].includes(arg))
+    } else if (
+      ["--plan", "--json", "--force", "--watch", "--publication"].includes(arg)
+    )
       result[arg.slice(2)] = true;
     else throw new Error(`Unknown check option: ${arg}`);
   }

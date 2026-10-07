@@ -1,3 +1,4 @@
+import { getWorkbenchOrigin } from "@/config/data-sync-state";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { withTestEnvironment } from "@/development/test-environment";
@@ -12,7 +13,12 @@ async function main(): Promise<void> {
     );
   const shared =
     suite === "journeys" && !process.env.CI && !args.includes("--fixture");
-  const forwarded = args.filter((arg) => arg !== "--fixture");
+  const warmScopes = args
+    .find((arg) => arg.startsWith("--warm-scopes="))
+    ?.slice("--warm-scopes=".length);
+  const forwarded = args.filter(
+    (arg) => arg !== "--fixture" && !arg.startsWith("--warm-scopes="),
+  );
   const before = await fingerprint([
     "src",
     "tests",
@@ -51,6 +57,7 @@ async function main(): Promise<void> {
         {
           ...process.env,
           MEDOTA2_SHARED_WEB: "1",
+          MEDOTA2_BROWSER_WARM_SCOPES: warmScopes,
           MEDOTA2_ARTIFACT_ROOT: evidenceRoot,
           MEDOTA2_EXPECTED_DATA_VERSION: databaseBefore,
         },
@@ -124,7 +131,7 @@ async function main(): Promise<void> {
               ? ["--project", "desktop-chromium"]
               : []),
           ],
-          env,
+          { ...env, MEDOTA2_BROWSER_WARM_SCOPES: warmScopes },
           resolve(env.MEDOTA2_ARTIFACT_ROOT!, "runner.log"),
         );
     },
@@ -148,7 +155,7 @@ async function main(): Promise<void> {
     );
 }
 async function dataVersion(): Promise<string> {
-  const response = await fetch("http://127.0.0.1:3000/api/catalog/heroes", {
+  const response = await fetch(`${getWorkbenchOrigin()}/api/catalog/head`, {
     signal: AbortSignal.timeout(5000),
   });
   if (!response.ok) throw new Error("Shared Catalog API is not ready.");
@@ -156,6 +163,10 @@ async function dataVersion(): Promise<string> {
     datasetVersionId: string;
     assetDatasetVersionId: string;
   };
+  if (!body?.datasetVersionId || !body.assetDatasetVersionId)
+    throw new Error(
+      "Shared Catalog requires an active catalog and asset dataset before browser checks.",
+    );
   return `${body.datasetVersionId}:${body.assetDatasetVersionId}`;
 }
 main()
