@@ -4,12 +4,14 @@
 
 ## 基线与接手
 
-- 基线：`main / 4fdce38`；旧交接与Mac同步证据见[历史快照](history/2026-10-06-current.md)。
+- 功能基线：`main / 381ae85`；匹配数据锁提交`36f310f`，本轮交接见[发布验收](history/2026-10-07-main-publication.md)。旧交接与Mac同步证据见[历史快照](history/2026-10-06-current.md)。
 - 目标由[dev-data.lock.json](../dev-data.lock.json)选择。实际应用、数据库身份及摘要用 `pnpm data:status` 核对；任务启动与共享协作按[AGENTS](../AGENTS.md)执行。
 
 ## 当前交接
 
 Context整理见[迁移验收](history/2026-10-07-context-migration.md)。全局中英界面已实现；应用术语优先官方VPK，范围与本机检查见[i18n记录](history/2026-10-07-global-i18n.md)。
+
+本轮请求范围的本地变更及完整业务快照已发布到main，Mac的10项最终组合检查通过，远端全部6342对象回取核验通过、本机`in-sync`。其他机器用`pnpm sync`消费，再验证对应平台；具体提交、范围和限制见[发布验收](history/2026-10-07-main-publication.md)。
 
 活动任务：
 
@@ -22,7 +24,7 @@ Context整理见[迁移验收](history/2026-10-07-context-migration.md)。全局
 - Windows浏览及原生构建异常仍待专项复验，保留原断言，按[平台交接](work/windows-native-validation.md)定位。
 - **实体版本与Diff已实现，7.41f为默认**。收录、验证及边界见[更新报告](work/7.41f-update.md)、[Spec](specs/entity-versions.md)和[记录](history/2026-10-07-entity-version-foundation.md)；跨机器验收见[任务](work/entity-version-diff.md)。
 
-- **物品与图片已接入**：7.41e/f每版544项图片；本机快照含迁移0011，旧lock不兼容当前schema。发布交接待授权，组合浏览已在属性任务最终检查中通过，发布构建仍待单独验收，见[验收](history/2026-10-07-item-catalog.md)与[Spec](specs/item-catalog.md)。
+- **物品与图片已接入并发布**：7.41e/f每版544项图片；数据锁已匹配迁移0011与完整快照。最终组合浏览、数据库与发布构建／启动通过，跨机器消费待复核，见[发布验收](history/2026-10-07-main-publication.md)、[物品验收](history/2026-10-07-item-catalog.md)与[Spec](specs/item-catalog.md)。
 
 ## 产品缺项
 

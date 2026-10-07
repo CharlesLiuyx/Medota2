@@ -12,12 +12,16 @@ test("abilities, units, items names: complete bilingual replicas and researched 
   const releases = index.releases.filter(
     (release) =>
       release.catalogId &&
+      !release.catalogClient?.startsWith("fixture-") &&
       [
         "f4c45719314754567cb4ef4fe343bbc790a311f4",
         "991daaf6fc24b08445209d9ce8767e145bab107e",
       ].includes(release.sourceCommit ?? ""),
   );
-  test.skip(!releases.length, "This fixture has no reviewed VPK release.");
+  test.skip(
+    !releases.length,
+    "This fixture has no complete reviewed VPK catalog.",
+  );
   for (const release of releases) {
     const first = await request.get(
       `/api/catalog/abilities?release=${encodeURIComponent(release.id)}&status=all`,

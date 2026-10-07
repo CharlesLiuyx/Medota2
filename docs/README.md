@@ -115,6 +115,7 @@
 | [旧current完整快照](history/2026-10-06-current.md)                          | historical | 61个旧章节与原证据路径                       |
 | [旧环境登记快照](history/2026-10-06-development-environments.md)            | historical | 环境观察历史                                 |
 | [Context迁移与验收](history/2026-10-07-context-migration.md)                | reference  | 原章节去向、此次范围与验收                   |
+| [全部变更发布验收](history/2026-10-07-main-publication.md)                  | reference  | main代码、完整快照、组合检查与平台边界       |
 | [实体版本架构实施](history/2026-10-07-entity-version-foundation.md)         | historical | 第一阶段范围、基线、验证与下一次更新         |
 | [属性实体验收](history/2026-10-07-attribute-catalog.md)                     | historical | 属性、枚举、固定来源与验证边界               |
 | [物品实体验收](history/2026-10-07-item-catalog.md)                          | historical | 物品实施、专项验证与并行检查边界             |

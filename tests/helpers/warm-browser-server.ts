@@ -14,12 +14,33 @@ export default async function warmBrowserServer(config: FullConfig) {
     await warmCatalogRoutes(origin);
     // Global navigation includes these modules. Compile their locale payloads
     // before measuring UI behavior, just as the catalog warmup does above.
-    for (const route of ["units", "items", "map", "changes", "attributes"]) {
+    for (const route of [
+      "heroes",
+      "abilities",
+      "units",
+      "items",
+      "map",
+      "changes",
+      "attributes",
+      "heroes/antimage",
+      "abilities/antimage_blink",
+      "units/npc_dota_roshan",
+      "items/item_blink",
+      "attributes/armor",
+      "attributes/dispel-type",
+      "attributes/strength",
+      "attributes/health",
+      "design-system",
+      "dev/database",
+    ]) {
       for (const locale of LOCALES) {
         const response = await fetch(`${origin}/${route}?lang=${locale}`, {
           signal: AbortSignal.timeout(30_000),
         });
-        if (!response.ok)
+        if (
+          !response.ok &&
+          !(route === "dev/database" && response.status === 404)
+        )
           throw new Error(
             `Browser warmup ${route}/${locale}: ${response.status}`,
           );
@@ -39,6 +60,23 @@ export default async function warmBrowserServer(config: FullConfig) {
           }
         }
       }
+    }
+    const headResponse = await fetch(`${origin}/api/catalog/head`);
+    if (!headResponse.ok)
+      throw new Error(`Browser warmup head: ${headResponse.status}`);
+    const head = await headResponse.json();
+    for (const entity of ["heroes", "abilities"]) {
+      const response = await fetch(`${origin}/api/catalog/replica`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...head, entity, locale: "en", known: [] }),
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!response.ok)
+        throw new Error(
+          `Browser warmup replica ${entity}/en: ${response.status}`,
+        );
+      await response.arrayBuffer();
     }
   }
 }

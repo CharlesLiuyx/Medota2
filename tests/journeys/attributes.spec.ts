@@ -1,7 +1,58 @@
 import { expect, test } from "../e2e/test-fixture";
+import type { ReleaseIndex } from "@/domain/releases";
 test("attributes: bidirectional armor links, calculation, search, language and historical context", async ({
   page,
+  request,
 }) => {
+  const response = await request.get("/api/releases");
+  expect(response.ok()).toBe(true);
+  const index = (await response.json()) as ReleaseIndex;
+  const selected = index.releases.find((r) => r.id === index.defaultRelease);
+  if (selected?.catalogClient?.startsWith("fixture-")) {
+    await page.goto("/attributes?lang=zh-CN");
+    await expect(page.locator("h1")).toHaveText("属性图鉴");
+    await expect(page.getByText(/^部分关联来源缺失：/)).toBeVisible();
+    await page
+      .getByRole("textbox", { name: "搜索属性", exact: true })
+      .fill("hujia");
+    await page.reload();
+    await expect(
+      page.getByRole("textbox", { name: "搜索属性", exact: true }),
+    ).toHaveValue("hujia");
+    await page
+      .getByRole("list", { name: "属性结果" })
+      .getByRole("link")
+      .click();
+    await expect(page.locator("h1")).toHaveText("护甲");
+    expect(new URL(page.url()).searchParams.get("release")).toBe(selected.id);
+    await expect(
+      page.getByText("部分关联来源缺失：物品、单位", { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText(/^客户端版本 fixture-1 ·/)).toBeVisible();
+    await expect(
+      page.getByText("社区机制资料，待引擎复核", { exact: true }),
+    ).toBeVisible();
+    await expect(page.locator("output")).toContainText("70.42");
+    await page.getByRole("spinbutton", { name: "示例总护甲" }).fill("-10");
+    await expect(page.locator("output")).toContainText("137.50");
+    await page.getByRole("combobox", { name: "语言", exact: true }).click();
+    await page.getByRole("option", { name: "English", exact: true }).click();
+    await expect(page.locator("h1")).toHaveText("Armor");
+    await expect(
+      page.getByRole("heading", { name: "Meaning and scope" }),
+    ).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(390);
+    const hero = page.locator('main a[href^="/heroes/"]').first();
+    await expect(hero).toBeVisible();
+    await hero.click();
+    await expect(page.locator("h1")).toBeVisible();
+    expect(new URL(page.url()).searchParams.get("release")).toBe(selected.id);
+    expect(new URL(page.url()).searchParams.get("lang")).toBe("en");
+    return;
+  }
   await page.goto("/items/item_platemail?lang=zh-CN");
   await expect(page.locator("h1")).toBeVisible();
   const release = new URL(page.url()).searchParams.get("release");

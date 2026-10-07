@@ -26,6 +26,8 @@ Node 26.8.1 的本机验证记录与 CI 的 Node 配置分开解释；实际工�
 
 2026-10-07本轮Mac代码组合通过按需检查、浏览、数据库及构建／启动验收；具体范围见[验收记录](history/2026-10-07-context-migration.md#验收记录)。未执行原生客户端提取或Windows复验。
 
+2026-10-07最终发布基线381ae85／数据锁36f310f：349单元、12真实旅程、23隔离E2E、22数据库合同及正式构建／启动通过；Mac与本机Linux容器Chromium154 arm64桌面／手机视觉各6项通过。完整两版Catalog／物品图片／地图快照已向远端发布并独立回取6342对象，本机`in-sync`。原长时webpack浏览失败经刷新及预热后消失；导航、旧文案断言和截图基线已修复，无放宽门禁。范围、过程与平台限制见[发布验收](history/2026-10-07-main-publication.md)。
+
 ## Windows 客户端与平台验证
 
 - 已有工具记录：Windows 11 26200、Node 24.19.0、pnpm 11.7.0、Git 2.36.0／LFS 3.1.4、Docker Desktop 4.94.0／CLI 29.8.2／Compose 5.5.1。WSL2只作为该机器Docker后端；代码与命令运行在原生Windows。Docker VMM的vsock故障未解决。

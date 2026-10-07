@@ -333,7 +333,15 @@ test("heroes global language persists across catalogs, details, history and relo
 
 test("heroes global locale covers deep pages and preserves map state", async ({
   page,
+  request,
 }) => {
+  const response = await request.get("/api/releases");
+  expect(response.ok()).toBe(true);
+  const index = await response.json();
+  const selected = index.releases.find(
+    (r: { id: string }) => r.id === index.defaultRelease,
+  );
+  const fixture = selected?.catalogClient?.startsWith("fixture-");
   for (const [path, heading] of [
     ["/heroes/antimage", "Anti-Mage"],
     ["/abilities/antimage_blink", "Blink"],
@@ -348,10 +356,22 @@ test("heroes global locale covers deep pages and preserves map state", async ({
     await page.goto(`${path}?lang=en`);
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
     await expect(
-      page.getByRole("heading", { name: heading, exact: true }).first(),
+      page
+        .getByRole("heading", {
+          name:
+            path === "/dev/database" && process.env.MEDOTA2_SHARED_WEB !== "1"
+              ? "This version or page is not available"
+              : fixture && path.startsWith("/units/")
+                ? "Unit data unavailable"
+                : fixture && path.startsWith("/items/")
+                  ? "Items data is not available for this version"
+                  : heading,
+          exact: true,
+        })
+        .first(),
     ).toBeVisible();
     const content =
-      path === "/dev/database"
+      path === "/dev/database" && process.env.MEDOTA2_SHARED_WEB === "1"
         ? page.getByRole("region", { name: "Development database inspector" })
         : page.locator("main");
     const untranslated = await content.evaluate((main) => {
@@ -374,6 +394,26 @@ test("heroes global locale covers deep pages and preserves map state", async ({
     expect(untranslated, path).toEqual([]);
   }
   await page.goto("/map?lang=en#map-state");
+  if (fixture && !selected.mapId) {
+    await expect(
+      page.getByRole("heading", {
+        name: "Map data is not available for this version",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page.getByRole("combobox", { name: "Language", exact: true }).click();
+    await page.getByRole("option", { name: "简体中文", exact: true }).click();
+    await expect(page.locator("html")).toHaveAttribute("lang", "zh-CN");
+    await expect(
+      page.getByRole("heading", {
+        name: "该版本的地图资料未收录",
+        exact: true,
+      }),
+    ).toBeVisible();
+    expect(new URL(page.url()).searchParams.get("release")).toBe(selected.id);
+    expect(new URL(page.url()).hash).toBe("#map-state");
+    return;
+  }
   await page
     .getByRole("textbox", { name: "Search map points", exact: true })
     .fill("bounty");
