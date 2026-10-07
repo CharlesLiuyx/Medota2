@@ -28,3 +28,13 @@
 没有把目标耗时当作实测收益。下一次获授权的真实发布可通过push --status核对各阶段，累计10次后再比较典型耗时和首次CI通过率。此次不宣称已验证真实上传速度或新代码的远端CI集成结果；GitHub读取权限与查询参数已只读核验。
 
 图谱同步：workflow / sync-graph的候选、数据发布、推送与CI三个节点，包含定义、作用、详情和实现入口。下层合同见[同步Spec](../specs/development-data-sync.md#发布候选与执行证据)，命令见[运行手册](../development-data-sync-runbook.md#发布预览验证与恢复)。
+
+## 真实发布验收
+
+2026-10-07（新加坡时间），用户授权将全部本地修改推送并合入main。执行 `pnpm push -m "feat(dev): harden publication workflow and improve development feedback"`，39项本地文件形成候选提交 `a0f0699a73926ec3358c1ca0b66d28f34a1b8480`，远端main已确认等于该提交；[verify/push CI](https://github.com/CharlesLiuyx/Medota2/actions/runs/37639800744)成功。此次采用现行main直接推送流程。
+
+首次CI在系统依赖准备阶段遇到Ubuntu Azure镜像下载极慢：5.6 MB字体包耗时约8分29秒；尚未进入代码检查便主动取消，随后在同一SHA上重新运行CI（attempt 2）。首轮日志保存在本机`.medota2/sessions/publish-main-20261007-ci-attempt1.log`，最终成功以第二次运行结论为准。第二次CI的fixture旅程为10项直接通过、1项技能详情跳转首次超时后重试通过（flaky）、2项前提跳过；保留原断言与一次重试规则。Mac两组浏览均无flaky，不能将其作为Linux零flaky的证据。
+
+本机收据：`.medota2/publications/1791384150356-b4e4e1f6/run.json`；组合检查：`.medota2/checks/1791384169543-b36b8eaa/run.json`，9项任务全部通过，378单测（2既有跳过）、11fixture旅程（2前提跳过）、12真实旅程（1fixture专用跳过）、4所选数据库合同（其余18未选）及构建／独立启动。两组浏览均无flaky。可通过 `pnpm push --status` 核对阶段；本机附件不随Git交接。
+
+准备数据15.7秒、组合检查257.2秒、发布数据33.6秒、推送代码4.6秒。完整快照 `6577aa14e3dd6e59246735e4588bb9b2d921be4a05ed9fd7430cee286283c920` 与现有私有数据提交 `93885618e3fd2faf408b68223c9091f3db87ec9c` 相同；回取缓存的6342对象复核通过，未请求新的LFS下载，不将缓存命中称作本轮全新下载或上传性能验证。本机 `pnpm data:status` 返回`in-sync`。原Windows复验和Chrome扩展设置仍待完成。

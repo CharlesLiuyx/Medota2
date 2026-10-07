@@ -32,3 +32,7 @@
 CSS边界实测：在docs临时加入`w-[137px]`不进入页面CSS，在src加入`w-[139px]`正常热更新；两次检查页面运行标记相同，没有整页重载。临时文件均已删除。干净浏览器从英雄进入地图、返回英雄、再进入地图正常，控制台0错误；2条Next LCP图片建议保留。当前Turbopack共享服务本轮未见图片500／空manifest错误。截图为`output/dev-latency-diagnosis-20261007/map-after.png`；边界与日志证据为`output/dev-feedback-fix-20261007/verification.json`及同目录附件。
 
 实际Chrome的沉浸式翻译站点设置仍受Mac锁屏阻塞。该步骤尚未完成，因此原Chrome刷新仍可能出现扩展引起的hydration提示；待解锁后停用本地站点的页面改写或使用独立无扩展开发配置，并回读属性与控制台。代码侧没有抑制hydration错误。本轮未提交或推送。
+
+## 代码发布
+
+2026-10-07（新加坡时间），本轮代码修复与发布流程优化一并发布到main，提交 `a0f0699`；[对应CI](https://github.com/CharlesLiuyx/Medota2/actions/runs/37639800744)成功。本机再次通过378单测、11fixture及12真实旅程（无flaky）、4数据库合同及构建／启动；完整业务快照复核通过且`in-sync`，详见[发布记录](2026-10-07-publication-optimization.md#真实发布验收)。实际Chrome扩展设置仍待解锁后处理，原段落中的未提交状态仅描述当时修复验收。

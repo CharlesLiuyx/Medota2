@@ -4,20 +4,20 @@
 
 ## 基线与接手
 
-- 功能基线：`main / 381ae85`；匹配数据锁提交`36f310f`，本轮交接见[发布验收](history/2026-10-07-main-publication.md)。旧交接与Mac同步证据见[历史快照](history/2026-10-06-current.md)。
+- 功能基线：`main / a0f0699`；完整业务数据锁仍为数据提交`93885618`，最近发布见[流程优化发布验收](history/2026-10-07-publication-optimization.md#真实发布验收)，原功能与数据交接见[发布验收](history/2026-10-07-main-publication.md)。旧交接与Mac同步证据见[历史快照](history/2026-10-06-current.md)。
 - 目标由[dev-data.lock.json](../dev-data.lock.json)选择。实际应用、数据库身份及摘要用 `pnpm data:status` 核对；任务启动与共享协作按[AGENTS](../AGENTS.md)执行。
 
 ## 当前交接
 
 Context整理见[迁移验收](history/2026-10-07-context-migration.md)。全局中英界面已实现；应用术语优先官方VPK，范围与本机检查见[i18n记录](history/2026-10-07-global-i18n.md)。
 
-本轮请求范围的本地变更及完整业务快照已发布到main，Mac的10项最终组合检查通过，远端全部6342对象回取核验通过、本机`in-sync`。其他机器用`pnpm sync`消费，再验证对应平台；具体提交、范围和限制见[发布验收](history/2026-10-07-main-publication.md)。
+此前功能发布的本地变更及完整业务快照已进入main，Mac的10项最终组合检查通过，远端全部6342对象回取核验通过、本机`in-sync`。其他机器用`pnpm sync`消费，再验证对应平台；具体提交、范围和限制见[发布验收](history/2026-10-07-main-publication.md)。
+
+发布流程优化与开发反馈代码修复已通过 `pnpm push` 发布到main；9项本地组合检查与[该提交CI](https://github.com/CharlesLiuyx/Medota2/actions/runs/37639800744)成功，完整快照复核通过，本机`in-sync`。范围和耗时见[优化发布验收](history/2026-10-07-publication-optimization.md#真实发布验收)。
 
 活动任务：
 
-- **发布流程优化已实施，待发布**：固定候选、发布检查、依赖防护、阶段收据与CI续接已接入，9项组合验证通过，收尾5项检查与45项发布／规划专项通过；本轮尚未提交／推送。见[优化验收](history/2026-10-07-publication-optimization.md)。
-
-- **开发反馈代码修复已通过，浏览器设置待完成**：已限定样式扫描、修复隐藏地图绘制、暂停后台面板轮询，并统一Turbopack开发入口；8项范围检查通过，351单测、12浏览旅程无flaky、4数据库合同及构建／启动均通过；实际Chrome扩展处理等待Mac解锁，原浏览器仍可能报hydration提示。见[修复记录](history/2026-10-07-development-feedback.md)。
+- **开发反馈代码修复已发布，浏览器设置待完成**：已限定样式扫描、修复隐藏地图绘制、暂停后台面板轮询，并统一Turbopack开发入口；发布组合检查通过，378单测、11fixture及12真实浏览旅程无flaky、4数据库合同及构建／启动均通过；实际Chrome扩展处理等待Mac解锁，原浏览器仍可能报hydration提示。见[修复记录](history/2026-10-07-development-feedback.md)。
 
 - **属性实体已完成本机检查，待页面审阅**：63个通用概念、专属参数、枚举值、描述内实体链接、四类对象双向引用和同版机制证据已接入；8项范围检查通过，浏览12通过、1跳过，见[验收](history/2026-10-07-attribute-catalog.md)与[合同](specs/attribute-catalog.md)。未能由文本确定的结算与叠加规则见[Windows机制核验](work/attribute-engine-verification.md)。
 
