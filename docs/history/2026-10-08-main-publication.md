@@ -28,10 +28,12 @@
 
 2026-10-08 12:23:20（新加坡）`pnpm data:status`为`in-sync`、`problems=[]`。数据／来源／地图均沿用同一基线；本机身份和忽略目录日志不跨机器交接。
 
-精确提交`de9e513e0b4db3a37eafb7e1342e0535bf6ae0df`的[verify/push CI](https://github.com/CharlesLiuyx/Medota2/actions/runs/37727204556)首轮失败：Linux技能详情跳转持续超时，英雄同类流程按既定重试后通过（flaky）。轨迹中RSC成功返回，但详情客户端脚本首次获取／编译各约2.7–3.4秒，导航完成晚于原5秒断言。已扩展测试globalSetup，只读获取英雄／技能目录与首条详情HTML引用的Next客户端脚本块、去重且顺序消费完整响应；原断言和超时保留。后续修复提交与精确CI由发布入口收据绑定，最终结果待确认，避免文档记录自身提交形成循环。
+精确提交`de9e513e0b4db3a37eafb7e1342e0535bf6ae0df`的[verify/push CI](https://github.com/CharlesLiuyx/Medota2/actions/runs/37727204556)首轮失败：Linux技能详情跳转持续超时，英雄同类流程按既定重试后通过（flaky）。轨迹中RSC成功返回，但详情客户端脚本首次获取／编译各约2.7–3.4秒，导航完成晚于原5秒断言。已扩展测试globalSetup，只读获取英雄／技能目录与首条详情HTML引用的Next客户端脚本块、去重且顺序消费完整响应；原断言和超时保留。修复提交`684dd1225fce3bd5dc674d53d2d9d6b423c455e5`经`pnpm push`发布，[对应verify/push CI](https://github.com/CharlesLiuyx/Medota2/actions/runs/37728068582)成功，收据`1791433831198-ff732447`为passed。Mac修复范围7项检查通过（6fixture浏览、8真实浏览、4所选数据库合同；分别3／1／19项未选或跳过），最终浏览无flaky；Linux CI对应范围6fixture浏览、4所选数据库合同通过，浏览无flaky，收据`1791434072383-61dea758`。所有后续检查沿用原断言与超时。
+
+2026-10-08 12:37:29（新加坡）再次`pnpm data:status`为`in-sync`、`problems=[]`。功能与必要修复均已进入main；收尾仅更新发布文档，精确收尾提交和CI由发布入口收据绑定，避免文档记录自身提交形成循环。
 
 ## 接手与边界
 
 另一环境用`pnpm sync`消费同一代码和完整快照，再按[环境登记](../development-environments.md)验证平台。Windows浏览／原生构建异常、真实多版本后续更新、同版游戏机制核验和视野遮挡算法仍按原任务推进。页面人工审阅状态保留；本轮没有远程部署或Windows复验。
 
-本机证据：`.medota2/sessions/codex-push-all-20261008.md`、`push-20261008-retry.log`、`push-20261008-data-published.json`，出版收据`1791433116507-a2cdc915`；本机附件缺失时按上述check、data:status及CI链接复核。
+本机证据：`.medota2/sessions/codex-push-all-20261008.md`、`push-20261008-retry.log`、`push-20261008-data-published.json`，出版收据`1791433116507-a2cdc915`（首轮CI失败）与`1791433831198-ff732447`（修复后成功）；修复证据另见`push-20261008-warm.log`、`push-20261008-ci-success.log`及`push-20261008-data-feature-final.json`；本机附件缺失时按上述check、data:status及CI链接复核。

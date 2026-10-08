@@ -4,7 +4,7 @@
 
 ## 基线与接手
 
-- 最新功能基线：`main / de9e513`，含本轮全部本地实现和必要测试修复；完整业务快照仍为`6577aa14`、数据提交`93885618`。本次发布CI待最终确认，见[发布验收](history/2026-10-08-main-publication.md)。
+- 最新功能基线：`main / 684dd12`，含本轮全部本地实现、测试顺序与客户端脚本预热修复；完整业务快照仍为`6577aa14`、数据提交`93885618`。该提交[verify/push CI](https://github.com/CharlesLiuyx/Medota2/actions/runs/37728068582)成功；收尾仅更新发布文档，见[发布验收](history/2026-10-08-main-publication.md)。
 - 目标由[dev-data.lock.json](../dev-data.lock.json)选择。其他机器运行`pnpm sync`；实际应用、数据库身份及摘要用`pnpm data:status`核对。任务启动与共享协作按[AGENTS](../AGENTS.md)执行。
 
 ## 当前交接
