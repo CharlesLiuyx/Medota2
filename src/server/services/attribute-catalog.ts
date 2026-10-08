@@ -33,7 +33,7 @@ export function attributeSlice(
   if (cursors.after !== undefined && cursors.before !== undefined)
     throw new ListRequestError("Only one cursor is allowed");
   const identity = createHash("sha256")
-    .update(JSON.stringify(["attributes-v2", dataset, query]))
+    .update(JSON.stringify(["attributes-v5", dataset, query]))
     .digest("hex");
   const selected = entries.filter(
     (e) =>

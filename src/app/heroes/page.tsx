@@ -1,9 +1,7 @@
 import { gameLocale } from "@/i18n/config";
-import { formatDateTime } from "@/i18n/format";
 import { getTranslations } from "@/i18n/server";
 import { getRequestLocale } from "@/i18n/server";
 import { withLocale } from "@/i18n/locale";
-import { LocalizedText } from "@/i18n/provider";
 import { resolvePageRelease } from "@/server/services/releases";
 import { withRelease } from "@/domain/releases";
 import { MissingReleaseCoverage } from "@/components/release-navigation";
@@ -11,8 +9,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LiveHeroCatalog } from "@/components/live-catalog";
 import { ImportFailureBanner, SetupState } from "@/components/system-state";
-import { DatasetBadge } from "@/components/ui/dataset-badge";
-import { getGameplayVersion } from "@/server/services/gameplay-version";
 import { getHeroOverview } from "@/server/repositories/heroes";
 import {
   canonicalHeroQuery,
@@ -81,46 +77,27 @@ export default async function HeroesPage({
     );
   }
   const meta = overview.meta;
-  const gameplayVersion = await getGameplayVersion(
-    meta.datasetVersionId,
-    meta.sourceCommit,
-  );
   return (
     <main className="mx-auto max-w-[var(--content-max)] px-4 py-4 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <h1 className="text-xl font-semibold tracking-wide">
-          <LocalizedText>英雄图鉴</LocalizedText>
-        </h1>
-        <DatasetBadge
-          clientVersion={meta.clientVersion}
-          sourceCommit={meta.sourceCommit}
-          gateStatus={meta.gateStatus}
-          gameplayVersion={gameplayVersion}
-        />
-      </div>
-
-      <div className="mt-3 space-y-2">
-        {overview.latestFailure && (
-          <ImportFailureBanner
-            stage={overview.latestFailure.stage}
-            message={overview.latestFailure.errorSummary}
-          />
-        )}
-      </div>
-
       <LiveHeroCatalog
+        header={
+          <h1 className="text-xl font-semibold tracking-wide">
+            {t("英雄图鉴")}
+          </h1>
+        }
+        notice={
+          overview.latestFailure && (
+            <ImportFailureBanner
+              stage={overview.latestFailure.stage}
+              message={overview.latestFailure.errorSummary}
+            />
+          )
+        }
         key={`${meta.datasetVersionId}:${meta.assetDatasetVersionId}:${canonicalHeroQuery(parsed.filters)}`}
         initialSlice={overview.slice}
         initialFilters={parsed.filters}
         initialErrors={parsed.errors}
         total={meta.totalHeroes}
-        updatedAt={formatDateTime(locale, meta.importedAt, {
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        })}
       />
     </main>
   );

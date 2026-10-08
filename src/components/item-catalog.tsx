@@ -2,12 +2,13 @@
 import { SourceText } from "@/i18n/provider";
 import { gameLocale } from "@/i18n/config";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { withRelease } from "@/domain/releases";
 import { useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { ITEM_CATEGORIES, type ItemDefinition } from "@/domain/items";
 import { useLocale, useTranslations } from "@/i18n/provider";
+import { CatalogHeader } from "./catalog-header";
 import { CompactSelect } from "./ui/compact-select";
 import { HoverTooltip } from "./ui/hover-tooltip";
 import { InfiniteList } from "./infinite-list";
@@ -23,11 +24,13 @@ const normalize = (value: string) =>
     .replace(/[\s_'’\-]+/gu, "");
 export function ItemCatalog({
   items,
+  header,
   version,
   imageVersion,
 }: {
   version: string;
   imageVersion: string | null;
+  header: ReactNode;
   items: Array<
     ItemDefinition & {
       searchText: string;
@@ -80,70 +83,77 @@ export function ItemCatalog({
     });
   return (
     <>
-      <form
-        className="mt-3 flex flex-wrap items-center gap-1.5"
-        autoComplete="off"
-        onSubmit={(event) => event.preventDefault()}
-      >
-        <label className="relative min-w-0 basis-full sm:flex-1 sm:basis-44">
-          <Search
-            aria-hidden
-            className="absolute left-1.5 top-2 size-3.5 text-[var(--text-muted)]"
-          />
-          <span className="sr-only">{t("搜索物品")}</span>
-          <input
-            name="q"
-            disabled={!ready}
-            value={draft}
-            onChange={(event) => {
-              setDraft(event.target.value);
-              if (!(event.nativeEvent as InputEvent).isComposing)
-                update({ q: event.target.value });
-            }}
-            onCompositionEnd={(event) =>
-              update({ q: event.currentTarget.value })
-            }
-            maxLength={100}
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="none"
-            spellCheck={false}
-            placeholder={t("搜索物品中文、英文或拼音…")}
-            className="h-8 w-full bg-transparent pl-7 pr-2 text-xs"
-          />
-        </label>
-        <CompactSelect
-          name="category"
-          disabled={!ready}
-          label={t("分类")}
-          value={category}
-          onChange={select}
+      <CatalogHeader header={header}>
+        <form
+          className="flex flex-wrap items-center gap-1.5"
+          autoComplete="off"
+          onSubmit={(event) => event.preventDefault()}
         >
-          <option value="all">{t("全部分类")}</option>
-          {Object.entries(ITEM_CATEGORIES).map(([value, label]) => (
-            <option key={value} value={value}>
-              {t(label)}
-            </option>
-          ))}
-        </CompactSelect>
-
-        {(q || category !== "all") && (
-          <button
-            type="button"
-            aria-label={t("清除筛选")}
-            onClick={() => {
-              setDraft("");
-              update({ q: "", category: "all" });
-            }}
-            className="p-2 text-[var(--text-muted)]"
+          <label className="relative min-w-0 basis-full sm:w-60 sm:flex-none sm:basis-auto">
+            <Search
+              aria-hidden
+              className="absolute left-1.5 top-2 size-3.5 text-[var(--text-muted)]"
+            />
+            <span className="sr-only">{t("搜索物品")}</span>
+            <input
+              name="q"
+              disabled={!ready}
+              value={draft}
+              onChange={(event) => {
+                setDraft(event.target.value);
+                if (!(event.nativeEvent as InputEvent).isComposing)
+                  update({ q: event.target.value });
+              }}
+              onCompositionEnd={(event) =>
+                update({ q: event.currentTarget.value })
+              }
+              maxLength={100}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder={t("搜索物品中文、英文或拼音…")}
+              className="h-8 w-full bg-transparent pl-7 pr-2 text-xs"
+            />
+          </label>
+          <p
+            role="status"
+            className="shrink-0 whitespace-nowrap text-[11px] text-[var(--text-muted)]"
           >
-            <X className="size-3.5" />
-          </button>
-        )}
-      </form>
-      <p role="status" className="my-3 text-[11px] text-[var(--text-muted)]">
-        {filtered.length} / {items.length} {t("个物品定义")}
-      </p>
+            {filtered.length} / {items.length} {t("个物品定义")}
+          </p>
+
+          <CompactSelect
+            name="category"
+            disabled={!ready}
+            label={t("分类")}
+            value={category}
+            onChange={select}
+          >
+            <option value="all">{t("全部分类")}</option>
+            {Object.entries(ITEM_CATEGORIES).map(([value, label]) => (
+              <option key={value} value={value}>
+                {t(label)}
+              </option>
+            ))}
+          </CompactSelect>
+
+          {(q || category !== "all") && (
+            <button
+              type="button"
+              aria-label={t("清除筛选")}
+              onClick={() => {
+                setDraft("");
+                update({ q: "", category: "all" });
+              }}
+              className="p-2 text-[var(--text-muted)]"
+            >
+              <X className="size-3.5" />
+            </button>
+          )}
+        </form>
+      </CatalogHeader>
+
       <InfiniteList
         source={{
           kind: "local",
@@ -180,6 +190,7 @@ export function ItemCatalog({
               >
                 <HoverTooltip
                   href={`/items/${item.internalName}`}
+
                   className="flex min-h-[76px] items-center gap-2 bg-[#182127]/65 p-2 hover:bg-[#25313a]"
                   content={
                     <>

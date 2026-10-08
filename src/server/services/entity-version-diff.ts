@@ -111,32 +111,57 @@ export const readEntityVersion = cache(async function readEntityVersion(
         identity: (r) => `ability:${r.ability_internal_name}:${r.locale}`,
       },
     ];
-    const [tables, sourceRows, files, values, assets] = await Promise.all([
-      Promise.all(
-        specs.map((s) =>
-          db.query<Row>(
-            `SELECT * FROM ${s.table} WHERE dataset_version_id=$1`,
+    // One verified read transaction per endpoint: do not fan a single page out
+    // to 26 pool checkouts, each with its own session setup and attestation.
+    const [tables, sourceRows, files, values, assets] = await db.readSnapshot(
+      async (reader) => {
+        const tables = [];
+        for (const spec of specs) {
+          tables.push(
+            await reader.query<Row>(
+              `SELECT * FROM ${spec.table} WHERE dataset_version_id=$1`,
+              [meta.datasetVersionId],
+            ),
+          );
+        }
+        return [
+          tables,
+          await reader.query<Row>(
+            "SELECT * FROM entity_source_records WHERE dataset_version_id=$1 ORDER BY occurrence_ordinal",
             [meta.datasetVersionId],
           ),
-        ),
-      ),
-      db.query<Row>(
-        "SELECT * FROM entity_source_records WHERE dataset_version_id=$1 ORDER BY occurrence_ordinal",
-        [meta.datasetVersionId],
-      ),
-      db.query<{ source_path: string; raw_sha256: string }>(
-        "SELECT f.source_path,f.raw_sha256 FROM source_snapshot_files f JOIN hero_catalog_dataset_versions v ON v.source_snapshot_id=f.source_snapshot_id WHERE v.id=$1",
-        [meta.datasetVersionId],
-      ),
-      db.query<Row>(
-        "SELECT * FROM ability_values WHERE dataset_version_id=$1 ORDER BY ability_internal_name,ordinal",
-        [meta.datasetVersionId],
-      ),
-      db.query<Row>(
-        "SELECT b.*, o.logical_path, o.source_repository, o.source_commit, o.client_version, o.source_content_sha256, o.original_blob_sha256 FROM entity_asset_bindings b JOIN asset_objects o ON o.id=b.asset_object_id WHERE b.asset_dataset_version_id=$1",
-        [meta.assetDatasetVersionId],
-      ),
-    ]);
+          await reader.query<{ source_path: string; raw_sha256: string }>(
+            "SELECT f.source_path,f.raw_sha256 FROM source_snapshot_files f JOIN hero_catalog_dataset_versions v ON v.source_snapshot_id=f.source_snapshot_id WHERE v.id=$1",
+            [meta.datasetVersionId],
+          ),
+          await reader.query<Row>(
+            "SELECT * FROM ability_values WHERE dataset_version_id=$1 ORDER BY ability_internal_name,ordinal",
+            [meta.datasetVersionId],
+          ),
+          await reader.query<Row>(
+            "SELECT b.*, o.logical_path, o.source_repository, o.source_commit, o.client_version, o.source_content_sha256, o.original_blob_sha256 FROM entity_asset_bindings b JOIN asset_objects o ON o.id=b.asset_object_id WHERE b.asset_dataset_version_id=$1",
+            [meta.assetDatasetVersionId],
+          ),
+        ] as const;
+      },
+    );
+    const filesByPath = new Map(
+      files.rows.map((file) => [file.source_path, file.raw_sha256]),
+    );
+    const sourcesByEntity = new Map<string, Row[]>();
+    for (const row of sourceRows.rows) {
+      const key = `${row.entity_type}:${row.entity_key}`;
+      const rows = sourcesByEntity.get(key) ?? [];
+      rows.push(row);
+      sourcesByEntity.set(key, rows);
+    }
+    const valuesByAbility = new Map<string, Row[]>();
+    for (const row of values.rows) {
+      const key = String(row.ability_internal_name);
+      const rows = valuesByAbility.get(key) ?? [];
+      rows.push(row);
+      valuesByAbility.set(key, rows);
+    }
     const evidence = (row: Row, path?: string): SourceEvidence => {
       const sourcePath =
         path ??
@@ -150,9 +175,7 @@ export const readEntityVersion = cache(async function readEntityVersion(
         commit: meta.sourceCommit,
         path: sourcePath,
         line: typeof row.source_line === "number" ? row.source_line : null,
-        sha256:
-          files.rows.find((f) => f.source_path === sourcePath)?.raw_sha256 ??
-          null,
+        sha256: filesByPath.get(sourcePath) ?? null,
         clientVersion: meta.clientVersion,
       };
     };
@@ -161,11 +184,7 @@ export const readEntityVersion = cache(async function readEntityVersion(
       const entities = tables[i].rows.map((row) => {
         const sources =
           spec.kind === "hero" || spec.kind === "ability"
-            ? sourceRows.rows.filter(
-                (s) =>
-                  s.entity_type === spec.kind &&
-                  s.entity_key === row.internal_name,
-              )
+            ? (sourcesByEntity.get(`${spec.kind}:${row.internal_name}`) ?? [])
             : [];
         return {
           key: spec.identity(row),
@@ -195,18 +214,16 @@ export const readEntityVersion = cache(async function readEntityVersion(
     const abilityGroup = snapshot.groups.ability!;
     for (const entity of abilityGroup.entities) {
       entity.fields.values = Object.fromEntries(
-        values.rows
-          .filter((v) => v.ability_internal_name === entity.key)
-          .map((v) => [
-            `${v.ordinal}:${v.value_key}`,
-            withoutSourceLayout(
-              omit(v, [
-                "dataset_version_id",
-                "ability_internal_name",
-                "raw_value",
-              ]),
-            ),
-          ]),
+        (valuesByAbility.get(entity.key) ?? []).map((v) => [
+          `${v.ordinal}:${v.value_key}`,
+          withoutSourceLayout(
+            omit(v, [
+              "dataset_version_id",
+              "ability_internal_name",
+              "raw_value",
+            ]),
+          ),
+        ]),
       );
     }
     // Unknown raw structures are review records, never claims of a new engine mechanic.
@@ -239,13 +256,9 @@ export const readEntityVersion = cache(async function readEntityVersion(
             valueKey: v.value_key,
             modifiers: withoutSourceLayout(v.modifiers),
           },
-          sources: sourceRows.rows
-            .filter(
-              (r) =>
-                r.entity_type === "ability" &&
-                r.entity_key === v.ability_internal_name,
-            )
-            .map((r) => evidence(r)),
+          sources: (
+            sourcesByEntity.get(`ability:${v.ability_internal_name}`) ?? []
+          ).map((r) => evidence(r)),
         })),
       "仅覆盖已解析技能数值修饰条件；完整引擎／脚本机制未建模。",
     );

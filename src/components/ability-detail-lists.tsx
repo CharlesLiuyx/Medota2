@@ -1,4 +1,5 @@
 "use client";
+import { DataTable } from "@/components/ui/data-table";
 import { useTranslations } from "@/i18n/provider";
 
 import Link from "@/components/version-link";
@@ -105,7 +106,7 @@ export function AbilityValuesTable({
 
   return (
     <div className="mt-4 max-w-full overflow-x-auto border border-[var(--border-default)]">
-      <table
+      <DataTable
         ref={rootRef}
         className="w-full min-w-[640px] border-collapse text-left text-xs"
         aria-busy={isBusy}
@@ -205,7 +206,7 @@ export function AbilityValuesTable({
             />
           </>
         )}
-      </table>
+      </DataTable>
       {isEmpty && (
         <p className="p-6 text-sm text-[var(--text-muted)]">
           {t("没有技能数值节点。")}

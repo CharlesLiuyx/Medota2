@@ -1,0 +1,86 @@
+.scroll {
+  position: relative;
+  overflow-x: auto;
+}
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 12px;
+  line-height: 1.4;
+  background: var(--surface-panel);
+}
+.table th,
+.table td {
+  text-align: left;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+.table thead th {
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--surface-elevated);
+  font-size: 10px;
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+.table th[scope="row"] {
+  vertical-align: top;
+  padding-top: 8px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--surface-elevated) 40%, transparent);
+}
+.table tbody:hover th[scope="row"],
+.table tr:hover td {
+  background: var(--surface-hover);
+}
+.table .spacer,
+.table .sentinel {
+  padding: 0;
+  border: 0;
+}
+.sentinel div {
+  height: 1px;
+}
+
+.fitContent {
+  width: max-content;
+  max-width: min(100%, var(--table-content-max, 320px));
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Measure all labels once; virtual row mounts do not change these samples. */
+.measurements {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.measureColumn,
+.measureBody {
+  width: max-content;
+}
+.measureBody {
+  font-weight: 400;
+}
+.measureBody[data-merged] {
+  font-weight: 600;
+}
+.measureHeader {
+  width: max-content;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 500;
+}
+.measureBody > * {
+  width: max-content;
+  white-space: nowrap;
+}

@@ -10,8 +10,9 @@ import {
   valueLabel,
 } from "@/presentation/dota";
 import type { ItemDefinition } from "@/domain/items";
+import { itemParameterLabel } from "@/domain/item-parameter-labels";
 
-export const ITEM_ADAPTER_VERSION = "vpk-items-v3";
+export const ITEM_ADAPTER_VERSION = "vpk-items-v4";
 const scalar = (object: KeyValuesObject, key: string) => {
   const value = object.entries.findLast((entry) => entry.key === key)?.value;
   return typeof value === "string" ? value : undefined;
@@ -24,6 +25,7 @@ export function adaptItems(
   text: string,
   zh: Record<string, string>,
   en: Record<string, string>,
+  sourceCommit?: string,
 ) {
   const root = object(parseKeyValues(text), "DOTAAbilities");
   if (!root) throw new Error("Missing item DOTAAbilities");
@@ -114,29 +116,29 @@ export function adaptItems(
         continue;
       const zhToken = zh[`${token}_${key}`];
       const enToken = en[`${token}_${key}`];
+      const supplement = itemParameterLabel(sourceCommit, entry.key, key);
       const known = attributeDefinition(
         attributeId("item", entry.key, key, zhToken || enToken),
       );
-      const label =
-        valueLabel(key, zhToken, "zh-CN", zh) ||
-        known?.zh ||
-        valueLabel(key, enToken, "en", en);
+      const sourceZhLabel = valueLabel(key, zhToken, "zh-CN", zh) || known?.zh;
+      const sourceEnLabel = valueLabel(key, enToken, "en", en) || known?.en;
+      const label = sourceZhLabel || supplement?.zh || sourceEnLabel;
       const source = object(fields, "AbilityValues")?.entries.find(
         (e) => e.key.toLowerCase() === key,
       );
       stats.push({
         key,
         labelToken: zhToken || enToken,
+        labelNote:
+          !sourceZhLabel || !sourceEnLabel ? supplement?.note : undefined,
         sourceLine: source?.line,
         modifiers: typeof source?.value === "object" ? source.value : undefined,
         zh: label === key ? (known?.zh ?? label) : label || "未命名参数",
-        en:
-          valueLabel(key, enToken, "en", en) ||
-          known?.en ||
-          label ||
-          "Unnamed parameter",
+        en: sourceEnLabel || supplement?.en || label || "Unnamed parameter",
         value:
-          (zhToken || enToken)?.startsWith("%") && value !== "未提供"
+          ((zhToken || enToken)?.startsWith("%") ||
+            (!(zhToken || enToken) && supplement?.unit === "%")) &&
+          value !== "未提供"
             ? `${value}%`
             : value,
       });

@@ -1,0 +1,132 @@
+.tables {
+  margin-top: 16px;
+}
+.section {
+  margin-bottom: 20px;
+}
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 650;
+}
+.heading span {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.empty {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+.number {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.before {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.after {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.detail {
+  color: var(--text-secondary);
+}
+.impact {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.direction {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+}
+.delta {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.percent {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.buff {
+  color: #7ec69b;
+}
+.nerf {
+  color: #e59186;
+}
+.neutral {
+  color: var(--text-muted);
+}
+.source {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.impact svg,
+.source svg {
+  width: min(1em, 1lh);
+  height: min(1em, 1lh);
+  flex-shrink: 0;
+}
+
+.legend {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-left: 8px;
+}
+.legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.legend svg {
+  width: 1em;
+  height: 1em;
+}
+.legend [data-direction-count="nerf"] {
+  color: #e59186;
+}
+.legend [data-direction-count="buff"] {
+  color: #7ec69b;
+}
+.legend [data-direction-count="neutral"] {
+  color: var(--text-muted);
+}
+.directionRow[data-direction="nerf"] {
+  --direction-tone: #e59186;
+}
+.directionRow[data-direction="buff"] {
+  --direction-tone: #7ec69b;
+}
+.directionRow[data-direction="neutral"] {
+  --direction-tone: #8b969e;
+}
+.directionRow > td {
+  background: color-mix(
+    in srgb,
+    var(--direction-tone) 4%,
+    var(--surface-panel)
+  );
+}
+.directionRow[data-direction-start] > td {
+  padding-top: 9px;
+}

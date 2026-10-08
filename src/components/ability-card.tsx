@@ -10,6 +10,7 @@ import {
   behaviorLabels,
 } from "@/presentation/dota";
 import type { AbilityCardRow } from "@/server/repositories/abilities";
+import { AttributeLink } from "./attribute-link";
 import { AbilityIcon } from "./ability-icon";
 import { HoverTooltip } from "./ui/hover-tooltip";
 export const AbilityCard = memo(function AbilityCard({
@@ -96,26 +97,38 @@ export const AbilityCard = memo(function AbilityCard({
             <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
               {ability.cooldown != null && (
                 <span>
-                  <Message
-                    id="◷ 冷却 {value0} 秒"
-                    values={{
-                      value0: (
-                        <strong>{numbers(ability.cooldown, locale)}</strong>
-                      ),
-                    }}
-                  />
+                  <AttributeLink
+                    kind="ability"
+                    owner={ability.internalName}
+                    field="AbilityCooldown"
+                  >
+                    <Message
+                      id="◷ 冷却 {value0} 秒"
+                      values={{
+                        value0: (
+                          <strong>{numbers(ability.cooldown, locale)}</strong>
+                        ),
+                      }}
+                    />
+                  </AttributeLink>
                 </span>
               )}
               {ability.manaCost != null && (
                 <span className="text-[#82bbf2]">
-                  <Message
-                    id="◆ 魔耗 {value0}"
-                    values={{
-                      value0: (
-                        <strong>{numbers(ability.manaCost, locale)}</strong>
-                      ),
-                    }}
-                  />
+                  <AttributeLink
+                    kind="ability"
+                    owner={ability.internalName}
+                    field="AbilityManaCost"
+                  >
+                    <Message
+                      id="◆ 魔耗 {value0}"
+                      values={{
+                        value0: (
+                          <strong>{numbers(ability.manaCost, locale)}</strong>
+                        ),
+                      }}
+                    />
+                  </AttributeLink>
                 </span>
               )}
             </div>

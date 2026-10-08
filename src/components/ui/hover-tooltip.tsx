@@ -1,6 +1,9 @@
 "use client";
 
 import {
+  createContext,
+  useContext,
+  useMemo,
   useCallback,
   useEffect,
   useId,
@@ -14,7 +17,12 @@ import {
 import { createPortal } from "react-dom";
 import Link from "@/components/version-link";
 
-let activeTooltip: string | null = null;
+const TooltipAncestors = createContext<readonly string[]>([]);
+let activePath: readonly string[] = [];
+const elements = new Map<
+  string,
+  () => { anchor: HTMLElement | null; panel: HTMLElement | null }
+>();
 let hoverSuppressed = false;
 const listeners = new Map<string, Set<() => void>>();
 function subscribe(id: string, listener: () => void) {
@@ -26,18 +34,46 @@ function subscribe(id: string, listener: () => void) {
     if (!bucket.size) listeners.delete(id);
   };
 }
-function setActive(id: string | null) {
-  if (activeTooltip === id) return;
-  const previous = activeTooltip;
-  activeTooltip = id;
-  // Only the old and new anchors need to render, independent of catalog size.
-  if (previous)
-    for (const listener of listeners.get(previous) ?? []) listener();
-  if (id) for (const listener of listeners.get(id) ?? []) listener();
+function setActive(path: readonly string[]) {
+  if (activePath.at(-1) === path.at(-1)) return;
+  const previous = activePath;
+  activePath = path;
+  // Only anchors whose visibility changed rerender; open parents remain mounted.
+  for (const id of new Set([...previous, ...path])) {
+    if (previous.includes(id) === path.includes(id)) continue;
+    for (const listener of listeners.get(id) ?? []) listener();
+  }
 }
 const serverSnapshot = () => false;
 function close(id: string) {
-  if (activeTooltip === id) setActive(null);
+  const index = activePath.indexOf(id);
+  if (index >= 0) setActive(activePath.slice(0, index));
+}
+function insideBranch(id: string, target: EventTarget | null) {
+  if (!(target instanceof Node)) return false;
+  const index = activePath.indexOf(id);
+  return (
+    index >= 0 &&
+    activePath.slice(index).some((key) => {
+      const nodes = elements.get(key)?.();
+      return nodes?.anchor?.contains(target) || nodes?.panel?.contains(target);
+    })
+  );
+}
+function closeInactive() {
+  for (let index = activePath.length - 1; index >= 0; index--) {
+    const nodes = elements.get(activePath[index])?.();
+    if (
+      [nodes?.anchor, nodes?.panel].some(
+        (node) =>
+          node?.matches(":hover") || node?.contains(document.activeElement),
+      )
+    ) {
+      setActive(activePath.slice(0, index + 1));
+      return;
+    }
+  }
+  setActive([]);
 }
 
 /** Opens synchronously; the short exit grace lets the pointer cross into the panel. */
@@ -46,18 +82,22 @@ export function HoverTooltip({
   content,
   href,
   className,
+  width,
 }: {
   children: ReactNode;
   content: ReactNode;
   href?: string;
   className?: string;
+  width?: number;
 }) {
   const id = useId();
+  const ancestors = useContext(TooltipAncestors);
+  const path = useMemo(() => [...ancestors, id], [ancestors, id]);
   const listen = useCallback(
     (listener: () => void) => subscribe(id, listener),
     [id],
   );
-  const snapshot = useCallback(() => activeTooltip === id, [id]);
+  const snapshot = useCallback(() => activePath.includes(id), [id]);
   const open = useSyncExternalStore(listen, snapshot, serverSnapshot);
   const [prefetchReady, setPrefetchReady] = useState(false);
   // Only the active anchor opts into full route prefetch. A short dwell avoids
@@ -80,22 +120,23 @@ export function HoverTooltip({
   };
   const scheduleClose = () => {
     cancelClose();
-    closing.current = setTimeout(() => close(id), 90);
+    closing.current = setTimeout(closeInactive, 90);
   };
   const show = (element: HTMLElement, pointer = false) => {
     if (pointer && hoverSuppressed) return;
     cancelClose();
     anchor.current = element;
-    setActive(id);
+    setActive(path);
   };
 
-  useEffect(
-    () => () => {
+  useLayoutEffect(() => {
+    elements.set(id, () => ({ anchor: anchor.current, panel: panel.current }));
+    return () => {
       if (closing.current) clearTimeout(closing.current);
       close(id);
-    },
-    [id],
-  );
+      elements.delete(id);
+    };
+  }, [id]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -121,18 +162,14 @@ export function HoverTooltip({
       popup.style.visibility = "visible";
     };
     const key = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && activePath.at(-1) === id) {
         hoverSuppressed = true;
+        event.stopImmediatePropagation();
         close(id);
       }
     };
     const dismiss = (event: globalThis.PointerEvent) => {
-      if (
-        event.target instanceof Node &&
-        !anchor.current?.contains(event.target) &&
-        !panel.current?.contains(event.target)
-      )
-        close(id);
+      if (!insideBranch(id, event.target)) close(id);
     };
     const schedulePosition = () => {
       if (!frame)
@@ -168,12 +205,12 @@ export function HoverTooltip({
     onPointerMove: (event) => {
       if (event.pointerType === "touch") return;
       hoverSuppressed = false;
-      if (activeTooltip !== id) show(event.currentTarget, true);
+      if (activePath.at(-1) !== id) show(event.currentTarget, true);
     },
     onPointerLeave: scheduleClose,
     onFocus: (event) => show(event.currentTarget),
     onBlur: (event) => {
-      if (!panel.current?.contains(event.relatedTarget)) hide();
+      if (!insideBranch(id, event.relatedTarget)) hide();
     },
   };
   return (
@@ -198,17 +235,20 @@ export function HoverTooltip({
             id={id}
             role="tooltip"
             className="game-hover-tooltip"
+            data-tooltip-depth={ancestors.length}
+            style={{
+              ...(width === undefined
+                ? {}
+                : { width: `min(${width}px, calc(100vw - 16px))` }),
+              zIndex: 100 + ancestors.length,
+            }}
             onPointerEnter={cancelClose}
             onPointerLeave={scheduleClose}
             onBlur={(event) => {
-              if (
-                !event.currentTarget.contains(event.relatedTarget) &&
-                !anchor.current?.contains(event.relatedTarget)
-              )
-                hide();
+              if (!insideBranch(id, event.relatedTarget)) hide();
             }}
           >
-            {content}
+            <TooltipAncestors value={path}>{content}</TooltipAncestors>
           </div>,
           document.body,
         )}

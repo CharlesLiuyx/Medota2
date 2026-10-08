@@ -1,0 +1,23 @@
+{
+  "source_repository": "https://github.com/spirit-bear-productions/dota_vpk_updates",
+  "imported_at": "2026-10-07T17:00:42.668Z",
+  "importer_version": "reviewed-attribute-parameters-v2",
+  "schema_version": "attribute-parameter-labels-v2",
+  "contentSha256": "10b9dd5c3980165ed76690bc3da6e36489c4697f1bc30b9a2e52aa3dd5b7df92",
+  "snapshots": [
+    {
+      "source_commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+      "client_version": "6918",
+      "missingBefore": 3487,
+      "named": 3487,
+      "unresolved": []
+    },
+    {
+      "source_commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+      "client_version": "6944",
+      "missingBefore": 3492,
+      "named": 3492,
+      "unresolved": []
+    }
+  ]
+}

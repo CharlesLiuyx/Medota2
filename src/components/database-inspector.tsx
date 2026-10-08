@@ -1,4 +1,5 @@
 "use client";
+import { DataTable } from "@/components/ui/data-table";
 import { Message, useLocale, useTranslations } from "@/i18n/provider";
 
 import { formatNumber } from "@/i18n/format";
@@ -283,7 +284,7 @@ export function DatabaseInspector() {
             </button>
           </form>
           <div className={styles.grid}>
-            <table>
+            <DataTable>
               <thead>
                 <tr>
                   {table === "asset_blobs" && <th>{t("图片")}</th>}
@@ -318,7 +319,7 @@ export function DatabaseInspector() {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </DataTable>
           </div>
           {!currentPage && <p role="status">{t("正在读取记录…")}</p>}
           {currentPage?.rows.length === 0 && <p>{t("没有匹配记录。")}</p>}

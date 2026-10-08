@@ -47,14 +47,56 @@ const ERROR_REMEDIATION: Readonly<
 export class EnvironmentContractError extends Error {
   readonly code: EnvironmentContractErrorCode;
   readonly remediation: string;
+  readonly connectionFailure?:
+    "timeout" | "unreachable" | "capacity" | "unknown";
 
   constructor(code: EnvironmentContractErrorCode, cause?: unknown) {
     super(code + ": " + ERROR_REMEDIATION[code]);
-    void cause;
+    // Never retain driver messages/URLs as Error.cause. Keep only an allowlisted
+    // diagnosis so pool saturation can be distinguished from an offline server.
+    if (code === "ENV_CONNECT_FAILED") {
+      const driver = cause as { code?: string; message?: string } | undefined;
+      this.connectionFailure =
+        driver?.message === "timeout exceeded when trying to connect" ||
+        driver?.message === "Connection terminated due to connection timeout" ||
+        driver?.code === "ETIMEDOUT"
+          ? "timeout"
+          : [
+                "ECONNREFUSED",
+                "ECONNRESET",
+                "EHOSTUNREACH",
+                "ENETUNREACH",
+                "EPIPE",
+                "57P01",
+                "57P02",
+                "57P03",
+              ].includes(driver?.code ?? "") ||
+              [
+                "Connection terminated unexpectedly",
+                "Connection terminated",
+                "Client has encountered a connection error and is not queryable",
+              ].includes(driver?.message ?? "")
+            ? "unreachable"
+            : driver?.code === "53300"
+              ? "capacity"
+              : "unknown";
+    }
     this.name = "EnvironmentContractError";
     this.code = code;
     this.remediation = ERROR_REMEDIATION[code];
   }
+}
+
+/** The global Web pool survives HMR, so its errors can have an older prototype. */
+export function isEnvironmentConnectionError(
+  error: unknown,
+): error is EnvironmentContractError {
+  return (
+    error instanceof Error &&
+    error.name === "EnvironmentContractError" &&
+    "code" in error &&
+    error.code === "ENV_CONNECT_FAILED"
+  );
 }
 
 export interface ParsedDatabaseEndpoint {

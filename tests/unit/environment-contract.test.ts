@@ -20,6 +20,24 @@ import {
 } from "@/server/environment/policy";
 
 describe("Environment Contract endpoint policy", () => {
+  it("retains only safe connection failure categories, never driver secrets", () => {
+    for (const [cause, category] of [
+      [new Error("timeout exceeded when trying to connect"), "timeout"],
+      [
+        { code: "ECONNREFUSED", message: "postgresql://user:secret@host/db" },
+        "unreachable",
+      ],
+      [{ code: "53300", message: "private role exhausted" }, "capacity"],
+      [new Error("postgresql://user:secret@host/db"), "unknown"],
+    ] as const) {
+      const error = new EnvironmentContractError("ENV_CONNECT_FAILED", cause);
+      expect(error.connectionFailure).toBe(category);
+      expect(error.cause).toBeUndefined();
+      expect(JSON.stringify(error)).not.toMatch(
+        /secret|postgresql|private role/,
+      );
+    }
+  });
   it("accepts only loopback PostgreSQL targets outside production", () => {
     expect(
       parseDatabaseEndpoint(

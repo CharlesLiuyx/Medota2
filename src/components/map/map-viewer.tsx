@@ -147,6 +147,7 @@ export function MapViewer({
   const [showExperience, setShowExperience] = useState(false);
   const [showTimings, setShowTimings] = useState(true);
   const [showLanes, setShowLanes] = useState(true);
+  const [showCurrents, setShowCurrents] = useState(false);
   const [barracks, setBarracks] = useState<BarracksState>("normal");
   const [hoveredLanes, setHoveredLanes] = useState<string[]>([]);
   const laneHover = useRef<string[]>([]);
@@ -302,6 +303,7 @@ export function MapViewer({
       layers,
       query,
       terrainLayer,
+      showCurrents,
       showGold,
       showLanes,
       campLayerHover,
@@ -317,6 +319,7 @@ export function MapViewer({
       layers,
       query,
       terrainLayer,
+      showCurrents,
       showGold,
       showLanes,
       campLayerHover,
@@ -460,6 +463,7 @@ export function MapViewer({
         layers,
         query,
         terrainLayer,
+        showCurrents,
         showGold,
         showLanes,
         campLayerHover,
@@ -659,6 +663,7 @@ export function MapViewer({
         height,
         dpr,
         terrainLayer,
+        showCurrents,
         showLanes,
         showGold,
         showExperience,
@@ -754,7 +759,7 @@ export function MapViewer({
           }
           ctx.restore();
         }
-        if (terrainLayer === "currents" && currents) {
+        if (showCurrents && currents) {
           ctx.save();
           ctx.beginPath();
           const side = treeGrid.cell * scale * camera.current.zoom;
@@ -1597,134 +1602,159 @@ export function MapViewer({
       : [];
   return (
     <div>
-      <div className="map-time-controls mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded bg-white/[0.025] px-2 py-1 text-[11px]">
-        {data.economy && (
-          <>
-            <label className="flex min-w-0 flex-[1_1_200px] items-center gap-2">
-              <Message
-                id="游戏时间 {value0}{value1}"
-                values={{
-                  value0: (
-                    <strong className="w-12 tabular-nums">
-                      {clockText(time)}
-                    </strong>
-                  ),
-                  value1: (
-                    <input
-                      className="min-w-20 flex-1 accent-[#a4c5bc]"
-                      type="range"
-                      aria-label={t("游戏时间")}
-                      min={0}
-                      max={7200}
-                      step={30}
-                      value={time}
-                      onChange={(e) => setTime(Number(e.target.value))}
-                    />
-                  ),
-                }}
-              />
-            </label>
-            <CompactSelect
-              hideLabel
-              label={t("跳转游戏时间")}
-              className="map-select"
-              value={time}
-              onValueChange={(value) => setTime(Number(value))}
-            >
-              {![0, 120, 300, 450, 900, 1800, 2400, 2700, 3600, 7200].includes(
-                time,
-              ) && <option value={time}>{clockText(time)}</option>}
-              {[0, 120, 300, 450, 900, 1800, 2400, 2700, 3600, 7200].map(
-                (t) => (
-                  <option key={t} value={t}>
-                    {clockText(t)}
-                  </option>
-                ),
-              )}
-            </CompactSelect>
-            <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
-              <Message
-                id="{value0}野区金币"
-                values={{
-                  value0: (
-                    <input
-                      type="checkbox"
-                      className="m-0 size-3.5 shrink-0"
-                      checked={showGold}
-                      onChange={(e) => setShowGold(e.target.checked)}
-                    />
-                  ),
-                }}
-              />
-            </label>
-            <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
-              <Message
-                id="{value0}野区经验"
-                values={{
-                  value0: (
-                    <input
-                      type="checkbox"
-                      className="m-0 size-3.5 shrink-0"
-                      checked={showExperience}
-                      onChange={(e) => setShowExperience(e.target.checked)}
-                    />
-                  ),
-                }}
-              />
-            </label>
-            <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
-              <Message
-                id="{value0}拉野/叠野秒数"
-                values={{
-                  value0: (
-                    <input
-                      type="checkbox"
-                      className="m-0 size-3.5 shrink-0"
-                      checked={showTimings}
-                      onChange={(e) => setShowTimings(e.target.checked)}
-                    />
-                  ),
-                }}
-              />
-            </label>
-            <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
-              <Message
-                id="{value0}兵线路径"
-                values={{
-                  value0: (
-                    <input
-                      type="checkbox"
-                      className="m-0 size-3.5 shrink-0"
-                      checked={showLanes}
-                      onChange={(e) => setShowLanes(e.target.checked)}
-                    />
-                  ),
-                }}
-              />
-            </label>
-            <CompactSelect
-              hideLabel
-              label={t("地图兵营情景")}
-              className="map-select"
-              value={barracks}
-              onValueChange={(value) => setBarracks(value as BarracksState)}
-            >
-              {Object.entries(BARRACKS_LABELS).map(([v, label]) => (
-                <option key={v} value={v}>
-                  {t(label)}
-                </option>
-              ))}
-            </CompactSelect>
-          </>
-        )}
-        {versionControls}
-      </div>
       <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_200px]">
         <div className="min-w-0">
-          <div className="map-stage grid grid-cols-[minmax(0,1fr)_64px] items-stretch gap-1">
+          <div className="map-stage grid grid-cols-[64px_minmax(0,1fr)] grid-rows-[auto_auto] items-stretch gap-x-1 gap-y-1">
+            <div className="map-time-controls col-start-2 row-start-1 flex flex-wrap items-center gap-x-3 gap-y-1 rounded bg-white/[0.025] px-2 py-0.5 text-[11px]">
+              {data.economy && (
+                <>
+                  <div className="flex min-w-0 flex-[1_1_320px] flex-wrap items-center gap-x-3 gap-y-1">
+                    <CompactSelect
+                      hideLabel
+                      label={t("地图兵营情景")}
+                      className="map-select"
+                      value={barracks}
+                      onValueChange={(value) =>
+                        setBarracks(value as BarracksState)
+                      }
+                    >
+                      {Object.entries(BARRACKS_LABELS).map(([v, label]) => (
+                        <option key={v} value={v}>
+                          {t(label)}
+                        </option>
+                      ))}
+                    </CompactSelect>
+                    <label className="flex min-w-0 flex-[1_1_160px] items-center gap-2">
+                      <Message
+                        id="游戏时间 {value0}{value1}"
+                        values={{
+                          value0: (
+                            <strong className="w-12 tabular-nums">
+                              {clockText(time)}
+                            </strong>
+                          ),
+                          value1: (
+                            <input
+                              className="min-w-20 flex-1 accent-[#a4c5bc]"
+                              type="range"
+                              aria-label={t("游戏时间")}
+                              min={0}
+                              max={7200}
+                              step={30}
+                              value={time}
+                              onChange={(e) => setTime(Number(e.target.value))}
+                            />
+                          ),
+                        }}
+                      />
+                    </label>
+                    <CompactSelect
+                      hideLabel
+                      label={t("跳转游戏时间")}
+                      className="map-select"
+                      value={time}
+                      onValueChange={(value) => setTime(Number(value))}
+                    >
+                      {![
+                        0, 120, 300, 450, 900, 1800, 2400, 2700, 3600, 7200,
+                      ].includes(time) && (
+                        <option value={time}>{clockText(time)}</option>
+                      )}
+                      {[
+                        0, 120, 300, 450, 900, 1800, 2400, 2700, 3600, 7200,
+                      ].map((t) => (
+                        <option key={t} value={t}>
+                          {clockText(t)}
+                        </option>
+                      ))}
+                    </CompactSelect>
+                  </div>
+                  <div className="flex max-w-full flex-wrap items-center gap-x-3 gap-y-1 border-l border-white/15 pl-3">
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
+                      <Message
+                        id="{value0}野区金币"
+                        values={{
+                          value0: (
+                            <input
+                              type="checkbox"
+                              className="m-0 size-3.5 shrink-0"
+                              checked={showGold}
+                              onChange={(e) => setShowGold(e.target.checked)}
+                            />
+                          ),
+                        }}
+                      />
+                    </label>
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
+                      <Message
+                        id="{value0}野区经验"
+                        values={{
+                          value0: (
+                            <input
+                              type="checkbox"
+                              className="m-0 size-3.5 shrink-0"
+                              checked={showExperience}
+                              onChange={(e) =>
+                                setShowExperience(e.target.checked)
+                              }
+                            />
+                          ),
+                        }}
+                      />
+                    </label>
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
+                      <Message
+                        id="{value0}拉野/叠野秒数"
+                        values={{
+                          value0: (
+                            <input
+                              type="checkbox"
+                              className="m-0 size-3.5 shrink-0"
+                              checked={showTimings}
+                              onChange={(e) => setShowTimings(e.target.checked)}
+                            />
+                          ),
+                        }}
+                      />
+                    </label>
+                  </div>
+                  <div className="flex items-center border-l border-white/15 pl-3">
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap leading-none">
+                      <Message
+                        id="{value0}兵线路径"
+                        values={{
+                          value0: (
+                            <input
+                              type="checkbox"
+                              className="m-0 size-3.5 shrink-0"
+                              checked={showLanes}
+                              onChange={(e) => setShowLanes(e.target.checked)}
+                            />
+                          ),
+                        }}
+                      />
+                    </label>
+                  </div>
+                </>
+              )}
+              {!!data.routing?.currents?.length && (
+                <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap border-l border-white/15 pl-3 leading-none">
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    className="m-0 size-3.5 shrink-0"
+                    checked={showCurrents}
+                    onChange={(e) => setShowCurrents(e.target.checked)}
+                  />
+                  {t("湍流")}
+                </label>
+              )}
+              {versionControls}
+            </div>
+
             <div
               ref={surfaceRef}
-              className="map-viewport relative h-[70vh] min-h-[400px] overflow-hidden rounded bg-[#0b131a] sm:h-[calc(100dvh-160px)]"
+              className="map-viewport col-start-2 row-start-2 relative h-[70vh] min-h-[400px] overflow-hidden rounded bg-[#0b131a] sm:h-[calc(100dvh-96px)]"
               aria-label={t("地图视口")}
             >
               <canvas
@@ -1735,7 +1765,7 @@ export function MapViewer({
                 )}
                 className="block h-full w-full touch-none"
               />
-              <div className="absolute left-3 top-3 z-10">
+              <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
                 <HoverTooltip
                   className="grid size-5 place-items-center rounded-full border border-white/25 text-[10px] text-[#c9d7e2] hover:bg-white/10"
                   content={
@@ -1754,6 +1784,35 @@ export function MapViewer({
                   <span aria-hidden="true">?</span>
                   <span className="sr-only">{t("地图操作说明")}</span>
                 </HoverTooltip>
+                <div
+                  className="map-zoom-controls w-20 rounded bg-[#0b131acc]"
+                  aria-label={t("地图缩放")}
+                >
+                  <div className="grid h-6 w-full grid-cols-[20px_minmax(0,1fr)_20px] items-center">
+                    <button
+                      className="grid h-6 place-items-center rounded text-xs leading-none hover:bg-white/5"
+                      onClick={() => controls.current?.zoom(1 / 1.5)}
+                      aria-label={t("缩小地图")}
+                    >
+                      −
+                    </button>
+                    <button
+                      className="h-6 min-w-0 rounded text-center text-[10px] leading-none tracking-tight tabular-nums hover:bg-white/5"
+                      aria-label={t("缩放比例")}
+                      title={t("复位地图（0）")}
+                      onClick={() => controls.current?.reset()}
+                    >
+                      {Math.round(zoom * 100)}%
+                    </button>
+                    <button
+                      className="grid h-6 place-items-center rounded text-xs leading-none hover:bg-white/5"
+                      onClick={() => controls.current?.zoom(1.5)}
+                      aria-label={t("放大地图")}
+                    >
+                      ＋
+                    </button>
+                  </div>
+                </div>
               </div>
               {(!data.imageUrl || imageError) && (
                 <div className="pointer-events-none absolute inset-0 grid place-content-center px-8 text-center">
@@ -1873,7 +1932,7 @@ export function MapViewer({
               </div>
             </div>
             <div
-              className="map-view-tools flex min-w-0 flex-col items-stretch gap-1 rounded bg-white/[0.025] p-1"
+              className="map-view-tools col-start-1 row-start-1 row-span-2 flex min-w-0 flex-col items-stretch gap-1 rounded bg-white/[0.025] p-1"
               aria-label={t("地图视图工具栏")}
             >
               {!!data.rasterLayers?.length && (
@@ -1885,22 +1944,18 @@ export function MapViewer({
                     {t("地形")}
                   </h2>
                   <div className="flex flex-col gap-0.5">
-                    {[
-                      { id: "", label: t("底图") },
-                      ...data.rasterLayers,
-                      ...(data.routing?.currents?.length
-                        ? [{ id: "currents", label: t("湍流") }]
-                        : []),
-                    ].map((layer) => (
-                      <button
-                        key={layer.id}
-                        aria-pressed={terrainLayer === layer.id}
-                        onClick={() => setTerrainLayer(layer.id)}
-                        className={`${buttonStyle} !px-1 !py-1.5 !text-[10px] ${terrainLayer === layer.id ? "bg-white/10" : ""}`}
-                      >
-                        {t(layer.label)}
-                      </button>
-                    ))}
+                    {[{ id: "", label: t("底图") }, ...data.rasterLayers].map(
+                      (layer) => (
+                        <button
+                          key={layer.id}
+                          aria-pressed={terrainLayer === layer.id}
+                          onClick={() => setTerrainLayer(layer.id)}
+                          className={`${buttonStyle} !px-1 !py-1.5 !text-[10px] ${terrainLayer === layer.id ? "bg-white/10" : ""}`}
+                        >
+                          {t(layer.label)}
+                        </button>
+                      ),
+                    )}
                   </div>
                 </section>
               )}
@@ -1934,55 +1989,6 @@ export function MapViewer({
                   {t("寻路")}
                 </button>
               </div>
-              <div
-                role="separator"
-                className="mx-1 my-1 h-px shrink-0 bg-white/15"
-              />
-              <div
-                className="flex flex-col items-center gap-1"
-                aria-label={t("地图缩放")}
-              >
-                <div className="grid h-7 w-full grid-cols-[14px_minmax(0,1fr)_14px] items-center">
-                  <button
-                    className="grid h-7 place-items-center rounded text-xs leading-none hover:bg-white/5"
-                    onClick={() => controls.current?.zoom(1 / 1.5)}
-                    aria-label={t("缩小地图")}
-                  >
-                    −
-                  </button>
-                  <span
-                    className="min-w-0 text-center text-[9px] leading-none tracking-tight tabular-nums"
-                    aria-label={t("缩放比例")}
-                  >
-                    {Math.round(zoom * 100)}%
-                  </span>
-                  <button
-                    className="grid h-7 place-items-center rounded text-xs leading-none hover:bg-white/5"
-                    onClick={() => controls.current?.zoom(1.5)}
-                    aria-label={t("放大地图")}
-                  >
-                    ＋
-                  </button>
-                </div>
-                <button
-                  className="flex h-7 w-full items-center justify-center rounded hover:bg-white/5"
-                  aria-label={t("复位地图")}
-                  title={t("复位地图（0）")}
-                  onClick={() => controls.current?.reset()}
-                >
-                  <svg
-                    aria-hidden="true"
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.7"
-                  >
-                    <path d="M3 10a9 9 0 1 1 2 8M3 4v6h6" />
-                  </svg>
-                </button>
-              </div>
             </div>
           </div>
           {terrainError && (
@@ -1991,12 +1997,12 @@ export function MapViewer({
             </p>
           )}
           <section
-            aria-label={t("地图搜索与图层筛选")}
+            aria-label={t("地图点位")}
             className="mt-3 rounded bg-white/[0.025] p-3 text-xs"
           >
             <div className="flex flex-wrap items-center gap-x-1 gap-y-0.5">
               <div className="mr-1 flex items-center gap-2">
-                <h2 className="shrink-0 font-semibold">{t("图层")}</h2>
+                <h2 className="shrink-0 font-semibold">{t("地图点位")}</h2>
                 <input
                   aria-label={t("搜索地图点位")}
                   value={query}
@@ -2010,46 +2016,6 @@ export function MapViewer({
                   className="w-40 min-w-0 rounded bg-white/5 px-2 py-1 text-[11px] focus-visible:outline focus-visible:outline-[#a4c5bc]"
                 />
               </div>
-              {layerOrder.map((kind) => (
-                <label
-                  key={kind}
-                  onPointerEnter={() => {
-                    if (kind === "camp") setCampLayerHover(true);
-                  }}
-                  onPointerLeave={() => {
-                    if (kind === "camp") setCampLayerHover(false);
-                  }}
-                  onFocus={() => {
-                    if (kind === "camp") setCampLayerHover(true);
-                  }}
-                  onBlur={() => {
-                    if (kind === "camp") setCampLayerHover(false);
-                  }}
-                  className="flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded px-2 py-1 text-[11px] hover:bg-white/5"
-                >
-                  <input
-                    type="checkbox"
-                    checked={layers.has(kind)}
-                    onChange={() => {
-                      hoverPoint(null);
-                      setLayers((previous) => {
-                        const next = new Set(previous);
-                        if (next.has(kind)) next.delete(kind);
-                        else next.add(kind);
-                        return next;
-                      });
-                    }}
-                    className="accent-[#a4c5bc]"
-                  />
-                  <span style={{ color: MAP_LAYERS[kind].color }}>
-                    {MAP_LAYERS[kind].symbol}
-                  </span>
-                  <span>{t(MAP_LAYERS[kind].label)}</span>
-                  <span className="ml-1 text-[10px] tabular-nums text-[var(--text-muted)]">
-                    {counts.get(kind) ?? (data.coverage ? 0 : t("待接入"))}
-                  </span>
-                </label>
-              ))}
             </div>
             {data.points.length > 0 && (
               <section className="mt-4">
@@ -2106,6 +2072,7 @@ export function MapViewer({
           )}
           <RoutePanel planner={planner} data={data} />
           <TerrainLegend layer={terrainLayer} />
+          <TerrainLegend layer={showCurrents ? "currents" : ""} />
           <h2 className="my-2 font-semibold">{t("对象属性与操作")}</h2>
           {!selected && (
             <p className="rounded bg-white/[0.035] p-2 text-[11px] leading-5 text-[var(--text-muted)]">
@@ -2369,6 +2336,59 @@ export function MapViewer({
               )}
             </section>
           )}
+          <section
+            aria-label={t("图层")}
+            className="map-layer-filters mt-3 rounded bg-white/[0.025] p-2"
+          >
+            <h2 className="mb-1 font-semibold">{t("图层")}</h2>
+            <div className="flex flex-col">
+              {layerOrder.map((kind) => (
+                <label
+                  key={kind}
+                  onPointerEnter={() => {
+                    if (kind === "camp") setCampLayerHover(true);
+                  }}
+                  onPointerLeave={() => {
+                    if (kind === "camp") setCampLayerHover(false);
+                  }}
+                  onFocus={() => {
+                    if (kind === "camp") setCampLayerHover(true);
+                  }}
+                  onBlur={() => {
+                    if (kind === "camp") setCampLayerHover(false);
+                  }}
+                  className="flex cursor-pointer items-center gap-1.5 rounded px-1 py-1 text-[11px] hover:bg-white/5"
+                >
+                  <input
+                    type="checkbox"
+                    checked={layers.has(kind)}
+                    onChange={() => {
+                      hoverPoint(null);
+                      setLayers((previous) => {
+                        const next = new Set(previous);
+                        if (next.has(kind)) next.delete(kind);
+                        else next.add(kind);
+                        return next;
+                      });
+                    }}
+                    className="m-0 size-3.5 shrink-0 accent-[#a4c5bc]"
+                  />
+                  <span
+                    className="shrink-0"
+                    style={{ color: MAP_LAYERS[kind].color }}
+                  >
+                    {MAP_LAYERS[kind].symbol}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    {t(MAP_LAYERS[kind].label)}
+                  </span>
+                  <span className="ml-1 shrink-0 text-[10px] tabular-nums text-[var(--text-muted)]">
+                    {counts.get(kind) ?? (data.coverage ? 0 : t("待接入"))}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </section>
         </aside>
       </div>
       <MemoEconomyPanel

@@ -3,6 +3,16 @@ test("items: navigation, search, filters, recipe links and version context", asy
   page,
 }) => {
   await page.goto("/items?lang=zh-CN");
+  // The server renders the title before client focus handlers are ready.
+  await expect(
+    page.getByRole("textbox", { name: "搜索物品", exact: true }),
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "物品图鉴", exact: true }).focus();
+  await expect(page.getByRole("tooltip")).toContainText(
+    "资料也含历史及活动定义",
+  );
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
   await expect(
     page.getByRole("heading", { name: "物品图鉴", exact: true }),
   ).toBeVisible();
@@ -119,4 +129,77 @@ test("items: navigation, search, filters, recipe links and version context", asy
   await expect(
     page.getByRole("heading", { name: "Item not found" }),
   ).toBeVisible();
+});
+
+test("items: reviewed Javelin and Maelstrom labels survive language, historical release and attribute navigation", async ({
+  page,
+}) => {
+  await page.goto("/items?lang=zh-CN");
+  await expect(
+    page.getByRole("heading", { name: "物品图鉴", exact: true }),
+  ).toBeVisible();
+  test.skip(
+    !(await page.getByRole("list", { name: "物品结果" }).count()),
+    "Fixture has no pinned item source",
+  );
+  const current = new URL(page.url()).searchParams.get("release")!;
+  const releases = [current];
+  await page.getByRole("combobox", { name: "全局版本" }).click();
+  const historical = page.getByRole("option", { name: /7\.41e/ });
+  if (await historical.count()) {
+    await historical.click();
+    await expect(
+      page.getByRole("combobox", { name: "全局版本" }),
+    ).toContainText("7.41e");
+    await expect
+      .poll(() => new URL(page.url()).searchParams.get("release"))
+      .not.toBe(current);
+    releases.push(new URL(page.url()).searchParams.get("release")!);
+  } else await page.keyboard.press("Escape");
+  for (const release of releases) {
+    for (const lang of ["zh-CN", "en"]) {
+      await page.goto(
+        `/items/item_javelin?release=${encodeURIComponent(release)}&lang=${lang}`,
+      );
+      const stats = page.locator("main dl").first();
+      await expect(stats).toContainText(
+        lang === "en" ? "Pierce chance" : "穿刺概率",
+      );
+      await expect(stats).toContainText("25%");
+      await expect(stats).toContainText(
+        lang === "en" ? "Pierce bonus magical damage" : "穿刺额外魔法伤害",
+      );
+      await expect(stats).toContainText("60");
+      await expect(stats).not.toContainText(/未命名参数|Unnamed parameter/);
+      await page.goto(
+        `/items/item_maelstrom?release=${encodeURIComponent(release)}&lang=${lang}`,
+      );
+      await expect(stats).not.toContainText(/未命名参数|Unnamed parameter/);
+      const chance = stats.getByRole("link", {
+        name:
+          lang === "en" ? "Chain Lightning proc chance" : "连环闪电触发概率",
+        exact: true,
+      });
+      await expect(chance).toBeVisible();
+      await expect(stats).toContainText(
+        lang === "en"
+          ? "Chain Lightning jump interval (s)"
+          : "连环闪电跳跃间隔（秒）",
+      );
+      await expect(stats).toContainText("0.25");
+      await expect(stats).toContainText("100%");
+      await page.setViewportSize({ width: 390, height: 844 });
+      await expect(chance).toBeVisible();
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth),
+      ).toBeLessThanOrEqual(390);
+      await page.setViewportSize({ width: 1280, height: 844 });
+      await chance.click();
+      await expect(page.locator("h1")).toHaveText(
+        lang === "en" ? "Chain Lightning proc chance" : "连环闪电触发概率",
+      );
+      expect(new URL(page.url()).searchParams.get("release")).toBe(release);
+      expect(new URL(page.url()).searchParams.get("lang")).toBe(lang);
+    }
+  }
 });

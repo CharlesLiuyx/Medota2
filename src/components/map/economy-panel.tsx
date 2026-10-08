@@ -1,4 +1,5 @@
 "use client";
+import { DataTable } from "@/components/ui/data-table";
 import { gameLocale } from "@/i18n/config";
 import { useLocale } from "@/i18n/provider";
 import { mapPointLabel, campGroupLabel } from "@/presentation/map-labels";
@@ -104,7 +105,7 @@ export function MapEconomyPanel({
           )}
         </p>
         <div className="max-h-52 overflow-auto rounded border border-white/5">
-          <table
+          <DataTable
             className="w-full text-left tabular-nums"
             aria-label={t("各营地金币与经验收益")}
           >
@@ -157,7 +158,7 @@ export function MapEconomyPanel({
                 );
               })}
             </tbody>
-          </table>
+          </DataTable>
         </div>
         {camp ? (
           <div className="mt-4" aria-label={t("营地组合详情")}>
@@ -279,7 +280,7 @@ export function MapEconomyPanel({
                       />
                     </span>
                   </summary>
-                  <table className="mt-2 w-full text-left tabular-nums">
+                  <DataTable className="mt-2 w-full text-left tabular-nums">
                     <thead>
                       <tr>
                         <th>{t("单位")}</th>
@@ -333,7 +334,7 @@ export function MapEconomyPanel({
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </DataTable>
                   {g.spawnType === 2 && g.tier === 2 && (
                     <p className="mt-1 text-[10px] text-[var(--text-muted)]">
                       {t("不计黑暗巨魔主动召唤的骷髅，其数量取决于战斗过程。")}
@@ -451,7 +452,7 @@ export function MapEconomyPanel({
             />
           </strong>
         </div>
-        <table className="w-full text-left tabular-nums">
+        <DataTable className="w-full text-left tabular-nums">
           <thead>
             <tr>
               <th>{t("兵种")}</th>
@@ -472,7 +473,7 @@ export function MapEconomyPanel({
               </tr>
             ))}
           </tbody>
-        </table>
+        </DataTable>
         <p className="mt-3">
           <Message
             id="单位悬赏 {value0}；旗手额外奖励 {value1}。"

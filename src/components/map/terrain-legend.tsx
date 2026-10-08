@@ -46,7 +46,7 @@ export function TerrainLegend({ layer }: { layer: string }) {
   return (
     <section
       aria-label={t("地形图例")}
-      className="mt-3 rounded bg-white/[0.035] p-3 text-xs leading-5"
+      className="mb-3 rounded bg-white/[0.035] p-3 text-xs leading-5"
     >
       <h2 className="mb-2 font-semibold">
         {navigation

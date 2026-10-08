@@ -123,7 +123,7 @@ test("heroes releases: global version survives filters, details, related links a
   expect(result.fromVersion).toBe(catalog.id);
   expect(result.toVersion).toBe(catalog.id);
 });
-test("heroes changes: shared dropdowns submit and restore comparison filters", async ({
+test("heroes changes: live dropdowns and search restore comparison filters", async ({
   page,
   request,
 }) => {
@@ -134,6 +134,18 @@ test("heroes changes: shared dropdowns submit and restore comparison filters", a
     (release: { catalogId: string | null }) => release.catalogId,
   );
   test.skip(!catalog, "No published catalog in this environment.");
+  const latest = index.releases.find(
+    (release: { id: string }) => release.id === index.defaultRelease,
+  );
+  const previous = index.releases[index.releases.indexOf(latest) + 1] ?? latest;
+  await page.goto("/changes?lang=zh-CN");
+  await expect(
+    page.getByRole("combobox", { name: "终点版本", exact: true }),
+  ).toContainText(latest.label);
+  await expect(
+    page.getByRole("combobox", { name: "起始版本", exact: true }),
+  ).toContainText(previous.label);
+  expect(new URL(page.url()).searchParams.get("release")).toBe(latest.id);
   const query = new URLSearchParams({ release: catalog.id, from: catalog.id });
   await page.goto(`/changes?${query}`);
   await expect(
@@ -141,31 +153,107 @@ test("heroes changes: shared dropdowns submit and restore comparison filters", a
   ).toBeVisible();
   await page.getByRole("combobox", { name: "起始版本", exact: true }).click();
   await page.getByRole("option", { name: catalog.label, exact: true }).click();
+  const filterRequests: string[] = [];
+  page.on("request", (request) => {
+    if (
+      new URL(request.url()).pathname === "/changes" &&
+      request.headers()["rsc"] === "1"
+    )
+      filterRequests.push(request.url());
+  });
   await page.getByRole("combobox", { name: "对象", exact: true }).click();
-  await page.getByRole("option", { name: "地图对象", exact: true }).click();
+  await page.getByRole("option", { name: "其他", exact: true }).click();
   await page.getByRole("combobox", { name: "变化", exact: true }).click();
-  await page.getByRole("option", { name: "属性", exact: true }).click();
-  await page.getByRole("button", { name: "比较", exact: true }).click();
-  await expect(page).toHaveURL(/entity=map_object/);
+  await page.getByRole("option", { name: "增强", exact: true }).click();
+
+  await expect(page).toHaveURL(/category=buff/);
   await expect(
     page.getByRole("combobox", { name: "对象", exact: true }),
-  ).toContainText("地图对象");
+  ).toContainText("其他");
   await expect(
     page.getByRole("combobox", { name: "变化", exact: true }),
-  ).toContainText("属性");
+  ).toContainText("增强");
+  await expect(
+    page.getByRole("button", { name: "比较", exact: true }),
+  ).toHaveCount(0);
+  const search = page.getByRole("searchbox", { name: "搜索变化" });
+  await search.fill("MiXeD ");
+  await expect(page).toHaveURL(/q=MiXeD/);
+  await expect(search).toHaveValue("MiXeD ");
+  await expect(search).toBeFocused();
+  await search.fill("");
+  await expect
+    .poll(() => new URL(page.url()).searchParams.has("q"))
+    .toBe(false);
+  await search.dispatchEvent("compositionstart");
+  await search.fill("护甲");
+  expect(new URL(page.url()).searchParams.has("q")).toBe(false);
+  await search.dispatchEvent("compositionend");
+  await expect
+    .poll(() => new URL(page.url()).searchParams.get("q"))
+    .toBe("护甲");
+  await search.fill("");
+  await expect
+    .poll(() => new URL(page.url()).searchParams.has("q"))
+    .toBe(false);
+  await page.getByRole("button", { name: "版本变化", exact: true }).focus();
+  await expect(page.getByRole("tooltip")).toContainText(
+    "数值按技能等级顺序排列",
+  );
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
+  expect(filterRequests).toEqual([]);
   const params = new URL(page.url()).searchParams;
   expect(params.get("release")).toBe(catalog.id);
   expect(params.get("from")).toBe(catalog.id);
-  expect(params.get("category")).toBe("property");
+  expect(params.get("category")).toBe("buff");
   await page.reload();
   const entity = page.getByRole("combobox", { name: "对象", exact: true });
-  await expect(entity).toContainText("地图对象");
+  await expect(entity).toContainText("其他");
   await entity.click();
   await expect(
-    page.getByRole("option", { name: "地图对象", exact: true }),
+    page.getByRole("option", { name: "其他", exact: true }),
   ).toHaveAttribute("aria-selected", "true");
   await page.keyboard.press("Escape");
   await expect(entity).toBeFocused();
+  const other = index.releases.find(
+    (release: { id: string }) => release.id !== catalog.id,
+  );
+  if (other) {
+    const ending = page.getByRole("combobox", {
+      name: "终点版本",
+      exact: true,
+    });
+    await ending.click();
+    await page.getByRole("option", { name: other.label, exact: true }).click();
+    await expect
+      .poll(() => new URL(page.url()).searchParams.get("release"))
+      .toBe(other.id);
+    expect(new URL(page.url()).searchParams.get("from")).toBe(catalog.id);
+    expect(new URL(page.url()).searchParams.get("category")).toBe("buff");
+    expect(new URL(page.url()).searchParams.get("entity")).toBe("other");
+    await expect(ending).toContainText(other.label);
+    await page.reload();
+    await expect(ending).toContainText(other.label);
+    await expect(
+      page.getByRole("combobox", { name: "起始版本", exact: true }),
+    ).toContainText(catalog.label);
+    await page.getByRole("combobox", { name: "起始版本", exact: true }).click();
+    await page.getByRole("option", { name: other.label, exact: true }).click();
+    await expect(page.locator("main").getByRole("status")).toContainText(
+      "起始与目标为同一版本",
+    );
+    await ending.click();
+    await page
+      .getByRole("option", { name: catalog.label, exact: true })
+      .click();
+    await expect
+      .poll(() => new URL(page.url()).searchParams.get("release"))
+      .toBe(catalog.id);
+    await expect(page.locator("main").getByRole("status")).not.toContainText(
+      "起始与目标为同一版本",
+    );
+  }
 });
 
 test("heroes changes: named official notes and readable values survive search, reverse comparison and mobile layout", async ({
@@ -193,32 +281,32 @@ test("heroes changes: named official notes and readable values survive search, r
   );
   const bane = page.locator('[data-change-group="npc_dota_hero_bane"]');
   await expect(
-    bane.getByRole("heading", { name: "祸乱之源", exact: true }),
+    bane.getByRole("link", { name: /祸乱之源/ }).first(),
   ).toBeVisible();
+  await expect(bane.locator("[data-change-before]")).toHaveText("1");
+  await expect(bane.locator("[data-change-after]")).toHaveText("0");
+  await expect(bane.getByRole("button", { name: "削弱 -100%" })).toBeVisible();
+  await bane.getByRole("button", { name: /变化依据/ }).click();
+  await expect(page.getByRole("tooltip")).toContainText("基础护甲：降低1点");
   await expect(
-    bane.getByText("基础护甲：降低1点", { exact: true }),
+    page.getByRole("tooltip").getByRole("link", { name: /官方更新说明/ }),
   ).toBeVisible();
-  await expect(bane.locator(".change-value-row")).toHaveText("基础护甲1→0");
-  await expect(
-    page.getByRole("link", { name: "7.41f 官方更新说明 ↗", exact: true }),
-  ).toBeVisible();
+  await page.keyboard.press("Escape");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
     ),
   ).toBe(true);
   await page.getByRole("searchbox", { name: "搜索变化" }).fill("恐鳌之心");
-  await page.getByRole("button", { name: "比较", exact: true }).click();
   const heart = page.locator('[data-change-group="item_heart"]');
   await expect(
-    heart.getByRole("heading", { name: "恐鳌之心", exact: true, level: 2 }),
+    heart.getByRole("link", { name: /恐鳌之心/ }).first(),
   ).toBeVisible();
-  await expect(
-    heart.getByRole("heading", { name: "恐鳌之心图纸", exact: true }),
-  ).toBeVisible();
-  await expect(heart.locator(".change-value-row").last()).toHaveText(
-    "价格700→800",
-  );
+  const recipe = page
+    .locator('[data-table-group="item_heart"]')
+    .filter({ has: page.locator('a[href^="/items/item_recipe_heart?"]') });
+  await expect(recipe.locator("[data-change-before]")).toHaveText("700");
+  await expect(recipe.locator("[data-change-after]")).toHaveText("800");
   await page.reload();
   await expect(page.getByRole("searchbox", { name: "搜索变化" })).toHaveValue(
     "恐鳌之心",
@@ -226,17 +314,343 @@ test("heroes changes: named official notes and readable values survive search, r
   await page.goto(
     `/changes?${new URLSearchParams({ release: from.id, from: to.id, q: "祸乱之源" })}`,
   );
+  await expect(bane.locator("[data-change-before]")).toHaveText("0");
+  await expect(bane.locator("[data-change-after]")).toHaveText("1");
+  await expect(bane.getByRole("button", { name: "增强 —" })).toBeVisible();
+  await page
+    .getByRole("button", { name: "比较范围与来源", exact: true })
+    .click();
   await expect(
-    page.locator('[data-change-group="npc_dota_hero_bane"] .change-value-row'),
-  ).toHaveText("基础护甲0→1");
-  await expect(
-    page.getByRole("link", { name: "7.41e 官方更新说明 ↗", exact: true }),
+    page.getByRole("tooltip").getByRole("link", { name: /官方更新说明/ }),
   ).toHaveCount(0);
+  await page.keyboard.press("Escape");
   await page.getByRole("searchbox", { name: "搜索变化" }).fill("恐鳌之心");
-  await page.getByRole("button", { name: "比较", exact: true }).click();
+  await expect(recipe.locator("[data-change-before]")).toHaveText("800");
+  await expect(recipe.locator("[data-change-after]")).toHaveText("700");
+});
+
+test("heroes changes: compact entity tables keep ranking, tooltips and continuous scrolling", async ({
+  page,
+  request,
+}) => {
+  const index = await (await request.get("/api/releases")).json();
+  const from = index.releases.find(
+    (r: { patch: string }) => r.patch === "7.41e",
+  );
+  const to = index.releases.find((r: { patch: string }) => r.patch === "7.41f");
+  test.skip(!from || !to, "Reviewed source pair is not present.");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(
+    `/changes?${new URLSearchParams({ release: to.id, from: from.id })}`,
+  );
+  for (const name of ["机制", "英雄", "物品", "其他"])
+    await expect(page.getByRole("region", { name, exact: true })).toBeVisible();
+  const heroes = page.getByRole("table", { name: "英雄", exact: true });
+  await expect(heroes.locator("[data-change-row]").first()).toBeVisible();
+  await expect
+    .poll(() => heroes.locator("[data-change-row]").count())
+    .toBeGreaterThan(25);
+  await expect(page.getByRole("navigation", { name: "变化分页" })).toHaveCount(
+    0,
+  );
+  const contentColumnWidths = () =>
+    heroes
+      .locator("col")
+      .evaluateAll((cols) =>
+        cols
+          .slice(1, 4)
+          .map((col) => Math.round(col.getBoundingClientRect().width)),
+      );
+  await expect
+    .poll(async () => (await contentColumnWidths())[0])
+    .toBeLessThan(146);
+  const initialWidths = await contentColumnWidths();
+  expect(initialWidths[1]).toBeLessThanOrEqual(216);
+  expect(initialWidths[2]).toBeGreaterThan(200);
+  const treantSubjects = heroes.locator(
+    '[data-table-group="npc_dota_hero_treant"] [data-table-column="subject"]',
+  );
   await expect(
-    page.locator('[data-change-group="item_heart"] .change-value-row').last(),
-  ).toHaveText("价格800→700");
+    treantSubjects.filter({
+      has: page.locator('a[href^="/abilities/treant_leech_seed?"]'),
+    }),
+  ).toHaveAttribute("rowspan", "2");
+  await expect(
+    treantSubjects.filter({
+      has: page.locator('a[href^="/abilities/treant_living_armor?"]'),
+    }),
+  ).toHaveAttribute("rowspan", "3");
+  const first = heroes.locator("[data-change-row]").first();
+  expect((await first.boundingBox())!.height).toBeLessThanOrEqual(32);
+  const icons = await first.evaluate((row) =>
+    [...row.querySelectorAll("img")].map((img) => ({
+      height: img.getBoundingClientRect().height,
+      lineHeight: parseFloat(getComputedStyle(img).lineHeight),
+      fontSize: parseFloat(getComputedStyle(img).fontSize),
+    })),
+  );
+  expect(icons[0].height).toBeCloseTo(icons[0].fontSize * 1.25, 0);
+  for (const icon of icons)
+    expect(icon.height).toBeLessThanOrEqual(icon.lineHeight);
+  expect(icons[1].height).toBeCloseTo(icons[1].fontSize, 0);
+  const impactLayout = await first
+    .locator('[data-table-column="impact"] button')
+    .evaluate((button) => {
+      const [direction, percent, delta] = [...button.children].map((el) =>
+        el.getBoundingClientRect(),
+      );
+      return {
+        direction: direction.top,
+        percent: percent.top,
+        delta: delta.top,
+        height: button.getBoundingClientRect().height,
+      };
+    });
+  expect(Math.abs(impactLayout.direction - impactLayout.percent)).toBeLessThan(
+    2,
+  );
+  expect(impactLayout.height).toBeLessThanOrEqual(18);
+  expect(Math.abs(impactLayout.direction - impactLayout.delta)).toBeLessThan(2);
+  await expect(first.locator("[data-change-delta]")).toHaveText("Δ +35");
+  await first.locator('[data-table-column="impact"] button').focus();
+  await expect(page.getByRole("tooltip")).toContainText("差值为终点减起点");
+  await page.keyboard.press("Escape");
+  const hero = first.locator('th[scope="row"] a');
+  await hero.focus();
+  await expect(page.getByRole("tooltip").locator("img")).toBeVisible();
+  await expect(page.getByRole("tooltip")).toContainText("基础力量");
+  const parentCard = page.locator('[role="tooltip"][data-tooltip-depth="0"]');
+  const facts = await parentCard.locator("dl > div").evaluateAll((items) =>
+    items.map((item) => {
+      const label = item.querySelector("dt")!.getBoundingClientRect(),
+        value = item.querySelector("dd")!.getBoundingClientRect();
+      return { top: label.top, left: label.left, valueLeft: value.left };
+    }),
+  );
+  // Two content-sized columns align labels and values, without a fixed 720px card.
+  expect(facts).toHaveLength(4);
+  expect(facts[0].top).toBe(facts[1].top);
+  expect(facts[2].top).toBe(facts[3].top);
+  expect(facts[2].top).toBeGreaterThan(facts[0].top);
+  expect(facts[0].left).toBe(facts[2].left);
+  expect(facts[0].valueLeft).toBe(facts[2].valueLeft);
+  expect(facts[1].valueLeft).toBe(facts[3].valueLeft);
+  expect((await parentCard.boundingBox())!.width).toBeLessThan(520);
+  const strength = parentCard.getByRole("link", {
+    name: "基础力量",
+    exact: true,
+  });
+  const strengthUrl = new URL(
+    (await strength.getAttribute("href"))!,
+    page.url(),
+  );
+  expect(strengthUrl.pathname).toBe("/attributes/strength");
+  expect(strengthUrl.searchParams.get("release")).toBe(to.id);
+  await strength.focus();
+  const attributeCard = page.locator(
+    '[role="tooltip"][data-tooltip-depth="1"]',
+  );
+  await expect(attributeCard).toContainText("生命上限");
+  await expect(parentCard).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(attributeCard).toHaveCount(0);
+  await expect(parentCard).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
+  const merged = heroes.locator("[data-table-merged-content]").first();
+  await merged.evaluate((content) => {
+    const cell = content.closest("th,td")!;
+    window.scrollTo(0, window.scrollY + cell.getBoundingClientRect().top + 30);
+  });
+  const header = heroes.locator("[data-table-header-content]").first();
+  await expect
+    .poll(async () => Math.round((await header.boundingBox())!.y))
+    .toBe(28);
+  const stickyTop = 28 + (await header.boundingBox())!.height + 4;
+  await expect
+    .poll(async () => (await merged.boundingBox())!.y)
+    .toBeCloseTo(stickyTop, 0);
+  // Read at every animation frame during bidirectional scrolling, before any
+  // delayed JS correction. A settled-position check misses visible shaking.
+  const motion = await merged.evaluate(async (content) => {
+    const tops: number[] = [];
+    for (let frame = 0; frame < 40; frame++) {
+      await new Promise(requestAnimationFrame);
+      tops.push(content.getBoundingClientRect().top);
+      window.scrollBy(0, frame < 20 ? 4 : -4);
+    }
+    return { min: Math.min(...tops), max: Math.max(...tops) };
+  });
+  expect(motion.min).toBeCloseTo(stickyTop, 0);
+  expect(motion.max).toBeCloseTo(stickyTop, 0);
+  // At the group boundary the old item moves out, without covering the next item.
+  await merged.evaluate((content) => {
+    window.scrollBy(
+      0,
+      content.closest("th,td")!.getBoundingClientRect().bottom - 50,
+    );
+  });
+  await expect
+    .poll(() =>
+      merged.evaluate(
+        (content) =>
+          content.getBoundingClientRect().bottom <=
+          content.closest("th,td")!.getBoundingClientRect().bottom,
+      ),
+    )
+    .toBe(true);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await expect
+    .poll(() =>
+      merged.evaluate((content) =>
+        Math.round(
+          content.getBoundingClientRect().top -
+            content.parentElement!.getBoundingClientRect().top,
+        ),
+      ),
+    )
+    .toBe(0);
+  // The same primitive works in an embedded scrolling table, under its sticky header.
+  await heroes.evaluate((table) => {
+    const root = table.parentElement!;
+    root.style.maxHeight = "220px";
+    root.scrollTop = 100;
+  });
+  await expect
+    .poll(() =>
+      merged.evaluate((content) => {
+        const header = content
+          .closest("table")!
+          .querySelector("[data-table-header-content]")!;
+        return Math.round(
+          content.getBoundingClientRect().top -
+            header.getBoundingClientRect().bottom,
+        );
+      }),
+    )
+    .toBe(4);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await heroes.evaluate((table) => {
+    table.parentElement!.scrollLeft = 70;
+  });
+  const aligned = await merged.evaluate((content) => {
+    const cell = content.closest("th,td")!;
+    return (
+      content.getBoundingClientRect().left - cell.getBoundingClientRect().left
+    );
+  });
+  expect(aligned).toBeCloseTo(8, 0);
+  await heroes.evaluate((table) => {
+    table.parentElement!.style.maxHeight = "";
+    table.parentElement!.scrollLeft = 0;
+    table.parentElement!.scrollTop = 0;
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await expect(
+    page.locator('[data-change-group="official:fixes"]'),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("table", { name: "物品", exact: true })
+      .locator("[data-change-row]")
+      .last(),
+  ).toBeAttached();
+  expect(await contentColumnWidths()).toEqual(initialWidths);
+  const subjectRuns = await heroes
+    .locator("[data-change-row]")
+    .evaluateAll((rows) => {
+      const groups = new Map<string, string[]>();
+      for (const row of rows) {
+        const el = row as HTMLElement,
+          subjects = groups.get(el.dataset.tableGroup!) ?? [];
+        if (subjects.at(-1) !== el.dataset.changeSubject)
+          subjects.push(el.dataset.changeSubject!);
+        groups.set(el.dataset.tableGroup!, subjects);
+      }
+      return [...groups.values()];
+    });
+  for (const subjects of subjectRuns)
+    expect(new Set(subjects).size).toBe(subjects.length);
+  const ranks = await heroes
+    .locator("[data-change-row]")
+    .evaluateAll((rows) => {
+      const groups = new Map<string, number[]>();
+      for (const row of rows) {
+        const group = `${(row as HTMLElement).dataset.tableGroup}:${(row as HTMLElement).dataset.changeSubject}:${(row as HTMLElement).dataset.direction}`;
+        const scores = groups.get(group) ?? [];
+        scores.push(Number((row as HTMLElement).dataset.impactScore));
+        groups.set(group, scores);
+      }
+      return [...groups.values()];
+    });
+  for (const scores of ranks)
+    expect(scores).toEqual([...scores].sort((a, b) => b - a));
+  const segments = await heroes
+    .locator("[data-change-row]")
+    .evaluateAll((rows) => {
+      const previous = new Map<string, string>();
+      return rows.map((row) => {
+        const el = row as HTMLElement,
+          group = `${el.dataset.tableGroup}:${el.dataset.changeSubject}`,
+          direction = el.dataset.direction!;
+        const prior = previous.get(group);
+        previous.set(group, direction);
+        return {
+          direction,
+          prior,
+          starts: el.hasAttribute("data-direction-start"),
+          padding: getComputedStyle(el.querySelector("td")!).paddingTop,
+          border: getComputedStyle(el.querySelector("td")!).borderTopWidth,
+          shadow: getComputedStyle(el.querySelector("td")!).boxShadow,
+        };
+      });
+    });
+  for (const segment of segments) {
+    expect(segment.starts).toBe(segment.prior !== segment.direction);
+    if (segment.prior)
+      expect(
+        ["nerf", "buff", "neutral"].indexOf(segment.direction),
+      ).toBeGreaterThanOrEqual(
+        ["nerf", "buff", "neutral"].indexOf(segment.prior),
+      );
+    if (segment.starts) expect(segment.padding).toBe("9px");
+    expect(segment.border).toBe("0px");
+    expect(segment.shadow).toBe("none");
+  }
+  const heroSection = page.getByRole("region", { name: "英雄", exact: true });
+  await expect(
+    heroSection.locator('[data-direction-count="nerf"]'),
+  ).toContainText("削弱");
+  await expect(
+    heroSection.locator('[data-direction-count="buff"]'),
+  ).toContainText("增强");
+  await expect(
+    heroSection.locator('[data-direction-count="neutral"]'),
+  ).toContainText("持平");
+
+  await page.getByRole("searchbox", { name: "搜索变化" }).fill("敌法师");
+  // This group already exists before filtering. Wait for the debounced result,
+  // otherwise focus can target the old row immediately before it is replaced.
+  await expect(heroes.locator("[data-change-row]")).toHaveCount(1);
+  await expect
+    .poll(async () => {
+      const widths = await contentColumnWidths();
+      return widths[0] + widths[1];
+    })
+    .toBeLessThan(initialWidths[0] + initialWidths[1]);
+  const antimage = page.locator('[data-change-group="npc_dota_hero_antimage"]');
+  await expect(antimage).toHaveCount(1);
+  await expect(
+    antimage.getByRole("button", { name: "增强 +8.3%" }),
+  ).toBeVisible();
+  await antimage.locator('a[href^="/abilities/antimage_mana_break?"]').focus();
+  await expect(page.getByRole("tooltip")).toContainText("法力损毁");
+  await page.keyboard.press("Escape");
+  await page.getByRole("combobox", { name: "变化", exact: true }).click();
+  await page.getByRole("option", { name: "削弱", exact: true }).click();
+  await expect(antimage).toHaveCount(0);
+  await expect(heroSection.locator("[data-direction-count]")).toHaveCount(0);
 });
 
 test("heroes global language persists across catalogs, details, history and reload", async ({

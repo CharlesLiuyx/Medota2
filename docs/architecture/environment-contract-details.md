@@ -22,7 +22,7 @@ Medota2 是本地优先、以来源可追溯和原子版本为核心的 Dota 2 �
 - Run Identity；
 - 允许的读取、fixture 构造、迁移、导入、提升、回滚、seed 或 reset 操作。
 
-进程不能通过 URL 后缀、`NODE_ENV`、端口、分支名或默认值推断合同。每次 pool checkout 先核对 session role、回滚遗留事务、`DISCARD ALL`，恢复 search path、RLS、replication role 与默认事务只读策略，再按验证策略完成attestation：默认使用严格allowlist的只读control-plane查询；仅 `development + Web/read + MEDOTA2_WORKBENCH=1` 对已验证的物理连接复用身份结果；验证成功后，`openVerifiedDatabase` 才返回不透明的 verified capability。除这些 session setup/attestation 语句外，正常 Web、Worker、migration、seed 和 reset 入口不接受裸数据库 URL，也不能在验证前执行应用查询、DDL 或 DML。
+进程不能通过 URL 后缀、`NODE_ENV`、端口、分支名或默认值推断合同。每次 pool checkout 先核对 session role、回滚遗留事务、`DISCARD ALL`，恢复 search path、RLS、replication role 与默认事务只读策略，再按验证策略完成attestation：默认使用严格allowlist的只读control-plane查询；仅 `(development 或 local-review) + Web/read + MEDOTA2_WORKBENCH=1` 对已验证的物理连接复用身份结果；验证成功后，`openVerifiedDatabase` 才返回不透明的 verified capability。除这些 session setup/attestation 语句外，正常 Web、Worker、migration、seed 和 reset 入口不接受裸数据库 URL，也不能在验证前执行应用查询、DDL 或 DML。
 
 为区分生命周期，**Environment Declaration** 指验证前冻结的预期身份，operation 在申请 capability 时另外声明；**Verified Environment Contract** 指 declaration 与数据库事实验证一致后的结果。本文简称 Environment Contract 时，指约束这些阶段及其转换的完整规则。只有 verified 结果可以投影 database identity 或授权数据库操作；验证失败的 UI 只能显示 declaration 和明确的 blocked 状态。
 
@@ -118,7 +118,7 @@ Role-specific credential adapter
                   │ role guard → ROLLBACK → DISCARD ALL          │
                   │ restore session baseline                     │
                   ▼                                             │
-      attestation or permitted development connection reuse                    │
+      attestation or permitted workbench connection reuse                    │
                   │                                             │
                   ├── mismatch/drift ──> destroy + fail closed   │
                   ▼                                             │
@@ -139,7 +139,7 @@ Hero Catalog Dataset    Asset Dataset
 
 1. 进程环境只声明一次；没有隐式 `main` fallback。
 2. URL、数据库名后缀和 `NODE_ENV` 都不是可信环境身份。
-3. 每次pool checkout恢复只读及session baseline；应用访问前取得验证能力。默认fresh attestation，仅上述development Web物理连接允许复用，迁移／权限变化后重启。
+3. 每次pool checkout恢复只读及session baseline；应用访问前取得验证能力。默认fresh attestation，仅上述共享工作台Web物理连接允许复用，迁移／权限变化后重启。
 4. 正常数据库 caller 只能消费 opaque verified capability，不消费裸 URL。
 5. marker 缺失或不匹配时 fail closed；普通 migration 不自动 bootstrap marker。
 6. 三角色通过共同 Database Identity convergence，而不是通过三个独立 URL 的字符串相似性建立信任。

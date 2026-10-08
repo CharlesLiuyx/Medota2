@@ -1,4 +1,5 @@
 "use client";
+import type { ReactNode } from "react";
 import { useLocale } from "@/i18n/provider";
 import { useTranslations } from "@/i18n/provider";
 import { CompactSelect } from "./ui/compact-select";
@@ -8,10 +9,12 @@ import { Search, X } from "lucide-react";
 import type { AbilityFilters } from "@/server/services/ability-filters";
 export function AbilityFilterForm({
   filters,
+  status,
   onChange,
   onClear,
   heroes = [],
 }: {
+  status?: ReactNode;
   filters: AbilityFilters;
   onChange: (data: FormData, composing: boolean) => void;
   onClear: () => void;
@@ -37,7 +40,7 @@ export function AbilityFilterForm({
         <input type="hidden" name="lang" value={locale} />
         <input type="hidden" name="behavior" value={filters.behavior} />
         <input type="hidden" name="damage" value={filters.damage} />
-        <label className="relative min-w-0 basis-full sm:min-w-44 sm:flex-1 sm:basis-44">
+        <label className="relative min-w-0 basis-full sm:w-60 sm:flex-none sm:basis-auto">
           <Search className="absolute left-1.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--text-muted)]" />
           <span className="sr-only">{t("搜索技能")}</span>
           <input
@@ -53,6 +56,7 @@ export function AbilityFilterForm({
             className="h-8 w-full bg-transparent pl-7 pr-2 text-xs placeholder:text-[var(--text-muted)]"
           />
         </label>
+        {status}
         <CompactSelect
           onChange={onChange}
           name="status"

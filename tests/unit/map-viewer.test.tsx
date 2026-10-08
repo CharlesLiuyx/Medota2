@@ -195,12 +195,20 @@ it("coalesces dense-map pointer input, reuses the scene, and keeps the canvas in
 });
 
 it("shows and hits trees at 100%, draws the hover label above markers, and obeys the layer switch", async () => {
-  let queued: FrameRequestCallback | undefined;
+  // Tooltip positioning and map paints can queue independent animation frames.
+  const frames = new Map<number, FrameRequestCallback>();
+  let nextFrame = 0;
   vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
-    queued = callback;
-    return 1;
+    frames.set(++nextFrame, callback);
+    return nextFrame;
   });
-  vi.stubGlobal("cancelAnimationFrame", () => {});
+  vi.stubGlobal("cancelAnimationFrame", (id: number) => frames.delete(id));
+  const flush = (time: number) =>
+    act(() => {
+      const batch = [...frames.values()];
+      frames.clear();
+      batch.forEach((callback) => callback(time));
+    });
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -357,7 +365,7 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
     />,
   );
   const canvas = screen.getByLabelText(/交互地图/);
-  act(() => queued?.(0));
+  flush(0);
   expect(screen.getByLabelText("缩放比例").textContent).toBe("100%");
   const treeFill = () =>
     paint.some(
@@ -390,14 +398,14 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
       bubbles: true,
     }),
   );
-  act(() => queued?.(1));
+  flush(1);
   expect(screen.getByRole("status").textContent).toContain(
     "树 · X 0, Y 0, Z 128",
   );
   expect(paint.at(-1)).toBe("fillText:树,300,323");
   fireEvent.click(screen.getByRole("checkbox", { name: /树/ }));
   paint.length = 0;
-  act(() => queued?.(2));
+  flush(2);
   expect(treeFill()).toBe(false);
   fireEvent(
     canvas,
@@ -417,7 +425,7 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
       bubbles: true,
     }),
   );
-  act(() => queued?.(3));
+  flush(3);
   expect(paint).toContain("set:lineWidth:5");
   expect(paint.some((s) => s.includes("Z 轴范围：-128～256"))).toBe(true);
   expect(paint.indexOf("set:lineWidth:5")).toBeGreaterThan(
@@ -440,7 +448,7 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
   }
   paint.length = 0;
   fireEvent.pointerLeave(canvas);
-  act(() => queued?.(3.1));
+  flush(3.1);
   expect(paint).toContain("set:lineWidth:5");
   expect(paint.some((s) => s.includes("Z 轴范围：-128～256"))).toBe(true);
   expect(paint.some((s) => s.startsWith("fillText:经验 50,"))).toBe(true);
@@ -451,7 +459,7 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
     canvas,
     new MouseEvent("pointermove", { clientX: 25, clientY: 25, bubbles: true }),
   );
-  act(() => queued?.(3.2));
+  flush(3.2);
   // No hover change: keep the previous complete frame rather than repaint it.
   expect(paint).toHaveLength(0);
   fireEvent(
@@ -462,7 +470,7 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
       bubbles: true,
     }),
   );
-  act(() => queued?.(3.25));
+  flush(3.25);
   expect(paint.some((s) => s.startsWith("fillText:营地,"))).toBe(true);
   expect(paint.some((s) => s.startsWith("fillText:商店,"))).toBe(true);
   expect(paint).toContain("set:lineWidth:5");
@@ -470,18 +478,18 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
   const campToggle = screen.getByRole("checkbox", { name: /野怪营地/ });
   fireEvent.click(campToggle);
   paint.length = 0;
-  act(() => queued?.(3.3));
+  flush(3.3);
   expect(paint).not.toContain("set:lineWidth:5");
   expect(paint.some((s) => s.includes("Z 轴范围"))).toBe(false);
   expect(paint.some((s) => s.startsWith("fillText:经验 50,"))).toBe(false);
   fireEvent.click(campToggle);
   paint.length = 0;
-  act(() => queued?.(3.4));
+  flush(3.4);
   expect(paint).toContain("set:lineWidth:5");
   fireEvent.click(screen.getByRole("button", { name: "关闭点位详情" }));
   paint.length = 0;
   fireEvent.pointerLeave(canvas);
-  act(() => queued?.(4));
+  flush(4);
   expect(paint).not.toContain("set:lineWidth:5");
   expect(paint.some((s) => s.startsWith("fillText:经验 50,"))).toBe(false);
   expect(paint.some((s) => s.includes("Z 轴范围"))).toBe(false);
@@ -493,7 +501,7 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
       bubbles: true,
     }),
   );
-  act(() => queued?.(4.5));
+  flush(4.5);
   const preview = screen.getByRole("status", { name: "兵线路径收益" });
   expect(preview.textContent).toContain("经验 200");
   expect(preview.textContent).toContain("天辉");
@@ -514,17 +522,17 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
   expect(screen.queryByRole("status", { name: "兵线路径收益" })).toBeNull();
   const campButton = screen.getByRole("button", { name: "营地 10, 0" });
   fireEvent.pointerEnter(campButton);
-  act(() => queued?.(5));
+  flush(5);
   expect(paint).toContain("set:lineWidth:5");
   paint.length = 0;
   fireEvent.pointerLeave(campButton);
-  act(() => queued?.(6));
+  flush(6);
   expect(paint).not.toContain("set:lineWidth:5");
   const campLayer = screen
     .getByRole("checkbox", { name: /野怪营地/ })
     .closest("label")!;
   fireEvent.pointerEnter(campLayer);
-  act(() => queued?.(7));
+  flush(7);
   expect(paint).toContain("set:lineWidth:5");
   fireEvent.pointerLeave(campLayer);
   fireEvent.click(screen.getByRole("button", { name: "寻路" }));
@@ -538,7 +546,7 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
       bubbles: true,
     }),
   );
-  act(() => queued?.(8));
+  flush(8);
   expect(canvas.getAttribute("data-pick-hint")).toBe("点击设置起点 A");
   for (const x of [156, 444]) {
     fireEvent(
@@ -645,4 +653,126 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
   expect(
     screen.getByRole("button", { name: "寻路" }).getAttribute("aria-pressed"),
   ).toBe("false");
+});
+
+it("toggles currents independently of terrain, invalidates the scene, and resets zoom from its number", () => {
+  const frames = new Map<number, FrameRequestCallback>();
+  let nextFrame = 0;
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+    frames.set(++nextFrame, callback);
+    return nextFrame;
+  });
+  vi.stubGlobal("cancelAnimationFrame", (id: number) => frames.delete(id));
+  const flush = () =>
+    act(() => {
+      const batch = [...frames.values()];
+      frames.clear();
+      batch.forEach((callback) => callback(0));
+    });
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(600);
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(600);
+  const paint: string[] = [];
+  const context = new Proxy(
+    {},
+    {
+      get: (_, key) =>
+        key === "measureText" ? () => ({ width: 24 }) : () => {},
+      set: (_, key, value) => {
+        paint.push(`set:${String(key)}:${value}`);
+        return true;
+      },
+    },
+  );
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+    context as CanvasRenderingContext2D,
+  );
+  render(
+    <MapViewer
+      data={{
+        bounds: { minX: -128, maxX: 128, minY: -128, maxY: 128 },
+        points: [],
+        imageUrl: "/fixture.webp",
+        clientVersion: "6944",
+        coverage: null,
+        routing: {
+          grid: {
+            cell: 64,
+            width: 4,
+            height: 4,
+            x: -128,
+            y: -128,
+            walkable: "1".repeat(16),
+          },
+          gate: null,
+          revision: "test",
+          currents: [
+            {
+              id: "current",
+              maxBonus: 150,
+              samples: [
+                { x: -100, y: 0, z: 0, radius: 64 },
+                { x: 100, y: 0, z: 0, radius: 64 },
+              ],
+            },
+          ],
+        },
+        rasterLayers: [
+          {
+            id: "navigation",
+            label: "导航栅格",
+            file: "navigation.webp",
+            url: "/navigation.webp",
+            sha256: "a".repeat(64),
+            bounds: { minX: -128, maxX: 128, minY: -128, maxY: 128 },
+            width: 4,
+            height: 4,
+            note: "fixture",
+          },
+        ],
+      }}
+    />,
+  );
+  const canvas = screen.getByLabelText(/交互地图/) as HTMLCanvasElement;
+  flush();
+  fireEvent.click(screen.getByRole("button", { name: "放大地图" }));
+  flush();
+  expect(screen.getByLabelText("缩放比例").textContent).toBe("150%");
+  fireEvent.click(screen.getByRole("button", { name: "缩放比例" }));
+  flush();
+  expect(screen.getByLabelText("缩放比例").textContent).toBe("100%");
+  expect(screen.queryByRole("button", { name: "复位地图" })).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: "导航栅格" }));
+  flush();
+  const currentSwitch = screen.getByRole("switch", {
+    name: "湍流",
+  }) as HTMLInputElement;
+  expect(currentSwitch.checked).toBe(false);
+  paint.length = 0;
+  const builds = Number(canvas.dataset.backgroundBuilds);
+  fireEvent.click(currentSwitch);
+  flush();
+  expect(currentSwitch.checked).toBe(true);
+  expect(
+    screen
+      .getByRole("button", { name: "导航栅格" })
+      .getAttribute("aria-pressed"),
+  ).toBe("true");
+  expect(paint).toContain("set:fillStyle:#38bfc950");
+  expect(Number(canvas.dataset.backgroundBuilds)).toBe(builds + 1);
+  expect(screen.getAllByRole("region", { name: "地形图例" })).toHaveLength(2);
+  paint.length = 0;
+  fireEvent.click(currentSwitch);
+  flush();
+  expect(paint).not.toContain("set:fillStyle:#38bfc950");
+  expect(Number(canvas.dataset.backgroundBuilds)).toBe(builds + 2);
+  fireEvent.click(screen.getByRole("button", { name: "底图" }));
+  flush();
 });

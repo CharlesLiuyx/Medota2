@@ -56,76 +56,87 @@
 
 下表是文档状态的维护位置，`pnpm docs:check`核对覆盖。`active`为当前规则／操作／任务；`reference`为决策或固定证据，按适用范围读取；`historical`仅代表原基线。部分被取代的ADR仍保留有效条款，替代范围写在原页。
 
-| 文档                                                                        | 状态       | 负责内容                                          |
-| --------------------------------------------------------------------------- | ---------- | ------------------------------------------------- |
-| [当前工作](current.md)                                                      | active     | 活动状态与接手                                    |
-| [环境登记](development-environments.md)                                     | active     | 机器能力、限制与推荐                              |
-| [同步运行手册](development-data-sync-runbook.md)                            | active     | 获取、发布、恢复操作                              |
-| [设计系统](design-system.md)                                                | active     | 共用视觉规则                                      |
-| [项目现状与架构图谱](architecture/project-atlas.html)                       | active     | 跨模块可视化总览、现状及实现入口                  |
-| [数据流](architecture/data-flow.md)                                         | active     | 来源、存储与版本关系                              |
-| [技术选型](architecture/technology-selection.md)                            | active     | 技术理由与演进条件                                |
-| [环境合同细节](architecture/environment-contract-details.md)                | active     | 身份、用途和权限概念                              |
-| [环境合同历史审阅](architecture/environment-contract-review.md)             | historical | 2026-08-31审查基线                                |
-| [实体版本与Diff](specs/entity-versions.md)                                  | active     | 全局版本、实体身份、覆盖和端点比较                |
-| [ADR0009](adr/0009-entity-release-read-context.md)                          | reference  | 版本读上下文与完整端点Diff                        |
-| [Catalog v2](specs/hero-catalog-v2.md)                                      | active     | Catalog、来源适配、关系、导入合同；UI见专项       |
-| [英雄MVP](specs/hero-metadata-mvp.md)                                       | historical | 首版合同；兼容记录保留，现行Catalog见v2           |
-| [全局国际化](specs/global-i18n.md)                                          | active     | 界面语言、请求上下文、文案与全工作流验收          |
-| [i18n实施](work/global-i18n.md)                                             | active     | 国际化迁移范围、状态与验证                        |
-| [i18n验证](history/2026-10-07-global-i18n.md)                               | historical | 双语实现、本机验证与复跑边界                      |
-| [语义图鉴](specs/semantic-game-ui.md)                                       | active     | 玩家页面、搜索、游戏文本                          |
-| [缺失名称补充验收](history/2026-10-07-name-enrichment.md)                   | reference  | 名称身份盘点、公开来源、用途名及固定版本验证      |
-| [无限列表](specs/infinite-lists.md)                                         | active     | 连续加载与分块渲染                                |
-| [浏览器目录缓存](specs/browser-catalog-cache.md)                            | active     | 派生快照、同步与失效                              |
-| [单位](specs/unit-catalog.md)                                               | active     | 单位模型、头像及缺项                              |
-| [属性字段覆盖审计](data/attribute-coverage-7.41e-7.41f.json)                | reference  | 两版根级数字字段、枚举字段与物品参数覆盖          |
-| [属性](specs/attribute-catalog.md)                                          | active     | 属性身份、同版引用、官方名称、机制与证据          |
-| [属性机制Windows核验](work/attribute-engine-verification.md)                | active     | 同版客户端来源提取与实验交接                      |
-| [物品](specs/item-catalog.md)                                               | active     | 物品定义、目录、配方与来源边界                    |
-| [地图](specs/map-explorer.md)                                               | active     | 地图数据、操作、计算与估算边界                    |
-| [工作台](specs/development-workbench.md)                                    | active     | 共享开发、反馈、检查与产物合同                    |
-| [开发数据同步](specs/development-data-sync.md)                              | active     | 快照、切换、内容一致性协议                        |
-| [隔离验证](specs/environment-isolation-and-verification.md)                 | active     | 显式isolated运行与数据库合同                      |
-| [OpenDota配置](specs/opendota-secret.md)                                    | active     | 可选服务端秘密入口                                |
-| [开发操作](operations/development.md)                                       | active     | 启动、检查、构建、清理及排障命令                  |
-| [Catalog与资产导入](operations/catalog-import.md)                           | active     | 首次来源、英雄／技能／单位图片导入                |
-| [Catalog刷新](operations/catalog-refresh.md)                                | active     | Review、发布、回滚与development调度               |
-| [来源总览](repositories/README.md)                                          | active     | 各来源职责与选源                                  |
-| [GameTracking](repositories/game-tracking-dota2.md)                         | reference  | 协议／引擎来源审阅                                |
-| [VPK定义来源](repositories/dota-vpk-updates.md)                             | reference  | 固定快照结构与适配边界                            |
-| [dotaconstants](repositories/dotaconstants.md)                              | reference  | QA与图片路径参考                                  |
-| [ReDota](repositories/redota.md)                                            | reference  | 单位截图来源和许可                                |
-| [Sloppy地图](repositories/sloppy-map.md)                                    | reference  | 固定公开地图版本与许可                            |
-| [本机地图](repositories/local-dota-map.md)                                  | reference  | 6944取证、当前适配及引擎待验项                    |
-| [ADR0001](adr/0001-hero-catalog-version-boundary.md)                        | reference  | Catalog原子版本                                   |
-| [ADR0002](adr/0002-valve-local-asset-provider.md)                           | reference  | 只读来源／许可；供图方式被0004替代                |
-| [ADR0003](adr/0003-catalog-refresh-gates.md)                                | reference  | 刷新审阅门禁                                      |
-| [ADR0004](adr/0004-database-icon-asset-datasets.md)                         | reference  | 数据库资产版本                                    |
-| [ADR0005](adr/0005-environment-contract.md)                                 | reference  | 身份合同；开发连接复用由0007修订                  |
-| [ADR0006](adr/0006-run-scoped-verification.md)                              | reference  | 显式隔离；日常共享规则由0007修订                  |
-| [ADR0007](adr/0007-shared-development-workbench.md)                         | reference  | 共享工作台与按需验证                              |
-| [ADR0008](adr/0008-development-snapshot-restore.md)                         | reference  | 开发快照与恢复                                    |
-| [主图标记录](assets/medota2-icon.md)                                        | reference  | 图片来源、选择和导出参数                          |
-| [固定Catalog审计](data/real-snapshot-audit-991daaf6.json)                   | reference  | 单次来源审计，不代表当前环境                      |
-| [开发脚手架Review](reviews/development-scaffold-review-2026-10-06.html)     | historical | 0007的方案依据                                    |
-| [早期完整工程方案](reviews/testing-to-delivery-refactor-2026-09-06.html)    | historical | 原候选方案；按需打开大HTML                        |
-| [简版工程方案](reviews/testing-to-delivery-refactor-simple-2026-10-05.html) | historical | 原需求讨论与附录                                  |
-| [空间审计](reviews/storage-audit-2026-10-06.md)                             | historical | 特定机器与时间的容量证据                          |
-| [旧current完整快照](history/2026-10-06-current.md)                          | historical | 61个旧章节与原证据路径                            |
-| [旧环境登记快照](history/2026-10-06-development-environments.md)            | historical | 环境观察历史                                      |
-| [Context迁移与验收](history/2026-10-07-context-migration.md)                | reference  | 原章节去向、此次范围与验收                        |
-| [全部变更发布验收](history/2026-10-07-main-publication.md)                  | reference  | main代码、完整快照、组合检查与平台边界            |
-| [实体版本架构实施](history/2026-10-07-entity-version-foundation.md)         | historical | 第一阶段范围、基线、验证与下一次更新              |
-| [属性实体验收](history/2026-10-07-attribute-catalog.md)                     | historical | 属性、枚举、固定来源与验证边界                    |
-| [物品实体验收](history/2026-10-07-item-catalog.md)                          | historical | 物品实施、专项验证与并行检查边界                  |
-| [地图紧凑UI](history/2026-10-07-map-compact-ui.md)                          | historical | 本轮布局与验证                                    |
-| [发布流程优化](history/2026-10-07-publication-optimization.md)              | reference  | 候选门禁、fixture前置、阶段收据、CI续接与验证边界 |
-| [开发反馈修复](history/2026-10-07-development-feedback.md)                  | reference  | 扩展干扰、扫描边界、编译器与隐藏视口验收          |
-| [Windows复验任务](work/windows-native-validation.md)                        | active     | 平台失败的接手步骤与解除条件                      |
-| [实体版本与 Diff 优化](work/entity-version-diff.md)                         | active     | 第一阶段实施、后续范围及真实更新验收              |
-| [7.41f 更新与 VPK Diff](work/7.41f-update.md)                               | active     | 收录、官方说明与真实Diff                          |
-| [7.41e → 7.41f 字段差异](data/vpk-diff-7.41e-7.41f.json)                    | reference  | 固定字段差异及首发后核对                          |
+| 文档                                                                        | 状态       | 负责内容                                           |
+| --------------------------------------------------------------------------- | ---------- | -------------------------------------------------- |
+| [当前工作](current.md)                                                      | active     | 活动状态与接手                                     |
+| [环境登记](development-environments.md)                                     | active     | 机器能力、限制与推荐                               |
+| [同步运行手册](development-data-sync-runbook.md)                            | active     | 获取、发布、恢复操作                               |
+| [设计系统](design-system.md)                                                | active     | 共用视觉规则                                       |
+| [项目现状与架构图谱](architecture/project-atlas.html)                       | active     | 跨模块可视化总览、现状及实现入口                   |
+| [数据流](architecture/data-flow.md)                                         | active     | 来源、存储与版本关系                               |
+| [技术选型](architecture/technology-selection.md)                            | active     | 技术理由与演进条件                                 |
+| [环境合同细节](architecture/environment-contract-details.md)                | active     | 身份、用途和权限概念                               |
+| [环境合同历史审阅](architecture/environment-contract-review.md)             | historical | 2026-08-31审查基线                                 |
+| [实体版本与Diff](specs/entity-versions.md)                                  | active     | 全局版本、实体身份、覆盖和端点比较                 |
+| [ADR0009](adr/0009-entity-release-read-context.md)                          | reference  | 版本读上下文与完整端点Diff                         |
+| [Catalog v2](specs/hero-catalog-v2.md)                                      | active     | Catalog、来源适配、关系、导入合同；UI见专项        |
+| [英雄MVP](specs/hero-metadata-mvp.md)                                       | historical | 首版合同；兼容记录保留，现行Catalog见v2            |
+| [全局国际化](specs/global-i18n.md)                                          | active     | 界面语言、请求上下文、文案与全工作流验收           |
+| [i18n实施](work/global-i18n.md)                                             | active     | 国际化迁移范围、状态与验证                         |
+| [i18n验证](history/2026-10-07-global-i18n.md)                               | historical | 双语实现、本机验证与复跑边界                       |
+| [语义图鉴](specs/semantic-game-ui.md)                                       | active     | 玩家页面、搜索、游戏文本                           |
+| [缺失名称补充验收](history/2026-10-07-name-enrichment.md)                   | reference  | 名称身份盘点、公开来源、用途名及固定版本验证       |
+| [无限列表](specs/infinite-lists.md)                                         | active     | 连续加载与分块渲染                                 |
+| [浏览器目录缓存](specs/browser-catalog-cache.md)                            | active     | 派生快照、同步与失效                               |
+| [单位](specs/unit-catalog.md)                                               | active     | 单位模型、头像及缺项                               |
+| [属性字段覆盖审计](data/attribute-coverage-7.41e-7.41f.json)                | reference  | 两版根级数字字段、枚举字段与物品参数覆盖           |
+| [属性](specs/attribute-catalog.md)                                          | active     | 属性身份、同版引用、官方名称、机制与证据           |
+| [属性机制Windows核验](work/attribute-engine-verification.md)                | active     | 同版客户端来源提取与实验交接                       |
+| [物品](specs/item-catalog.md)                                               | active     | 物品定义、目录、配方与来源边界                     |
+| [地图](specs/map-explorer.md)                                               | active     | 地图数据、操作、计算与估算边界                     |
+| [视野遮挡算法 Plan / Todo](work/map-vision-occlusion.md)                    | active     | 版本输入、引擎采样、算法校准、地图接入与验收待办   |
+| [工作台](specs/development-workbench.md)                                    | active     | 共享开发、反馈、检查与产物合同                     |
+| [开发数据同步](specs/development-data-sync.md)                              | active     | 快照、切换、内容一致性协议                         |
+| [隔离验证](specs/environment-isolation-and-verification.md)                 | active     | 显式isolated运行与数据库合同                       |
+| [OpenDota配置](specs/opendota-secret.md)                                    | active     | 可选服务端秘密入口                                 |
+| [开发操作](operations/development.md)                                       | active     | 启动、检查、构建、清理及排障命令                   |
+| [Catalog与资产导入](operations/catalog-import.md)                           | active     | 首次来源、英雄／技能／单位图片导入                 |
+| [Catalog刷新](operations/catalog-refresh.md)                                | active     | Review、发布、回滚与development调度                |
+| [来源总览](repositories/README.md)                                          | active     | 各来源职责与选源                                   |
+| [GameTracking](repositories/game-tracking-dota2.md)                         | reference  | 协议／引擎来源审阅                                 |
+| [VPK定义来源](repositories/dota-vpk-updates.md)                             | reference  | 固定快照结构与适配边界                             |
+| [dotaconstants](repositories/dotaconstants.md)                              | reference  | QA与图片路径参考                                   |
+| [ReDota](repositories/redota.md)                                            | reference  | 单位截图来源和许可                                 |
+| [Sloppy地图](repositories/sloppy-map.md)                                    | reference  | 固定公开地图版本与许可                             |
+| [本机地图](repositories/local-dota-map.md)                                  | reference  | 6944取证、当前适配及引擎待验项                     |
+| [ADR0001](adr/0001-hero-catalog-version-boundary.md)                        | reference  | Catalog原子版本                                    |
+| [ADR0002](adr/0002-valve-local-asset-provider.md)                           | reference  | 只读来源／许可；供图方式被0004替代                 |
+| [ADR0003](adr/0003-catalog-refresh-gates.md)                                | reference  | 刷新审阅门禁                                       |
+| [ADR0004](adr/0004-database-icon-asset-datasets.md)                         | reference  | 数据库资产版本                                     |
+| [ADR0005](adr/0005-environment-contract.md)                                 | reference  | 身份合同；开发连接复用由0007修订                   |
+| [ADR0006](adr/0006-run-scoped-verification.md)                              | reference  | 显式隔离；日常共享规则由0007修订                   |
+| [ADR0007](adr/0007-shared-development-workbench.md)                         | reference  | 共享工作台与按需验证                               |
+| [ADR0008](adr/0008-development-snapshot-restore.md)                         | reference  | 开发快照与恢复                                     |
+| [主图标记录](assets/medota2-icon.md)                                        | reference  | 图片来源、选择和导出参数                           |
+| [固定Catalog审计](data/real-snapshot-audit-991daaf6.json)                   | reference  | 单次来源审计，不代表当前环境                       |
+| [开发脚手架Review](reviews/development-scaffold-review-2026-10-06.html)     | historical | 0007的方案依据                                     |
+| [早期完整工程方案](reviews/testing-to-delivery-refactor-2026-09-06.html)    | historical | 原候选方案；按需打开大HTML                         |
+| [简版工程方案](reviews/testing-to-delivery-refactor-simple-2026-10-05.html) | historical | 原需求讨论与附录                                   |
+| [空间审计](reviews/storage-audit-2026-10-06.md)                             | historical | 特定机器与时间的容量证据                           |
+| [旧current完整快照](history/2026-10-06-current.md)                          | historical | 61个旧章节与原证据路径                             |
+| [旧环境登记快照](history/2026-10-06-development-environments.md)            | historical | 环境观察历史                                       |
+| [Context迁移与验收](history/2026-10-07-context-migration.md)                | reference  | 原章节去向、此次范围与验收                         |
+| [全部变更发布验收](history/2026-10-07-main-publication.md)                  | reference  | main代码、完整快照、组合检查与平台边界             |
+| [实体版本架构实施](history/2026-10-07-entity-version-foundation.md)         | historical | 第一阶段范围、基线、验证与下一次更新               |
+| [属性参数命名审阅](history/2026-10-08-attribute-parameter-labels.md)        | historical | 两版逐项VPK查询、名称补充、未确认清单与验证        |
+| [属性参数上下文命名](history/2026-10-08-attribute-context-names.md)         | historical | GPT-6-Luna逐项推定剩余双语名称与依据               |
+| [属性原变量中文命名](history/2026-10-08-attribute-field-chinese-names.md)   | historical | GPT-6-Luna并行复核全部原变量中文标签与验证         |
+| [变化表格与影响排序](history/2026-10-08-changes-table.md)                   | historical | 紧凑分类、实体简述卡、语义方向与连续虚拟滚动验收   |
+| [图鉴统计与即时搜索](history/2026-10-08-tab-search-tooltips.md)             | historical | 属性数量、变化实时搜索、页头说明提示与本机验证     |
+| [属性完整术语匹配](history/2026-10-08-attribute-term-matching.md)           | historical | 两版中英全篇匹配、复合术语、枚举定位与验证         |
+| [属性实体验收](history/2026-10-07-attribute-catalog.md)                     | historical | 属性、枚举、固定来源与验证边界                     |
+| [物品实体验收](history/2026-10-07-item-catalog.md)                          | historical | 物品实施、专项验证与并行检查边界                   |
+| [物品参数名称补全](history/2026-10-07-item-parameter-labels.md)             | reference  | 注释标签、字段释义、两版补名与验证边界             |
+| [地图紧凑UI](history/2026-10-07-map-compact-ui.md)                          | historical | 本轮布局与验证                                     |
+| [地图顶栏分组](history/2026-10-08-map-toolbar.md)                           | historical | 顶栏收窄、状态分组、工具轨与属性栏上移及本机验证   |
+| [地图工具栏移左](history/2026-10-08-map-left-tools.md)                      | historical | 工具移左、顶部湍流开关、缩放数字复位与地图视区加高 |
+| [发布流程优化](history/2026-10-07-publication-optimization.md)              | reference  | 候选门禁、fixture前置、阶段收据、CI续接与验证边界  |
+| [数据库读取稳定性](history/2026-10-08-database-read-resilience.md)          | reference  | 变化页池等待超时、端点快照、连接恢复及本机测量     |
+| [开发反馈修复](history/2026-10-07-development-feedback.md)                  | reference  | 扩展干扰、扫描边界、编译器与隐藏视口验收           |
+| [Windows复验任务](work/windows-native-validation.md)                        | active     | 平台失败的接手步骤与解除条件                       |
+| [实体版本与 Diff 优化](work/entity-version-diff.md)                         | active     | 第一阶段实施、后续范围及真实更新验收               |
+| [7.41f 更新与 VPK Diff](work/7.41f-update.md)                               | active     | 收录、官方说明与真实Diff                           |
+| [7.41e → 7.41f 字段差异](data/vpk-diff-7.41e-7.41f.json)                    | reference  | 固定字段差异及首发后核对                           |
 
 ## 维护与自动检查
 

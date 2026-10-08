@@ -19,6 +19,7 @@ export interface ItemDefinition {
   stats: Array<{
     key: string;
     labelToken?: string;
+    labelNote?: { zh: string; en: string };
     sourceLine?: number;
     modifiers?: unknown;
     zh: string;

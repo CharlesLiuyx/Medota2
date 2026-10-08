@@ -1,0 +1,21 @@
+.merged {
+  position: relative;
+  transform: translateY(var(--table-cell-offset, 0px));
+}
+.merged[data-table-pinned] {
+  position: fixed;
+  top: var(--table-cell-top);
+  left: var(--table-cell-left);
+  width: var(--table-cell-width);
+  transform: none;
+  clip-path: var(--table-cell-clip);
+  z-index: 1;
+}
+
+.header {
+  padding: 7px 8px;
+  background: var(--surface-elevated);
+}
+.header[data-table-pinned] {
+  z-index: 3;
+}

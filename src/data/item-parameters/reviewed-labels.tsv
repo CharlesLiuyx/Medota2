@@ -1,0 +1,582 @@
+blink_damage_cooldown	受伤后禁用时间	Damage disable duration	s
+attack_slow	攻击速度降低	Attack speed reduction	-
+damage_base	基础伤害	Base damage	-
+damage_pct_instant	即时伤害的力量系数	Instant damage as strength	%
+damage_pct_over_time	持续伤害的力量系数	Damage over time as strength	%
+bonus_movement	移动速度加成	Movement speed bonus	%
+bonus_agi_active	主动敏捷加成	Active agility bonus	-
+heal_amount	治疗量	Heal amount	-
+mana_amount	魔法恢复量	Mana restored	-
+quelling_range_tooltip	砍树距离	Tree cutting range	-
+active_radius	主动作用范围	Active radius	-
+bonus_magical_armor	魔法抗性加成	Magic resistance bonus	%
+max_charges	最大充能次数	Maximum charges	-
+charge_radius	充能获取范围	Charge gain radius	-
+replenish_amount	恢复量	Restore amount	-
+movespeed_slow	移动速度减缓	Movement speed slow	%
+damage_over_time	持续伤害	Damage over time	-
+impact_damage	命中伤害	Impact damage	-
+tick_rate	生效间隔	Tick interval	s
+debuff_duration	负面效果持续时间	Debuff duration	s
+shield	护盾容量	Shield capacity	-
+regen	恢复速率参数	Regeneration rate parameter	-
+idle	空闲等待参数	Idle delay parameter	-
+health_restore	生命恢复量	Health restored	-
+mana_restore	魔法恢复量	Mana restored	-
+break_on_hero_damage	受到英雄伤害时中断	Break on hero damage	-
+linger_duration	离开范围后持续时间	Linger duration	s
+health_restore_pct	生命恢复比例	Health restoration ratio	%
+mana_restore_pct	魔法恢复比例	Mana restoration ratio	%
+rune_expire_time	神符储存时间	Stored rune duration	s
+lifetime	存续时间	Lifetime	s
+vision_range_tooltip	视野范围	Vision range	-
+health	生命值	Health	-
+vision_range	视野范围	Vision range	-
+observer_cost	侦查守卫价格	Observer Ward cost	-
+sentry_cost	岗哨守卫价格	Sentry Ward cost	-
+lifetime_observer	侦查守卫存续时间	Observer Ward lifetime	s
+lifetime_sentry	岗哨守卫存续时间	Sentry Ward lifetime	s
+cast_range_observer	侦查守卫放置距离	Observer Ward cast range	-
+cast_range_sentry	岗哨守卫放置距离	Sentry Ward cast range	-
+tooltip_charges	初始使用次数	Initial uses	-
+duration_to_use	使用期限	Time available to use	s
+minimum_distance	最小传送偏移距离	Minimum teleport offset	-
+maximum_distance	最大传送偏移距离	Maximum teleport offset	-
+tooltip_channel_time	持续施法时间	Channel time	s
+phase_movement_speed	相位移动速度加成	Phase movement speed bonus	%
+phase_movement_speed_range	远程相位移动速度加成	Ranged phase movement speed bonus	%
+phase_duration	相位持续时间	Phase duration	s
+slow	移动速度减缓	Movement speed slow	%
+bonus_spell_damage	额外技能伤害	Bonus spell damage	-
+kill_bonus_window	击杀加成判定时间	Kill bonus window	s
+bonus_per_kill	每次击杀加成	Bonus per kill	-
+max_kill_bonus	击杀加成上限	Maximum kill bonus	-
+bonus_gold	金钱奖励	Gold granted	-
+int_damage_multiplier	智力伤害系数	Intelligence damage multiplier	-
+block_chance	伤害格挡概率	Damage block chance	%
+block_chance_hero	对英雄攻击格挡概率	Hero attack block chance	%
+aura_radius	光环范围	Aura radius	-
+aura_health_regen	光环生命恢复	Aura health regeneration	-
+heal_radius	治疗范围	Heal radius	-
+armor_aura	光环护甲加成	Aura armor bonus	-
+mana_regen_aura	光环魔法恢复	Aura mana regeneration	-
+damage_aura	光环攻击力加成	Aura attack damage bonus	%
+lifesteal_self	自身吸血参数	Self lifesteal parameter	-
+damage_self	自身伤害参数	Self damage parameter	-
+lifesteal_creeps_tooltip	对非英雄单位吸血	Lifesteal against creeps	%
+creep_lifesteal_reduction_pct	非英雄单位吸血衰减	Creep lifesteal reduction	%
+pact_aura_radius	契约光环范围	Pact aura radius	-
+damage_penalty_aura	光环伤害降低	Aura damage reduction	%
+aura_dps	光环每秒伤害	Aura damage per second	-
+bonus_aoe_armor	范围护甲加成	Area armor bonus	-
+bonus_aoe_radius	范围加成半径	Area bonus radius	-
+aura_mana_regen	光环魔法恢复	Aura mana regeneration	-
+heal_increase_passive	被动治疗增强	Passive heal amplification	%
+health_restore_per_charge	每次充能恢复生命	Health restored per charge	-
+mana_restore_per_charge	每次充能恢复魔法	Mana restored per charge	-
+incoming_heal_increase_active	主动受到治疗增强	Active incoming heal amplification	%
+active_buff_duration	主动增益持续时间	Active buff duration	s
+charge_gain_timer	自动充能间隔	Automatic charge interval	s
+add_nostack_debuff	施加防叠加效果	Apply stacking prevention debuff	-
+barrier_block_creep	非英雄单位护盾容量	Creep barrier capacity	-
+soul_radius	灵魂收集范围	Soul collection radius	-
+soul_initial_charge	首次获得充能	Initial soul charges	-
+soul_additional_charges	后续获得充能	Additional soul charges	-
+sheep_movement_speed	妖术基础移动速度	Hex base movement speed	-
+upgrade_radius	升级作用范围参数	Upgrade radius parameter	-
+cast_range_limit	施法距离上限	Cast range limit	-
+backstab_duration	背刺效果持续时间	Backstab effect duration	s
+silence_damage_percent	沉默期间伤害结算比例	Silence damage conversion	%
+silence_duration	沉默持续时间	Silence duration	s
+spell_amp_debuff	技能伤害调整参数	Spell damage modifier parameter	-
+proc_damage_heroes	对英雄触发伤害	Proc damage against heroes	-
+proc_damage_creeps	对非英雄单位触发伤害	Proc damage against creeps	-
+passive_proc_damage	被动触发伤害	Passive proc damage	-
+proc_chance	触发概率	Proc chance	%
+tooltip_drop_damage	落地伤害	Landing damage	-
+cyclone_duration	吹风持续时间	Cyclone duration	s
+tornado_speed	旋风移动速度	Tornado movement speed	-
+push_length	推行距离	Push distance	-
+enemy_cast_range	对敌施法距离	Enemy cast range	-
+push_time	推行时间	Push duration	s
+enemy_length	对敌推行距离	Enemy push distance	-
+dizzy_duration	晕眩效果时间参数	Dizzy effect duration parameter	s
+dizzy_distance_pct	晕眩距离比例参数	Dizzy distance ratio parameter	%
+mana_cost_tooltip	各级魔法消耗	Mana cost by level	-
+summon_duration	召唤持续时间	Summon duration	s
+warrior_mana_feedback	战士魔法损毁参数	Warrior mana feedback parameter	-
+warrior_truesight	战士真实视域范围	Warrior True Sight radius	-
+archer_aura_radius_tooltip	弓手光环范围	Archer aura radius	-
+archer_move_speed	弓手光环移动速度	Archer aura movement speed	%
+intellect_pct	基础智力增加比例	Base intelligence increase	%
+max_level	最大等级	Maximum level	-
+cooldown_duration	冷却持续时间	Cooldown duration	s
+refresh_items	是否刷新物品	Refresh items enabled	-
+missing_health_regen	已损失生命值恢复比例	Missing health regeneration	%
+model_scale	模型缩放参数	Model scale parameter	-
+spell_reduce	魔法抗性	Magic resistance	%
+reincarnate_time	重生等待时间	Reincarnation delay	s
+disappear_time	消失时间	Expiration time	s
+disappear_time_minutes_tooltip	存续时间	Lifetime	min
+disappear_time_turbo	快速模式存续时间	Turbo lifetime	s
+aura_attack_speed	光环攻击速度调整	Aura attack speed modifier	-
+blast_damage	冲击伤害	Blast damage	-
+blast_movement_speed	冲击移动速度调整	Blast movement speed modifier	%
+blast_debuff_duration	冲击负面效果时间	Blast debuff duration	s
+blast_radius	冲击范围	Blast radius	-
+blast_speed	冲击扩散速度	Blast expansion speed	-
+bonus_mp_regen	魔法恢复加成	Mana regeneration bonus	-
+buff_duration	增益持续时间	Buff duration	s
+spell_lifesteal_while_active	主动技能吸血	Active spell lifesteal	%
+hp_cost	生命消耗	Health cost	-
+aura_spell_vulnerability	光环技能伤害加深	Aura spell damage vulnerability	%
+block_cooldown	抵挡冷却时间	Block cooldown	s
+upgrade_absorb_duration	升级吸收持续时间参数	Upgrade absorption duration parameter	s
+damage_absorb	伤害吸收量	Damage absorbed	-
+burn_dps_buildings	对建筑每秒灼烧伤害	Burn damage per second against buildings	-
+burn_dps_units	对单位每秒灼烧伤害	Burn damage per second against units	-
+burn_slow	灼烧减速	Burn slow	%
+burn_duration	灼烧持续时间	Burn duration	s
+burn_interval	灼烧伤害间隔	Burn tick interval	s
+land_time	落地延迟	Landing delay	s
+impact_radius	冲击范围	Impact radius	-
+max_duration	最长持续时间	Maximum duration	s
+impact_damage_buildings	对建筑冲击伤害	Impact damage against buildings	-
+impact_damage_units	对单位冲击伤害	Impact damage against units	-
+enemy_particles_visible	敌方可见特效	Particles visible to enemies	-
+mute_duration	无效化效果持续时间	Nullify effect duration	s
+slow_interval_duration	减速刷新持续时间	Slow refresh duration	s
+health_threshold_pct	生命值触发阈值	Health trigger threshold	%
+initial_cooldown	初始冷却时间	Initial cooldown	s
+soul_heal_amount	灵魂释放每秒治疗	Soul Release healing per second	-
+soul_damage_amount	灵魂释放每秒伤害	Soul Release damage per second	-
+restoration_reduction_enemy	敌方生命恢复降低	Enemy health restoration reduction	%
+enemy_hp_drain	每秒当前生命值伤害	Current health damage per second	%
+enemy_slow_pct	敌方移动减速	Enemy movement slow	%
+ground_duration	地面停留时间	Ground duration	s
+latch_range	附着触发范围	Latch range	-
+latch_vision	附着视野范围	Latch vision range	-
+linger_after_latch_duration	附着后残留时间	Post-latch linger duration	s
+block_damage_active	主动格挡基础值	Active base damage block	-
+block_chance_active	主动格挡概率	Active damage block chance	%
+block_penalty_ranged	远程格挡减值	Ranged block penalty	-
+max_hp_pct	最大生命值格挡系数	Max health block ratio	%
+passive_reflection_constant	被动固定反弹伤害	Passive flat damage return	-
+passive_reflection_pct	被动伤害反弹比例	Passive damage return ratio	%
+active_reflection_pct	主动伤害反弹比例	Active damage return ratio	%
+stack_threshold	每层伤害阈值	Damage threshold per stack	-
+stack_duration	每层持续时间	Stack duration	s
+stack_resist	每层魔法抗性	Magic resistance per stack	%
+movement_speed_pct_on_stack_gain	获得充能时移速加成	Movement speed on charge gain	%
+stack_threshold_damage	充能触发伤害阈值	Charge damage threshold	-
+barrier_per_stack	每层护盾容量	Barrier capacity per stack	-
+max_barrier_tooltip	护盾容量上限	Maximum barrier capacity	-
+extra_spell_damage_percent	受到魔法伤害调整	Incoming magic damage modifier	%
+health_steal	生命窃取量	Health stolen	-
+interval	生效间隔	Effect interval	s
+movespeed_steal_pct	每次移动速度窃取	Movement speed stolen per tick	%
+active_health_steal	主动生命窃取量	Active health stolen	-
+bonus_chance	穿刺概率	Pierce chance	%
+bonus_chance_damage	穿刺额外魔法伤害	Pierce bonus magical damage	-
+aura_damage_illusions	幻象光环每秒伤害	Illusion aura damage per second	-
+upgrade_day_vision	升级白天视野参数	Upgrade day vision parameter	-
+blind_pct	致盲概率	Blind chance	%
+illusion_multiplier_pct	幻象伤害倍率参数	Illusion damage multiplier parameter	%
+bash_cooldown	重击冷却时间	Bash cooldown	s
+cleave_damage_percent_creep	对非英雄单位分裂伤害比例	Cleave damage against creeps	%
+cleave_starting_width	分裂起始宽度	Cleave starting width	-
+cleave_ending_width	分裂末端宽度	Cleave ending width	-
+cleave_distance	分裂距离	Cleave distance	-
+upgraded_cleave_bonus	升级分裂加成参数	Upgrade cleave bonus parameter	-
+upgraded_damage_bonus	升级伤害加成参数	Upgrade damage bonus parameter	-
+images_do_damage_percent_melee	近战幻象输出伤害调整	Melee illusion outgoing damage modifier	%
+images_take_damage_percent	幻象承受额外伤害	Illusion incoming bonus damage	%
+tooltip_damage_incoming_total_pct	幻象承受总伤害比例	Illusion total incoming damage	%
+images_do_damage_percent_ranged	远程幻象输出伤害调整	Ranged illusion outgoing damage modifier	%
+invuln_duration	无敌持续时间	Invulnerability duration	s
+tooltip_crit_damage	暴击额外伤害比例	Critical bonus damage	%
+base_attack_range_melee	近战基础攻击距离参数	Melee base attack range parameter	-
+unholy_bonus_damage	邪恶之力攻击力加成	Unholy Strength damage bonus	-
+unholy_bonus_strength	邪恶之力力量加成	Unholy Strength strength bonus	-
+unholy_bonus_armor	邪恶之力护甲加成	Unholy Strength armor bonus	-
+unholy_bonus_slow_resistance	邪恶之力减速抗性	Unholy Strength slow resistance	%
+unholy_health_drain_per_second	邪恶之力每秒生命消耗	Unholy Strength health drain per second	-
+toggle_cooldown	切换冷却时间	Toggle cooldown	s
+windwalk_movement_speed	疾风步移动速度加成	Shadow Walk movement speed bonus	%
+windwalk_fade_time	疾风步渐隐时间	Shadow Walk fade time	s
+max_movement_speed	移动速度上限参数	Maximum movement speed parameter	-
+visibility_radius	显形判定范围	Visibility check radius	-
+movement_speed_percent_bonus_melee	近战移动速度加成	Melee movement speed bonus	%
+unholy_lifesteal_percent	不洁狂热额外吸血	Unholy Rage bonus lifesteal	%
+static_strikes	静电冲击额外目标数	Static Charge additional targets	-
+static_primary_radius	静电冲击首目标范围	Static Charge primary radius	-
+static_seconary_radius	静电冲击次目标范围	Static Charge secondary radius	-
+static_cooldown	静电冲击触发冷却	Static Charge proc cooldown	s
+chain_delay	连环闪电跳跃间隔	Chain Lightning jump interval	s
+chain_cooldown	连环闪电触发冷却	Chain Lightning proc cooldown	s
+cold_slow_melee	对近战目标移动减速	Movement slow against melee targets	%
+cold_attack_slow_melee	对近战目标攻击减速	Attack speed slow against melee targets	-
+cold_slow_ranged	对远程目标移动减速	Movement slow against ranged targets	%
+cold_attack_slow_ranged	对远程目标攻击减速	Attack speed slow against ranged targets	-
+cold_duration	霜冻攻击持续时间	Cold Attack duration	s
+restoration_reduction	生命恢复降低	Health restoration reduction	%
+health_min	支配单位最低生命值	Dominated unit minimum health	-
+speed_base	支配单位基础移动速度	Dominated unit base movement speed	-
+bounty_gold	击杀金钱奖励	Gold bounty	-
+creep_bonus_damage	支配单位攻击力加成	Dominated unit damage bonus	-
+creep_bonus_hp_regen	支配单位生命恢复加成	Dominated unit health regeneration bonus	-
+creep_bonus_mp_regen	支配单位魔法恢复加成	Dominated unit mana regeneration bonus	-
+creep_bonus_armor	支配单位护甲加成	Dominated unit armor bonus	-
+count_limit	控制数量上限	Controlled unit limit	-
+creep_ability_level_increase	支配单位技能等级加成	Dominated unit ability level bonus	-
+creep_damage_taken_cooldown	支配单位受伤后冷却	Dominated unit damage cooldown	s
+bounty_pct	金钱奖励比例	Bounty ratio	%
+is_overlord	是否为霸主模式	Overlord mode enabled	-
+radius_tooltip	作用范围	Effect radius	-
+corruption_duration	腐蚀持续时间	Corruption duration	s
+bonus_damage_per_kill	每次击杀攻击力加成	Damage bonus per kill	-
+bonus_damage_per_assist	每次助攻攻击力加成	Damage bonus per assist	-
+berserk_bonus_movement_speed_melee	近战狂热移动速度	Melee Berserk movement speed	%
+berserk_slow_resist_melee	近战狂热减速抗性	Melee Berserk slow resistance	%
+berserk_slow_resist	远程狂热减速抗性	Ranged Berserk slow resistance	%
+feedback_mana_burn	每次攻击燃烧魔法	Mana burned per attack	-
+feedback_mana_burn_illusion_melee	近战幻象魔法燃烧	Melee illusion mana burn	-
+feedback_mana_burn_illusion_ranged	远程幻象魔法燃烧	Ranged illusion mana burn	-
+purge_rate	净化频率参数	Purge rate parameter	-
+purge_root_duration	净化缠绕时间参数	Purge root duration parameter	s
+enemy_effect_duration	敌方效果持续时间	Enemy effect duration	s
+ally_effect_duration	友方效果持续时间	Ally effect duration	s
+movement_speed_buff_rate	移速增益变化速率参数	Movement speed buff rate parameter	-
+blast_stat_multiplier	虚化冲击属性系数	Ether Blast attribute multiplier	-
+blast_damage_base	虚化冲击基础伤害	Ether Blast base damage	-
+mana_gain	临时魔法获取量	Temporary mana gained	-
+replenish_radius	恢复作用范围	Restoration radius	-
+tick_interval	伤害间隔	Damage tick interval	s
+corruption_armor	腐蚀护甲调整	Corruption armor modifier	-
+slow_melee	对近战目标移动减速	Movement slow against melee targets	%
+slow_ranged	对远程目标移动减速	Movement slow against ranged targets	%
+heal_reduction	生命恢复降低	Health restoration reduction	%
+dps	每秒伤害	Damage per second	-
+aura_movement_speed	光环移动速度加成	Aura movement speed bonus	-
+charges_tooltip	使用次数	Number of uses	-
+bonus_attack_speed_pct	主动攻击速度加成	Active attack speed bonus	-
+bonus_movement_speed_pct	主动移动速度加成	Active movement speed bonus	%
+bonus_ms_duration	移速效果持续时间	Movement effect duration	s
+ally_armor	友方护甲调整	Ally armor modifier	-
+enemy_armor	敌方护甲调整	Enemy armor modifier	-
+target_movement_speed	目标移动速度加成	Target movement speed bonus	%
+target_attack_speed	目标攻击速度加成	Target attack speed bonus	-
+target_armor	目标护甲加成	Target armor bonus	-
+absorb_amount	伤害护盾容量	Damage barrier capacity	-
+application_radius	施加效果范围	Application radius	-
+second_cast_cooldown	再次施放冷却时间	Second cast cooldown	s
+secondary_application_radius	效果传播范围	Secondary application radius	-
+debuff_radius	负面效果范围	Debuff radius	-
+resist_debuff_duration	抗性削弱持续时间	Resistance debuff duration	s
+active_mres_reduction	主动魔法抗性降低	Active magic resistance reduction	%
+passive_cooldown	被动效果冷却时间	Passive effect cooldown	s
+max_health_pct_heal_amount	最大生命值治疗比例	Max health healing ratio	%
+cast_range_ward	对守卫施法距离	Ward cast range	-
+creep_damage_pct	非英雄单位当前生命伤害	Creep current health damage	%
+alternative_cooldown	替代冷却时间参数	Alternative cooldown parameter	s
+disarm_range	对远程目标缴械时间	Ranged target disarm duration	s
+disarm_melee	对近战目标缴械时间	Melee target disarm duration	s
+heal_duration	治疗持续时间	Healing duration	s
+heal_interval	治疗间隔	Healing interval	s
+break_time	破损持续时间	Break duration	s
+break_count	破损触发次数参数	Break trigger count parameter	-
+break_threshold	破损触发阈值参数	Break threshold parameter	-
+broken_movement_speed	破损后移动速度加成	Broken movement speed bonus	-
+movement_speed_reduction	移动速度降低	Movement speed reduction	%
+fade_duration	渐隐效果持续时间	Fade effect duration	s
+initial_fade_delay	首次渐隐延迟	Initial fade delay	s
+secondary_fade_delay	再次渐隐延迟	Secondary fade delay	s
+active_movement_speed	主动移动速度加成	Active movement speed bonus	-
+barrier_block	护盾吸收量	Barrier absorption	-
+paint_duration	河道染色持续时间	River paint duration	s
+attack_speed_bonus	攻击速度加成	Attack speed bonus	-
+magic_resistance_reduction	魔法抗性降低	Magic resistance reduction	%
+push_duration	推行持续时间	Push duration	s
+health_pct	生命值比例参数	Health ratio parameter	%
+mana	魔法值	Mana	-
+attack_damage	攻击伤害	Attack damage	-
+vision_loss	视野损失参数	Vision loss parameter	-
+self_armor	自身护甲加成	Self armor bonus	-
+self_mres	自身魔法抗性	Self magic resistance	%
+bonus_aoe_mres	范围魔法抗性加成	Area magic resistance bonus	%
+blind_duration	致盲持续时间	Blind duration	s
+bat	基础攻击间隔	Base attack time	s
+stun_chance	眩晕概率	Stun chance	%
+armor_bonus	护甲加成	Armor bonus	-
+move_speed	移动速度参数	Movement speed parameter	-
+active_armor	主动护甲加成	Active armor bonus	-
+active_duration	主动效果持续时间	Active duration	s
+hp_restore	生命恢复量	Health restored	-
+reflect_chance	法术反弹概率	Spell reflection chance	%
+tree_duration	树木存续时间	Tree lifetime	s
+seconds	芒果生成间隔	Mango spawn interval	s
+use_cooldown	使用冷却时间	Use cooldown	s
+regen_duration	恢复持续时间	Regeneration duration	s
+duration_minutes	效果持续时间	Effect duration	min
+heal_percent	生命治疗比例	Health healed	%
+magic_damage	魔法伤害	Magical damage	-
+truesight_radius	真实视域范围	True Sight radius	-
+movespeed	移动速度	Movement speed	-
+max_range	最大作用距离	Maximum range	-
+min_range	最小作用距离	Minimum range	-
+aura_range	光环范围	Aura range	-
+turn_rate	转身速率加成	Turn rate bonus	%
+bonus_movement_speed_active	主动移动速度加成	Active movement speed bonus	%
+bonus_kill_duration	击杀延长存续时间	Duration gained per kill	s
+kill_radius	击杀判定范围	Kill detection radius	-
+bonus_primary_stat	所选属性加成	Selected attribute bonus	-
+bonus_secondary_stat	其他属性加成	Other attribute bonus	-
+knockback_distance	击退距离	Knockback distance	-
+knockback_duration	击退时间	Knockback duration	s
+water_hp_regen	河道生命恢复	River health regeneration	-
+water_mp_regen	河道魔法恢复	River mana regeneration	-
+chance_bounty_rune	挖出赏金神符概率	Bounty Rune dig chance	%
+chance_other_item	挖出其他物品概率参数	Other item dig chance parameter	%
+kobold_duration	狗头人存续时间	Kobold lifetime	s
+damage_per_sec	每秒伤害	Damage per second	-
+bonus_int	智力加成	Intelligence bonus	-
+mp_regen	魔法恢复	Mana regeneration	-
+health_gain	生命值增加	Health gained	-
+health_gain_duration	生命值增加持续时间	Health gain duration	s
+all_stats	全属性加成	All attributes bonus	-
+active_bonus_attack_range	触发攻击距离加成	Proc attack range bonus	-
+passive_movement_bonus	被动移动速度加成	Passive movement speed bonus	-
+attack_damage_aura	光环输出伤害加成	Aura outgoing damage bonus	%
+outgoing_damage	输出伤害比例参数	Outgoing damage ratio parameter	%
+incoming_damage	承受伤害比例参数	Incoming damage ratio parameter	%
+angle	作用角度	Effect angle	-
+pull_distance	牵引距离	Pull distance	-
+nuke_base_dmg	冲击基础伤害	Blast base damage	-
+nuke_str_dmg	冲击力量伤害系数	Blast strength damage multiplier	-
+health_threshold	生命触发阈值	Health trigger threshold	%
+primary_stat_universal	全才英雄属性加成	Universal hero attribute bonus	-
+gold_steal_base	基础金钱窃取	Base gold stolen	-
+gold_steal_kill	击杀额外金钱窃取	Bonus gold stolen on kill	-
+gold_steal_range	金钱窃取判定范围	Gold steal radius	-
+gold_loss_reduction	金钱损失降低	Gold loss reduction	%
+bonus_amp	增幅参数	Amplification parameter	-
+demolish	对建筑伤害加成	Building damage bonus	%
+hp_regen	生命恢复	Health regeneration	-
+damage_return_hero	对英雄反弹伤害	Damage return against heroes	-
+damage_return_creep	对非英雄单位反弹伤害	Damage return against creeps	-
+damage_illusions	幻象每秒灼烧伤害	Illusion burn damage per second	-
+lifesteal	每次攻击恢复生命	Health restored per attack	-
+maim_chance	残废触发概率	Maim chance	%
+maim_slow_movement	残废移动减速	Maim movement slow	%
+maim_slow_attack	残废攻击速度降低	Maim attack speed reduction	-
+maim_duration	残废持续时间	Maim duration	s
+bullwhip_delay_time	鞭笞生效延迟	Whip delay	s
+intelligence_pct	智力加成比例	Intelligence bonus ratio	%
+bonus_attack	攻击速度加成	Attack speed bonus	-
+night_vision	夜间视野	Night vision	-
+pct_str_damage_per_second	每秒力量伤害比例	Strength damage per second	%
+damage_radius	伤害作用范围	Damage radius	-
+max_targets	最大目标数	Maximum targets	-
+missing_hp	额外伤害所需已损失生命比例	Missing health step for bonus damage	%
+aspd	攻击速度参数	Attack speed parameter	-
+active_movespeed_pct	主动移动速度加成	Active movement speed bonus	%
+leap_distance	跳跃距离	Leap distance	-
+leap_speed	跳跃速度	Leap speed	-
+leap_acceleration	跳跃加速度	Leap acceleration	-
+aura_health_regen_pct	施法者生命恢复转化比例	Caster health regeneration ratio	%
+backstab_damage	背刺额外伤害	Backstab bonus damage	-
+backstab_angle	背刺判定角度	Backstab angle	-
+slow_pct_melee	近战使用者移动减速	Melee wielder movement slow	%
+slow_pct_ranged	远程使用者移动减速	Ranged wielder movement slow	%
+stack_limit	叠加层数上限	Stack limit	-
+movement_turn_rate	移动转身速率参数	Movement turn rate parameter	-
+flop_damage	弹跳伤害	Flop damage	-
+max_bounces	弹跳次数	Bounce count	-
+pull_duration	牵引持续时间	Pull duration	s
+pull_distance_pct	牵引距离比例	Pull distance ratio	%
+min_distance	最小距离	Minimum distance	-
+max_distance	最大距离	Maximum distance	-
+cast_range_enemy	对敌施法距离	Enemy cast range	-
+counter_damage	反击攻击伤害比例	Counterattack damage ratio	%
+stored_rune_duration	神符储存时间	Stored rune duration	s
+max_charges_per_kill	每次击杀最大充能	Maximum charges per kill	-
+recharge_time	充能恢复时间	Recharge time	s
+health_sacrifice	献祭生命消耗	Health sacrificed	-
+ricochet_radius_start	弹射起始半径	Ricochet starting radius	-
+ricochet_radius_end	弹射末端半径	Ricochet ending radius	-
+ricochet_stun_duration	弹射眩晕时间参数	Ricochet stun duration parameter	s
+ricochet_distance_multiplier	弹射距离系数	Ricochet distance multiplier	-
+ricochet_fear_duration	弹射恐惧持续时间	Ricochet fear duration	s
+impact_slow_percent	命中移动减速	Impact movement slow	%
+impact_slow_duration	命中减速持续时间	Impact slow duration	s
+extra_bonus_damage	额外攻击力加成	Additional attack damage bonus	-
+restore_time	恢复等待时间	Restoration time	s
+bonus_hp_regen	生命恢复加成	Health regeneration bonus	-
+vision_penalty	白天视野降低	Day vision reduction	%
+debuff_self	自身承受伤害增加	Self incoming damage increase	%
+debuff_enemy	敌方承受伤害增加	Enemy incoming damage increase	%
+debuff_enemy_duration	敌方易伤持续时间	Enemy vulnerability duration	s
+flight_threshold	飞行触发生命阈值	Flight health threshold	%
+max_health	最大生命值	Maximum health	-
+magic_block	魔法伤害格挡量	Magic damage block	-
+damage_redirection	魔法伤害转移比例	Magic damage redirection	%
+penalty	恢复效果削减参数	Regeneration penalty parameter	-
+tree_destruction_radius	树木摧毁范围	Tree destruction radius	-
+miss_rate	攻击落空概率	Miss chance	%
+damage_reset_interval	伤害累计重置间隔	Damage accumulator reset interval	s
+damage_threshold	伤害触发阈值	Damage threshold	-
+projectile_damage	弹道伤害	Projectile damage	-
+target_count	目标数量	Target count	-
+conversion_pct	生命魔法转换比例	Health and mana conversion ratio	%
+regen_bonus_pct	恢复加成比例	Regeneration bonus ratio	%
+buff_linger_duration	增益残留时间	Buff linger duration	s
+xp_per_charge	每次充能经验	Experience per charge	-
+death_gold_lost_reduction_pct	死亡损失金钱储存比例	Death gold loss stored	%
+gold_tick_interval	金钱累积间隔	Gold tick interval	s
+max_slow_res	最大减速抗性	Maximum slow resistance	%
+hero_reduction	每名敌方英雄抗性扣减	Resistance reduction per enemy hero	%
+status_res_pct_increase_per_hero	每名英雄状态抗性参数	Status resistance per hero parameter	%
+water_acceleration	河道充能加速参数	River recharge acceleration parameter	-
+thorn_area	荆棘作用范围	Thorn radius	-
+slow_pct	移动速度减缓	Movement speed slow	%
+heal_reduce	生命恢复降低	Health restoration reduction	%
+barrier_duration	护盾持续时间	Barrier duration	s
+barrier_amount	护盾容量	Barrier capacity	-
+barrier_pct	护盾伤害吸收比例	Barrier absorption ratio	%
+splash_radius	溅射范围	Splash radius	-
+splash_pct	溅射伤害比例	Splash damage ratio	%
+burn_damage	灼烧总伤害	Total burn damage	-
+burn_tickrate	灼烧伤害间隔	Burn tick interval	s
+creep_penalty	非英雄目标伤害衰减	Non-hero damage reduction	%
+hp_dmg	目标当前生命伤害比例	Target current health damage	%
+hp_dmg_rosh	对肉山固定伤害	Flat damage against Roshan	-
+regen_boost	生命恢复提升	Health regeneration increase	-
+water_movespeed	河道移动速度加成	River movement speed bonus	%
+bonus_cast_range	施法距离加成	Cast range bonus	-
+damage_disable	受伤后失效时间	Damage disable duration	s
+damage_time	伤害反弹持续时间	Damage reflection duration	s
+madstone_primary	主要魔晶数量	Primary madstone count	-
+madstone_secondary	次要魔晶数量	Secondary madstone count	-
+turbo_madstone_primary	快速模式主要魔晶数量	Turbo primary madstone count	-
+turbo_madstone_secondary	快速模式次要魔晶数量	Turbo secondary madstone count	-
+die_time	掉落物消失时间	Drop expiration time	s
+protector_duration	守护者存续时间	Protector lifetime	s
+max_barrier_pct_max_health	最大生命值护盾比例	Max health barrier ratio	%
+owner_max_barrier_pct_max_health	持有者最大生命值护盾比例	Owner max health barrier ratio	%
+regeneration_to_max_seconds	护盾恢复至满时间	Barrier time to regenerate fully	s
+decay_to_zero_seconds	护盾衰减至零时间	Barrier time to decay to zero	s
+damage_cooldown	受伤后冷却时间	Damage cooldown	s
+damage_reflection_pct	伤害反弹比例	Damage reflection ratio	%
+movespeed_pct	移动速度加成	Movement speed bonus	%
+buff_radius	增益作用范围	Buff radius	-
+item_potency	中立物品效力提升	Neutral artifact potency increase	%
+hp_threshold	生命触发阈值	Health trigger threshold	%
+evasion_max	初始闪避比例	Initial evasion	%
+evasion_loss	每次闪避后的比例损失	Evasion loss per dodge	%
+health_regen_loss	生命恢复降低	Health restoration reduction	%
+hp_damage	最大生命值总伤害比例	Total max health damage	%
+damage_interval	伤害生效间隔	Damage interval	s
+self_dmg_pct	自身最大生命伤害比例	Self max health damage	%
+aoe_pct	作用范围增大比例	Area of effect increase	%
+cast_slow	施法速度减缓	Cast speed slow	%
+gold_bag_duration	钱袋存续时间	Gold bag lifetime	s
+count	额外攻击目标数	Additional attack targets	-
+secondary_target_range_bonus	次要目标攻击距离加成	Secondary target range bonus	-
+secondary_target_angle	次要目标判定角度	Secondary target angle	-
+base_proc_dmg	触发额外基础伤害	Proc bonus base damage	-
+proc_dmg_pct	次要目标攻击伤害比例	Secondary target attack damage	%
+proc_dmg_pct_primary_tooltip	主目标攻击伤害比例	Primary target attack damage	%
+base_count	基础额外目标数	Base additional targets	-
+poison_duration	毒素持续时间	Poison duration	s
+poison_base_damage	毒素基础伤害	Poison base damage	-
+poison_damage_per_second	每秒最大生命值毒伤	Poison max health damage per second	%
+roll_count	随机取值次数	Random roll count	-
+bonus_max_damage	基础攻击力上限加成	Maximum base damage bonus	-
+block_amount	物理伤害护盾容量	Physical damage barrier capacity	-
+block_radius	护盾施加范围	Barrier application radius	-
+health_cost	当前生命消耗比例	Current health cost	%
+bonus_movespeed	移动速度加成	Movement speed bonus	%
+size_decrease	模型尺寸缩小比例	Model size reduction	%
+armor_decrease	护甲降低比例	Armor reduction	%
+base_damage	基础攻击力加成	Base damage bonus	%
+death_radius	死亡触发范围	Death trigger radius	-
+mana_pct	魔法恢复比例	Mana restoration ratio	%
+restore_tickrate	魔法恢复间隔	Mana restoration interval	s
+delay_pct	延迟结算伤害比例	Deferred damage ratio	%
+delay_time	伤害延迟结算时间	Damage deferral duration	s
+knockback_resistance	强制位移距离调整	Forced movement distance modifier	%
+feather_movespeed	羽毛形态移动速度	Feather movement speed	-
+rocks_armor	岩石形态护甲	Rock armor	-
+enchantment_bonus_base	附魔基础增幅	Base enchantment amplification	%
+enchantment_bonus_growth	再次打造附魔增幅	Enchantment amplification per recraft	%
+damage_aoe	伤害扩散范围	Damage spread radius	-
+damage_creep	非英雄目标扩散伤害	Non-hero target spread damage	-
+gold_amount	金钱数量	Gold amount	-
+tree_radius	树木采集范围	Tree foraging radius	-
+tree_creation_interval	树木生成间隔	Tree creation interval	s
+max_trees	树木数量上限	Maximum trees	-
+old_destroy_radius	旧树清除距离参数	Old tree removal radius parameter	-
+health_regen_pct	每秒最大生命恢复比例	Max health regeneration per second	%
+bonus_stat	永久主属性增加	Permanent primary attribute gain	-
+bonus_stat_uni	全才英雄永久属性增加	Universal hero permanent attribute gain	-
+bonus_damage_pct	对玩家控制单位技能伤害加成	Spell damage bonus against player-controlled units	%
+damage_bonus	攻击伤害加成	Attack damage bonus	-
+damage_bonus_ranged	远程压制额外伤害	Ranged Quell bonus damage	-
+magic_damage_block	魔法伤害格挡量	Magic damage block	-
+initial_charges	初始充能次数	Initial charges	-
+consumed_bonus	吞服后攻击速度加成	Consumed attack speed bonus	-
+restore_per_charge	每次充能恢复生命和魔法	Health and mana restored per charge	-
+duration_minutes_tooltip	存续时间	Lifetime	min
+true_sight_range	真实视域范围	True Sight range	-
+magic_resistance_aura	光环魔法抗性	Aura magic resistance	%
+barrier_radius	护盾施加范围	Barrier application radius	-
+sheep_duration	妖术持续时间	Hex duration	s
+range_duration	无限攻击距离持续时间	Unlimited attack range duration	s
+max_attacks	无限距离攻击次数	Unlimited range attacks	-
+warrior_health_tooltip	战士生命值	Warrior health	-
+warrior_damage_tooltip	战士攻击力	Warrior attack damage	-
+warrior_mana_break_tooltip	战士魔法损毁量	Warrior mana burned	-
+explosion	战士遗愿伤害	Warrior Last Will damage	-
+archer_health_tooltip	弓手生命值	Archer health	-
+archer_damage_tooltip	弓手攻击力	Archer attack damage	-
+archer_mana_burn	弓手魔法燃烧量	Archer mana burned	-
+aura_positive_armor	友方光环护甲加成	Allied aura armor bonus	-
+aura_negative_armor	敌方光环护甲削减	Enemy aura armor reduction	-
+aura_damage	光环每秒灼烧伤害	Aura burn damage per second	-
+bash_chance_melee	近战重击概率	Melee bash chance	%
+bash_chance_ranged	远程重击概率	Ranged bash chance	%
+bash_duration	重击眩晕时间	Bash stun duration	s
+cleave_damage_percent	分裂伤害比例	Cleave damage ratio	%
+quelling_bonus	近战压制额外伤害	Melee Quell bonus damage	-
+quelling_bonus_ranged	远程压制额外伤害	Ranged Quell bonus damage	-
+images_count	幻象数量	Illusion count	-
+tooltip_damage_outgoing_melee	近战幻象总输出伤害比例	Melee illusion total outgoing damage	%
+tooltip_damage_outgoing_ranged	远程幻象总输出伤害比例	Ranged illusion total outgoing damage	%
+windwalk_duration	疾风步持续时间	Shadow Walk duration	s
+windwalk_bonus_damage	破隐一击额外伤害	Invisibility breaking attack bonus damage	-
+unholy_lifesteal_total_tooltip	不洁狂热总吸血	Unholy Rage total lifesteal	%
+unholy_duration	不洁狂热持续时间	Unholy Rage duration	s
+static_duration	静电冲击护盾持续时间	Static Charge shield duration	s
+static_chance	静电冲击触发概率	Static Charge proc chance	%
+static_damage	静电冲击伤害	Static Charge damage	-
+static_radius	静电冲击释放范围	Static Charge release radius	-
+chain_chance	连环闪电触发概率	Chain Lightning proc chance	%
+chain_damage	连环闪电魔法伤害	Chain Lightning magical damage	-
+chain_strikes	连环闪电目标数	Chain Lightning targets	-
+chain_radius	连环闪电跳跃范围	Chain Lightning jump radius	-
+berserk_bonus_attack_speed	狂热攻击速度加成	Berserk attack speed bonus	-
+berserk_bonus_movement_speed	远程狂热移动速度加成	Ranged Berserk movement speed bonus	%
+berserk_armor_reduction	狂热护甲降低	Berserk armor reduction	-
+berserk_duration	狂热持续时间	Berserk duration	s
+purge_slow_duration	净化减速持续时间	Purge slow duration	s
+blast_movement_slow	虚化冲击移动减速	Ether Blast movement slow	%
+duration_ally	对友方虚化持续时间	Ally ethereal duration	s
+ethereal_damage_bonus	虚化魔法伤害加深	Ethereal magic damage vulnerability	%
+xp_bonus	基础经验奖励	Base experience bonus	-
+xp_per_use	每次使用经验增量	Experience increment per use	-
+aura_health_regen_bonus	低生命时光环生命恢复	Low health aura regeneration	-
+aura_bonus_threshold	光环强化生命阈值	Aura boost health threshold	%
+replenish_health	范围生命恢复量	Area health restored	-
+replenish_mana	范围魔法恢复量	Area mana restored	-
+aura_bonus_armor	光环护甲加成	Aura armor bonus	-
+hp_bonus	生命值加成比例	Health bonus	%

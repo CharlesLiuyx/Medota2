@@ -1,0 +1,287 @@
+tick_interval	生效间隔	Tick interval
+tick_rate	生效间隔	Tick interval
+think_interval	逻辑更新间隔	Think interval
+knockback_duration	击退时间	Knockback duration
+knockback_distance	击退距离	Knockback distance
+knockback_height	击退高度	Knockback height
+vision_duration	视野持续时间	Vision duration
+vision_cone	视野锥角	Vision cone
+cast_animation	施法动画参数	Cast animation parameter
+animation_rate	动画播放速率	Animation playback rate
+debuff_duration	负面效果持续时间	Debuff duration
+buff_duration	增益效果持续时间	Buff duration
+linger_duration	残留效果持续时间	Linger duration
+fade_time	渐隐时间	Fade time
+fade_delay	渐隐延迟	Fade delay
+damage_interval	伤害间隔	Damage interval
+damage_tick_rate	伤害间隔	Damage tick interval
+burn_interval	灼烧间隔	Burn interval
+turn_rate	转身速率	Turn rate
+max_level	最高等级	Maximum level
+projectile_width	弹道宽度	Projectile width
+projectile_radius	弹道半径	Projectile radius
+projectile_distance	弹道距离	Projectile distance
+break_distance	断开距离	Break distance
+model_scale	模型缩放参数	Model scale parameter
+pull_duration	牵引时间	Pull duration
+pull_distance	牵引距离	Pull distance
+pull_speed	牵引速度	Pull speed
+max_distance	最大距离	Maximum distance
+min_distance	最小距离	Minimum distance
+max_charges	最大充能次数	Maximum charges
+bounce_delay	弹跳延迟	Bounce delay
+start_radius	起始半径	Starting radius
+end_radius	终点半径	Ending radius
+jump_delay	跳跃延迟	Jump delay
+hit_radius	命中判定范围	Hit radius
+area_of_effect	作用范围	Area of effect
+aoe_radius	作用半径	Area radius
+aura_radius	光环范围	Aura radius
+scepter_bonus_levels	神杖额外等级	Scepter bonus levels
+bonus_movespeed	移动速度加成	Movement speed bonus
+movespeed	移动速度	Movement speed
+move_speed	移动速度	Movement speed
+illusion_outgoing_damage	幻象输出伤害比例	Illusion outgoing damage ratio
+illusion_incoming_damage	幻象承受伤害比例	Illusion incoming damage ratio
+creep_lifesteal_reduction_pct	对非英雄单位吸血降低比例	Creep lifesteal reduction
+miss_chance	攻击落空概率	Miss chance
+miss_rate	攻击落空概率	Miss chance
+invuln_duration	无敌持续时间	Invulnerability duration
+bonus_hp	生命值加成	Bonus health
+hop_duration	跳跃时间	Hop duration
+travel_speed	飞行速度	Travel speed
+silence_duration	沉默持续时间	Silence duration
+blind_duration	致盲持续时间	Blind duration
+arrow_speed	箭矢速度	Arrow speed
+arrow_width	箭矢宽度	Arrow width
+scepter_radius	神杖作用范围	Scepter radius
+splash_radius	溅射范围	Splash radius
+splash_pct	溅射伤害比例	Splash damage percentage
+bash_chance	重击概率	Bash chance
+bash_duration	重击眩晕时间	Bash stun duration
+acceleration	加速度	Acceleration
+max_height	最大高度	Maximum height
+gold_bounty	金钱奖励	Gold bounty
+xp_bounty	经验奖励	Experience bounty
+stop_distance	停止距离	Stop distance
+cleave_starting_width	分裂起始宽度	Cleave starting width
+cleave_ending_width	分裂末端宽度	Cleave ending width
+cleave_distance	分裂距离	Cleave distance
+leap_speed	跳跃速度	Leap speed
+leap_distance	跳跃距离	Leap distance
+leap_acceleration	跳跃加速度	Leap acceleration
+bolt_speed	弹体速度	Bolt speed
+missile_speed	弹体速度	Missile speed
+missile_range	弹体射程	Missile range
+health_threshold	生命值阈值	Health threshold
+health_threshold_pct	生命值比例阈值	Health percentage threshold
+max_health	最大生命值	Maximum health
+hp_regen	生命恢复	Health regeneration
+heal_interval	治疗间隔	Heal interval
+heal_radius	治疗范围	Heal radius
+heal_duration	治疗持续时间	Heal duration
+health_restore	生命恢复量	Health restored
+armor_bonus	护甲加成	Armor bonus
+attack_speed_bonus	攻击速度加成	Attack speed bonus
+attack_slow	攻击速度降低	Attack speed reduction
+movespeed_slow	移动速度减缓	Movement speed slow
+magic_resistance_reduction	魔法抗性降低	Magic resistance reduction
+initial_cooldown	初始冷却时间	Initial cooldown
+block_cooldown	抵挡冷却时间	Block cooldown
+barrier_duration	护盾持续时间	Barrier duration
+barrier_amount	护盾容量	Barrier amount
+stack_duration	叠加效果持续时间	Stack duration
+target_count	目标数量	Target count
+max_targets	目标数量上限	Maximum targets
+lifetime	存续时间	Lifetime
+max_duration	最长持续时间	Maximum duration
+min_range	最小距离	Minimum range
+max_range	最大距离	Maximum range
+tree_destruction_radius	树木摧毁范围	Tree destruction radius
+push_duration	推移时间	Push duration
+push_length	推移距离	Push distance
+impact_radius	命中范围	Impact radius
+impact_damage	命中伤害	Impact damage
+landing_damage	落地伤害	Landing damage
+active_duration	主动效果持续时间	Active duration
+backstab_angle	背刺判定角度	Backstab angle
+damage_radius	伤害作用范围	Damage radius
+radius_tooltip	作用范围显示值	Displayed effect radius
+tooltip_channel_time	持续施法时间显示值	Displayed channel time
+reincarnate_time	重生等待时间	Reincarnation delay
+images_count	幻象数量	Illusion count
+customval_damage	自定义伤害参数	Custom damage parameter
+customval_bonus_damage	自定义额外伤害参数	Custom bonus damage parameter
+undispellable	不可驱散标记	Undispellable flag
+strong_dispel	强驱散标记	Strong dispel flag
+basic_dispel	弱驱散标记	Basic dispel flag
+dispel	驱散参数	Dispel parameter
+incoming_damage	承受伤害比例参数	Incoming damage ratio parameter
+outgoing_damage	输出伤害比例参数	Outgoing damage ratio parameter
+distance	距离参数	Distance parameter
+activation_time	激活时间	Activation time
+damage_reduction_pct	伤害降低比例	Damage reduction percentage
+air_height	腾空高度	Air height
+air_duration	腾空时间	Air duration
+cooldown_reduction	冷却减少参数	Cooldown reduction parameter
+bounce_turn_angle	弹跳转向角度	Bounce turn angle
+bounce_turn_angle_tree	树木弹跳转向角度	Tree bounce turn angle
+max_vertical_move_time	垂直移动最长时间	Maximum vertical movement time
+min_distance_before_bounce	弹跳前最小移动距离	Minimum distance before bounce
+vision_aoe	视野作用范围	Vision area
+radius_end	终点半径	Ending radius
+radius_start	起始半径	Starting radius
+scepter_cooldown	神杖冷却时间	Scepter cooldown
+affects_buildings	作用于建筑标记	Affects buildings flag
+tree_radius	树木判定范围	Tree detection radius
+roaming_radius	巡游半径	Roaming radius
+roaming_seconds_per_rotation	巡游每圈时间	Roaming seconds per rotation
+max_throw_duration	最长投掷时间	Maximum throw duration
+min_throw_duration	最短投掷时间	Minimum throw duration
+angle	角度参数	Angle parameter
+attack_damage	攻击伤害	Attack damage
+base_damage	基础伤害	Base damage
+end_distance	结束距离	Ending distance
+spirit_speed	灵体移动速度	Spirit speed
+does_break	破坏标记	Break flag
+armor_creeps	非英雄单位护甲参数	Creep armor parameter
+armor_heroes	英雄护甲参数	Hero armor parameter
+hop_height	跳跃高度	Hop height
+neutral_shared_cooldown	中立技能共享冷却	Neutral shared cooldown
+damage_tick_interval	伤害间隔	Damage tick interval
+modelscale	模型缩放参数	Model scale parameter
+return_projectile_speed	返回弹道速度	Returning projectile speed
+end_vision_duration	结束后视野持续时间	Ending vision duration
+vision_distance	视野距离	Vision distance
+facet_bonus_levels	命石额外等级	Facet bonus levels
+upgrade_at_level	升级所需等级	Upgrade level
+pct_health_damage	生命比例伤害参数	Health percentage damage parameter
+pierces_magic_immunity	穿透技能免疫标记	Pierces magic immunity flag
+forward_angle	前方作用角度	Forward effect angle
+attack_range	攻击距离	Attack range
+min_height_above_highest	相对最高地面最小高度	Minimum height above highest terrain
+min_height_above_lowest	相对最低地面最小高度	Minimum height above lowest terrain
+initial_speed	初始速度	Initial speed
+process_procs	触发效果处理标记	Process procs flag
+can_target_magic_immune	可选中技能免疫目标标记	Can target magic immune flag
+procs_attack	攻击特效触发标记	Attack procs flag
+shadowraze_cooldown	毁灭阴影冷却时间	Shadowraze cooldown
+shadowraze_radius	毁灭阴影作用范围	Shadowraze radius
+turn_rate_pct	转身速率比例	Turn rate percentage
+forward_move_speed	前进速度	Forward movement speed
+knockback_radius	击退作用范围	Knockback radius
+max_simultaneous	同时存在数量上限	Maximum simultaneous count
+bonus_movement	移动速度加成	Movement speed bonus
+additional_charges_after_max_level	最高等级后额外充能	Additional charges after maximum level
+pass_slow_duration	经过目标减速时间	Pass slow duration
+stun_delay	眩晕延迟	Stun delay
+reveal_radius	显形范围	Reveal radius
+hull_radius	碰撞体积半径	Hull radius
+bonus_gold	额外金钱参数	Bonus gold parameter
+min_stun	最短眩晕时间	Minimum stun duration
+drag_speed	拖拽速度	Drag speed
+min_blink_range	最短闪烁距离	Minimum blink range
+does_reflect	反弹标记	Reflection flag
+duration_illusion	幻象持续时间	Illusion duration
+creep_damage_pct	非英雄单位伤害比例参数	Creep damage percentage parameter
+creep_multiplier	非英雄单位系数	Creep multiplier
+attack_interval	攻击间隔	Attack interval
+attack_radius	攻击作用范围	Attack radius
+attack_point	攻击前摇	Attack point
+base_attack_time	基础攻击间隔	Base attack time
+bonus_attack_range	攻击距离加成	Bonus attack range
+bonus_spell_damage	额外技能伤害	Bonus spell damage
+min_radius	最小半径	Minimum radius
+max_radius	最大半径	Maximum radius
+min_damage_pct	最小伤害比例	Minimum damage percentage
+max_damage_pct	最大伤害比例	Maximum damage percentage
+max_stun	最长眩晕时间	Maximum stun duration
+min_duration	最短持续时间	Minimum duration
+max_speed	速度上限	Maximum speed
+min_speed	速度下限	Minimum speed
+recharge_time	充能恢复时间	Charge restore time
+respawn_time	重生时间	Respawn time
+spawn_radius	生成范围	Spawn radius
+spawn_interval	生成间隔	Spawn interval
+spawn_delay	生成延迟	Spawn delay
+attack_speed_slow	攻击速度降低	Attack speed slow
+movement_speed_slow	移动速度降低	Movement speed slow
+move_speed_slow	移动速度降低	Movement speed slow
+slow_duration_scepter	神杖减速时间	Scepter slow duration
+stun_duration_scepter	神杖眩晕时间	Scepter stun duration
+scepter_duration	神杖持续时间	Scepter duration
+shard_duration	魔晶持续时间	Shard duration
+scepter_range	神杖作用距离	Scepter range
+scepter_damage	神杖伤害	Scepter damage
+shard_damage	魔晶伤害	Shard damage
+shard_radius	魔晶作用范围	Shard radius
+shard_cooldown	魔晶冷却时间	Shard cooldown
+cooldown_scepter	神杖冷却时间	Scepter cooldown
+cooldown_shard	魔晶冷却时间	Shard cooldown
+creep_damage	非英雄单位伤害	Creep damage
+hero_damage	英雄伤害	Hero damage
+building_damage	建筑伤害	Building damage
+building_damage_pct	建筑伤害比例	Building damage percentage
+building_damage_reduction	建筑伤害降低	Building damage reduction
+illusion_count	幻象数量	Illusion count
+illusion_damage_pct	幻象伤害比例参数	Illusion damage percentage parameter
+max_illusions	幻象数量上限	Maximum illusions
+max_units	单位数量上限	Maximum units
+max_bounces	弹跳次数上限	Maximum bounces
+bounce_range	弹跳范围	Bounce range
+bounce_radius	弹跳半径	Bounce radius
+bounce_interval	弹跳间隔	Bounce interval
+jump_speed	跳跃速度	Jump speed
+jump_height	跳跃高度	Jump height
+jump_distance	跳跃距离	Jump distance
+jump_duration	跳跃时间	Jump duration
+channel_time	持续施法时间	Channel time
+cast_delay	施法延迟	Cast delay
+effect_delay	效果延迟	Effect delay
+explosion_delay	爆炸延迟	Explosion delay
+explosion_radius	爆炸范围	Explosion radius
+explosion_damage	爆炸伤害	Explosion damage
+explosion_duration	爆炸持续时间	Explosion duration
+fear_duration	恐惧持续时间	Fear duration
+root_duration	缠绕持续时间	Root duration
+disarm_duration	缴械持续时间	Disarm duration
+blind_pct	致盲概率参数	Blind percentage parameter
+slow_pct	减速比例参数	Slow percentage parameter
+attack_slow_pct	攻击速度降低比例	Attack speed slow percentage
+movement_slow_pct	移动速度降低比例	Movement speed slow percentage
+health_pct	生命比例参数	Health percentage parameter
+mana_pct	魔法比例参数	Mana percentage parameter
+heal_pct	治疗比例参数	Heal percentage parameter
+health_cost	生命消耗参数	Health cost parameter
+mana_drain	魔法吸取参数	Mana drain parameter
+mana_burn	魔法燃烧参数	Mana burn parameter
+mana_burn_pct	魔法燃烧比例参数	Mana burn percentage parameter
+mana_restore	魔法恢复量	Mana restored
+mana_restore_pct	魔法恢复比例	Mana restoration percentage
+health_regen_pct	生命恢复比例	Health regeneration percentage
+hp_regen_pct	生命恢复比例	Health regeneration percentage
+hp_regen_amp	生命恢复增强	Health regeneration amplification
+heal_reduction	治疗降低参数	Healing reduction parameter
+heal_reduction_pct	治疗降低比例	Healing reduction percentage
+crit_chance	致命一击概率	Critical strike chance
+crit_multiplier	致命一击倍数	Critical strike multiplier
+crit_damage	致命一击伤害参数	Critical damage parameter
+crit_damage_pct	致命一击伤害比例	Critical damage percentage
+lifesteal_pct	吸血比例	Lifesteal percentage
+spell_lifesteal_pct	技能吸血比例	Spell lifesteal percentage
+spell_amp	技能增强	Spell amplification
+spell_amp_pct	技能增强比例	Spell amplification percentage
+status_resist	状态抗性	Status resistance
+status_resistance	状态抗性	Status resistance
+slow_resistance	减速抗性	Slow resistance
+slow_resist	减速抗性	Slow resistance
+armor_reduction_pct	护甲降低比例	Armor reduction percentage
+magic_resistance	魔法抗性	Magic resistance
+magic_resist	魔法抗性	Magic resistance
+magic_resist_pct	魔法抗性比例	Magic resistance percentage
+damage_multiplier	伤害倍数	Damage multiplier
+creep_penalty	对非英雄单位效果衰减参数	Creep effect reduction parameter
+creep_lifesteal_penalty	对非英雄单位吸血衰减参数	Creep lifesteal reduction parameter
+attack_speed_min	攻击速度下限	Minimum attack speed
+attack_speed_max	攻击速度上限	Maximum attack speed
+zealot_respawn_time	狂热者重生时间	Zealot respawn time

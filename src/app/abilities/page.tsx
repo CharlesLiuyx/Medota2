@@ -2,7 +2,6 @@ import { gameLocale } from "@/i18n/config";
 import { getTranslations } from "@/i18n/server";
 import { getRequestLocale } from "@/i18n/server";
 import { withLocale } from "@/i18n/locale";
-import { LocalizedText } from "@/i18n/provider";
 import { resolvePageRelease } from "@/server/services/releases";
 import { withRelease } from "@/domain/releases";
 import { MissingReleaseCoverage } from "@/components/release-navigation";
@@ -11,8 +10,6 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LiveAbilityCatalog } from "@/components/live-catalog";
 import { SetupState } from "@/components/system-state";
-import { DatasetBadge } from "@/components/ui/dataset-badge";
-import { getGameplayVersion } from "@/server/services/gameplay-version";
 import { getAbilityOverview } from "@/server/repositories/abilities";
 import {
   canonicalAbilityQuery,
@@ -81,24 +78,15 @@ export default async function AbilitiesPage({
     );
   }
   const meta = overview.meta;
-  const [gameplayVersion, heroes] = await Promise.all([
-    getGameplayVersion(meta.datasetVersionId, meta.sourceCommit),
-    getHeroChoices(meta.datasetVersionId),
-  ]);
+  const heroes = await getHeroChoices(meta.datasetVersionId);
   return (
     <main className="mx-auto max-w-[var(--content-max)] px-4 py-4 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-        <h1 className="text-xl font-semibold tracking-wide">
-          <LocalizedText>技能图鉴</LocalizedText>
-        </h1>
-        <DatasetBadge
-          gameplayVersion={gameplayVersion}
-          clientVersion={meta.clientVersion}
-          sourceCommit={meta.sourceCommit}
-          gateStatus={meta.gateStatus}
-        />
-      </div>
       <LiveAbilityCatalog
+        header={
+          <h1 className="text-xl font-semibold tracking-wide">
+            {t("技能图鉴")}
+          </h1>
+        }
         key={`${meta.datasetVersionId}:${meta.assetDatasetVersionId}:${canonicalAbilityQuery(parsed.filters)}`}
         initialSlice={overview.slice}
         initialFilters={parsed.filters}

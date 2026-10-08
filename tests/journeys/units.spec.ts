@@ -11,6 +11,10 @@ test("units: search, clear, filter, open detail and follow ability", async ({
   await expect(
     page.getByRole("heading", { name: "单位图鉴", exact: true }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "单位图鉴", exact: true }).focus();
+  await expect(page.getByRole("tooltip")).toContainText("收录版本中的基础定义");
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
   const results = page.getByRole("list", { name: "单位结果" });
   if (!(await results.count())) {
     // Synthetic catalog fixtures deliberately have no unit source snapshot.

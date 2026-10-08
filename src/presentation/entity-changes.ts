@@ -1,3 +1,4 @@
+import { UNIT_STATS } from "@/domain/units";
 import { createTranslator } from "@/i18n/messages";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import type {
@@ -9,10 +10,12 @@ import {
   numbers,
   valueLabel,
   tooltipValue,
+  upgradedValues,
   type ValueRow,
 } from "./dota";
 
 export interface ChangeIdentity {
+  preview?: import("./entity-preview").EntityPreview;
   key: string;
   name: string;
   href?: string;
@@ -24,10 +27,14 @@ export interface ChangeIdentity {
 }
 export interface ChangeDictionary {
   heroes: Record<string, ChangeIdentity>;
+  units?: Record<string, ChangeIdentity>;
   heroIds: Record<string, string>;
   abilities: Record<string, ChangeIdentity>;
 }
 export interface ReadableChange {
+  field?: string;
+  scoreBaseline?: number;
+  impactBasis?: { before: string; after: string };
   subject: ChangeIdentity;
   label: string;
   before: string;
@@ -182,6 +189,13 @@ export function readableChanges(
       key = c.path.split("/").at(-1)!;
       label = valueLabel(key, undefined, locale) ?? fields[key] ?? null;
     }
+    if (c.entityType === "unit") {
+      subject = names.units?.[c.entityKey];
+      key = c.path.split("/").at(-1)!;
+      label = Object.hasOwn(UNIT_STATS, key)
+        ? t(UNIT_STATS[key as keyof typeof UNIT_STATS])
+        : null;
+    }
     if (c.entityType === "hero") subject = names.heroes[c.entityKey];
     if (c.entityType === "ability") {
       subject = names.abilities[c.entityKey];
@@ -247,6 +261,7 @@ export function readableChanges(
       if (growth(before) !== growth(after) && subject && property) {
         push({
           subject,
+          field: key,
           label: t("{property} · 等级成长", { property }),
           before: growth(before),
           after: growth(after),
@@ -277,8 +292,38 @@ export function readableChanges(
               ? t("阿哈利姆魔晶")
               : talent?.name;
         if (subject && conditionName && property) {
+          const effective = (
+            identity: ChangeIdentity | undefined,
+            modifier: unknown,
+          ) => {
+            const row = identity?.valueRows?.[key];
+            if (!row) return undefined;
+            return upgradedValues(
+              [
+                {
+                  ...row,
+                  modifiers:
+                    modifier === undefined
+                      ? []
+                      : [{ key: "special_bonus_scepter", value: modifier }],
+                },
+              ],
+              "scepter",
+              locale,
+            )[key.toLowerCase()];
+          };
+          const oldEffective = effective(
+            oldNames.abilities[subject.key],
+            old?.value,
+          );
+          const newEffective = effective(subject, next?.value);
           push({
+            impactBasis:
+              oldEffective !== undefined && newEffective !== undefined
+                ? { before: oldEffective, after: newEffective }
+                : undefined,
             subject,
+            field: key,
             label: talent
               ? t("{condition} · {property}修正", {
                   condition: `${talent.talentLevel ? t("{level}级天赋", { level: talent.talentLevel }) : t("天赋")} · ${subject.name}`,
@@ -315,7 +360,7 @@ export function readableChanges(
         // Slot identity is retained. Talent levels are supplied by the actual endpoint binding order.
         const level = ability.talentLevel;
         push({
-          subject: hero,
+          subject: { ...ability, heroKey: hero.key },
           talent: parts[2] === "talent",
           label:
             parts[2] === "talent"
@@ -345,6 +390,7 @@ export function readableChanges(
     ) {
       push({
         subject,
+        field: key,
         label,
         sourceLocale:
           c.entityType === "localization"

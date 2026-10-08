@@ -35,13 +35,16 @@ export function ItemSummary({
             t("效果说明待补充")}
         </SourceText>
       </p>
-      <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
         {(compact ? item.stats.slice(0, 6) : item.stats).map((stat, index) => (
           <div
             key={index}
-            className="flex flex-wrap justify-between gap-x-2 gap-y-1"
+            className="grid min-w-0 grid-cols-[minmax(0,1fr)_max-content] items-start gap-x-2"
           >
-            <dt className="text-[var(--text-muted)]">
+            <dt
+              className="min-w-0 [overflow-wrap:anywhere] text-[var(--text-muted)]"
+              title={stat.labelNote?.[en ? "en" : "zh"]}
+            >
               <AttributeLink
                 kind="item"
                 owner={item.internalName}
@@ -51,7 +54,7 @@ export function ItemSummary({
                 {t(en ? stat.en : stat.zh)}
               </AttributeLink>
             </dt>
-            <dd className="tabular-nums">{t(stat.value)}</dd>
+            <dd className="text-right tabular-nums">{t(stat.value)}</dd>
           </div>
         ))}
       </dl>

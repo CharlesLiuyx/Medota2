@@ -134,7 +134,11 @@ export default async function AttributePage({
           </p>
           <dl className="grid gap-2 sm:grid-cols-2">
             {entry.enumValues.map((value) => (
-              <div key={value.value} className="space-y-2 bg-[#182127]/65 p-3">
+              <div
+                key={value.value}
+                id={value.value}
+                className="scroll-mt-12 space-y-2 bg-[#182127]/65 p-3"
+              >
                 <dt className="font-semibold text-[#c4a16a]">
                   {locale === "en" ? value.en : value.zh}
                 </dt>

@@ -706,6 +706,7 @@ export interface AttributeRelation {
   field: string;
   labelZh: string;
   labelEn: string;
+  labelNote?: { zh: string; en: string };
   value: string;
   descriptionZh: string;
   descriptionEn: string;

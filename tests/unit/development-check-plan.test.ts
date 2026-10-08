@@ -23,6 +23,68 @@ function selectedJourneys(paths: string[]) {
 }
 
 describe("development check scope", () => {
+  it("checks retry behavior and the changes journey for availability UI", () => {
+    const paths = ["src/components/data-unavailable.tsx"];
+    const plan = createPlan(paths);
+    expect(plan.tasks.find((task) => task.id === "unit")?.args).toContain(
+      "tests/unit/changes-availability.test.tsx",
+    );
+    expect(selectedJourneys(paths)("heroes changes: recovery")).toBe(true);
+  });
+  it("checks nested cards when shared entity or tooltip behavior changes", () => {
+    for (const path of [
+      "src/components/ui/hover-tooltip.tsx",
+      "src/components/attribute-link.tsx",
+      "src/presentation/entity-preview.ts",
+    ]) {
+      const args = createPlan([path]).tasks.find(
+        (task) => task.id === "unit",
+      )?.args;
+      expect(
+        args?.length === 1 ||
+          args?.includes("tests/unit/hover-tooltip.test.tsx"),
+      ).toBe(true);
+    }
+  });
+
+  it("checks change tables when contextual ranking or shared entity references change", () => {
+    for (const path of [
+      "src/components/entity-reference.tsx",
+      "src/presentation/change-impact.ts",
+      "src/presentation/change-notes.ts",
+      "src/presentation/entity-preview.ts",
+    ]) {
+      expect(
+        selectedJourneys([path])("heroes changes: compact entity tables"),
+      ).toBe(true);
+    }
+    const plan = createPlan(["src/components/changes-table.tsx"]);
+    expect(plan.tasks.find((task) => task.id === "unit")?.args).toContain(
+      "tests/unit/infinite-list.test.tsx",
+    );
+  });
+  it("checks attribute navigation and unit coverage when attribute label or unresolved evidence resources change", () => {
+    for (const path of [
+      "src/data/attribute-parameters/supplement.v1.json",
+      "src/data/attribute-parameters/unresolved.v1.json",
+      "src/data/attribute-parameters/contextual-labels.tsv",
+      "src/data/attribute-parameters/field-labels.v1.json",
+      "src/data/attribute-parameters/field-bindings.v1.json",
+      "src/data/attribute-parameters/field-labels.tsv",
+    ]) {
+      expect(
+        selectedJourneys([path])("attributes: pinned parameter names"),
+      ).toBe(true);
+      expect(createPlan([path]).tasks.map((task) => task.id)).toContain("unit");
+    }
+  });
+  it("checks both item and attribute navigation when parameter label resources change", () => {
+    const selected = selectedJourneys([
+      "src/data/item-parameters/supplement.v1.json",
+    ]);
+    expect(selected("items: reviewed parameter labels")).toBe(true);
+    expect(selected("attributes: item parameter details")).toBe(true);
+  });
   it("checks publication orchestration with its fault tests, while exporter and unknown modules retain dynamic checks", () => {
     const plan = createPlan([
       "src/workers/push.ts",
@@ -324,4 +386,21 @@ it("selects the attributes journey for attribute routes and item value mapping",
     expect(
       selectedJourneys([file])("attributes: links and versioned mechanics"),
     ).toBe(true);
+});
+
+it("routes reusable table changes to grouped-table coverage and changes journeys", () => {
+  for (const path of [
+    "src/components/ui/data-table.tsx",
+    "src/components/ui/grouped-table.tsx",
+    "src/components/ui/table-sticky-cells.ts",
+    "src/components/ui/table-cell-spans.ts",
+  ]) {
+    const plan = createPlan([path]);
+    expect(plan.tasks.find((task) => task.id === "unit")?.args).toContain(
+      "tests/unit/grouped-table.test.tsx",
+    );
+    expect(
+      selectedJourneys([path])("heroes changes: sticky merged items"),
+    ).toBe(true);
+  }
 });

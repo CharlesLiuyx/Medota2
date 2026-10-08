@@ -414,7 +414,9 @@ textarea:focus {
   position: fixed;
   z-index: 100;
   visibility: hidden;
-  width: min(304px, calc(100vw - 16px));
+  width: max-content;
+  max-width: min(520px, calc(100vw - 16px));
+  overflow-wrap: anywhere;
   max-height: calc(100vh - 16px);
   overflow-y: auto;
   padding: 12px;
@@ -424,6 +426,51 @@ textarea:focus {
   color: #edf1f3;
   font-size: 12px;
   line-height: 1.4;
+}
+/* Attribute rows determine intrinsic card width; prose wraps within that width. */
+.game-hover-tooltip:has(dl) {
+  width: max-content;
+  max-width: min(720px, calc(100vw - 16px));
+}
+.game-hover-tooltip > div {
+  max-width: 100%;
+}
+.game-hover-tooltip:has(dl) p:not(.flex > p) {
+  width: 0;
+  min-width: 100%;
+}
+.game-hover-tooltip dl {
+  display: grid;
+  grid-template-columns: repeat(
+    2,
+    minmax(0, max-content) minmax(0, max-content)
+  );
+  gap: 6px 8px;
+}
+.game-hover-tooltip dl > div {
+  display: contents;
+}
+.game-hover-tooltip dl > div:nth-child(even) > dt {
+  margin-left: 16px;
+}
+.game-hover-tooltip dt,
+.game-hover-tooltip dd {
+  min-width: 0;
+  margin: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.game-hover-tooltip dd {
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 640px) {
+  .game-hover-tooltip dl {
+    grid-template-columns: minmax(0, max-content) minmax(0, max-content);
+  }
+  .game-hover-tooltip dl > div:nth-child(even) > dt {
+    margin-left: 0;
+  }
 }
 @media (min-width: 360px) {
   .hero-catalog-flow {
@@ -726,7 +773,7 @@ textarea:focus {
 
 /* Map workspace: controls leave the vertical space to the canvas. */
 .map-time-controls .map-select > .compact-menu-trigger {
-  height: 26px;
+  height: 22px;
   padding: 0 6px;
   font-size: 11px;
 }

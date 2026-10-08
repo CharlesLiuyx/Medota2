@@ -1,7 +1,13 @@
 "use client";
 import type { ReactNode } from "react";
-import Link from "./version-link";
-import { attributeId, type AttributeOwnerKind } from "@/domain/attributes";
+import { useTranslations } from "@/i18n/provider";
+import { EntityReference } from "./entity-reference";
+import { attributePreview } from "@/presentation/entity-preview";
+import {
+  attributeDefinition,
+  attributeId,
+  type AttributeOwnerKind,
+} from "@/domain/attributes";
 export function AttributeLink({
   kind,
   owner,
@@ -15,13 +21,18 @@ export function AttributeLink({
   labelToken?: string;
   children: ReactNode;
 }) {
+  const t = useTranslations();
+  const definition = attributeDefinition(
+    attributeId(kind, owner, field, labelToken),
+  );
+  const label =
+    typeof children === "string" ? children : t(definition?.zh ?? field);
   return (
-    <Link
-      href={`/attributes/${encodeURIComponent(attributeId(kind, owner, field, labelToken))}`}
-      prefetch={false}
-      className="decoration-[#c4a16a]/50 underline underline-offset-4 hover:text-[#c4a16a]"
+    <EntityReference
+      entity={attributePreview(kind, owner, field, label, t, labelToken)}
+      inline
     >
       {children}
-    </Link>
+    </EntityReference>
   );
 }

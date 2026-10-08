@@ -1,5 +1,14 @@
 import { enumAttributeFields } from "@/domain/attribute-enums";
 import { officialAttributeLabels } from "@/domain/attribute-mechanics";
+import {
+  attributeFieldLabel,
+  attributeFieldLabelProvenance,
+} from "@/domain/attribute-field-labels";
+import {
+  attributeParameterLabel,
+  attributeParameterProvenance,
+  unresolvedAttributeParameter,
+} from "@/domain/attribute-parameter-labels";
 import "server-only";
 import { cache } from "react";
 import { getWebDatabase } from "@/server/db/client";
@@ -98,6 +107,7 @@ async function buildSnapshot(meta: ActiveDatasetMeta) {
         field: stat.key,
         labelZh: stat.zh,
         labelEn: stat.en,
+        labelNote: stat.labelNote,
         value: stat.value,
         descriptionZh: item.descriptions.zh,
         descriptionEn: item.descriptions.en,
@@ -180,7 +190,15 @@ async function buildSnapshot(meta: ActiveDatasetMeta) {
       textValues(ability.values, ability, "en"),
       "en",
     );
-    for (const value of values)
+    for (const value of values) {
+      const supplement = attributeParameterLabel(
+        meta.sourceCommit,
+        owner,
+        value.value_key,
+      );
+      const review =
+        supplement ??
+        unresolvedAttributeParameter(meta.sourceCommit, owner, value.value_key);
       relations.push({
         attributeId: attributeId(
           "ability",
@@ -201,23 +219,32 @@ async function buildSnapshot(meta: ActiveDatasetMeta) {
             zh[`${token}_${value.value_key}`.toLowerCase()],
             "zh-CN",
             zh,
-          ) || "未命名参数",
+          ) ||
+          supplement?.zh ||
+          "未命名参数",
         labelEn:
           valueLabel(
             value.value_key,
             en[`${token}_${value.value_key}`.toLowerCase()],
             "en",
             en,
-          ) || "Unnamed parameter",
+          ) ||
+          supplement?.en ||
+          "Unnamed parameter",
+        labelNote: review?.note,
         value: numbers(
           value.level_values.length ? value.level_values : value.scalar_value,
         ),
         descriptionZh,
         descriptionEn,
-        sourcePath: ability.source_path || "scripts/npc/npc_abilities.txt",
-        sourceLine: ability.source_line,
+        sourcePath:
+          review?.definition.sourcePath ||
+          ability.source_path ||
+          "scripts/npc/npc_abilities.txt",
+        sourceLine: review?.definition.line || ability.source_line,
         modifiers: value.modifiers,
       });
+    }
   }
   const ownerRelations = new Map<string, AttributeRelation[]>();
   for (const relation of relations) {
@@ -343,6 +370,19 @@ async function buildSnapshot(meta: ActiveDatasetMeta) {
         "en",
       ),
     );
+  for (const relation of relations) {
+    if (/\p{Script=Han}/u.test(relation.labelZh)) continue;
+    const label = attributeFieldLabel(
+      meta.sourceCommit,
+      relation.kind,
+      relation.owner,
+      relation.field,
+    );
+    if (label) {
+      relation.labelZh = label.zh;
+      relation.labelNote = label.note;
+    }
+  }
   const entries = buildAttributeEntries(relations, ATTRIBUTES).map((entry) => {
     const labels = officialAttributeLabels(meta.sourceCommit, entry.id);
     return { ...entry, zh: labels.zh ?? entry.zh, en: labels.en ?? entry.en };
@@ -355,8 +395,10 @@ async function buildSnapshot(meta: ActiveDatasetMeta) {
       source_commit: meta.sourceCommit,
       client_version: meta.clientVersion,
       imported_at: new Date().toISOString(),
-      importer_version: "attributes-v1",
-      schema_version: "attribute-read-model-v1",
+      importer_version: "attributes-v4",
+      schema_version: "attribute-read-model-v4",
+      parameter_labels: attributeParameterProvenance(meta.sourceCommit),
+      field_labels: attributeFieldLabelProvenance(meta.sourceCommit),
       items: items?.provenance,
       units: units?.provenance,
     },

@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   formatAttributeEnum,
   type AttributeEnumValue,
 } from "@/domain/attribute-enums";
 import type { ListSlice } from "@/domain/infinite-list";
+import { Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import Link from "./version-link";
 import { useLocale, useTranslations } from "@/i18n/provider";
@@ -23,10 +24,16 @@ const kinds: Record<string, string> = {
   item: "物品",
 };
 export function AttributeCatalog({
+  header,
+  notice,
   initialSlice,
+  totalAttributes,
   version,
 }: {
+  header: ReactNode;
+  notice?: ReactNode;
   initialSlice: ListSlice<Omit<AttributeSummary, "searchText">>;
+  totalAttributes: number;
   version: string;
 }) {
   const params = useSearchParams(),
@@ -89,7 +96,7 @@ export function AttributeCatalog({
         href={`/attributes/${encodeURIComponent(entry.id)}`}
         className="block h-full space-y-2 bg-[#182127]/65 p-3 hover:bg-[#25313a]"
       >
-        <h2 className="text-sm font-semibold">
+        <h2 className="text-sm font-semibold break-words">
           {locale === "en" ? entry.en : entry.zh}
         </h2>
         <p className="line-clamp-2 text-xs text-[var(--text-muted)]">
@@ -112,39 +119,62 @@ export function AttributeCatalog({
   const total = ready ? loaded.slice.total : undefined;
   return (
     <>
-      <div className="my-4 flex flex-wrap items-center gap-2">
-        <input
-          aria-label={t("搜索属性")}
-          placeholder={t("搜索属性、关联对象或拼音…")}
-          value={draft}
-          maxLength={100}
-          onChange={(e) => {
-            setDraft(e.target.value);
-            if (!(e.nativeEvent as InputEvent).isComposing)
-              update(e.target.value);
-          }}
-          onCompositionEnd={(e) => update(e.currentTarget.value)}
-          className="h-8 min-w-0 flex-1 bg-white/5 px-3 text-xs"
-        />
-        <CompactSelect
-          label={t("属性范围")}
-          value={scope}
-          onValueChange={(value) => update(q, value)}
-        >
-          <option value="common">{t("通用属性")}</option>
-          <option value="all">{t("全部属性与专属参数")}</option>
-        </CompactSelect>
-        {q && (
-          <button className="p-2 text-xs" onClick={() => update("")}>
-            {t("清除筛选")}
-          </button>
-        )}
+      <div className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div className="shrink-0">{header}</div>
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-2 lg:ml-auto lg:w-auto lg:max-w-none">
+          <div className="flex min-w-0 flex-[1_1_100%] items-center gap-3 sm:flex-[0_1_auto]">
+            <label className="relative w-60 min-w-0 flex-1 sm:flex-none">
+              <Search
+                aria-hidden="true"
+                className="absolute left-1.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--text-muted)]"
+              />
+              <input
+                aria-label={t("搜索属性")}
+                placeholder={t("搜索属性、关联对象或拼音…")}
+                value={draft}
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                maxLength={100}
+                onChange={(e) => {
+                  setDraft(e.target.value);
+                  if (!(e.nativeEvent as InputEvent).isComposing)
+                    update(e.target.value);
+                }}
+                onCompositionEnd={(e) => update(e.currentTarget.value)}
+                className="h-8 w-full bg-transparent pl-7 pr-2 text-xs placeholder:text-[var(--text-muted)]"
+              />
+            </label>
+            <p
+              role="status"
+              className="shrink-0 whitespace-nowrap text-xs tabular-nums text-[var(--text-muted)]"
+            >
+              {t("{value0} / {value1} 个属性", {
+                value0:
+                  total === undefined
+                    ? "…"
+                    : new Intl.NumberFormat(locale).format(total),
+                value1: new Intl.NumberFormat(locale).format(totalAttributes),
+              })}
+            </p>
+          </div>
+          <CompactSelect
+            label={t("属性范围")}
+            value={scope}
+            onValueChange={(value) => update(q, value)}
+          >
+            <option value="common">{t("通用属性")}</option>
+            <option value="all">{t("全部属性与专属参数")}</option>
+          </CompactSelect>
+          {q && (
+            <button className="p-2 text-xs" onClick={() => update("")}>
+              {t("清除筛选")}
+            </button>
+          )}
+        </div>
       </div>
-      <p role="status" className="mb-3 text-xs text-[var(--text-muted)]">
-        {total === undefined
-          ? t("正在加载属性…")
-          : t("{value0} 个属性", { value0: total })}
-      </p>
+      {notice}
       {ready && !loaded.error && total === 0 && (
         <p className="text-sm">
           {t("没有符合条件的属性，请调整关键词或范围。")}
@@ -331,6 +361,11 @@ export function AttributeRelations({
                   {r.sourcePath}
                   {r.sourceLine ? `:${r.sourceLine}` : ""} · {r.field}
                 </p>
+                {r.labelNote && (
+                  <p className="mt-2 whitespace-pre-line [overflow-wrap:anywhere]">
+                    {r.labelNote[locale === "en" ? "en" : "zh"]}
+                  </p>
+                )}
                 {Boolean(r.modifiers) && (
                   <pre className="mt-2 max-h-32 overflow-auto whitespace-pre-wrap break-all text-[10px]">
                     {JSON.stringify(r.modifiers, null, 2)}

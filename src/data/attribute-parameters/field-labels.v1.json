@@ -1,0 +1,1664 @@
+{
+  "source_repository": "https://github.com/spirit-bear-productions/dota_vpk_updates",
+  "imported_at": "2026-10-07T18:18:20.433Z",
+  "importer_version": "reviewed-attribute-fields-v1",
+  "schema_version": "attribute-field-labels-v1",
+  "contentSha256": "07acb797c4a17ca683b760de89467e57128131cf45c5b6a9f13ef355d21409fd",
+  "bindingsSha256": "ba9bf9bd0fcac36e44cb4da7d5af90f02ca09173e9d5e36c13118a72f33e7bd8",
+  "labels": {
+    "ability.AbilityBehavior": {
+      "zh": "技能行为类型",
+      "confidence": "high",
+      "rationale": "枚举值由施法目标等行为标记组成，概括技能行为配置。"
+    },
+    "ability.AbilityCastRangeBuffer": {
+      "zh": "技能施法距离缓冲值",
+      "confidence": "medium",
+      "rationale": "字段名明确关联施法距离缓冲，但样本未说明该缓冲值的具体用途。"
+    },
+    "ability.AbilityDamageType": {
+      "zh": "技能伤害类型",
+      "confidence": "high",
+      "rationale": "字段及枚举值标明技能配置的伤害类型。"
+    },
+    "ability.AbilityModifierSupportBonus": {
+      "zh": "技能修正支持加成值",
+      "confidence": "low",
+      "rationale": "字段名包含修正、支持与加成，但样本不足以确定“支持”的具体含义。"
+    },
+    "ability.AbilityModifierSupportValue": {
+      "zh": "技能修正支持值",
+      "confidence": "low",
+      "rationale": "字段名含修正与支持字样，样本无法确定其具体含义，故采用中性名称。"
+    },
+    "ability.AbilityOvershootCastRange": {
+      "zh": "施法距离超出值",
+      "confidence": "low",
+      "rationale": "字段名仅能确认其与施法距离超出量有关，样本不足以确定具体计算含义。"
+    },
+    "ability.AbilityType": {
+      "zh": "技能类型",
+      "confidence": "high",
+      "rationale": "取值区分基础技能与终极技能等类别。"
+    },
+    "ability.AbilityUnitDamageType": {
+      "zh": "技能单位伤害类型",
+      "confidence": "high",
+      "rationale": "枚举值列出魔法与物理等伤害类型。"
+    },
+    "ability.AbilityUnitTargetFlag": {
+      "zh": "技能目标标记",
+      "confidence": "high",
+      "rationale": "枚举值是目标筛选标记，字段名未表明更具体的筛选机制。"
+    },
+    "ability.AbilityUnitTargetFlags": {
+      "zh": "技能目标单位标记集合",
+      "confidence": "high",
+      "rationale": "枚举值可组合多个目标单位筛选标记。"
+    },
+    "ability.AbilityUnitTargetTeam": {
+      "zh": "技能目标阵营",
+      "confidence": "high",
+      "rationale": "枚举值表示技能目标所属的友方、敌方或双方阵营。"
+    },
+    "ability.AbilityUnitTargetType": {
+      "zh": "技能目标单位类型",
+      "confidence": "high",
+      "rationale": "字段值列出技能配置涉及的目标单位类型。"
+    },
+    "ability.AnimationPlaybackRate": {
+      "zh": "技能动画播放速率",
+      "confidence": "medium",
+      "rationale": "字段名和倍率形式的样本值都指向动画播放速率。"
+    },
+    "ability.InitialAbilityCharges": {
+      "zh": "技能初始充能数",
+      "confidence": "high",
+      "rationale": "字段名直接表示技能配置中的初始充能数量。"
+    },
+    "ability.ItemCost": {
+      "zh": "技能配置物品价格",
+      "confidence": "medium",
+      "rationale": "字段位于技能配置中且名为 ItemCost，保留物品价格含义及其配置语境。"
+    },
+    "ability.ItemInitialCharges": {
+      "zh": "技能初始充能数",
+      "confidence": "medium",
+      "rationale": "该字段出现在技能配置中并记录初始充能数量。"
+    },
+    "ability.LevelsBetweenUpgrades": {
+      "zh": "技能升级间隔等级数",
+      "confidence": "medium",
+      "rationale": "字段名表示升级之间的等级间隔，但不同技能的具体用途有别。"
+    },
+    "ability.MaxLevel": {
+      "zh": "技能最高等级",
+      "confidence": "high",
+      "rationale": "字段记录技能配置允许的最高等级。"
+    },
+    "ability.RequiredLevel": {
+      "zh": "技能需求等级",
+      "confidence": "high",
+      "rationale": "字段记录技能配置关联的需求等级，样本本身不能进一步限定用途。"
+    },
+    "ability.SpellDispellableType": {
+      "zh": "技能效果可驱散类型",
+      "confidence": "high",
+      "rationale": "枚举值表示技能效果是否可被驱散及其类型。"
+    },
+    "ability.SpellImmunityType": {
+      "zh": "技能法术免疫交互类型",
+      "confidence": "high",
+      "rationale": "枚举值描述技能配置对法术免疫单位的适用类别。"
+    },
+    "ability.gyrocopter_call_down.tracking_strike_radius": {
+      "zh": "召唤飞弹追踪打击半径",
+      "confidence": "medium",
+      "rationale": "专属字段名含strike_radius，所属技能为召唤飞弹。"
+    },
+    "ability.meepo_fling.range": {
+      "zh": "投掷作用距离",
+      "confidence": "medium",
+      "rationale": "官方英文标签为投掷距离，字段记录该技能的分级距离数值。"
+    },
+    "ability.morphling_syntropy.attack_slow_max": {
+      "zh": "攻击减速上限",
+      "confidence": "medium",
+      "rationale": "技能说明将其用于攻击速度减缓上限，并与移动速度减缓上限并列。"
+    },
+    "ability.morphling_syntropy.attack_slow_min": {
+      "zh": "攻击减速下限",
+      "confidence": "medium",
+      "rationale": "字段名和官方英文标签MIN ATTACK SLOW均指向攻击减速下限。"
+    },
+    "ability.naga_siren_slithereen_cutlass.miss_chance_per_stack": {
+      "zh": "每层攻击落空概率",
+      "confidence": "medium",
+      "rationale": "技能说明表明减益按层数叠加并令目标攻击落空，字段名对应每层概率。"
+    },
+    "ability.phoenix_sun_ray.focal_point_max_multiplier": {
+      "zh": "烈日炙烤焦点最大倍率",
+      "confidence": "low",
+      "rationale": "字段名可确认焦点相关最大倍率，现有说明无法确认倍率所作用的量。"
+    },
+    "ability.rubick_might_and_magus.magic_resist_bonus": {
+      "zh": "魔法抗性加成",
+      "confidence": "medium",
+      "rationale": "字段名含magic_resist_bonus，但技能说明没有解释该参数的作用。"
+    },
+    "hero.agility_gain": {
+      "zh": "敏捷每级成长",
+      "confidence": "high",
+      "rationale": "英雄字段记录每级敏捷成长数值。"
+    },
+    "hero.attack_animation_point": {
+      "zh": "攻击动作前摇时长",
+      "confidence": "high",
+      "rationale": "该字段记录英雄攻击动作的前摇时长参数。"
+    },
+    "hero.attack_range": {
+      "zh": "攻击距离",
+      "confidence": "high",
+      "rationale": "多个英雄样本以数值记录该通用攻击距离字段。"
+    },
+    "hero.attack_rate": {
+      "zh": "基础攻击间隔",
+      "confidence": "medium",
+      "rationale": "字段名为攻击速率，Dota英雄数据中该字段表示基础攻击间隔。"
+    },
+    "hero.base_agility": {
+      "zh": "基础敏捷",
+      "confidence": "high",
+      "rationale": "英雄字段直接记录基础敏捷数值。"
+    },
+    "hero.base_armor": {
+      "zh": "基础护甲",
+      "confidence": "high",
+      "rationale": "base_前缀表明这是英雄的基础护甲字段。"
+    },
+    "hero.base_attack_damage_max": {
+      "zh": "基础攻击力上限",
+      "confidence": "high",
+      "rationale": "字段名明确表示基础攻击伤害区间的最大值。"
+    },
+    "hero.base_attack_damage_min": {
+      "zh": "基础攻击伤害下限",
+      "confidence": "high",
+      "rationale": "字段表示基础攻击伤害区间的下限。"
+    },
+    "hero.base_attack_speed": {
+      "zh": "基础攻击速度",
+      "confidence": "high",
+      "rationale": "base_前缀和数值样本支持命名为英雄基础攻击速度。"
+    },
+    "hero.base_health": {
+      "zh": "基础生命值",
+      "confidence": "high",
+      "rationale": "字段名表示英雄的基础生命值。"
+    },
+    "hero.base_health_regen": {
+      "zh": "基础生命回复",
+      "confidence": "high",
+      "rationale": "字段直接记录基础生命回复数值。"
+    },
+    "hero.base_intelligence": {
+      "zh": "基础智力",
+      "confidence": "high",
+      "rationale": "base_前缀表明这是英雄的基础智力字段。"
+    },
+    "hero.base_mana": {
+      "zh": "基础魔法值",
+      "confidence": "high",
+      "rationale": "字段名表示英雄的基础魔法值。"
+    },
+    "hero.base_mana_regen": {
+      "zh": "基础魔法回复",
+      "confidence": "high",
+      "rationale": "字段直接记录基础魔法回复数值。"
+    },
+    "hero.base_strength": {
+      "zh": "基础力量",
+      "confidence": "high",
+      "rationale": "base_前缀表明这是英雄的基础力量字段。"
+    },
+    "hero.day_vision": {
+      "zh": "白天视野",
+      "confidence": "high",
+      "rationale": "字段名直接表示白天视野数值。"
+    },
+    "hero.intelligence_gain": {
+      "zh": "智力每级成长",
+      "confidence": "high",
+      "rationale": "英雄智力成长字段表示每升一级增加的智力。"
+    },
+    "hero.magic_resistance": {
+      "zh": "魔法抗性",
+      "confidence": "high",
+      "rationale": "字段名和英雄数值样本直接对应魔法抗性。"
+    },
+    "hero.movement_speed": {
+      "zh": "移动速度",
+      "confidence": "high",
+      "rationale": "字段名直接表示英雄移动速度。"
+    },
+    "hero.night_vision": {
+      "zh": "夜间视野",
+      "confidence": "high",
+      "rationale": "字段名及属性合同均指向夜间视野。"
+    },
+    "hero.projectile_speed": {
+      "zh": "攻击弹道速度",
+      "confidence": "medium",
+      "rationale": "字段位于英雄属性中且部分英雄取非零弹道速度值。"
+    },
+    "hero.strength_gain": {
+      "zh": "力量每级成长",
+      "confidence": "high",
+      "rationale": "英雄字段记录每级力量成长数值。"
+    },
+    "hero.turn_rate": {
+      "zh": "转身速率",
+      "confidence": "high",
+      "rationale": "字段表示英雄转向时使用的速率参数。"
+    },
+    "item.AbilityBehavior": {
+      "zh": "物品技能行为类型",
+      "confidence": "high",
+      "rationale": "取值由物品技能行为标记组成，描述其行为配置。"
+    },
+    "item.AbilityCastPoint": {
+      "zh": "物品施法前摇",
+      "confidence": "high",
+      "rationale": "字段记录物品技能施法前摇数值。"
+    },
+    "item.AbilityChannelTime": {
+      "zh": "物品持续施法时间",
+      "confidence": "high",
+      "rationale": "物品样本及说明中的持续施法时长与该字段对应。"
+    },
+    "item.AbilityChargeRestoreTime": {
+      "zh": "物品充能恢复时间",
+      "confidence": "high",
+      "rationale": "字段名明确记录物品充能的恢复时间。"
+    },
+    "item.AbilityCharges": {
+      "zh": "物品技能充能数",
+      "confidence": "high",
+      "rationale": "字段记录物品技能当前充能数量。"
+    },
+    "item.AbilityDamage": {
+      "zh": "物品技能伤害值",
+      "confidence": "medium",
+      "rationale": "字段名指向物品技能伤害数值，但样本为零且不能据此确定生效机制。"
+    },
+    "item.AbilityDuration": {
+      "zh": "物品技能持续时间",
+      "confidence": "medium",
+      "rationale": "字段名表示物品技能持续时间，但样本不足以限定其对应效果。"
+    },
+    "item.AbilityHealthCost": {
+      "zh": "物品技能生命消耗",
+      "confidence": "high",
+      "rationale": "字段记录物品技能消耗的生命值。"
+    },
+    "item.AbilityUnitDamageType": {
+      "zh": "物品技能单位伤害类型",
+      "confidence": "high",
+      "rationale": "枚举值表示物品技能配置的单位伤害类型。"
+    },
+    "item.AbilityUnitTargetFlags": {
+      "zh": "物品技能目标单位标记集合",
+      "confidence": "high",
+      "rationale": "枚举值可组合多个目标单位筛选标记。"
+    },
+    "item.AbilityUnitTargetTeam": {
+      "zh": "物品技能目标阵营",
+      "confidence": "high",
+      "rationale": "枚举值表示物品技能目标所属的阵营范围。"
+    },
+    "item.AbilityUnitTargetType": {
+      "zh": "物品技能目标单位类型",
+      "confidence": "high",
+      "rationale": "字段值列出物品技能配置涉及的目标单位类型。"
+    },
+    "item.BonusDelayedStockCount": {
+      "zh": "延迟库存奖励数量",
+      "confidence": "low",
+      "rationale": "字段名仅能确认其关联延迟库存数量，具体触发和计算方式未由样本说明。"
+    },
+    "item.ItemBaseLevel": {
+      "zh": "物品基础等级",
+      "confidence": "high",
+      "rationale": "字段记录物品的基础等级。"
+    },
+    "item.ItemCost": {
+      "zh": "物品价格",
+      "confidence": "high",
+      "rationale": "字段直接记录物品价格数值。"
+    },
+    "item.ItemDisassembleRule": {
+      "zh": "物品拆分规则",
+      "confidence": "high",
+      "rationale": "枚举值表示物品拆分规则及其允许状态。"
+    },
+    "item.ItemInitialCharges": {
+      "zh": "物品初始充能数",
+      "confidence": "high",
+      "rationale": "字段记录物品的初始充能数量。"
+    },
+    "item.ItemInitialStockTime": {
+      "zh": "物品初始库存时间",
+      "confidence": "medium",
+      "rationale": "字段名表示物品的初始库存时间，不能据此推定恢复间隔或具体模式规则。"
+    },
+    "item.ItemInitialStockTimeTurbo": {
+      "zh": "物品初始库存时间（极速模式）",
+      "confidence": "high",
+      "rationale": "字段名区分极速模式并记录物品初始库存时间。"
+    },
+    "item.ItemStackableMax": {
+      "zh": "物品最大可堆叠数",
+      "confidence": "high",
+      "rationale": "字段记录物品允许的最大堆叠数量。"
+    },
+    "item.ItemStockInitial": {
+      "zh": "物品初始库存数量",
+      "confidence": "high",
+      "rationale": "字段记录物品初始库存的数量。"
+    },
+    "item.ItemStockMax": {
+      "zh": "物品库存上限",
+      "confidence": "high",
+      "rationale": "字段名和数值样本均表示库存最大数量。"
+    },
+    "item.ItemStockTime": {
+      "zh": "物品库存恢复时间",
+      "confidence": "high",
+      "rationale": "字段记录物品库存补充所需的时间。"
+    },
+    "item.MaxLevel": {
+      "zh": "物品技能最高等级",
+      "confidence": "high",
+      "rationale": "该字段位于物品技能配置中并记录其最高等级。"
+    },
+    "item.MaxUpgradeLevel": {
+      "zh": "物品最高升级等级",
+      "confidence": "high",
+      "rationale": "该字段与达贡等可升级物品关联，记录升级等级上限。"
+    },
+    "item.SpellDispellableType": {
+      "zh": "物品技能效果可驱散类型",
+      "confidence": "high",
+      "rationale": "枚举值表示物品技能效果是否可被驱散及其类型。"
+    },
+    "item.SpellImmunityType": {
+      "zh": "物品技能法术免疫交互类型",
+      "confidence": "high",
+      "rationale": "枚举值描述物品技能配置对法术免疫单位的适用类别。"
+    },
+    "unit.AttackAcquisitionRange": {
+      "zh": "单位攻击获取距离",
+      "confidence": "medium",
+      "rationale": "字段名表示攻击获取范围，样本不足以说明具体获取规则。"
+    },
+    "unit.AttackAnimationPoint": {
+      "zh": "单位攻击动画前摇",
+      "confidence": "high",
+      "rationale": "字段记录单位攻击动画的生效点参数。"
+    },
+    "unit.AttackCapabilities": {
+      "zh": "单位攻击能力",
+      "confidence": "high",
+      "rationale": "枚举值区分单位不能攻击、近战攻击及远程攻击能力。"
+    },
+    "unit.AttackDamageType": {
+      "zh": "单位攻击伤害类型",
+      "confidence": "high",
+      "rationale": "枚举值用于标记单位攻击伤害类型。"
+    },
+    "unit.AttackDesire": {
+      "zh": "单位攻击倾向值",
+      "confidence": "low",
+      "rationale": "字段名指向攻击倾向参数，但样本不足以判断其决策含义。"
+    },
+    "unit.AttackRangeBuffer": {
+      "zh": "攻击距离缓冲值",
+      "confidence": "medium",
+      "rationale": "字段名仅能确认其为攻击距离相关的缓冲参数，具体规则未见说明。"
+    },
+    "unit.AttributeAgilityGain": {
+      "zh": "单位敏捷成长值",
+      "confidence": "high",
+      "rationale": "字段名明确表示单位敏捷成长数值，未假定成长发生的等级间隔。"
+    },
+    "unit.AttributeBaseAgility": {
+      "zh": "单位基础敏捷",
+      "confidence": "high",
+      "rationale": "字段明确记录单位的基础敏捷数值。"
+    },
+    "unit.AttributeBaseIntelligence": {
+      "zh": "单位基础智力",
+      "confidence": "high",
+      "rationale": "字段直接记录单位基础智力数值。"
+    },
+    "unit.AttributeBaseStrength": {
+      "zh": "单位基础力量",
+      "confidence": "high",
+      "rationale": "字段名明确表示单位的基础力量数值。"
+    },
+    "unit.AttributeIntelligenceGain": {
+      "zh": "单位智力成长值",
+      "confidence": "medium",
+      "rationale": "字段表示单位智力成长参数，但样本未说明其具体应用方式。"
+    },
+    "unit.AttributePrimary": {
+      "zh": "单位主属性",
+      "confidence": "high",
+      "rationale": "枚举值表示单位配置的主属性类别。"
+    },
+    "unit.AttributeStrengthGain": {
+      "zh": "单位力量成长值",
+      "confidence": "high",
+      "rationale": "字段名明确表示单位力量成长数值，未假定成长发生的等级间隔。"
+    },
+    "unit.BoundsHullName": {
+      "zh": "单位边界壳体类型",
+      "confidence": "medium",
+      "rationale": "枚举值对应不同大小的边界壳体，但样本未说明具体碰撞机制。"
+    },
+    "unit.CombatClassAttack": {
+      "zh": "攻击方战斗类别",
+      "confidence": "medium",
+      "rationale": "字段与枚举值指向攻击方的战斗类别，但样本不足以确定其完整用途。"
+    },
+    "unit.CombatClassDefend": {
+      "zh": "单位防御战斗类别",
+      "confidence": "medium",
+      "rationale": "枚举值位于单位配置的防御战斗类别字段。"
+    },
+    "unit.FollowRange": {
+      "zh": "单位跟随范围",
+      "confidence": "medium",
+      "rationale": "字段名指向跟随范围参数，样本未说明该值的具体使用规则。"
+    },
+    "unit.MovementCapabilities": {
+      "zh": "单位移动能力",
+      "confidence": "high",
+      "rationale": "枚举值区分单位可用的移动能力类别。"
+    },
+    "unit.MovementTurnRate": {
+      "zh": "单位转身速率",
+      "confidence": "high",
+      "rationale": "字段名直接记录单位移动时的转身速率参数。"
+    },
+    "unit.ProjectileCollisionSize": {
+      "zh": "单位弹道碰撞尺寸",
+      "confidence": "medium",
+      "rationale": "字段名关联弹道碰撞尺寸，样本不足以确定其几何形式。"
+    },
+    "unit.ProjectileSpeed": {
+      "zh": "单位投射物速度",
+      "confidence": "high",
+      "rationale": "字段记录单位投射物的速度参数，未在名称中补充单位。"
+    },
+    "unit.StatusStartingMana": {
+      "zh": "单位初始魔法值",
+      "confidence": "medium",
+      "rationale": "字段名表示单位状态配置中的起始魔法值，样本含特殊值但不改变字段含义。"
+    },
+    "unit.TeamName": {
+      "zh": "单位所属阵营",
+      "confidence": "high",
+      "rationale": "枚举值表示单位所属的阵营。"
+    },
+    "unit.UnitRelationshipClass": {
+      "zh": "单位关系类别",
+      "confidence": "medium",
+      "rationale": "字段与枚举值表示单位的关系类别，具体影响未由样本说明。"
+    }
+  },
+  "snapshots": [
+    {
+      "source_commit": "991daaf6fc24b08445209d9ce8767e145bab107e",
+      "client_version": "6918",
+      "rawTitleCount": 13355,
+      "rawRelationCount": 30761,
+      "verifiedBindings": 30761,
+      "sourceFiles": [
+        {
+          "source_path": "scripts/npc/npc_heroes.txt",
+          "raw_sha256": "03375c615ae05cc71ffedf3a9df407ba9925d31d42d864e6e449423bccad1b6f"
+        },
+        {
+          "source_path": "resource/localization/abilities_english.txt",
+          "raw_sha256": "d5fe70141b9ef7898f5db59fba522e403fe03dc7baf7726a113045ed114b9d5a"
+        },
+        {
+          "source_path": "resource/localization/abilities_schinese.txt",
+          "raw_sha256": "9d2cff9c5fd992baf2375994c289d8cd2c5f57fbeda9d427175e8a0a7bb7be1f"
+        },
+        {
+          "source_path": "resource/localization/dota_english.txt",
+          "raw_sha256": "41b585ac235dcc8f986010a05e56875736a03d452ac71798bf8c3b6935cde3e3"
+        },
+        {
+          "source_path": "resource/localization/dota_schinese.txt",
+          "raw_sha256": "632ce222342910da7a279b0ab415542f47a303161b49cc53771cd332be9488ba"
+        },
+        {
+          "source_path": "resource/localization/hero_lore_english.txt",
+          "raw_sha256": "7c175a0c5e5c4f15e17e215c39125a87c00ac82c1bbdfc0cf1bdd34e8d51d35c"
+        },
+        {
+          "source_path": "resource/localization/hero_lore_schinese.txt",
+          "raw_sha256": "593fac88459d6129257ec947d53af3128906dadf9fe32b91abaf103a507f6d56"
+        },
+        {
+          "source_path": "steam.inf",
+          "raw_sha256": "7fc2fabd85c667d10416c6fc353c176ebbb66bb99ab388854d08a88a3bed805b"
+        },
+        {
+          "source_path": "scripts/npc/npc_abilities.txt",
+          "raw_sha256": "040b8075832a8c5767bb2ad50ca5eb1dfda024a9c45d1d5b857d2911f2d97ab8"
+        },
+        {
+          "source_path": "scripts/npc/npc_ability_ids.txt",
+          "raw_sha256": "a4709374a249dcd9e98b1d996d53e44a944581c04b5d65c5afd36d40973de598"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_abaddon.txt",
+          "raw_sha256": "6244637202b0c286457b998ca99cc29d5f9ffc9af41dfb989053eedead3d606c"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_abyssal_underlord.txt",
+          "raw_sha256": "6bce8a0f3b4d00feb803c6a88b3369025b0cbaf1228313cd81af0d1258bbd401"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_alchemist.txt",
+          "raw_sha256": "05b3e021448660ae3d89d2203a1a07cce8e082a88fc8ad219dae1eb36c45b01e"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_ancient_apparition.txt",
+          "raw_sha256": "c5255643b045610568af4b3fc4038c0cfefe6e03bad2c7d2c32192de7b1209ee"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_antimage.txt",
+          "raw_sha256": "6f0f524498c12cdb2bf875fbeef6530cd0236c9eb97447c7570a47e22cc49071"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_arc_warden.txt",
+          "raw_sha256": "8febcc155be3ec9fffb28adaa0cd3c38d37a988765d21ec54a44aa5cd8af4c09"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_axe.txt",
+          "raw_sha256": "a26da3b2fffbccf8b738b309093b464835c682ffd6f6b29f87a928fbce2a3a5c"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_bane.txt",
+          "raw_sha256": "cac83664ed17638ea0ea55b35cb87f689c99f9715608059a3fc24b40759a2031"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_batrider.txt",
+          "raw_sha256": "1abd8b2c9af1d48969416caebab68de5775020a68a5c3f2ebf2098f3ff0d7a3d"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_beastmaster.txt",
+          "raw_sha256": "3f25f3fbb217c35aa2e715426d86f88c0d7e1a5b92b489e996156f1f5157db44"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_bloodseeker.txt",
+          "raw_sha256": "e3626c3e4bbe56f0dd6dcedcb561e13b07a43ce17079610f1a9528d3e4337fda"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_bounty_hunter.txt",
+          "raw_sha256": "79d24bfbbd31a9ef9f4574bd6d05dc622a4de4ebac667da65de1db1491d9a9f6"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_brewmaster.txt",
+          "raw_sha256": "bed705d4562c08d7dbab8a56ac7d499f8bfad907988cf1bd6a7045fb3093a6e4"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_bristleback.txt",
+          "raw_sha256": "4ddd3b9fb45c4189dccccdb8c12449239ea305d16b724856408965fbb947947b"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_broodmother.txt",
+          "raw_sha256": "f5486677432ecf6a477ce9c7d7dea4d9e20a0ec31381b9de40737817b1952045"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_centaur.txt",
+          "raw_sha256": "6e3040eb6272c1b5bf1edd5133c3e2fb5c995b28feba3762b3f84851d63295eb"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_chaos_knight.txt",
+          "raw_sha256": "bebbb7ff463bbdcf65aed2a92edff5ec2a47dcc168bb52a6b4ffec30d3bba7c1"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_chen.txt",
+          "raw_sha256": "c194acf17392d8aa1cacc55b42a8af5473dea032938564a79c9c74185d0c75ce"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_clinkz.txt",
+          "raw_sha256": "41afdb6ad49cfee65465ec3a425a97bb6634c27b0dbffa4526e1879951ed2bf5"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_crystal_maiden.txt",
+          "raw_sha256": "32b0159b87fd6d79681fe909dcda29150c696acab0581fae4ce56972d105a44e"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_dark_seer.txt",
+          "raw_sha256": "00b90dd765245cdaeb00e391685638da52e3560a572c58c72aa13b299b26610d"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_dark_willow.txt",
+          "raw_sha256": "b9425aabc3889a403d6a89892701ab8c1ab70fc95d2b635eee3635b28dc9bf8e"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_dawnbreaker.txt",
+          "raw_sha256": "a4022439d3ab8c4a4e523f1e6ff0a3f162370fbccc047860cefd064a4e9c8c87"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_dazzle.txt",
+          "raw_sha256": "44121d926a50148696df6df3d15bf0da78b223055911b79624d9d77b39b1a2bd"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_death_prophet.txt",
+          "raw_sha256": "91646722d62d6451c97f2b60e9e82b883e57efcae0e734a4f184a5a16058ba2d"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_disruptor.txt",
+          "raw_sha256": "6116d486e1a240c3727b7c7f366fbd54a1d7a70e6293f7efe54696b4881c9e50"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_doom_bringer.txt",
+          "raw_sha256": "b95f9cc2b4b47c637b0dc8153113a48176282ba11680e09c17e3a085152a28ed"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_dragon_knight.txt",
+          "raw_sha256": "6897eda3ba4fb1138ac9e84439e14f1fd5355d4b6a8d67f75c7c288a43cd4fcb"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_drow_ranger.txt",
+          "raw_sha256": "5d60011bc8892363525d59473df16d67a31234400d03fcf1ec3d1cb7ecb70e8c"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "raw_sha256": "54449906959f362067655810c18e94e8124b10983ee70104a670a1223781ca40"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_earthshaker.txt",
+          "raw_sha256": "350faa73305bd9bf96c4ecd455a058e6ccf3a019a984ad5a833d42af509eb720"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_elder_titan.txt",
+          "raw_sha256": "05e1a4de7541dbaa05b3e126c364a2bc7c3878870b4620a795cc114e1b16e165"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_ember_spirit.txt",
+          "raw_sha256": "3a5505df36329ded36d59cf671e6b97989eefe0559ad6b6f76d1749e1860e19d"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_enchantress.txt",
+          "raw_sha256": "f534b163694541e532b146ee7e905de28745b32b2da3f1264e8be2cca192244e"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_enigma.txt",
+          "raw_sha256": "51b37dcadd80b8a28168352a560cca45a4e33fc259931bc4781cf64481a2608b"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_faceless_void.txt",
+          "raw_sha256": "91177da3f76f974a49f62f734bfb66d0a31abda7c8c94e9494ae8187a211414f"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_furion.txt",
+          "raw_sha256": "29ac34dfb1cda2f742f67b70d9c886d0e60ea53c671980182ce8195405e4d590"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_grimstroke.txt",
+          "raw_sha256": "188092bda14874d7ceb915241d03bebad1590cba781de5e1808f24e83888f79e"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_gyrocopter.txt",
+          "raw_sha256": "a3ddb68364a5ff2fcb7b3ab4625c51ac435364ccad48c27fd70963e6420fb2cf"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_hoodwink.txt",
+          "raw_sha256": "dbd62591abda56a11f98cf1c617704e707fe42a8e99a66e5da6b0b43fb0369bf"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_huskar.txt",
+          "raw_sha256": "a1c87b39b0f4639dc5351636bcd6ab096261d297a7f3b36f7311cc987e75094f"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "raw_sha256": "fa737dda89a3afc35b0422c0ac025d00c35d2f10b4f24815e2b6ed6de4ee1ce3"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_jakiro.txt",
+          "raw_sha256": "2a1933a53078610dabd7a657a48eab383ba6b00e56f6862091ce8423d5f21052"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_juggernaut.txt",
+          "raw_sha256": "13d9e7e5b0cda73b208490779983c0ba3b9c0a44ef56ff22f59fe785b6b0eac9"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_keeper_of_the_light.txt",
+          "raw_sha256": "d6988257f8cae786dcf1c44491b538ba97235c118907973fc8d01ae433e91465"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "raw_sha256": "5043f9bb9c7849f7ae636bc0e921121c613682f6d39a9f7930460e247d56c39f"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_kunkka.txt",
+          "raw_sha256": "49c02994ff32991bd93bdbd446d78663aff4c7eacdd9d3afba2eb36bd18fdc16"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_largo.txt",
+          "raw_sha256": "9cbc27b06b9335ba4e048f6796f91e29864fde7203a445f6c0d9af9f458b3cf7"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_legion_commander.txt",
+          "raw_sha256": "1ec8bc732c73a1a22e325461a47f97a3f87d72c9bab9bfea2638459121d5111d"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_leshrac.txt",
+          "raw_sha256": "83e7f8853a73efd49c315366047c35722ebf6000d8d027ee2d9216cc72685577"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_lich.txt",
+          "raw_sha256": "aa0b03b9a83b986aefcf983bfa25ebe6bf8e0cb851f80a0a76f984a8bc3ca5c5"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_life_stealer.txt",
+          "raw_sha256": "761fb98ec9f48af6deffe24b883a1c96f4bc6460495400181515a1e148a34261"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_lina.txt",
+          "raw_sha256": "99dc00fc83a0306266f8a5420c57cc934cf8bac169bd076814f9ceef5a911a58"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_lion.txt",
+          "raw_sha256": "a73f540eac196f115ce30c2ed3597b00cf97bd4fd587a02322bed78a8ffb9359"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_lone_druid.txt",
+          "raw_sha256": "bd9ab5a5660a0555454551874a6f934d4e9204a6785b47ad9f8260d540282900"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_luna.txt",
+          "raw_sha256": "7769c5691d237edd55bddf9cef5e7f356e7985820866f10f0e164df389727895"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_lycan.txt",
+          "raw_sha256": "a120fc50af8ef9a8cd1365fe67cfff6d2fddb1747dfff1f8199e1f57f4cb9399"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_magnataur.txt",
+          "raw_sha256": "a0a220ddf6f745df9ab350c0c89b2afd17fe7b781ef7c18d4a34607daf7077a9"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_marci.txt",
+          "raw_sha256": "c4e9312dee8e2ae1da36ffe622b8e7b6c59c430609956fa501c26e78d36e9eb4"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_mars.txt",
+          "raw_sha256": "263292fb6fda3f1877c5df4f8d6b12343d2412adfdfd538dfb6085c14b302efd"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_medusa.txt",
+          "raw_sha256": "e1921b8911b5c415de2c8d71d176d0e0edd2baa98e4f795c5849f644e41c6ebd"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_meepo.txt",
+          "raw_sha256": "acc5c48fbcee76302d4bb10071b44eda143556b1e76c85b072372a513efdfbb6"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_mirana.txt",
+          "raw_sha256": "c7fb1cb45efa207ee13f858ef7de687e6eb4e85cf9903b10d4759d93521c5583"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_monkey_king.txt",
+          "raw_sha256": "92db8b5f7209386418e787c9c49e49b64152d405cd497bba25b923f0109b23c2"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_morphling.txt",
+          "raw_sha256": "ec34010c9d803d9f70271c4344e8a8294c1a68a5ceb65ffff47a271cbfb87984"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_muerta.txt",
+          "raw_sha256": "31dfa0f6b0e088bba1bbce1f0a4c3800da6c60dffe25563610eb4c0e4768e633"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_naga_siren.txt",
+          "raw_sha256": "1c09dd4b00b30d07e4ede69de5895a2f3b91fb874c8ed6975b611530fa42c6cb"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_necrolyte.txt",
+          "raw_sha256": "6ebfc13fc4e7de778e2f7d199b4f06713ec959c3cd2a5ea38865636267b14b5b"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "raw_sha256": "4a1e4ee2ed67e9f7bccd6f271412a1629bf9f35b1fe119365ed5bb28b7b0ce00"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_night_stalker.txt",
+          "raw_sha256": "9255709c5a6411d141d2a71356838c77629878376e70bb7b17fc4a3cffc00db6"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_nyx_assassin.txt",
+          "raw_sha256": "f9b58150a5b624a489b49fbfca31f10cdc89884c46fd6be1c83cc3bca4458814"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_obsidian_destroyer.txt",
+          "raw_sha256": "b5de272450379f0c7647121e493b80070b745e4eaaa4e2d7e748e9dd96105912"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_ogre_magi.txt",
+          "raw_sha256": "3df140e52c4c97505172574138d4b55cebbbad8efd8bd1a2a49cb26d367386e9"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_omniknight.txt",
+          "raw_sha256": "942f16866a20057f005d1eaa0c9e4e85852d0d9c6ce62b87d49069cb3cafe86d"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_oracle.txt",
+          "raw_sha256": "a61b0cb68cef7476406148c9306edc66dec99b9b414eceff7d80b19a3a3abcf5"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_pangolier.txt",
+          "raw_sha256": "1daf3c2e502a129c9b7f443357af84a29e3ca16e34623b1cfeb5ec316a5ddc0a"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_phantom_assassin.txt",
+          "raw_sha256": "eec05400177c1b5e444c6a421f7233f6fef81c62f14dbd0b969f7593a5c702ef"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_phantom_lancer.txt",
+          "raw_sha256": "b215c5960d1b32ce0641a23a2304df432472f02de5170104d069b07264dc2e0c"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_phoenix.txt",
+          "raw_sha256": "b79ca6e1ab2bc5004e53f0ebc201a4861429fe0c411a4b0352596320d4c14c5a"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_primal_beast.txt",
+          "raw_sha256": "89c395795a7d9933313d0f77e8ae6ad21906c3e61614094388c6b3f9d15f9fc9"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_puck.txt",
+          "raw_sha256": "5366a861af9b617c5eaed75e31ce676bab08444fb1c8377572f68a52b5230f9a"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_pudge.txt",
+          "raw_sha256": "f99d8905a9f7a696da4ed2ed916fe84e2fa645083bb926837cfe6c088709b846"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_pugna.txt",
+          "raw_sha256": "79936212de4970f17b8865ca5442f8220139d74478d07986c8de57904bcb07b2"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_queenofpain.txt",
+          "raw_sha256": "96f61d5b57b816a8ac86c9c413f429e7f6a0f10d7cea9b83e9f42a4ca6e8e0d6"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_rattletrap.txt",
+          "raw_sha256": "6d800cdf344079c8c56488744ee1d91287290508df05c33f9cdc54a3e83a2645"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_razor.txt",
+          "raw_sha256": "26a233b5d7a0b699e8ec73e28555a190989b849cdf21941e882eae5df1c8e6f3"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_riki.txt",
+          "raw_sha256": "a30bde1e96268080113290d9d5f7a9113eab6e869af1d3c108f6cf4f38107ffc"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_ringmaster.txt",
+          "raw_sha256": "2cc19d9b21e11196336359b08afc0926ab6856e338e539145afb9fc17df65d79"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_rubick.txt",
+          "raw_sha256": "bcec7d6a2c315eff623b7b3d225ef91441f8ccbece947a399c7a4cce4deff764"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_sand_king.txt",
+          "raw_sha256": "040428b9d9122452a5480c6c3430a5ec966970de974b2522e34c46d440b1c2de"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_shadow_demon.txt",
+          "raw_sha256": "1b489c6c7fdf4da7b70224b4d388dca486bff2a19e399cecd45207055404fb7f"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_shadow_shaman.txt",
+          "raw_sha256": "5ea8bae67bc7b85f9de84db2e90b6354cf8b8b67e09e88d868fc6b481aa2ff32"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_shredder.txt",
+          "raw_sha256": "d606ef9f05f96c033235adc1f1111bbd8a7bce4e013529fdd1aa3c114736129e"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_silencer.txt",
+          "raw_sha256": "9bf4ef5c8079cd71a24203aa0040e2eaa09ac4409752bc22a1bee550d69afdd5"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_skeleton_king.txt",
+          "raw_sha256": "968d6228ecb6b64fecf04363a3b7bafd711204685a5d8bd82df18cb277a6a61b"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_skywrath_mage.txt",
+          "raw_sha256": "03a14f9d61d4e6311e28c336d99112c08fd20ee158017aa72399f38b48a68b9e"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_slardar.txt",
+          "raw_sha256": "1a83c6bb42add2ba603e61a9e3f23201010d3e9f6403b468f766134d956c9dd3"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_slark.txt",
+          "raw_sha256": "60715c3cd65f0b028eafc6e26d8fc67bfebd3c0bd7dfae35e675a0ef97dc1a22"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_snapfire.txt",
+          "raw_sha256": "4eb3ac446772a59b93f8b7e2f027a39b0f2c39b186250b6d47dacf355d45a743"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_sniper.txt",
+          "raw_sha256": "9f539989cc4c10922e6b7b25ab040aa26cfa6afa00f37ce47f675f1b931253cb"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_spectre.txt",
+          "raw_sha256": "acb1d0f19bcf2ca849088160adbe165aad529586cbd4a1c27ea86b1267d8a89d"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_spirit_breaker.txt",
+          "raw_sha256": "22ad263b2a27b303274e71a6cd3ddfaf1587c7b79d87d8730b2da06430ca73a3"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_storm_spirit.txt",
+          "raw_sha256": "0e8260f541e6f2d3cf56e6cb3eb7f3a3d86c1e3e0963389f8a77083c05a0a6f7"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_sven.txt",
+          "raw_sha256": "434364807c47f339d1433f06576e02ef476c6890e0f9a7e079933eca8287caa3"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_target_dummy.txt",
+          "raw_sha256": "fdefc9de0cc60d11c27e35c38e3462100737ae24d991ae5c40ea3acbd00afa0c"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_techies.txt",
+          "raw_sha256": "6d52865bc3d2042478e0aa207f08d89b924cbf62023e5e62c23de4e577d4e9d4"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_templar_assassin.txt",
+          "raw_sha256": "6b759c89a12eba7a83ee10fe3b45ce17ddd6d51cf180390ef17d395189ab14ff"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_terrorblade.txt",
+          "raw_sha256": "cb938a3fc9768510f00c16bf3d15f28da9f9305cd5882a3dd61b946717650093"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_tidehunter.txt",
+          "raw_sha256": "4c42e3e21ae94825289f1976dc2f79b70a5bbf7035961ee5b8354f93ae5903f6"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_tinker.txt",
+          "raw_sha256": "3e2080542e6b5cd1f7f1ddefc98794b395da0b958083721c0b787b4eb1f6f05c"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_tiny.txt",
+          "raw_sha256": "39bf29dc52421df57228c5bc1a7057d758bb98835739ad9a4d14f4aaf22413c5"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "raw_sha256": "833171cf02cb6a67197ccd38a4762a8561d103c5ff401389c766b877df06f9a2"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_troll_warlord.txt",
+          "raw_sha256": "5f83de8a1ff6c4acf9de1f5b98e00e364206fc943054becf5092268a8a06b185"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_tusk.txt",
+          "raw_sha256": "1a9e519a77521d8ff9b19f76b5a986298cc52490df36f21db474745fd278ccd3"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_undying.txt",
+          "raw_sha256": "4adf4f27c0af737da4f758ef8aa4bf4b3ef42b871d98698e2f6851c917735c17"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_ursa.txt",
+          "raw_sha256": "725d049e916aea8c8b997d95849185dd7c3c09fa1abd562c0eda9e3a15f9f4af"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_vengefulspirit.txt",
+          "raw_sha256": "7b3d7f9f77ec990ab24dd0effc520288a00200bba3b66eb8d8c19f2344e35733"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_venomancer.txt",
+          "raw_sha256": "9caaf007ccdf64263b2cf5c652fa8ce4bafdc5d6f44e2fc3ac039042330df0ec"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_viper.txt",
+          "raw_sha256": "7aef903c66ecc746f36dc699547214cf29e7b0d602fa7b9a489bd61ecfbe3da6"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_visage.txt",
+          "raw_sha256": "4d96cf3d194918051ffd835026f82f606243672b06d6b668e6257a051393dcc6"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_void_spirit.txt",
+          "raw_sha256": "5fd76971b2aea8f271e59c2000139ec8c841d75dad3199d197a1d50d3b61ef16"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_warlock.txt",
+          "raw_sha256": "608c01904471bc2b35aaaf1131f134a404ab67ceafb23812e442acc4e68d9495"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_weaver.txt",
+          "raw_sha256": "709179467d41e3eb6bab95c64885839ffdc15be756ecd96e22aa012e1dfa02f4"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_windrunner.txt",
+          "raw_sha256": "f3f17087afd4febd6e45d5c8b7bb1aa4b4c81cc5bb30659f179ec8fa4958c2e8"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_winter_wyvern.txt",
+          "raw_sha256": "4f3790062068407ba4bf469ec733472f283f3f2312ca830fe1eecbb01e083233"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_wisp.txt",
+          "raw_sha256": "97242305e4ba9442ac2a4688da31bd56c15adecb6ea4f07f5d91b479738e780a"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_witch_doctor.txt",
+          "raw_sha256": "3a1743281bc25612285bc0460562b33400ece2cb2d1acd7723a617177888deac"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_zuus.txt",
+          "raw_sha256": "2cc9a66e1f13b2067629d446af9bb4087a7ae7f4d4a70a25dcc88cff9e7c79b8"
+        },
+        {
+          "source_path": "scripts/npc/items.txt",
+          "raw_sha256": "308522003567de5dd08aeee95f350f46990e9251b257ca57eb2b49a49b43aa96"
+        },
+        {
+          "source_path": "scripts/npc/npc_units.txt",
+          "raw_sha256": "cbffa0e75f7802bae9d6dccff7d06821588f38e9a51ad53d6a643d75385bb4f4"
+        }
+      ]
+    },
+    {
+      "source_commit": "f4c45719314754567cb4ef4fe343bbc790a311f4",
+      "client_version": "6944",
+      "rawTitleCount": 13355,
+      "rawRelationCount": 30758,
+      "verifiedBindings": 30758,
+      "sourceFiles": [
+        {
+          "source_path": "scripts/npc/npc_heroes.txt",
+          "raw_sha256": "03a201c16c98a1c2b7f26717f95b55d860d01affa8a9b7b283a243961ff7ceff"
+        },
+        {
+          "source_path": "resource/localization/abilities_english.txt",
+          "raw_sha256": "562494850a6a660994fcfe7ea39ce0b04ada85f30311a34635fa4a4e7e0cc5d0"
+        },
+        {
+          "source_path": "resource/localization/abilities_schinese.txt",
+          "raw_sha256": "3467d35dab20b9ad50df60fa55c3f0aac574c1360947f310530419d5857d7fe3"
+        },
+        {
+          "source_path": "resource/localization/dota_english.txt",
+          "raw_sha256": "19132a0d5dfee808942d81370abc2ca2814b9ed75c20fd295923fd0c9bdf2307"
+        },
+        {
+          "source_path": "resource/localization/dota_schinese.txt",
+          "raw_sha256": "ac4b6582aa639b66a76efc7ce02d05675e2bcec554c1af52945ef4d6dcf82f6b"
+        },
+        {
+          "source_path": "resource/localization/hero_lore_english.txt",
+          "raw_sha256": "7c175a0c5e5c4f15e17e215c39125a87c00ac82c1bbdfc0cf1bdd34e8d51d35c"
+        },
+        {
+          "source_path": "resource/localization/hero_lore_schinese.txt",
+          "raw_sha256": "593fac88459d6129257ec947d53af3128906dadf9fe32b91abaf103a507f6d56"
+        },
+        {
+          "source_path": "steam.inf",
+          "raw_sha256": "b1380a011df3ab399d1161a683825c3d853533ff615eaf61fa5616963ef82b8d"
+        },
+        {
+          "source_path": "scripts/npc/npc_abilities.txt",
+          "raw_sha256": "040b8075832a8c5767bb2ad50ca5eb1dfda024a9c45d1d5b857d2911f2d97ab8"
+        },
+        {
+          "source_path": "scripts/npc/npc_ability_ids.txt",
+          "raw_sha256": "a4709374a249dcd9e98b1d996d53e44a944581c04b5d65c5afd36d40973de598"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_abaddon.txt",
+          "raw_sha256": "11675d9923948833b336123ba5aa5ef8667e65dd6663a2e07934d557363419ad"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_abyssal_underlord.txt",
+          "raw_sha256": "31060e5fdf53b01592b172f9f40a1113f9b8af09b3494750bbe881f34461a5d8"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_alchemist.txt",
+          "raw_sha256": "865e2108c580ac9ea8819c4378d16bf49031d71b2fe9dbdd64a7f5951e1a6ba3"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_ancient_apparition.txt",
+          "raw_sha256": "cf50b6f14b62e4c62d9419b84569d22dbb046625ac126da43ca4a8aa1515cc91"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_antimage.txt",
+          "raw_sha256": "b70ba50c837db7379329dc1c515847dfa25a256b6252a115f39d2d7530579b11"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_arc_warden.txt",
+          "raw_sha256": "9eff62939f7cc439a0a90359ced120628eea70bd677ed624a23cda9674337298"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_axe.txt",
+          "raw_sha256": "c91a8721a951d45c5c010769f68a650474d512819bae6a191306b652c71b999f"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_bane.txt",
+          "raw_sha256": "08156714cc63132d9beb80f54237b687652603e543658ae173fc2314b35d51d8"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_base.txt",
+          "raw_sha256": "f10e8783ee56c816db606cb14d61dc9909ef852846b1b03b1f0c8eb22f7827e7"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_batrider.txt",
+          "raw_sha256": "8d253dc40baad8501940fbf185e99f91ed242256a7931bca589fd0265b1b0313"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_beastmaster.txt",
+          "raw_sha256": "b03b2f69c23df5889473952e0b2e86b1b4c453b973169625430229b7b504768b"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_bloodseeker.txt",
+          "raw_sha256": "9cb2d954bea2e0f7ad47e0d1833e6ed8a4679eba5d8fa8bd6c93ada412d227c5"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_bounty_hunter.txt",
+          "raw_sha256": "92e67485426f711ee9c1563e9d4675b34f0cebed416267de616d2894f6b2eb3e"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_brewmaster.txt",
+          "raw_sha256": "f02e14baf4a85b34c1b04809b06972285a66f4c8435de1d6375b78a2a9d37dd5"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_bristleback.txt",
+          "raw_sha256": "2d8ca6edbae9a580a2faa49f798848d7beef87109dbac8c00e59f34bd68f7a34"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_broodmother.txt",
+          "raw_sha256": "5a4b3b2d76847fffc9256e96af16ecb43caef698eef7b0649ed0b74032f56627"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_centaur.txt",
+          "raw_sha256": "33c8ac9381898217373bea1d5deea95c33504e9e40505d64c64f3b8f0bac6404"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_chaos_knight.txt",
+          "raw_sha256": "d0288fc845f81f0445018401e8d35e4b615ce95656f9024078e1643f083aab47"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_chen.txt",
+          "raw_sha256": "81f0702a568829e578a059acc18a7982c1e42728940507c6b57ba9e06f3e7383"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_clinkz.txt",
+          "raw_sha256": "8ec8b4e009b38fccf305d3303575cc9bef7c564856b7a12572c94bf64379b4af"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_crystal_maiden.txt",
+          "raw_sha256": "b4b1bddb3448471cbeecc2e625264954ac7705b1e110b9d17e1514a5183f9151"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_dark_seer.txt",
+          "raw_sha256": "36ae05c637f1dfabb457ae45510f73e52cfff890897329114eae2934c6a98ba3"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_dark_willow.txt",
+          "raw_sha256": "a98d88b30e37f3eb1c41b9758f5e2211aad7acc078be3bd7a490f8438efea97f"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_dawnbreaker.txt",
+          "raw_sha256": "e48cc34a54eba8f94f49c31b39b40f81f93be5e4e20dd714dda6a8755f015419"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_dazzle.txt",
+          "raw_sha256": "63068fe4bb9160f4f325ed30aa675a3506f8a6c4396cb7fc2fee3a7ce595a8b0"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_death_prophet.txt",
+          "raw_sha256": "02e82c1b71d8720f090f1ce8462d9db6dc09bc6cc97a7f147c0837aa700fd5ec"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_disruptor.txt",
+          "raw_sha256": "cdb3a0cd22ba230b6114f0de07e35afd74dd292f8b71a49896b9d0bf13947b52"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_doom_bringer.txt",
+          "raw_sha256": "fcfd0f36839a30217b482a7e9aa12d21b18482c0fcc3a3a5dba9c19c6d473b64"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_dragon_knight.txt",
+          "raw_sha256": "3dcfc11fbe634effac91207ead048537ffdda6b22ad030c7c097c1d43b3b2043"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_drow_ranger.txt",
+          "raw_sha256": "6b39eaee2c9b731438cb89105a6edfc254c38b56286bb0e6ca17d72ede3afd7b"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_earth_spirit.txt",
+          "raw_sha256": "c2aebda190fbc46d113e26cfd11517c218da8f89df0db1a3890c2336c9ea9f65"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_earthshaker.txt",
+          "raw_sha256": "9186c356dd2d69773164329a87835fba0797394a26342ff93a9d9ada53c7c797"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_elder_titan.txt",
+          "raw_sha256": "8b14ccca63907596520a2c549886df5b2a1e617fc367f48e05e7ea03ec198295"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_ember_spirit.txt",
+          "raw_sha256": "00c8e8281c82609ad774b05197c1ff354f11df953de1bc197dacd5fa91eea650"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_enchantress.txt",
+          "raw_sha256": "21d188f1df0d31bb713229dcabfc1f29b651d10a7580270881855802bbab8a23"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_enigma.txt",
+          "raw_sha256": "82b1997cef2722aed8a519723a1379d6cf90ca4fc3c07c4202aa992a350d643a"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_faceless_void.txt",
+          "raw_sha256": "8813f14acfc6a229872961dba2c9997feae3fbb84644b83b1b983e9b8e1b4117"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_furion.txt",
+          "raw_sha256": "15643ed715f694ea69ab16d70bd2e76021948c51582f5827386a2606275b725d"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_grimstroke.txt",
+          "raw_sha256": "3bc0e0e3b97fdc40e856730b4a9deb79a69693551922130999976380573c970e"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_gyrocopter.txt",
+          "raw_sha256": "6f9d2f5a1ffecda0a80da2d2ffb7643453258f0259898dd213d99ab588aa414b"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_hoodwink.txt",
+          "raw_sha256": "812803376feade46b4dbde73e7141f738f938a39917cd5cf84e5dc2c83d6191a"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_huskar.txt",
+          "raw_sha256": "08a9a56368395aa482cf4bb69b5b1d87e01b0e9ea0a3795e9ed2ef3ef809b308"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_invoker.txt",
+          "raw_sha256": "72046fa3d6f49ce24e6c126ff93983ae859900039799b30895c95df9a8b17229"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_jakiro.txt",
+          "raw_sha256": "da0a519bfad3795e143cd0f8e595d83ed20ea1354a8391beed27400aadcc0f34"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_juggernaut.txt",
+          "raw_sha256": "00260da4289144a9cda71ff0fceffddde5df7d2f86c9edb063fbd5dbafc02469"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_keeper_of_the_light.txt",
+          "raw_sha256": "1c5a920a22c5f0c16c4d58430b0ae34504a241be27cbabbd824eecdd738f367b"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_kez.txt",
+          "raw_sha256": "24928e5081473724824eec0381f4404c44cc7bf069ab86d1cc1259bc13d73f7f"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_kunkka.txt",
+          "raw_sha256": "485e9962fe1fbbc1e59986924f4c6692630309296de25e4eaf1ed77883c0c8fe"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_largo.txt",
+          "raw_sha256": "df497f4f7f5ead7bdd9ce28902006ed117ca0872ddc40c754d745c7dd633438e"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_legion_commander.txt",
+          "raw_sha256": "07961ff69f2c14b83212b33e8f8013b012c9cf26245d6c01f804b0b81f66644b"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_leshrac.txt",
+          "raw_sha256": "d28c42a4598c5a75717569cb970ade97839c4d07dc98ecee8b8d09d861df8b5f"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_lich.txt",
+          "raw_sha256": "b2ec9e1aa401185354c4f685e5db97994b00816a8a915bbf52f63dbe9128be75"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_life_stealer.txt",
+          "raw_sha256": "719ac762a3a40c9d5c99ada3b38759b9a0bc6666497f9938e9e8928c215fafe9"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_lina.txt",
+          "raw_sha256": "f360660bedce58d9561e0bd92422b1ecef48ba9b9a5c152793f3670b9430c504"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_lion.txt",
+          "raw_sha256": "8734daf1360ea784a2cb81a3afcac9f4e3d3d128f5ed0dabe47897a80e01c1c6"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_lone_druid.txt",
+          "raw_sha256": "22c9b0cc64dc7a9036fb905ef1f22e58973e987a4e694e565c3b8ea45ffeb926"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_luna.txt",
+          "raw_sha256": "96f7fb3388afcc02ac071da9beeb97f53ae5ea2ae41b95c172c16434fa60e747"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_lycan.txt",
+          "raw_sha256": "ac015ee69c0123f0051d40fb934b13ec3dea38f19fcc485d2aac9fbcd0f97b38"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_magnataur.txt",
+          "raw_sha256": "4438a73d05d4d3fdb257b90ae5678077555c581886c092713f9fbcf3b8b9aa96"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_marci.txt",
+          "raw_sha256": "40ab8769ae90c5e68d6dabb52a9fb7205ccfa620540ca0cc537e72bec7471a10"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_mars.txt",
+          "raw_sha256": "56f70cf9f7b6086ee1155d3868113b65ab310b1567326ff80c2aa36deaf89423"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_medusa.txt",
+          "raw_sha256": "2e0ca286f7164f1160c2295eaa10dabffe7101f628c06c16b84a044ea63c6f53"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_meepo.txt",
+          "raw_sha256": "bb58f171042bc0a686ceae28d52a051f197cf7f043349d49846389890decc67f"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_mirana.txt",
+          "raw_sha256": "e73af694e0b980fdcbfbf15c6c47379069be062b39eb9c09956f37beb22748b8"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_monkey_king.txt",
+          "raw_sha256": "6d7a10c3601871804fe1a69420f26192f09ff2267e138eb9799371bd448313a6"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_morphling.txt",
+          "raw_sha256": "f45b2aa29db738a48e50f6d345913f609a74068bf14bb93818159121543741bb"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_muerta.txt",
+          "raw_sha256": "1829b058cd7b681db9cf1e044c676bcfc854c16b6e5f812329512afca0585b0c"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_naga_siren.txt",
+          "raw_sha256": "d92fae03aab80e520c37b53e82102e54cb5df74d8438547acd22168704825ef9"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_necrolyte.txt",
+          "raw_sha256": "bf947f0cd4fbf34360751a57ba0196dcb5ac22ece9e52456822d55c41111854c"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_nevermore.txt",
+          "raw_sha256": "67de2fc73b3bddf8c2b3bf7943aa1c9c10d3de5e8c9e219a6762cbe37dae3371"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_night_stalker.txt",
+          "raw_sha256": "84d87307cbfa65fa2ad11da4de879bab64440197e9697afaa9f3ed8e3bc7e0b4"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_nyx_assassin.txt",
+          "raw_sha256": "e91be5a2672c0f4915f756366973e2af4ad04e5d8293a23c46fe4ad3f848c068"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_obsidian_destroyer.txt",
+          "raw_sha256": "e17b41eabff8bf88724d79dfaab93b7d71f7fdfb7585e5fe11a415d642d89e78"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_ogre_magi.txt",
+          "raw_sha256": "764bd9e0e3b357f09ef25c8af1118aaee40cac48a8b31a4349c292fb80b71ad6"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_omniknight.txt",
+          "raw_sha256": "c8f030c542ace2c12940d6e7c768557f23be9962051569014db4009d4108ceab"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_oracle.txt",
+          "raw_sha256": "7549120a705d6d8a7c8d02d5dd96f21955d5a9716702bfb42bf422e2082b5982"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_pangolier.txt",
+          "raw_sha256": "5ae02ae8296de9b5b2395dd0f3b3209c952d58a2cdba767ecbea4e16b1348e54"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_phantom_assassin.txt",
+          "raw_sha256": "78f9c1ae238b3ecd2e41288478fb9c545fd8ab8476f2309b6a0a4c46a70b4b88"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_phantom_lancer.txt",
+          "raw_sha256": "14eeb5b8335bc9c506ed87836724d9c240ef9c6e0f8f95e1726d9dd4a16988d3"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_phoenix.txt",
+          "raw_sha256": "543777021974e6f751f62484457fb9c9345fe9b3d9dd3cded762883af425fe8f"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_primal_beast.txt",
+          "raw_sha256": "8a29f29fd3de71ef580be8347d5e6893714fb5f88aaa653c7f5017f80a66b325"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_puck.txt",
+          "raw_sha256": "f46e4f17fb0fab23f7d39ff60ea11a7e0dc61cfda5c6b60e30bc20313a4f3b62"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_pudge.txt",
+          "raw_sha256": "01ac9e175c2127bb00839ef8356fdb09b89fbff81e16d80fded83664adc975fa"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_pugna.txt",
+          "raw_sha256": "a15342f72afec6b2344247496e323865a50b44b45a4090f23dad52069ce795df"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_queenofpain.txt",
+          "raw_sha256": "f8030278b45490cb471c96f102c6412e29bd79850cbca7a8cbf85f52bf3ebe25"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_rattletrap.txt",
+          "raw_sha256": "f02ec8cb68002dd8f95b8b01c16f70748148cce1e93f2e08459e2f1f3f4f1980"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_razor.txt",
+          "raw_sha256": "3ea4b82a81217cd4851343215ef5b7254e768cef3190c27ecef7ece5cb3d2dab"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_riki.txt",
+          "raw_sha256": "e3a04044357727cc923c8eeac1d4b1d9ced4b8f9cb03a86d4ba33ca4e68e80c8"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_ringmaster.txt",
+          "raw_sha256": "fa3b8bd3692fbe4b7616d30bb8acdc75eae621a74fad2139e3094d480d33e270"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_rubick.txt",
+          "raw_sha256": "71355bd507105b5ecf11b42019c452e43a4fdbb2cb4fa1745e1f73cb6cd9b7ba"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_sand_king.txt",
+          "raw_sha256": "afac0562cc1f4f06da37cc4d95ce39591cc69867765985e331a5d2ae74c7521a"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_shadow_demon.txt",
+          "raw_sha256": "c8fd2fc5e3d43052feb85d7a09a4ebd026857ce7c615088bc9f45a7134e4cecc"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_shadow_shaman.txt",
+          "raw_sha256": "762dfd6468712a21ed5c0e8bb16b23580e7da8edbbf35f5f0654313b143a4539"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_shredder.txt",
+          "raw_sha256": "7eb19bdbb9e681ee0191405e4539174d79ff52526df665e3d9af989a185c75df"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_silencer.txt",
+          "raw_sha256": "fd08daf8692f57bc35f654b055c4cc95496e7ea2a75853fdd22e37bb190d0bb1"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_skeleton_king.txt",
+          "raw_sha256": "dea472e68d3c6b427b7342a5798afa66a19b3be3a8272a9ee29c74071d4d409d"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_skywrath_mage.txt",
+          "raw_sha256": "789359b121f3035323319a0bccb9ca97b49cd068540846cd3aadbea31abb54f9"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_slardar.txt",
+          "raw_sha256": "06b818604122f6e18c88cd01a52ce9c766aa5b0b1b2e622897ba49a6388c0619"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_slark.txt",
+          "raw_sha256": "c3bf34ff95deb386eaa918b14920ecd76b5a2a6060d7c07868ac39b8047cc752"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_snapfire.txt",
+          "raw_sha256": "dd46946d21a9bcdbf2c606ab276c5a1721ed62d28f7d3089344caab73225caf2"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_sniper.txt",
+          "raw_sha256": "ffa8d1a8132d40f3c48e4a0ff093ee3973dc5b627a9bd370e7273b53afe900db"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_spectre.txt",
+          "raw_sha256": "9584e0d51320a6032595c8b808593815dcc7591f350e060d6c0b70a08048daba"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_spirit_breaker.txt",
+          "raw_sha256": "5b906de593730ec8d1b906af62f6b916ea115a08e241fb32b76a3037d6db278e"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_storm_spirit.txt",
+          "raw_sha256": "02996ee5b413c86b193d109253e723ed3dabe87cbbe5002362f863b1b02c823c"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_sven.txt",
+          "raw_sha256": "2e82f619775e4b747282ec4150126e56dfbbf898687869c012c2c93c0dac527c"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_target_dummy.txt",
+          "raw_sha256": "ce72c0ce6575970d6d4cbedf3c74da6ffe09d83291a55ed311c462e5e7cef2c2"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_techies.txt",
+          "raw_sha256": "d5971d8c271433460e11b696f0dc123cf1eb9815cf2c14f98a7f1ab0a951cc60"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_templar_assassin.txt",
+          "raw_sha256": "2ca248e87d7ee36084946e53795a25d6c8e849725db5d6799deec8d8991d7c63"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_terrorblade.txt",
+          "raw_sha256": "4b597ba8251d4eed9cb1a3170e21e5708faec0a5018964010b384f99732343d5"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_tidehunter.txt",
+          "raw_sha256": "8c96be768e85e8d845bc6ef04f99ad261c0f9bd5c0e45503aedb6ab4c5c78cda"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_tinker.txt",
+          "raw_sha256": "8f0eba9be66697dd5a8486e8eee630fc98fb2d20d9253011221b677f8f380c02"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_tiny.txt",
+          "raw_sha256": "ce12f32f1f9d1888c94d531d74064ead5ffc465780ef1b0c8ae0a4b7436152dd"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_treant.txt",
+          "raw_sha256": "00c26fea42a34dad6a22d7d88d65dc1a9662d80dcbdabb6d24f24730cdae18cf"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_troll_warlord.txt",
+          "raw_sha256": "e0ee0f9b42f07cc6924e422f831d85dde557cb40dccbd4a9eea1c058c894f722"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_tusk.txt",
+          "raw_sha256": "d3da9432175b268fafe3e0e74be0a8152c9a3659de85ae4a2ab7d51524ccce37"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_undying.txt",
+          "raw_sha256": "1fb91721511593859efa376bd6adc7bc90ff9e0033dd6e6607ca8bd743628deb"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_ursa.txt",
+          "raw_sha256": "613c2cefe0a70e0a5582c5dd9def317fb93da2a346d0da650070a147b4faad9a"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_vengefulspirit.txt",
+          "raw_sha256": "3853993f2cdf388a31d6c5e4bdf60a6904a0431496ffef278995e5a40298739b"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_venomancer.txt",
+          "raw_sha256": "f2255c29b367754b84424d560763568f9688d8453711b8f19aec028ee766f4a7"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_viper.txt",
+          "raw_sha256": "1b8df453d84e4107199dde0f13a4107e6030ebad56f6f259beceded88ac056ca"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_visage.txt",
+          "raw_sha256": "a4f1e1932a55cce670298791e4d2c6d1ee65310550f963bfdd8db8f865115123"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_void_spirit.txt",
+          "raw_sha256": "25fa3af6f39a93b4aa1a964dfdd7596f813da3a6827c370b6152c3d714134a3b"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_warlock.txt",
+          "raw_sha256": "175304bf3cb299f8dd67429f44a44ad411e2005e827c3eddd8c7317f3b77553c"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_weaver.txt",
+          "raw_sha256": "e2579ede6833706e48202a7c84889f979a8dbf7c4d75de83b2dcfe6d8b5c0d28"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_windrunner.txt",
+          "raw_sha256": "16ee6d99ff21c90328a04e04d16f7bbb4bc9d281ba853454d58b2d3b4fed0263"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_winter_wyvern.txt",
+          "raw_sha256": "fc42a7c61ac296cfa85936c12b8402aa6d23c85dd4e1edd071523db41fff6f4f"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_wisp.txt",
+          "raw_sha256": "8686a091ec2739935175691a8606fbf75ffb0b67dfb6d2d620c02530cc2dfdab"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_witch_doctor.txt",
+          "raw_sha256": "9bf79ef6a42ed2f24f5b26e558799eb54a5ef048e82a5fda063ed99f3561f213"
+        },
+        {
+          "source_path": "scripts/npc/heroes/npc_dota_hero_zuus.txt",
+          "raw_sha256": "e1a5d9c91fa66a70c233912115244d4ec8c0e388b76770d54a81404c3733a15c"
+        },
+        {
+          "source_path": "scripts/npc/items.txt",
+          "raw_sha256": "3b0e786b5e3c1dbedf9fc51fd6507937654f8e6f7be9d702c3b7c544804baf33"
+        },
+        {
+          "source_path": "scripts/npc/npc_units.txt",
+          "raw_sha256": "cbffa0e75f7802bae9d6dccff7d06821588f38e9a51ad53d6a643d75385bb4f4"
+        }
+      ]
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import {
   screen,
 } from "@testing-library/react";
 import type { ComponentProps } from "react";
+import Link from "next/link";
 import { afterEach, expect, it, vi } from "vitest";
 
 const renders = vi.hoisted(() => new Map<string, number>());
@@ -93,5 +94,34 @@ it("prefetches only a settled active anchor and cancels a quick pass", () => {
   expect(second.getAttribute("data-prefetch")).toBe("true");
   fireEvent.blur(second);
   expect(second.getAttribute("data-prefetch")).toBe("false");
+  expect(screen.queryByRole("tooltip")).toBeNull();
+});
+
+it("keeps the parent card mounted while navigating a nested attribute card and closes one layer per Escape", () => {
+  render(
+    <HoverTooltip
+      content={
+        <HoverTooltip
+          content={<Link href="/attributes/cooldown">Attribute details</Link>}
+        >
+          Cooldown
+        </HoverTooltip>
+      }
+    >
+      Ability
+    </HoverTooltip>,
+  );
+  act(() => screen.getByRole("button", { name: "Ability" }).focus());
+  const parent = screen.getByRole("tooltip");
+  act(() => screen.getByRole("button", { name: "Cooldown" }).focus());
+  expect(screen.getAllByRole("tooltip")).toHaveLength(2);
+  const link = screen.getByRole("link", { name: "Attribute details" });
+  fireEvent.pointerDown(link);
+  act(() => link.focus());
+  expect(parent.isConnected).toBe(true);
+  expect(screen.getAllByRole("tooltip")).toHaveLength(2);
+  fireEvent.keyDown(document, { key: "Escape" });
+  expect(screen.getAllByRole("tooltip")).toEqual([parent]);
+  fireEvent.keyDown(document, { key: "Escape" });
   expect(screen.queryByRole("tooltip")).toBeNull();
 });

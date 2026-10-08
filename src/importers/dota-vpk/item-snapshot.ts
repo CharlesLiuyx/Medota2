@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 import { loadLocalEnv } from "@/config/env";
 import { adaptItems, ITEM_ADAPTER_VERSION } from "./item-adapter";
 import { unitTokens } from "./unit-adapter";
+import { itemParameterProvenance } from "@/domain/item-parameter-labels";
 import {
   nameSupplementProvenance,
   supplementEntityNames,
@@ -57,6 +58,7 @@ export async function readPinnedItemSnapshot(
       files[0],
       supplementEntityNames(unitTokens(files[1]), meta.sourceCommit, "zh-CN"),
       supplementEntityNames(unitTokens(files[2]), meta.sourceCommit, "en"),
+      meta.sourceCommit,
     );
     const snapshot = {
       ...adapted,
@@ -69,6 +71,7 @@ export async function readPinnedItemSnapshot(
         importer_version: ITEM_ADAPTER_VERSION,
         schema_version: "item-read-model-v2",
         name_supplement: nameSupplementProvenance(meta.sourceCommit),
+        parameter_labels: itemParameterProvenance(meta.sourceCommit),
         files: paths.map((path, i) => ({
           source_path: path,
           raw_sha256: sha(files[i]),

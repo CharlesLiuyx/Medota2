@@ -108,6 +108,14 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
     let retained: { query: (sql: string) => Promise<unknown> } | undefined;
     await web.readSnapshot(async (reader) => {
       retained = reader;
+      // A full endpoint projection stays on one physical connection, with more
+      // table reads than the Web pool has slots.
+      const parallel = [];
+      for (let i = 0; i < 13; i++)
+        parallel.push(await reader.query("SELECT pg_backend_pid() AS pid"));
+      expect(new Set(parallel.map((result) => result.rows[0].pid)).size).toBe(
+        1,
+      );
       const first = await reader.query(
         "SELECT txid_current_snapshot()::text AS snapshot",
       );
@@ -133,6 +141,47 @@ describe("PostgreSQL Hero Catalog v2 contract", () => {
     await expect(web.query("SELECT 1 AS ok")).resolves.toMatchObject({
       rows: [{ ok: 1 }],
     });
+  });
+
+  it("recovers from terminated idle and checked-out reader sockets", async () => {
+    const reader = await openVerifiedDatabase({
+      role: "web",
+      operation: "read",
+    });
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const {
+        rows: [{ pid }],
+      } = await reader.query<{ pid: number }>("SELECT pg_backend_pid() AS pid");
+      await controlPool.query("SELECT pg_terminate_backend($1)", [pid]);
+      await vi.waitFor(() =>
+        expect(warning).toHaveBeenCalledWith(
+          "[database] idle connection removed",
+          "unreachable",
+        ),
+      );
+      const replacement = await reader.query<{ pid: number }>(
+        "SELECT pg_backend_pid() AS pid",
+      );
+      expect(replacement.rows[0].pid).not.toBe(pid);
+      await expect(
+        reader.readSnapshot(async (snapshot) => {
+          const current = await snapshot.query<{ pid: number }>(
+            "SELECT pg_backend_pid() AS pid",
+          );
+          await controlPool.query("SELECT pg_terminate_backend($1)", [
+            current.rows[0].pid,
+          ]);
+          await snapshot.query("SELECT 1");
+        }),
+      ).rejects.toMatchObject({ code: "ENV_CONNECT_FAILED" });
+      await expect(reader.query("SELECT 1 AS ok")).resolves.toMatchObject({
+        rows: [{ ok: 1 }],
+      });
+    } finally {
+      warning.mockRestore();
+      await reader.end();
+    }
   });
 
   it("applies the checked migration ledger and creates the shared catalog schema", async () => {

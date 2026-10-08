@@ -4,6 +4,7 @@ import { Message, useTranslations } from "@/i18n/provider";
 import { memo } from "react";
 import type { HeroCardRow } from "@/server/repositories/heroes";
 import { labels, displayName } from "@/presentation/dota";
+import { AttributeLink } from "./attribute-link";
 import { HeroCrest } from "./hero-crest";
 import { HoverTooltip } from "./ui/hover-tooltip";
 export const HeroCard = memo(function HeroCard({
@@ -99,7 +100,15 @@ function HeroSummary({
             className="flex items-baseline justify-between bg-black/20 px-2 py-1.5"
             style={{ color: `var(--attribute-${key})` }}
           >
-            <span className="text-[10px] text-[#b9c2c7]">{label}</span>
+            <span className="text-[10px] text-[#b9c2c7]">
+              <AttributeLink
+                kind="hero"
+                owner={hero.internalName}
+                field={`base_${key}`}
+              >
+                {label}
+              </AttributeLink>
+            </span>
             <strong className="font-data text-lg leading-5">
               {Number(value)}
             </strong>
@@ -128,16 +137,22 @@ function HeroSummary({
       )}
       <div className="mt-2 flex items-center justify-between pt-2 text-[11px]">
         <span className="text-[#a4adb4]">
-          <Message
-            id="移动速度 {value0}"
-            values={{
-              value0: (
-                <strong className="ml-1 font-data text-[#e2e8ec]">
-                  {Number(hero.movementSpeed)}
-                </strong>
-              ),
-            }}
-          />
+          <AttributeLink
+            kind="hero"
+            owner={hero.internalName}
+            field="movement_speed"
+          >
+            <Message
+              id="移动速度 {value0}"
+              values={{
+                value0: (
+                  <strong className="ml-1 font-data text-[#e2e8ec]">
+                    {Number(hero.movementSpeed)}
+                  </strong>
+                ),
+              }}
+            />
+          </AttributeLink>
         </span>
         <span className="text-[#dfbd7e]">{t("点击查看技能与天赋 →")}</span>
       </div>

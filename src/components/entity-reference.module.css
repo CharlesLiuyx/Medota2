@@ -1,0 +1,61 @@
+.reference {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+  max-width: 100%;
+  line-height: 1.35;
+}
+.reference:hover {
+  color: #dfbd7e;
+}
+.icon {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  overflow: hidden;
+  background: var(--surface-elevated);
+  color: var(--text-muted);
+}
+.icon img {
+  object-fit: cover;
+}
+.hero,
+.item {
+  width: 36px;
+}
+.inline {
+  display: inline;
+  font-size: inherit;
+  line-height: inherit;
+}
+.inline > .icon {
+  --inline-icon-size: min(1em, 1lh);
+  display: inline-block;
+  width: var(--inline-icon-size);
+  height: var(--inline-icon-size);
+  margin-inline-end: 0.25em;
+  vertical-align: -0.12em;
+}
+.inline > .hero,
+.inline > .item {
+  width: calc(var(--inline-icon-size) * 1.385);
+}
+.inline > .hero {
+  --inline-icon-size: min(1.25em, 1lh);
+}
+.inline > .icon svg {
+  width: 100%;
+  height: 100%;
+}
+.summary {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.summary > p {
+  max-height: 180px;
+  overflow-y: auto;
+}

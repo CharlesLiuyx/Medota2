@@ -312,6 +312,14 @@ export function createPlan(inputPaths) {
     if (hasUnits) unitTests.forEach((path) => unitFiles.add(path));
     if (paths.includes("src/components/development-workbench.tsx"))
       unitFiles.add("tests/unit/development-workbench.test.tsx");
+    if (
+      paths.some((path) =>
+        /app\/(?:changes\/page|layout)\.tsx$|components\/data-unavailable\.tsx$/.test(
+          path,
+        ),
+      )
+    )
+      unitFiles.add("tests/unit/changes-availability.test.tsx");
     if (hasEngine) parserTests.forEach((path) => unitFiles.add(path));
     if (
       paths.some((path) => /filters|catalog-cursor|catalog-stream/.test(path))
@@ -319,6 +327,36 @@ export function createPlan(inputPaths) {
       ["hero-filters", "ability-filters", "catalog-cursor"].forEach((name) =>
         unitFiles.add(`tests/unit/${name}.test.ts`),
       );
+    if (
+      paths.some((path) =>
+        /changes|change-impact|change-notes|entity-reference|entity-preview/.test(
+          path,
+        ),
+      )
+    ) {
+      unitFiles.add("tests/unit/change-impact.test.ts");
+      unitFiles.add("tests/unit/entity-changes.test.ts");
+      unitFiles.add("tests/unit/infinite-list.test.tsx");
+    }
+    if (
+      paths.some((path) =>
+        /hover-tooltip|attribute-link|entity-reference|entity-preview/.test(
+          path,
+        ),
+      )
+    )
+      unitFiles.add("tests/unit/hover-tooltip.test.tsx");
+    if (
+      paths.some((path) =>
+        /(?:data-table|grouped-table|table-sticky-cells|table-cell-spans)/.test(
+          path,
+        ),
+      )
+    ) {
+      unitFiles.add("tests/unit/grouped-table.test.tsx");
+      unitFiles.add("tests/unit/detail-infinite-lists.test.tsx");
+      unitFiles.add("tests/unit/infinite-list.test.tsx");
+    }
     if (paths.some((path) => /infinite/.test(path)))
       ["infinite-list", "infinite-catalog", "detail-infinite-lists"].forEach(
         (name) => unitFiles.add(`tests/unit/${name}.test.tsx`),
@@ -330,6 +368,7 @@ export function createPlan(inputPaths) {
     if (dbContract)
       [
         "environment-contract",
+        "environment-connections",
         "environment-isolation",
         "data-stack-lifecycle",
       ].forEach((name) => unitFiles.add(`tests/unit/${name}.test.ts`));
@@ -376,7 +415,7 @@ export function createPlan(inputPaths) {
     shared ||
     localeRuntime ||
     flowPaths.some((path) =>
-      /attribute|item-adapter|unit-adapter|ability-tooltip|unit-stats/.test(
+      /attribute|item-adapter|item-parameter|unit-adapter|ability-tooltip|unit-stats/.test(
         path,
       ),
     )
@@ -396,7 +435,9 @@ export function createPlan(inputPaths) {
     localeRuntime ||
     catalogData ||
     flowPaths.some((path) =>
-      /changes|entity-version-diff|patch-notes/.test(path),
+      /changes|change-impact|change-notes|entity-reference|entity-preview|entity-version-diff|patch-notes|data-unavailable/.test(
+        path,
+      ),
     )
   )
     journeys.add("changes");

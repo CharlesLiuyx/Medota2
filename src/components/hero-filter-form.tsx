@@ -1,4 +1,5 @@
 "use client";
+import type { ReactNode } from "react";
 import { useFilterEvents } from "./use-live-catalog";
 import { Search, X } from "lucide-react";
 import type { HeroFilters } from "@/server/services/hero-filters";
@@ -29,9 +30,11 @@ const attacks = [
 
 export function HeroFilterForm({
   filters,
+  status,
   onChange,
   onClear,
 }: {
+  status?: ReactNode;
   filters: HeroFilters;
   onChange: (data: FormData, composing: boolean) => void;
   onClear: () => void;
@@ -55,7 +58,7 @@ export function HeroFilterForm({
       className="flex flex-wrap items-center gap-1.5"
     >
       <input type="hidden" name="lang" value={locale} />
-      <label className="relative min-w-0 basis-full sm:min-w-44 sm:flex-1 sm:basis-44">
+      <label className="relative min-w-0 basis-full sm:w-60 sm:flex-none sm:basis-auto">
         <Search className="absolute left-1.5 top-1/2 size-3.5 -translate-y-1/2 text-zinc-500" />
         <span className="sr-only">{t("搜索英雄")}</span>
         <input
@@ -71,6 +74,7 @@ export function HeroFilterForm({
           className="h-8 w-full bg-transparent pl-7 pr-2 text-xs placeholder:text-[var(--text-muted)] "
         />
       </label>
+      {status}
       <CompactFilterMenu title={t("主属性")} count={filters.attributes.length}>
         {attributes.map(([value, label]) => (
           <FilterOption

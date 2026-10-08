@@ -28,6 +28,7 @@ import {
 import {
   attestEnvironment,
   EnvironmentContractError,
+  isEnvironmentConnectionError,
   parseDatabaseEndpoint,
   type DatabaseProbeSnapshot,
   type EnvironmentMarkerSnapshot,
@@ -418,6 +419,15 @@ class PostgresVerifiedDatabase<Operation extends DatabaseOperation> {
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 5_000,
     });
+    // pg removes failed idle clients itself. Handle the event so a disconnected
+    // idle socket cannot terminate the Web process; the next checkout reconnects.
+    this.#pool.on("error", (error) => {
+      const failure = new EnvironmentContractError("ENV_CONNECT_FAILED", error);
+      console.warn(
+        "[database] idle connection removed",
+        failure.connectionFailure,
+      );
+    });
   }
 
   get identity(): DatabaseIdentity {
@@ -444,23 +454,35 @@ class PostgresVerifiedDatabase<Operation extends DatabaseOperation> {
     } catch (error) {
       throw new EnvironmentContractError("ENV_CONNECT_FAILED", error);
     }
+    // Pool only listens to idle sockets. A socket can also fail between two
+    // queries while checked out; retain that failure without an unhandled event.
+    let socketError: Error | undefined;
+    const onError = (error: Error) => {
+      socketError = error;
+    };
+    client.on("error", onError);
+    const detach = () => client.removeListener("error", onError);
+    const guard = () => {
+      if (socketError)
+        throw new EnvironmentContractError("ENV_CONNECT_FAILED", socketError);
+      assertSnapshotWritable(
+        this.#stateDirectory,
+        this.#declaration.environment,
+        this.operation,
+      );
+    };
     try {
       await this.#establishSessionBaseline(client);
       // The shared local workbench audits each physical reader connection once.
       // Database permissions and the session baseline still apply on every use.
       const reuseLocalIdentity =
-        this.#declaration.environment === "development" &&
+        (this.#declaration.environment === "development" ||
+          this.#declaration.environment === "local-review") &&
         this.role === "web" &&
         this.operation === "read" &&
         process.env.MEDOTA2_WORKBENCH === "1";
       if (reuseLocalIdentity && this.#verifiedConnections.has(client)) {
-        return createVerifiedSession(client, () =>
-          assertSnapshotWritable(
-            this.#stateDirectory,
-            this.#declaration.environment,
-            this.operation,
-          ),
-        );
+        return createVerifiedSession(client, guard, detach);
       }
       const identity = await this.#attest(client);
       if (this.#identity) {
@@ -470,16 +492,11 @@ class PostgresVerifiedDatabase<Operation extends DatabaseOperation> {
       }
       if (this.operation === "restore") assertRestoreCandidate(identity);
       if (reuseLocalIdentity) this.#verifiedConnections.add(client);
-      return createVerifiedSession(client, () =>
-        assertSnapshotWritable(
-          this.#stateDirectory,
-          this.#declaration.environment,
-          this.operation,
-        ),
-      );
+      return createVerifiedSession(client, guard, detach);
     } catch (error) {
+      detach();
       client.release(error instanceof Error ? error : new Error("attestation"));
-      throw error;
+      throw normalizeReadConnectionError(error);
     }
   }
 
@@ -547,7 +564,9 @@ class PostgresVerifiedDatabase<Operation extends DatabaseOperation> {
       active = false;
       await Promise.allSettled(pending);
       await session.query("ROLLBACK").catch(() => undefined);
-      throw error;
+      const failure = normalizeReadConnectionError(error);
+      if (isEnvironmentConnectionError(failure)) session.release(true);
+      throw failure;
     } finally {
       active = false;
       session.release();
@@ -579,7 +598,9 @@ class PostgresVerifiedDatabase<Operation extends DatabaseOperation> {
       if (transactionStarted) {
         await session.query("ROLLBACK").catch(() => undefined);
       }
-      throw error;
+      const failure = normalizeReadConnectionError(error);
+      if (isEnvironmentConnectionError(failure)) session.release(true);
+      throw failure;
     } finally {
       session.release();
     }
@@ -1088,6 +1109,7 @@ function createVerifiedDatabaseFacade<Operation extends DatabaseOperation>(
 function createVerifiedSession(
   client: PoolClient,
   guard: () => void,
+  detach: () => void,
 ): VerifiedSession {
   let released = false;
   const query = ((...args: unknown[]) => {
@@ -1106,6 +1128,7 @@ function createVerifiedSession(
     release(error?: Error | boolean): void {
       if (released) return;
       released = true;
+      detach();
       client.release(error);
     },
   });
@@ -1210,6 +1233,12 @@ function assertSameDatabaseIdentity(
 function isMissingMarkerError(error: unknown): boolean {
   if (!error || typeof error !== "object" || !("code" in error)) return false;
   return error.code === "42P01" || error.code === "3F000";
+}
+
+function normalizeReadConnectionError(error: unknown): unknown {
+  const failure = new EnvironmentContractError("ENV_CONNECT_FAILED", error);
+  // SQL errors and identity/permission violations keep their original failure.
+  return failure.connectionFailure === "unknown" ? error : failure;
 }
 
 function buildApplicationName(

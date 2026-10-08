@@ -1,3 +1,5 @@
+import { attributePreview } from "@/presentation/entity-preview";
+import { createTranslator } from "@/i18n/messages";
 import { describe, expect, it } from "vitest";
 import {
   changeValue,
@@ -158,4 +160,40 @@ describe("player-facing endpoint changes", () => {
     expect([heart.before.value, heart.after.value]).toEqual(["700", "800"]);
     expect(heart.afterSources[0].commit).toBe(patch.toCommit);
   });
+});
+
+it("pins summary attributes to stable identities and the original release", () => {
+  const t = createTranslator("en");
+  const strength = attributePreview(
+    "hero",
+    "npc_dota_hero_axe",
+    "base_strength",
+    "Base Strength",
+    t,
+    undefined,
+    "c:historical",
+  );
+  expect(strength.key).toBe("strength");
+  expect(strength.href).toBe("/attributes/strength?release=c%3Ahistorical");
+  expect(strength.description).toContain("health");
+  expect(
+    attributePreview(
+      "ability",
+      "bounty_hunter_shuriken_toss",
+      "AbilityCooldown",
+      "Cooldown",
+      t,
+    ).key,
+  ).toBe("cooldown");
+  const speed = attributePreview(
+    "ability",
+    "bounty_hunter_shuriken_toss",
+    "speed",
+    "Speed",
+    t,
+  );
+  expect(speed.key).toBe("ability~bounty_hunter_shuriken_toss~speed");
+  expect(speed.href).toBe(
+    "/attributes/ability~bounty_hunter_shuriken_toss~speed",
+  );
 });

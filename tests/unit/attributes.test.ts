@@ -15,7 +15,70 @@ import {
 } from "@/domain/attribute-mechanics";
 import { adaptItems } from "@/importers/dota-vpk/item-adapter";
 import { withRelease } from "@/domain/releases";
+import {
+  attributeFieldLabel,
+  attributeFieldLabelProvenance,
+} from "@/domain/attribute-field-labels";
+import {
+  attributeParameterLabel,
+  unresolvedAttributeParameter,
+  attributeParameterProvenance,
+} from "@/domain/attribute-parameter-labels";
 const commit = "f4c45719314754567cb4ef4fe343bbc790a311f4";
+it("names raw fields in Chinese within their audited kind, owner and pinned version", () => {
+  for (const source of [commit, "991daaf6fc24b08445209d9ce8767e145bab107e"]) {
+    expect(
+      attributeFieldLabel(source, "ability", "ability_launchpad", "AbilityType")
+        ?.zh,
+    ).toBe("技能类型");
+    expect(
+      attributeFieldLabel(source, "ability", "ability_launchpad", "MaxLevel")
+        ?.zh,
+    ).toBe("技能最高等级");
+    expect(
+      attributeFieldLabel(
+        source,
+        "ability",
+        "ability_launchpad",
+        "AbilityModifierSupportValue",
+      ),
+    ).toMatchObject({
+      zh: "技能修正支持值",
+      note: { zh: expect.stringContaining("把握程度：低") },
+    });
+    expect(
+      attributeFieldLabel(source, "ability", "meepo_fling", "range")?.zh,
+    ).toBe("投掷作用距离");
+    expect(
+      attributeFieldLabel(source, "ability", "ability_launchpad", "range"),
+    ).toBeUndefined();
+    expect(
+      attributeFieldLabel(source, "ability", "unreviewed-owner", "AbilityType"),
+    ).toBeUndefined();
+    expect(
+      attributeFieldLabel(
+        source,
+        "ability",
+        "ability_launchpad",
+        "abilitytype",
+      ),
+    ).toBeUndefined();
+    expect(
+      attributeFieldLabel(source, "unit", "ability_launchpad", "AbilityType"),
+    ).toBeUndefined();
+    expect(attributeFieldLabelProvenance(source)).toMatchObject({
+      raw_title_count: 13355,
+    });
+  }
+  expect(
+    attributeFieldLabel(
+      "unreviewed-commit",
+      "ability",
+      "ability_launchpad",
+      "AbilityType",
+    ),
+  ).toBeUndefined();
+});
 it("links plate mail armor, hero base armor and unit armor to one entity without merging unrelated owner parameters", () => {
   expect(attributeId("item", "item_platemail", "bonus_armor")).toBe("armor");
   expect(attributeId("hero", "npc_dota_hero_axe", "base_armor")).toBe("armor");
@@ -316,6 +379,107 @@ it("links longest attribute mentions without changing source wording or English 
   ).toEqual([{ text: "生命值" }]);
 });
 
+it("links complete damage types and compound attributes throughout source descriptions", () => {
+  const text =
+    "每次攻击有25%几率无视闪避并造成额外60点魔法伤害。物理伤害、纯粹伤害与技能伤害增强分别结算。生命值上限、魔法值上限、生命值恢复、法术吸血、冷却时间降低、魔法消耗减少。";
+  const parts = attributeTextParts(text, "zh-CN", ATTRIBUTES);
+  expect(parts.map((part) => part.text).join("")).toBe(text);
+  expect(parts.filter((part) => part.attributeId)).toEqual([
+    { text: "闪避", attributeId: "evasion" },
+    {
+      text: "魔法伤害",
+      attributeId: "damage-type",
+      enumValue: "DAMAGE_TYPE_MAGICAL",
+    },
+    {
+      text: "物理伤害",
+      attributeId: "damage-type",
+      enumValue: "DAMAGE_TYPE_PHYSICAL",
+    },
+    {
+      text: "纯粹伤害",
+      attributeId: "damage-type",
+      enumValue: "DAMAGE_TYPE_PURE",
+    },
+    { text: "技能伤害增强", attributeId: "spell-amplification" },
+    { text: "生命值上限", attributeId: "health" },
+    { text: "魔法值上限", attributeId: "mana" },
+    { text: "生命值恢复", attributeId: "health-regen" },
+    { text: "法术吸血", attributeId: "spell-lifesteal" },
+    { text: "冷却时间降低", attributeId: "cooldown-reduction" },
+    { text: "魔法消耗减少", attributeId: "mana-cost-reduction" },
+  ]);
+  const english =
+    "MAGICAL DAMAGE, physical damage, pure damage, attack damage, spell damage amplification, maximum health; magical damages source_magic_damage";
+  const enParts = attributeTextParts(english, "en", ATTRIBUTES);
+  expect(enParts.map((part) => part.text).join("")).toBe(english);
+  expect(enParts.filter((part) => part.attributeId)).toEqual([
+    {
+      text: "MAGICAL DAMAGE",
+      attributeId: "damage-type",
+      enumValue: "DAMAGE_TYPE_MAGICAL",
+    },
+    {
+      text: "physical damage",
+      attributeId: "damage-type",
+      enumValue: "DAMAGE_TYPE_PHYSICAL",
+    },
+    {
+      text: "pure damage",
+      attributeId: "damage-type",
+      enumValue: "DAMAGE_TYPE_PURE",
+    },
+    { text: "attack damage", attributeId: "attack-damage" },
+    { text: "spell damage amplification", attributeId: "spell-amplification" },
+    { text: "maximum health", attributeId: "health" },
+  ]);
+});
+
+it("keeps ambiguous longer phrases plain after repeated registration and checks boundaries before matching", () => {
+  const health = { id: "health", zh: "生命值", en: "Health" };
+  expect(
+    attributeTextParts("生命值", "zh-CN", [
+      health,
+      { id: "other", zh: "生命值", en: "Other" },
+      health,
+    ]),
+  ).toEqual([{ text: "生命值" }]);
+  expect(
+    attributeTextParts("伤害类型", "zh-CN", [
+      { id: "damage", zh: "伤害", en: "Damage" },
+      { id: "first", zh: "伤害类型", en: "First" },
+      { id: "second", zh: "伤害类型", en: "Second" },
+    ]),
+  ).toEqual([{ text: "伤害类型" }]);
+  expect(
+    attributeTextParts("Health regenerationist", "en", ATTRIBUTES).filter(
+      (p) => p.attributeId,
+    ),
+  ).toEqual([{ text: "Health", attributeId: "health" }]);
+  expect(
+    attributeTextParts("unhealthy source_health HEALTH", "zh-CN", [
+      health,
+      { id: "english", zh: "Health", en: "Health" },
+    ]).filter((p) => p.attributeId),
+  ).toEqual([{ text: "HEALTH", attributeId: "english" }]);
+  expect(
+    attributeTextParts("魔法和物理是不同概念。", "zh-CN", ATTRIBUTES).filter(
+      (p) => p.attributeId,
+    ),
+  ).toEqual([]);
+  // Enum aliases must be available in the selected version, rather than assumed.
+  expect(
+    attributeTextParts("魔法伤害", "zh-CN", [
+      { id: "damage-type", zh: "伤害类型", en: "Damage type", enumValues: [] },
+    ]),
+  ).toEqual([{ text: "魔法伤害" }]);
+  expect(
+    attributeTextParts("伤害", "zh-CN", [
+      { id: "item~javelin~damage", zh: "伤害", en: "Damage" },
+    ]),
+  ).toEqual([{ text: "伤害" }]);
+});
+
 it("keeps ordinary grid chunks complete when the primary group is present or filtered", () => {
   const query = { q: "", scope: "all" as const };
   const ordinary = Array.from({ length: 110 }, (_, i) => ({
@@ -355,5 +519,121 @@ it("keeps ordinary grid chunks complete when the primary group is present or fil
       attributeSlice(entries, "grid", query, { before: third.previousCursor! })
         .items,
     ).toEqual(second.items);
+  }
+});
+
+it("uses owner-specific VPK semantics for misleading fields and binds names to the reviewed version", () => {
+  expect(
+    attributeParameterLabel(
+      commit,
+      "dawnbreaker_fire_wreath",
+      "movespeed_bonus_duration",
+    ),
+  ).toMatchObject({
+    zh: "攻击速度加成持续时间",
+    en: "Attack speed bonus duration",
+    definition: {
+      sourcePath: "scripts/npc/heroes/npc_dota_hero_dawnbreaker.txt",
+    },
+    note: { zh: expect.stringContaining("同版本效果说明") },
+  });
+  expect(
+    attributeParameterLabel(commit, "broodmother_sticky_snare", "count")?.zh,
+  ).toBe("网线数量上限");
+  expect(
+    attributeParameterLabel(commit, "batrider_smoldering_resin", "total_ticks")
+      ?.zh,
+  ).toBe("负面效果持续时间");
+  expect(
+    attributeParameterLabel(commit, "lion_mana_drain", "tick_interval")?.zh,
+  ).toBe("生效间隔");
+  expect(
+    attributeParameterLabel(
+      commit,
+      "abaddon_death_coil",
+      "self_damage_enemy_target",
+    )?.note.zh,
+  ).toContain("注释");
+  expect(
+    attributeParameterLabel(
+      "unreviewed-commit",
+      "broodmother_sticky_snare",
+      "count",
+    ),
+  ).toBeUndefined();
+  expect(
+    attributeParameterLabel(commit, "shadow_shaman_serpentine", "count"),
+  ).toMatchObject({
+    zh: "蛇棒数量",
+    en: "Serpent Ward count",
+    note: { zh: expect.stringContaining("上下文推定") },
+  });
+  expect(
+    attributeParameterLabel(commit, "broodmother_sticky_snare", "COUNT"),
+  ).toBeUndefined();
+  expect(
+    attributeParameterLabel(commit, "antimage_persectur", "zero_tooltip"),
+  ).toMatchObject({ note: { zh: expect.stringContaining("上下文推定") } });
+  expect(
+    unresolvedAttributeParameter(commit, "antimage_persectur", "zero_tooltip"),
+  ).toBeUndefined();
+  expect(
+    unresolvedAttributeParameter(
+      "unreviewed-commit",
+      "antimage_mana_void",
+      "zero_tooltip",
+    ),
+  ).toBeUndefined();
+  expect(attributeParameterProvenance(commit)).toMatchObject({
+    client_version: "6944",
+    named: 3492,
+    unresolved: 0,
+  });
+});
+
+it("keeps contextual names separate from official evidence and covers both pinned snapshots", async () => {
+  const { default: resource } =
+    await import("@/data/attribute-parameters/supplement.v1.json");
+  const { attributeParameterLabel } =
+    await import("@/domain/attribute-parameter-labels");
+  for (const snapshot of resource.snapshots) {
+    expect(snapshot.unresolved).toBe(0);
+    expect(snapshot.named).toBe(snapshot.missingBefore);
+    const contextual = Object.entries(snapshot.evidence).filter(
+      ([, evidence]) => evidence.kind === "context-inference",
+    );
+    expect(contextual).toHaveLength(
+      snapshot.client_version === "6918" ? 1840 : 1846,
+    );
+    for (const [key, evidence] of contextual) {
+      const [owner, field] = key.split(".");
+      const label = attributeParameterLabel(
+        snapshot.source_commit,
+        owner,
+        field,
+      )!;
+      expect(label.zh).not.toMatch(/未命名|待命名|待补充/);
+      expect(label.en).not.toMatch(/unnamed|unknown parameter/iu);
+      expect(label.note.zh).toContain("上下文推定");
+      expect(label.note.en).toContain("Name inferred by GPT-6-Luna");
+      expect(evidence.definition.line).toBeGreaterThan(0);
+    }
+    expect(
+      attributeParameterLabel(
+        snapshot.source_commit,
+        "earthshaker_echo_slam",
+        "echo_slam_echo_range",
+      ),
+    ).toMatchObject({
+      zh: "回音伤害范围",
+      en: "Echo damage range",
+    });
+    expect(
+      attributeParameterLabel(
+        snapshot.source_commit,
+        "other_echo_slam",
+        "echo_slam_echo_range",
+      ),
+    ).toBeUndefined();
   }
 });

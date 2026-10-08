@@ -18,7 +18,7 @@ pnpm dev
 
 保存页面代码后自动热更新。页面右下角“共享开发”显示真实解析器的小样例、运行状态、耗时与错误；连续保存合并重算，旧结果不会覆盖新结果。页面数据与下方计算样例相互独立，计算使用的小 fixture 不替换页面的真实数据。冷启动与首次页面编译会慢一些。开发入口统一使用项目锁定的Turbopack，Tailwind扫描范围为`src/`；文档与测试保存不应引起全站CSS热更新。隐藏标签页暂停开发面板轮询，切回后立即同步。
 
-开发浏览器应使用不注入页面内容的配置。若hydration报错显示`data-immersive-translate-page-theme`等服务端不存在的属性，停用该站点的页面改写扩展，或使用无扩展的独立开发配置后完整刷新；不要用全局`suppressHydrationWarning`掩盖。依赖必须由本目录的`pnpm install --frozen-lockfile`建立，不复制其他工作树的`node_modules`或其链接；否则Turbopack可能无法在项目根内解析Next，临时工作树移除也会破坏开发环境。
+开发浏览器应使用不注入页面内容的配置。若hydration报错显示`data-immersive-translate-page-theme`等服务端不存在的属性，在沉浸式翻译「基本设置 → 更多进阶设置 → 不使用插件的网址」中添加`http://127.0.0.1:3000/*`并保存，然后完整刷新（其他开发地址按实际origin配置）；也可使用无扩展的独立开发配置。不要用全局`suppressHydrationWarning`掩盖。依赖必须由本目录的`pnpm install --frozen-lockfile`建立，不复制其他工作树的`node_modules`或其链接；否则Turbopack可能无法在项目根内解析Next，临时工作树移除也会破坏开发环境。
 
 `.env` 的 `MEDOTA2_WORKBENCH_DATA` 默认为 `auto`；可显式设为 `local-review` 或 `development`，修改后运行 `pnpm dev:restart`。真实数据模式的资产检查不通过时会报错，不会静默切换为占位图。
 
@@ -30,6 +30,8 @@ pnpm dev:sample              # 在终端执行同一个小样例
 ```
 
 开发日志位于 `.medota2/development/server.log`。多个 Session 共用目录和当前分支，各自维护 `.medota2/sessions/<id>.md`；提交、分支切换、依赖安装和数据库写操作先协调。详见 [AGENTS.md](../../AGENTS.md)。已有同步工作区的真实来源及地图由活动快照提供。
+
+遇到`ENV_CONNECT_FAILED`时先查开发日志中的`connectionFailure`：timeout包含连接池等待超时，unreachable表示连接中断或不可达，capacity表示数据库连接容量耗尽；不能仅凭错误标题判断数据库已停止。变化页可直接点击“重试”，导航及URL参数保留。连接池／环境合同代码修改后需`pnpm dev:restart`更新全局复用实例；不要通过增大等待超时掩盖重复读取。只读状态核对用`pnpm data:status`，检查身份、快照与代码修改状态。
 
 跨工作区的数据获取、恢复和发布见[同步运行手册](../development-data-sync-runbook.md)，协议见[同步 Spec](../specs/development-data-sync.md)。已实现 Windows 原生启动、进程与 ACL 适配；平台验证状态、推荐环境及待解决异常以[环境登记册](../development-environments.md)为准。
 

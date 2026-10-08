@@ -14,6 +14,7 @@ import {
 import { getWebDatabase } from "@/server/db/client";
 import { DevelopmentWorkbench } from "@/components/development-workbench";
 import { loadLocalEnv } from "@/config/env";
+import { isEnvironmentConnectionError } from "@/server/environment/policy";
 import "./globals.css";
 
 export const dynamic = "force-dynamic";
@@ -60,7 +61,7 @@ export default async function RootLayout({
   const locale = await getRequestLocale();
   const declaredEnvironment = presentationEnvironment();
   const mapOnly = process.env.MEDOTA2_WORKBENCH_MAPS_ONLY === "1";
-  const environment = mapOnly
+  let environment = mapOnly
     ? declaredEnvironment
     : await getWebDatabase()
         .then(async (database) =>
@@ -70,7 +71,11 @@ export default async function RootLayout({
 
   const releaseIndex =
     environment.verified || mapOnly
-      ? await getReleaseIndex()
+      ? await getReleaseIndex().catch((error: unknown) => {
+          if (!isEnvironmentConnectionError(error)) throw error;
+          environment = declaredEnvironment;
+          return { defaultRelease: null, releases: [] };
+        })
       : { defaultRelease: null, releases: [] };
   return (
     <html

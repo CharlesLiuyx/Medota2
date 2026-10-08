@@ -1,4 +1,5 @@
 "use client";
+import { DataTable } from "@/components/ui/data-table";
 import { useLocale } from "@/i18n/provider";
 import { diagnosticText } from "@/i18n/diagnostics";
 import { Message, useTranslations } from "@/i18n/provider";
@@ -143,7 +144,7 @@ export function DevelopmentWorkbench() {
                   }}
                 />
               </p>
-              <table>
+              <DataTable>
                 <thead>
                   <tr>
                     <th>{t("英雄")}</th>
@@ -158,7 +159,7 @@ export function DevelopmentWorkbench() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </DataTable>
               <p>
                 <Message
                   id="输入版本 {value0} · 结果版本 {value1}"

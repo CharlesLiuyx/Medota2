@@ -1,0 +1,49 @@
+item_basher.bonus_chance_damage	重击额外物理伤害	Bash bonus physical damage	-
+item_abyssal_blade.bonus_chance_damage	重击额外物理伤害	Bash bonus physical damage	-
+item_quelling_blade.damage_bonus	近战压制额外伤害	Melee Quell bonus damage	-
+item_roshans_banner.damage_bonus	攻击伤害加成比例	Attack damage bonus	%
+item_giant_maul.attack_slow	攻击速度降低比例	Attack speed reduction	%
+item_ash_legion_shield.slow	自身移动速度降低	Self movement speed reduction	-
+item_whisper_of_the_dread.bonus_spell_damage	技能伤害增幅	Spell damage amplification	%
+item_mage_slayer.spell_amp_debuff	敌方技能伤害降低	Enemy spell damage reduction	%
+item_dust.movespeed	隐形目标移动减速	Invisible target movement slow	%
+item_princes_knife.movespeed	妖术移动速度	Hex movement speed	-
+item_silver_edge.backstab_duration	被动失效持续时间	Break duration	s
+item_silver_edge.max_movement_speed	目标移动速度上限	Target movement speed cap	-
+item_phoenix_ash.health_pct	重生生命比例	Rebirth health ratio	%
+item_spark_of_courage.health_pct	攻防切换生命阈值	Damage and armor health threshold	%
+item_dezun_bloodrite.health_pct	魔法消耗转为生命消耗比例	Mana cost as additional health cost	%
+item_illusionsts_cape.outgoing_damage	幻象输出伤害调整	Illusion outgoing damage modifier	%
+item_illusionsts_cape.incoming_damage	幻象承受额外伤害	Illusion incoming bonus damage	%
+item_riftshadow_prism.outgoing_damage	幻象总输出伤害比例	Illusion total outgoing damage	%
+item_riftshadow_prism.incoming_damage	幻象承受总伤害比例	Illusion total incoming damage	%
+item_divine_regalia.outgoing_damage	输出伤害提升	Outgoing damage increase	%
+item_light_collector.penalty	附近有树时恢复效果降低	Regeneration reduction near trees	%
+item_mana_draught.water_acceleration	河道冷却速度提升	River cooldown rate increase	%
+item_enchanted_mango.replenish_amount	魔法恢复量	Mana restored	-
+item_famango.replenish_amount	生命和魔法恢复量	Health and mana restored	-
+item_great_famango.replenish_amount	生命和魔法恢复量	Health and mana restored	-
+item_greater_famango.replenish_amount	生命和魔法恢复量	Health and mana restored	-
+item_arcane_boots.replenish_amount	魔法恢复量	Mana restored	-
+item_foragers_mana.replenish_amount	固定魔法恢复量	Flat mana restored	-
+item_foragers_mana.mana_pct	最大魔法恢复比例	Max mana restored	%
+item_spellslinger.mana_pct	已消耗魔法返还比例	Spent mana refunded	%
+item_craggy_coat.move_speed	主动移动速度降低	Active movement speed reduction	-
+item_elixer.health	生命恢复量	Health restored	-
+item_elixer.mana	魔法恢复量	Mana restored	-
+item_bottomless_chalice.health	生命恢复参数	Health restoration parameter	-
+item_bottomless_chalice.mana	魔法恢复参数	Mana restoration parameter	-
+item_lotus_orb.active_duration	回音外壳持续时间	Echo Shell duration	s
+item_urn_of_shadows.soul_heal_amount	每秒生命恢复	Health regeneration per second	-
+item_spirit_vessel.soul_heal_amount	每秒生命恢复	Health regeneration per second	-
+item_essence_distiller.soul_heal_amount	每秒生命恢复	Health regeneration per second	-
+item_eternal_shroud.mana_restore_pct	所受技能伤害转为魔法比例	Incoming spell damage restored as mana	%
+item_safety_bubble.restore_time	护盾恢复前无伤等待时间	Damage-free time before barrier restoration	s
+item_bottle.restore_time	恢复持续时间	Restoration duration	s
+item_phase_boots.phase_movement_speed	近战相位移动速度加成	Melee phase movement speed bonus	%
+item_disperser.phase_movement_speed	友方移动速度加成	Ally movement speed bonus	%
+item_mana_draught.heal_duration	魔法恢复持续时间	Mana restoration duration	s
+item_madstone_bundle.madstone_primary	主要狂石数量	Primary madstone count	-
+item_madstone_bundle.madstone_secondary	次要狂石数量	Secondary madstone count	-
+item_madstone_bundle.turbo_madstone_primary	快速模式主要狂石数量	Turbo primary madstone count	-
+item_madstone_bundle.turbo_madstone_secondary	快速模式次要狂石数量	Turbo secondary madstone count	-
