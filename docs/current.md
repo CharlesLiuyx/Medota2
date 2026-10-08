@@ -13,7 +13,7 @@
 
 活动任务：
 
-- **视野遮挡算法Todo，待实施**：按版本与输入合同、引擎参照采样、算法校准、地图接入和验收五阶段推进；树木有效遮挡体、FoW高度及网格／实体边缘规则仍待同版实验。见[实现Plan与待办](work/map-vision-occlusion.md)。
+- **视野模拟算法准备完成，Web接入待启动**：按用户调整采用树圆＋粗略高地的离线近似模型，支持多来源与砍树情景；复用6944数据，不要求游戏内精确对齐。页面尚未接入，后续入口和限制见[视野准备](work/map-vision-occlusion.md)，验证见[准备验收](history/2026-10-08-map-vision-preparation.md)。
 - **页面人工审阅待完成**：变化表格、悬浮卡、地图紧凑布局、属性实体／名称及物品参数已通过相应本机检查；发布不代替人工审阅。各功能入口和细节见[本轮发布验收](history/2026-10-08-main-publication.md)，旧名称补充见[名称记录](history/2026-10-07-name-enrichment.md)。低把握推定名称仍保留说明，结算与叠加规则见[Windows机制核验](work/attribute-engine-verification.md)。
 - **Windows专项复验待完成**：浏览跳转／页面崩溃及原生构建异常保留原断言，按[平台交接](work/windows-native-validation.md)定位。
 - **实体版本与Diff后续验收**：7.41f为默认，第一阶段已落地；真实更新后的多版和跨机器验证见[实施任务](work/entity-version-diff.md)与[7.41f记录](work/7.41f-update.md)。

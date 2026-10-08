@@ -84,7 +84,8 @@
 | [属性机制Windows核验](work/attribute-engine-verification.md)                | active     | 同版客户端来源提取与实验交接                       |
 | [物品](specs/item-catalog.md)                                               | active     | 物品定义、目录、配方与来源边界                     |
 | [地图](specs/map-explorer.md)                                               | active     | 地图数据、操作、计算与估算边界                     |
-| [视野遮挡算法 Plan / Todo](work/map-vision-occlusion.md)                    | active     | 版本输入、引擎采样、算法校准、地图接入与验收待办   |
+| [视野模拟准备与后续接入](work/map-vision-occlusion.md)                      | active     | 近似算法、离线复现、Web接入与可选精度升级          |
+| [视野算法准备验收](history/2026-10-08-map-vision-preparation.md)            | historical | 6944离线样例、算法检查与未覆盖范围                 |
 | [工作台](specs/development-workbench.md)                                    | active     | 共享开发、反馈、检查与产物合同                     |
 | [开发数据同步](specs/development-data-sync.md)                              | active     | 快照、切换、内容一致性协议                         |
 | [隔离验证](specs/environment-isolation-and-verification.md)                 | active     | 显式isolated运行与数据库合同                       |

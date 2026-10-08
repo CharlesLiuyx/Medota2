@@ -1849,8 +1849,8 @@
                     data-name="地图浏览与静态寻路"
                     data-definition="加载所选地图，在浏览器绘制并估算路线。"
                     data-why="支持查看空间关系、测距和比较路线。"
-                    data-detail="紧凑地图工作区：28px顶栏统一Release版本与核验状态，时间行仅占画布宽度并保留来源说明，普通兵筛选在时间左侧，游戏状态／野区／兵线路径以细竖线分组；左侧64px地形／测距／寻路工具轨和属性栏从顶部开始，地形图例去掉顶部外边距；时间下拉压到22px，桌面地图视区增至100dvh减96px；湍流为顶部独立开关，可与导航／高度叠加；缩放移到视口左上问号右侧，点击比例数字复位100%，原右侧空竖栏删除并扩宽画布；200px属性栏，选中营地持续显示边界、名称、经验和高度；图层勾选筛选独立纵排放在对象属性下方，点位搜索与列表保留在地图下方。地图各自构建号保留，缺全局版本覆盖不混用其他地图；静态估算及引擎语义限制继续适用。"
-                    data-files='["src/components/map/map-viewer.tsx", "src/components/map/terrain-legend.tsx", "src/app/globals.css", "src/components/map/route-planner.tsx", "src/components/map/header-status.tsx", "src/components/release-navigation.tsx", "src/app/map/page.tsx", "src/domain/map/routing.ts", "docs/specs/map-explorer.md"]'
+                    data-detail="紧凑地图工作区：28px顶栏统一Release版本与核验状态，时间行仅占画布宽度并保留来源说明，普通兵筛选在时间左侧，游戏状态／野区／兵线路径以细竖线分组；左侧64px地形／测距／寻路工具轨和属性栏从顶部开始，地形图例去掉顶部外边距；时间下拉压到22px，桌面地图视区增至100dvh减96px；湍流为顶部独立开关，可与导航／高度叠加；缩放移到视口左上问号右侧，点击比例数字复位100%，原右侧空竖栏删除并扩宽画布；200px属性栏，选中营地持续显示边界、名称、经验和高度；图层勾选筛选独立纵排放在对象属性下方，点位搜索与列表保留在地图下方。地图各自构建号保留，缺全局版本覆盖不混用其他地图；静态估算及引擎语义限制继续适用。已准备独立离线视野算法：选定Dataset树木与验哈希VHCG→树圆和粗高度遮挡→可见性网格；支持多来源及砍树情景，尚未接入此页面，不宣称游戏引擎一致。"
+                    data-files='["src/components/map/map-viewer.tsx", "src/components/map/terrain-legend.tsx", "src/app/globals.css", "src/components/map/route-planner.tsx", "src/components/map/header-status.tsx", "src/components/release-navigation.tsx", "src/app/map/page.tsx", "src/domain/map/routing.ts", "src/domain/map/vision.ts", "src/server/map/vision.ts", "src/workers/sample-map-vision.ts", "docs/work/map-vision-occlusion.md", "docs/specs/map-explorer.md"]'
                     data-node-id="data-graph-mapview"
                     aria-pressed="false"
                   >

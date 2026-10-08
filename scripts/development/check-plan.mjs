@@ -130,7 +130,7 @@ const rootsForDocs = () => [
 // File-backed map computation does not read the product database. store.ts and
 // app/map still read Catalog metadata and retain the normal database checks.
 const mapOnly =
-  /^(?:src\/(?:domain\/map\/|importers\/dota-map\/|components\/map\/|server\/map\/(?:packages|navigation)\.ts)|src\/workers\/(?:index-maps|extract-map-vpk|extract-local-map|import-public-map|import-local-map|import-map|enrich-map-economy)\.ts|tests\/unit\/map(?:[.-]))/;
+  /^(?:src\/(?:domain\/map\/|importers\/dota-map\/|components\/map\/|server\/map\/(?:packages|navigation|vision)\.ts)|src\/workers\/(?:index-maps|extract-map-vpk|extract-local-map|import-public-map|import-local-map|import-map|enrich-map-economy|sample-map-vision)\.ts|tests\/unit\/map(?:[.-]))/;
 const mapScope =
   /^(?:src\/(?:domain\/map\/|importers\/dota-map\/|components\/map\/|server\/map\/|app\/(?:api\/)?map)|src\/workers\/[^/]*map|tests\/unit\/map(?:[.-]))/;
 const unitScope =
@@ -147,6 +147,8 @@ const mapTests = [
   "map-routing",
   "map-sync",
   "map-versions",
+  "map-vision",
+  "map-vision-source",
 ]
   .map((name) => `tests/unit/${name}.test.ts`)
   .concat("tests/unit/map-viewer.test.tsx");
