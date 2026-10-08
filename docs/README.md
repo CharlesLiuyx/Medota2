@@ -139,6 +139,7 @@
 | [发布流程优化](history/2026-10-07-publication-optimization.md)              | reference  | 候选门禁、fixture前置、阶段收据、CI续接与验证边界  |
 | [数据库读取稳定性](history/2026-10-08-database-read-resilience.md)          | reference  | 变化页池等待超时、端点快照、连接恢复及本机测量     |
 | [开发反馈修复](history/2026-10-07-development-feedback.md)                  | reference  | 扩展干扰、扫描边界、编译器与隐藏视口验收           |
+| [Windows本机发布复验](history/2026-10-09-windows-publication.md)            | historical | Node22组合验收、路径与fixture隔离修复              |
 | [Windows复验任务](work/windows-native-validation.md)                        | active     | 平台失败的接手步骤与解除条件                       |
 | [实体版本与 Diff 优化](work/entity-version-diff.md)                         | active     | 第一阶段实施、后续范围及真实更新验收               |
 | [7.41f 更新与 VPK Diff](work/7.41f-update.md)                               | active     | 收录、官方说明与真实Diff                           |

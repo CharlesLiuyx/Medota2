@@ -66,6 +66,8 @@ TypeScript 源码检查使用 `tsconfig.check.json`，其增量文件单独存�
 
 Windows单元测试最多并行4个worker（不超过可用CPU），减少Git和子进程fixture的资源争用；断言与测试时限保持原值。其他平台沿用Vitest默认并发。
 
+独立发布产物使用synthetic-fixture Catalog完成启动检查，构建及smoke环境显式清空本机地图集合／单包路径，防止dotenv重新注入。产物不复制开发地图；正式运行中显式配置的缺失或损坏地图仍按原合同报错。
+
 静态检查通过记录可跨调用复用；release自行管理构建产物身份。浏览器、数据库检查每次重新确认当前状态；共享页面测试记录 Catalog/Asset 版本，前后版本变化时作废。这里优先用简单、可解释的规则，暂不为动态数据库结果建立复杂缓存。
 
 CI 取消相同分支旧运行，按规划安装 Chromium，调用相同的 `pnpm check --base REF`。操作系统和 CI 身份参与摘要，不把本机通过记录当作 Linux CI 的通过记录。覆盖率只在显式 `pnpm verify` 或 `pnpm test:coverage` 中启用。

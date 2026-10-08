@@ -101,6 +101,10 @@ async function main(): Promise<void> {
           MEDOTA2_NEXT_TSCONFIG: relative(process.cwd(), config),
           NEXT_DIST_DIR: relative(process.cwd(), dist),
           MEDOTA2_WORKBENCH: "0",
+          // The standalone smoke uses synthetic Catalog data, not local maps.
+          // Empty values also prevent Next's dotenv loader from restoring them.
+          DOTA_MAP_COLLECTION_PATH: "",
+          DOTA_MAP_DATA_PATH: "",
           NEXT_TELEMETRY_DISABLED: "1",
         };
         await run("pnpm", ["exec", "next", "build", "--webpack"], buildEnv);
