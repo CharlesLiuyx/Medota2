@@ -1,6 +1,6 @@
 # Windows 原生浏览与构建复验
 
-状态：Node22本轮浏览与构建／启动已复验通过；Node24及长时稳定性待核验。更新：2026-10-09，结果与修复见[本机发布复验](../history/2026-10-09-windows-publication.md)。
+状态：Node22已有单轮浏览与构建／启动通过，后续仍出现预览间歇退出；Node24与退出根因待核验。更新：2026-10-09，结果与修复见[本机发布复验](../history/2026-10-09-windows-publication.md)。
 
 ## 任务范围
 
@@ -20,7 +20,7 @@
 
 ## 接手与解除条件
 
-2026-10-09便携Node22下12fixture／18真实浏览、23数据库合同及生产构建／启动已通过，当前组合未重现详情跳转和原生退出。具体基线、失败与修复见[本机发布复验](../history/2026-10-09-windows-publication.md)。Node24旧失败的运行时对照仍见[启动记录](../history/2026-10-07-windows-development-start.md)；后续只针对未覆盖的Node24及长时运行复核，复现时捕获精确退出码／dump。
+2026-10-09便携Node22下12fixture／18真实浏览、23数据库合同及生产构建／启动已通过，该轮未重现详情跳转和原生退出；后续真实预热发生ECONNRESET且工作台进程消失，重启后继续门禁，不能解除Node22间歇退出限制。具体基线、失败与修复见[本机发布复验](../history/2026-10-09-windows-publication.md)。Node24旧失败的运行时对照仍见[启动记录](../history/2026-10-07-windows-development-start.md)；后续针对Node22间歇退出、Node24及长时运行复核，复现时捕获精确退出码／dump。
 
 1. 在获得该环境执行授权后核对Git、未提交改动、Node／pnpm／Docker版本和lock；建立本次Session范围。重跑失败所需命令前确认共享工作台没有其他写任务。
 2. 用 `pnpm data:status` 确认数据一致性，运行 `pnpm check --plan` 明确检查范围。先复现技能浏览，再在源码稳定时运行 `pnpm release`；保留原断言、trace及退出码。

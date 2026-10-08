@@ -22,6 +22,8 @@
 
 最终发布仍由`pnpm push`针对候选运行原检查计划；有效静态结果及构建按输入身份复用，浏览／数据库重新核验。精确代码SHA、数据回读及CI结果保存在该环境`.medota2/publications/`的收据，远端结果可从[main提交历史](https://github.com/CharlesLiuyx/Medota2/commits/main/)核对。发布不替代页面人工审阅、同版引擎语义核验或原始资产交接。
 
+后续候选`7c357d4`复验保留一项fixture flaky：属性用例首次请求`/api/releases`遭ECONNRESET，单项重试后因fixture无相应正式数据而跳过（12通过、6跳过、1flaky）。随后真实浏览预热发生ECONNRESET，supervisor和Web进程均已消失、3000无监听，发布停止在本地；没有捕获精确退出码或相应OS崩溃记录，不能确定根因。`pnpm dev:restart`已恢复工作台，继续原门禁。因此前述单轮通过不解除Node22预览间歇退出限制。原始证据为`publish-all-20261009-completion.log`及`publish-windows-workbench-restart.log`。
+
 ## 复现与边界
 
 在本机便携Node22.23.3及项目pnpm的进程PATH下运行`pnpm push --plan`、`pnpm push`；如已推送仅CI确认中断，按[同步手册](../development-data-sync-runbook.md)使用`pnpm push --resume`。失败诊断日志为`.medota2/sessions/publish-all-20261009*.log`、`publish-windows-path-check.log`、`publish-windows-unit-concurrency.log`与`publish-windows-standalone-check.log`；忽略目录不是跨机器附件。
