@@ -3,16 +3,6 @@ test("items: navigation, search, filters, recipe links and version context", asy
   page,
 }) => {
   await page.goto("/items?lang=zh-CN");
-  // The server renders the title before client focus handlers are ready.
-  await expect(
-    page.getByRole("textbox", { name: "搜索物品", exact: true }),
-  ).toBeEnabled();
-  await page.getByRole("button", { name: "物品图鉴", exact: true }).focus();
-  await expect(page.getByRole("tooltip")).toContainText(
-    "资料也含历史及活动定义",
-  );
-  await page.keyboard.press("Escape");
-  await expect(page.getByRole("tooltip")).toHaveCount(0);
   await expect(
     page.getByRole("heading", { name: "物品图鉴", exact: true }),
   ).toBeVisible();
@@ -37,7 +27,14 @@ test("items: navigation, search, filters, recipe links and version context", asy
     return;
   }
   const search = page.getByRole("textbox", { name: /搜索物品|Search items/ });
+  // The server renders the title before client focus handlers are ready.
   await expect(search).toBeEnabled();
+  await page.getByRole("button", { name: "物品图鉴", exact: true }).focus();
+  await expect(page.getByRole("tooltip")).toContainText(
+    "资料也含历史及活动定义",
+  );
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("tooltip")).toHaveCount(0);
   await search.fill("shanshuobishou");
   const blink = results.locator('a[href^="/items/item_blink?"]');
   await expect(blink).toBeVisible();
