@@ -8,6 +8,17 @@ export const EXCLUDED_TABLES = [
   "hero_import_staging",
 ];
 export const schemaDigest = digest(expected);
+export type ReviewedSchema = typeof expected;
+export function schemaTables(schema: ReviewedSchema) {
+  return schema.columns
+    .map((table) => ({
+      name: table.table_name,
+      columns: table.columns,
+      keys: schema.keys.find((key) => key.table_name === table.table_name)!
+        .columns,
+    }))
+    .filter((table) => !EXCLUDED_TABLES.includes(table.name));
+}
 export const definitions = expected.columns.map((table) => ({
   name: table.table_name,
   columns: table.columns,
@@ -65,6 +76,7 @@ export function restoreOrder(): TableDefinition[] {
 
 export async function assertReviewedSchema(
   reader: VerifiedReadSnapshot,
+  schema: ReviewedSchema = expected,
 ): Promise<void> {
   const columns = (
     await reader.query(
@@ -81,7 +93,7 @@ export async function assertReviewedSchema(
       "SELECT c.relname AS table_name, array_agg(a.attname::text ORDER BY k.ordinality) AS columns FROM pg_class c JOIN pg_index i ON i.indrelid=c.oid AND i.indisprimary JOIN LATERAL unnest(i.indkey) WITH ORDINALITY k(attnum,ordinality) ON true JOIN pg_attribute a ON a.attrelid=c.oid AND a.attnum=k.attnum WHERE c.relnamespace='public'::regnamespace GROUP BY c.relname ORDER BY c.relname",
     )
   ).rows;
-  if (digest({ columns, constraints, keys }) !== schemaDigest)
+  if (digest({ columns, constraints, keys }) !== digest(schema))
     throw new Error(
       "Database schema differs from the reviewed snapshot schema. Review new tables, columns or constraints before exporting/restoring.",
     );

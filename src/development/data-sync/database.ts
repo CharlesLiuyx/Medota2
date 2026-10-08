@@ -14,6 +14,8 @@ import {
   assertTextRow,
   restoreOrder,
   cyclicResults,
+  schemaTables,
+  type ReviewedSchema,
 } from "./schema";
 import {
   canonical,
@@ -33,11 +35,14 @@ export async function migrationDigest(): Promise<string> {
 }
 export async function assertMigrations(
   reader: VerifiedReadSnapshot,
+  reviewed?: { id: string; sha256: string }[],
 ): Promise<void> {
-  const expected = (await listMigrations()).map(({ id, sha256 }) => ({
-    id,
-    sha256,
-  }));
+  const expected =
+    reviewed ??
+    (await listMigrations()).map(({ id, sha256 }) => ({
+      id,
+      sha256,
+    }));
   const actual = (
     await reader.query(
       "SELECT migration_id AS id,file_sha256 AS sha256 FROM public.schema_migrations ORDER BY migration_id",
@@ -50,6 +55,10 @@ export async function assertMigrations(
 export async function collectDatabase(
   reader: VerifiedReadSnapshot,
   root?: string,
+  inspection?: {
+    schema: ReviewedSchema;
+    migrations: { id: string; sha256: string }[];
+  },
 ): Promise<{
   tables: SnapshotManifest["tables"];
   objects: FileIdentity[];
@@ -57,8 +66,12 @@ export async function collectDatabase(
   sourceRows: TextRow[];
   sourceFileRows: TextRow[];
 }> {
-  await assertReviewedSchema(reader);
-  await assertMigrations(reader);
+  if (root && inspection)
+    throw new Error(
+      "Historical schemas support read-only inspection, not export.",
+    );
+  await assertReviewedSchema(reader, inspection?.schema);
+  await assertMigrations(reader, inspection?.migrations);
   const unfinished = await reader.query(
     "SELECT count(*)::int AS n FROM public.import_runs WHERE status NOT IN ('succeeded','failed')",
   );
@@ -74,7 +87,7 @@ export async function collectDatabase(
     sourceFileRows: [],
   };
   const objects = new Map<string, FileIdentity>();
-  for (const table of tables) {
+  for (const table of inspection ? schemaTables(inspection.schema) : tables) {
     const inspectAssets = table.name === "asset_blobs" && !root;
     const chunks: FileIdentity[] = [];
     let total = 0,

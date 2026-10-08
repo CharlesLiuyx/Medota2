@@ -12,6 +12,10 @@ import { exportSnapshot } from "./snapshot";
 import { digest } from "./protocol";
 import { atomicJson } from "./files";
 import { inspectMaps, mapDigest } from "./maps";
+import { readFile } from "node:fs/promises";
+import { listMigrations } from "@/server/db/migrations";
+import { reviewedInspectionContract } from "./inspection-schema";
+import { manifestSchema, snapshotId } from "./protocol";
 const execute = promisify(execFile);
 export async function taskProcess<T>(
   task: string,
@@ -49,7 +53,27 @@ export async function taskProcess<T>(
 export async function inspectDatabase() {
   const db = await openVerifiedDatabase({ role: "web", operation: "read" });
   try {
-    const content = await db.readSnapshot((reader) => collectDatabase(reader));
+    const active = readActiveSnapshot();
+    let contract: ReturnType<typeof reviewedInspectionContract>;
+    if (active) {
+      const bytes = await readFile(
+        active.snapshotManifestPath ??
+          resolve(active.lease.stateDirectory, "../manifest.json"),
+      );
+      const manifest = manifestSchema.parse(JSON.parse(bytes.toString("utf8")));
+      if (
+        snapshotId(manifest) !== active.snapshotId ||
+        manifest.databaseDigest !== active.databaseDigest
+      )
+        throw new Error("Active snapshot manifest identity mismatch.");
+      contract = reviewedInspectionContract(
+        manifest,
+        (await listMigrations()).map(({ id, sha256 }) => ({ id, sha256 })),
+      );
+    }
+    const content = await db.readSnapshot((reader) =>
+      collectDatabase(reader, undefined, contract),
+    );
     return {
       databaseDigest: digest(content.tables),
       mapDigest: mapDigest(await inspectMaps()),

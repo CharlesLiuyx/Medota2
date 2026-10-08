@@ -1,6 +1,6 @@
 # 地图视野遮挡算法 Plan / Todo
 
-状态：**近似算法、Web接入与添加模式界面修订已完成，机器检查通过，待页面人工审阅；原生地图Icon待Windows提取**。更新：2026-10-08。任务标识：`MAP-VISION-OCCLUSION`。
+状态：**近似算法、Web接入与添加模式界面修订已完成，机器检查通过，待页面人工审阅；Windows已获取6944原生图标，缺项处理与产品接入待完成**。更新：2026-10-08。任务标识：`MAP-VISION-OCCLUSION`。
 
 用户确定采用近似模型，不以游戏内精确对齐为门槛。离线算法准备后，本轮已接入Web地图的版本场景、覆盖层、来源／昼夜、砍树恢复、原因查询和取消。下方原五阶段计划保留为可选的精度升级路线，不是当前交付的前置条件。
 
@@ -131,11 +131,15 @@ Web接入和范围检查已完成，详见[Web验收](../history/2026-10-08-map-
 
 ## Windows原生小地图资产待办
 
+2026-10-09补充：当前本地交接包更新为`output/map-assets-20261009-v3.zip`，在原生v2基础上**仅新增devilesk固定提交的两张32×32透明地图守卫PNG**（侦查／岗哨），独立来源与版本未知标记，不覆盖原生图标；详见[守卫补充](../repositories/local-dota-map.md#devilesk守卫补充2026-10-09)。未导入数据库或上传。
+
 2026-10-08用户明确选择：先完成Mac界面，原生提取留给Windows。英雄图标已获用户确认；守卫当前是物品Icon，静态地图仍是符号标记，**原生替换尚未完成**。本机查找到固定来源`f4c45719314754567cb4ef4fe343bbc790a311f4`的`npc_units.txt`和`scripts/mod_textures.txt`，Mac没有完整VPK或已提取的HUD图集。未使用网上旧版或来源不明的图片代替。
 
 Windows按[原生来源手册](../repositories/local-dota-map.md)核验已登记的6944安装与CLI20.0；先确认该节标题和本机输入，路径通过参数填写，不把机器路径写进默认配置。若安装已更新，记录实际ClientVersion并独立核验，不能沿用6944标签。
 
-1. 记录`steam.inf`、`pak01_dir.vpk`与工具SHA-256；从同一主VPK提取`steam.inf`、`scripts/mod_textures.txt`、`scripts/npc/npc_units.txt`及需要的英雄定义。对照Catalog固定来源，保留原始与解码产物hash。
+**2026-10-08 Windows v2执行结果**：已补查全部41个小地图材质／36个纹理与图标注册表，219原文件VPK字节／CRC核验通过。304图集条目保留，新增36项中文用途预览和110个非树地图对象逐点清单，明确包含两类守卫、监视者、22塔和12兵营。护盾神符及受控单位的错位裁切已修正，保留原框／原图；监视者有原生注册键98，泉水mapunitname身份已确认但原图尺寸1；两个智慧圣坛仍缺有效专用键，候选图未冒充。来源与缺项见[获取记录](../repositories/local-dota-map.md#v2补全与纠正)。推荐本地v2包取代v1，尚未上传／加入业务快照；第5数据库／查询接入和第6阵营着色、两版隔离、真实浏览／缩放仍待完成。
+
+1. 记录安装旁`steam.inf`、`pak01_dir.vpk`与工具SHA-256；核对VPK内是否也有版本文件，缺失必须显式记录。从同一主VPK提取`scripts/mod_textures.txt`、`scripts/npc/npc_units.txt`及需要的英雄定义。对照Catalog固定来源，保留原始与解码产物hash。
 2. 先提取`materials/vgui/hud/minimap_sheet.vmat_c`（`-d`），按其中纹理引用定位确切的`minimap_sheet_psd_*.vtex_c`；不可凭另一个客户端文件名猜测。CLI用已有`-i <主VPK> -f <精确文件> -d --texture_decode_flags ForceLDR -o <新输出目录>`流程解码，不修改游戏文件、不在VPK旁生成缓存。
 3. 按同版本`mod_textures.txt`的x/y/width/height裁切，保留透明度和原始像素，不上采样。侦查单位`npc_dota_observer_wards`明确指向`minimap_ward_obs`，岗哨`npc_dota_sentry_wards`指向`minimap_ward_invis`；6944文本坐标分别为(576,448,64,64)和(576,512,64,64)，仍以实际核验文本为准。
 4. 建立单位用途资产引用：建筑读取其`MinimapIcon`（如tower90/45、racks90/45、ancient、lotuspool、watcher），守卫读取上述单位身份；营地／神符／商店等非单位地图对象保留独立明确映射，覆盖各营地级别、Roshan/Tormentor、传送门、神坛、泉水和前哨。缺键显式列出，不拿物品肖像或相似图冒充。单位图鉴原肖像仍独立存在，小地图使用`minimap`用途引用。

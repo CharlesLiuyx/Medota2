@@ -109,6 +109,7 @@
 | [ADR0006](adr/0006-run-scoped-verification.md)                              | reference  | 显式隔离；日常共享规则由0007修订                   |
 | [ADR0007](adr/0007-shared-development-workbench.md)                         | reference  | 共享工作台与按需验证                               |
 | [ADR0008](adr/0008-development-snapshot-restore.md)                         | reference  | 开发快照与恢复                                     |
+| [Windows开发启动记录](history/2026-10-07-windows-development-start.md)      | historical | 0010只读检查、独立恢复及本机运行对照               |
 | [主图标记录](assets/medota2-icon.md)                                        | reference  | 图片来源、选择和导出参数                           |
 | [固定Catalog审计](data/real-snapshot-audit-991daaf6.json)                   | reference  | 单次来源审计，不代表当前环境                       |
 | [开发脚手架Review](reviews/development-scaffold-review-2026-10-06.html)     | historical | 0007的方案依据                                     |

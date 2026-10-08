@@ -168,3 +168,54 @@ Valve 提供 Dota 集成的 Source 2 Filmmaker；工具通过 Dota 2 的 Worksho
 本机6944地图SHA-1仍为`412137a154d86cd4ba61da98692a5fb15e1cb79a`；复用现有文件包的2475树木与哈希绑定VHCG，离线准备64单位地面样本。算法树圆半径64和高度分层128是可调模型参数，不是Valve常量，也不采用导航阻挡半径作为视野证据。
 
 本版FGD定义`ent_fow_blocker_node.TargetNode`连线和`ent_fow_revealer.visionrange`；已抽查原生dump存在重复targetname且缺TargetNode，首版没有按文件顺序推测连线。后续Z修正已保留树木实体高度，并保留VHCG的32单位细采样和原点；2475棵树实体Z与原生采样的差值均不超过64，5万个确定性坐标的新场景查询与原生heightAt一致。专用线／区域、真正FoW高度和运行时状态继续未覆盖；有效树高128仍是近似参数，详见[Z修正验收](../history/2026-10-08-map-vision-web.md#z轴修正)。输入身份、近似口径、结果与复现见[视野准备](../work/map-vision-occlusion.md)及[验收](../history/2026-10-08-map-vision-preparation.md)。原Dataset、来源provenance与游戏文件未修改，未进行游戏内校准。
+
+## 6944 原生小地图资产获取（2026-10-08）
+
+以下首先保留v1取证结果；用户复审后的当前交付以本节末尾**v2补全与纠正**为准。
+
+环境`GofurWindowsLenovo`，代码`9603f84`加原有Windows兼容改动，业务lock为`173b0645`／数据提交`601d8a2b`。此次只获取本地资产，不导入数据库或替换页面；7.41e／6918不能借用本批6944身份。安装仍声明ClientVersion／ServerVersion 6944、SourceRevision 11085649，CLI仍为20.0.6980。输入前后SHA-256一致：
+
+| 输入                    | SHA-256                                                            |
+| ----------------------- | ------------------------------------------------------------------ |
+| 安装旁`steam.inf`       | `c1fc1855b880562832a2123312f7da5e9e2dae1ae8aefc8c39bd5d6071c77cfb` |
+| `pak01_dir.vpk`索引     | `09280034bfc7f3e978be36902189a8b1083e4c2eaaeccdb5fddee6ddfd371d83` |
+| `Source2Viewer-CLI.exe` | `a4bb4f9945db985efb2cad90a90d06867de5ba7e0447a2a4a69a07dace781028` |
+
+主VPK目录树中**没有`steam.inf`**。保留安装旁原文件，不伪称从VPK提取；它与固定来源`f4c45719314754567cb4ef4fe343bbc790a311f4`规范化换行／末尾空白后相同，原字节hash不同。其余132份文本（mod_textures、npc_units、npc_heroes及129份英雄定义）与该固定来源逐字节相同。安装美术资源是非Git来源，`source_repository/source_commit=null`；文本对照提交单独记录，不能给图片虚构Git来源。
+
+实际材质引用为`materials/vgui/hud/minimap_sheet_psd_b65d6dd9.vtex_c`（704×704）及`minimap_hero_sheet_psd_3529892a.vtex_c`（512×512）。按上文流程先以精确`*.vmat_c`的`-d`输出读取Compiled Textures，再分别保留原`*.vtex_c`及`ForceLDR`解码；材质依赖解码与精确纹理解码的RGBA完全一致。按mod_textures裁切得到304张PNG：通用图集122张、英雄图集182条，后者含变体与历史条目，**不等于182个当前英雄**。另12个additive材质条目明确排除。全部保留原尺寸／alpha，无上采样、染色或自动修边。
+
+136个原始提取文件逐一核对VPK索引、分卷原字节及CRC32通过；304张裁切图与对应图集矩形RGBA逐字节一致、均非全透明。接触表已目视检查；193个条目边缘存在非透明像素，属于审阅提示而非自动失败。尤其`minimap_rune_shield`的原x=502及`minimap_controlledcreep`的原y=60会带入邻图碎片，保留原框并列为接入前待处理；不能把机械裁切通过当成全部图片可直接上线。中性灰白像素保留，阵营染色和additive混合尚未引擎校准。
+
+68个单位定义／继承后的MinimapIcon引用中66个有图，包含守卫、塔90/45、兵营90/45、遗迹、莲花池等。侦查／岗哨坐标分别确认(576,448,64,64)、(576,512,64,64)。关键用途如下：
+
+| 地图对象                | 同版证据与边界                                                                                                          |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 双生之门                | `npc_dota_unit_twin_gate → minimap_underlord_portal`，明确单位引用                                                      |
+| 前哨                    | `npc_dota_watch_tower → minimap_miscbuilding`，不凭HUD通知图替换                                                        |
+| 营地／Roshan／Tormentor | 四级`minimap_creepcamp*`、`minimap_roshancamp`、`minimap_tormentor`；非单位对象单列语义键映射                           |
+| 神符／商店              | 11个`minimap_rune_*`语义键及shop／secretshop；出现于图集不代表当前地图一定生成                                          |
+| 监视者                  | `npc_dota_lantern → minimap_misc_building`缺键；图集中存在`minimap_watcher`，但该单位未引用，不能静默纠错或冒称明确映射 |
+| 智慧圣坛                | `npc_dota_xp_fountain → minimap_wisdom`缺键，未以XP神符代替                                                             |
+| 泉水                    | 地图类`ent_dota_fountain`与定义`dota_fountain`身份不同；后者指向ward_obs且IconSize=1，不能据此画为可见守卫图标          |
+
+本机附件为`output/native-minimap-20261008/`：raw、decoded、icons、source-comparison、unit-bindings、static-mappings、verification、manifest、接触表与复现脚本。`prepare.ts`复用当前仓库KV解析器／Sharp；`verify.mjs`读取VPK分卷核验，不写游戏。便携Node22进程局部PATH下运行`pnpm exec tsx output/native-minimap-20261008/prepare.ts`、`node output/native-minimap-20261008/verify.mjs`可重验；脚本只属于本机附件，接收方必须先另行取得资产包，不能靠Git路径访问。原始输入与每个输出的hash由包内manifest保留；本机ZIP未上传或纳入业务快照。接入和发布仍按[Windows待办](../work/map-vision-occlusion.md#windows原生小地图资产待办)第5–6步及许可／同步合同执行。
+
+### v2补全与纠正
+
+用户复审指出护盾神符错误及地图用途资产不完整。本轮补查主VPK全部41个`materials/vgui/hud/minimap_*.vmat_c`、材质实际引用的36个纹理、`scripts/minimap_icons.txt`、客户端相关字符串和8个原生HUD候选；219原文件VPK分卷字节／CRC检查通过，输入指纹保持不变。原304张图集图片继续保留，独立守卫／塔／兵营材质另列，不将不同尺寸／样式混称同一资源。
+
+- **护盾神符修正**：按可见图集单元格将x=502改为512，y=448、32×32不变；受控单位y=60改为64，x=256、64×64不变。原框、原错误裁切、审阅后框和像素hash全部保留，不上采样；这是有记录的裁切修正，不冒称引擎实测坐标。
+- **明确用途交付**：`map-assets/`与中文`map-assets-preview.png`提供36条命名资产，包括两类守卫、监视者、正／斜塔和兵营、遗迹、基地建筑、前哨、双生门、莲花池、四级营地、Roshan／Tormentor、商店、神符、兵和信使。守卫是可放置来源，未伪造为静态地图固有点位。
+- **逐对象核验**：`map-object-bindings.json`按当前6944地图原始properties登记110个非树对象（22塔、12兵营、14基地建筑、10监视者、28营地及其他），另2475棵树标为地形对象，无虚构独立图标。塔／兵营逐点通过`mapunitname`绑定对应45／90图标，不用统一符号覆盖。
+- **监视者补证**：新增`minimap_icons.txt`与固定f4c457逐字节一致，编号98明确登记`minimap_watcher`，客户端字符串亦有此键。采用该原生专用图片作审阅语义映射，原单位误键`minimap_misc_building`保持在原始清单；未声称已证明引擎覆盖逻辑。
+- **泉水结论纠正**：地图明确`mapunitname=dota_fountain`，撤回v1“身份未证实”。原引用仍是ward_obs／IconSize=1，不能显示为普通守卫；另提取原生HUD的24×24 `fountain.svg`供后续选择，标注其用途不是专用小地图图标。
+- **剩余真实缺项**：两个智慧圣坛仍引用不存在的`minimap_wisdom`；已检查主VPK清单、图标注册表／图集和同名loose覆盖。另取得`hud/timer/widsom_rune`和旧map_update智慧神符图作候选，未以神符冒充圣坛。商店原图集框的微弱边缘像素保留，独立黄色商店图另列；阵营着色与游戏内显示未校准。
+
+当前本机包`output/native-minimap-6944-20261008-v2.zip`及目录`output/native-minimap-20261008-v2/`保留完整manifest和复现脚本；顺序为`prepare.ts`（原裁切）→`augment.mjs`（修正／映射／中文预览）→`verify.mjs`→`finalize.mjs`后重新打包回读，具体参数见包内README。v1包保留对照，不再作为推荐交付。v2仍未入库、替换页面、上传或跨版填充；文档路径不等于接收方已经取得美术包。
+
+### devilesk守卫补充（2026-10-09）
+
+按用户收窄后的范围，v3只在v2基础上新增[devilesk/dota-interactive-map](https://github.com/devilesk/dota-interactive-map/tree/74cf2674358d941f05b0abe9003a91dd4b787d3a)固定提交`74cf2674358d941f05b0abe9003a91dd4b787d3a`的`assets/img/ward_observer.png`和`ward_sentry.png`：黄色侦查／蓝色岗哨，均为32×32透明PNG。该提交`src/js/styleDefinitions.js`的observer／sentry样式明确引用两图，锚点`[0.5,1]`。原字节、Git blob SHA-1、SHA-256、尺寸和ISC LICENSE随包保留；ClientVersion未知，不标为6944或6918，也不覆盖已有VPK眼睛式图标。没有加入该项目的其他图片。
+
+当前交接包为本机`output/map-assets-20261009-v3.zip`，新增图片在`supplements/devilesk/`；原v2文件除说明／总manifest外逐文件hash不变，707个manifest文件ZIP回读通过。SHA-256为`99cf5807c487283be97f9beeef654b7ac0093f190aaf4ea0f380dddbabfa1dca`，大小10,751,203字节。原生取证脚本仍归属v2，不能用旧finalize覆盖v3清单。未入库、改页面、上传或发布。
