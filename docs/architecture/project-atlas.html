@@ -1335,7 +1335,7 @@
     <div class="page">
       <main>
         <header class="hero">
-          <div class="eyebrow">MEDOTA2 / PROJECT ATLAS / 2026.10.07</div>
+          <div class="eyebrow">MEDOTA2 / PROJECT ATLAS / 2026.10.08</div>
           <h1>项目现在如何运转</h1>
           <p class="lead">
             一个以可追溯数据为基础的本地图鉴平台：<b
@@ -1343,8 +1343,8 @@
             >
           </p>
           <div class="baseline">
-            发布核验基线：2026-10-07 17:25:21（新加坡） · 代码
-            <code>36f310f</code> · 快照 <code>6577aa14e3dd…</code> ·
+            发布核验基线：2026-10-08 12:23:20（新加坡） · 代码
+            <code>de9e513</code> · 快照 <code>6577aa14e3dd…</code> ·
             <b>in-sync</b>
           </div>
           <p class="note">
@@ -1400,15 +1400,18 @@
               <div>
                 <h3>平台与后续方向</h3>
                 <p>
-                  Mac 已有 10 月 7 日组合验收记录；Windows
+                  Mac 已有 10 月 8 日组合验收记录；Windows
                   浏览崩溃与原生构建异常待复验。比赛、玩家、实时对局、replay、远程
                   production 尚未落地。
                 </p>
               </div>
             </div>
             <p class="note">
-              数据状态引用页首所标时间的核验，图示按当前代码复核；产品验收引用仓库现有记录。2026-10-07
-              的图谱整理仅验证文档与交互结构，未重跑产品全套测试；实时状态需重新核验。
+              数据状态引用页首所标时间的核验，图示按当前代码复核。2026-10-08
+              组合检查通过420单元、11fixture浏览、15真实浏览与23数据库合同；最终浏览无flaky。页面人工审阅、Windows复验与引擎机制核验仍待完成，见<a
+                href="../history/2026-10-08-main-publication.md"
+                >本轮发布验收</a
+              >；实时状态需重新核验。
             </p>
           </div>
         </section>
@@ -2751,8 +2754,8 @@
                     data-name="1 · 固定候选并验证"
                     data-definition="固定全部代码和数据候选，按远端基线执行检查。"
                     data-why="让通过结果对应这次发布的准确内容。"
-                    data-detail="先核对依赖归属和远端；保存候选提交后执行fixture与真实旅程。输入变化停止后续检查；并行编辑应提前使用独立工作区。"
-                    data-files='["src/workers/push.ts", "src/development/publication/candidate.ts", "src/workers/run-check.ts"]'
+                    data-detail="先核对依赖归属和远端；保存候选提交后执行fixture与真实旅程。浏览预热目录／首条详情及客户端脚本块，保留原导航断言与时限。输入变化停止后续检查；并行编辑应提前使用独立工作区。"
+                    data-files='["src/workers/push.ts", "src/development/publication/candidate.ts", "src/workers/run-check.ts", "tests/helpers/warm-browser-server.ts"]'
                     data-node-id="sync-graph-commit"
                     aria-pressed="false"
                   >
@@ -2953,9 +2956,9 @@
                   <b>已有证据</b>
                   <p>
                     Mac 在本页标注时间核验为
-                    in-sync，代码与37表完整快照已发布，全部6342对象独立回取核验通过，见<a
-                      href="../history/2026-10-07-main-publication.md"
-                      >发布验收</a
+                    in-sync，代码与37表完整快照已发布；本轮复用已有不可变快照，6342对象哈希复核通过，见<a
+                      href="../history/2026-10-08-main-publication.md"
+                      >本轮发布验收</a
                     >。Windows
                     已有恢复与导出回验记录，浏览崩溃及原生构建异常仍待复验；云端完整验收待完成。
                   </p>

@@ -97,6 +97,8 @@ pnpm verify                     # 显式全量诊断，包含覆盖率
 
 日常固定数据测试复用一套 PostgreSQL，相关写入排队；浏览器状态和报告每次独立。测试 API 固定数据版本，相关代码或数据变化时结果作废。`check` 的证据位于 `.medota2/checks/`，测试报告位于 `.medota2/shared-tests/runs/`；独立验证仍在 `.medota2/test-runs/`。
 
+浏览流程globalSetup会只读预热目录／首条详情及其客户端脚本块，排除开发编译耗时后仍使用原导航断言与时限；此步骤只获取当前同源页面引用的Next静态脚本，按URL去重。
+
 CI 在安装 Chromium 或准备数据库前计算范围，调用同一个 `pnpm check`，并取消同分支已过期的运行。仅完整输入与执行条件一致时复用结果；本地与 CI 分别记录。默认无覆盖率门槛。
 
 `release` 当前只准备 `.medota2/releases/` 下的 Web 产物，并用固定测试数据做启动检查。构建完成钩子在 standalone 复制前移除本地状态、旧构建和测试输出的追踪引用，兼容 Windows 路径；发布复制前再次检查边界，Windows 使用普通文件副本，失败时清理 `app/` 与验收副本。远程部署目标尚未配置。计算引擎、独立部署单元和大型调度按实际需要扩展。详见[开发工作台规范](../specs/development-workbench.md)。

@@ -130,6 +130,7 @@
 | [地图紧凑UI](history/2026-10-07-map-compact-ui.md)                          | historical | 本轮布局与验证                                     |
 | [地图顶栏分组](history/2026-10-08-map-toolbar.md)                           | historical | 顶栏收窄、状态分组、工具轨与属性栏上移及本机验证   |
 | [地图工具栏移左](history/2026-10-08-map-left-tools.md)                      | historical | 工具移左、顶部湍流开关、缩放数字复位与地图视区加高 |
+| [2026-10-08全部本地变更发布](history/2026-10-08-main-publication.md)        | historical | 本轮组合检查、完整快照、精确提交CI及接手边界       |
 | [发布流程优化](history/2026-10-07-publication-optimization.md)              | reference  | 候选门禁、fixture前置、阶段收据、CI续接与验证边界  |
 | [数据库读取稳定性](history/2026-10-08-database-read-resilience.md)          | reference  | 变化页池等待超时、端点快照、连接恢复及本机测量     |
 | [开发反馈修复](history/2026-10-07-development-feedback.md)                  | reference  | 扩展干扰、扫描边界、编译器与隐藏视口验收           |
