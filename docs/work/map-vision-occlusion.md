@@ -131,7 +131,7 @@ Web接入和范围检查已完成，详见[Web验收](../history/2026-10-08-map-
 
 ## Windows原生小地图资产待办
 
-2026-10-09补充：当前本地交接包更新为`output/map-assets-20261009-v3.zip`，在原生v2基础上**仅新增devilesk固定提交的两张32×32透明地图守卫PNG**（侦查／岗哨），独立来源与版本未知标记，不覆盖原生图标；详见[守卫补充](../repositories/local-dota-map.md#devilesk守卫补充2026-10-09)。未导入数据库或上传。
+2026-10-09补充：当前本地交接包更新为`output/map-assets-20261009-v3.zip`，在原生v2基础上**仅新增devilesk固定提交的两张32×32透明地图守卫PNG**（侦查／岗哨），独立来源与版本未知标记，不覆盖原生图标；详见[守卫补充](../repositories/local-dota-map.md#devilesk守卫补充2026-10-09)。完整v3包已上传私有数据远端，独立回下载SHA-256及707个manifest文件通过；按[独立资产包交接](../development-data-sync-runbook.md#独立资产包交接)获取。尚未导入数据库或接入页面，`pnpm sync`不会自动下载该独立附件。
 
 2026-10-08用户明确选择：先完成Mac界面，原生提取留给Windows。英雄图标已获用户确认；守卫当前是物品Icon，静态地图仍是符号标记，**原生替换尚未完成**。本机查找到固定来源`f4c45719314754567cb4ef4fe343bbc790a311f4`的`npc_units.txt`和`scripts/mod_textures.txt`，Mac没有完整VPK或已提取的HUD图集。未使用网上旧版或来源不明的图片代替。
 

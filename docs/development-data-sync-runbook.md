@@ -116,3 +116,17 @@ pnpm push --resume     # 只回读已保存提交并续接CI确认，不提交�
 5. 发布前重新 fetch 目标代码分支，确认它仍等于批准基线。远端已推进则重新核对数据祖先和 schema，不通过强制推送覆盖并发工作。
 
 所有受支持代码版本引用的数据 commit 与 LFS 对象都需要保留。不要自动 force push、清空历史或删除旧对象。`data:export`／`data:bundle`仍只准备本机产物；只有显式 `data:publish`／`push` 执行上述发布动作，没有后台上传、自动合并或远端垃圾清理服务。
+
+## 独立资产包交接
+
+尚未入库的取证资产包可以在用户明确授权其资源范围后，作为既有私有数据仓库的独立Release附件交接；不写入公开代码仓库，也不冒充数据库快照或改变业务lock。`pnpm sync`只消费已入库的业务快照，不自动下载独立附件。接收方需要该私有仓库的读取权限和已认证的GitHub CLI。
+
+当前[地图资产v3附件](https://github.com/CharlesLiuyx/Medota2-dev-data/releases/tag/map-assets-20261009-v3)包含原生6944资产、修正裁切和仅两张devilesk守卫补充；来源、许可及边界见[来源记录](repositories/local-dota-map.md#devilesk守卫补充2026-10-09)。完整ZIP大小10,751,203字节，SHA-256为`99cf5807c487283be97f9beeef654b7ac0093f190aaf4ea0f380dddbabfa1dca`。2026-10-09已独立回下载并逐一核对707个manifest文件。
+
+在目标工作区下载：
+
+```sh
+gh release download map-assets-20261009-v3 -R CharlesLiuyx/Medota2-dev-data -p 'map-assets-20261009-v3.zip*' -D output
+```
+
+Windows用`Get-FileHash output/map-assets-20261009-v3.zip -Algorithm SHA256`核对；macOS用`shasum -a 256 output/map-assets-20261009-v3.zip`，Linux用`sha256sum output/map-assets-20261009-v3.zip`。摘要必须与上方及随附清单一致，再解压到新的目录。此下载不修改数据库、地图版本或页面；后续用途导入独立实施。新版本使用新tag和文件名，保留已交接版本，不覆盖现有附件。
