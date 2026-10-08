@@ -2,7 +2,7 @@
 
 ## 产品与边界
 
-本地 Dota 2 数据与图鉴平台，资料保留版本和来源。已有简体中文／英语界面、Release浏览与Diff、Hero Catalog v2、英雄／技能／单位／物品／属性图鉴、独立图片资产、地图与静态寻路、浏览器缓存、共享工作台及业务快照同步。比赛、玩家、实时对局、replay和远程production尚未落地。
+本地 Dota 2 数据与图鉴平台，资料保留版本和来源。已有简体中文／英语界面、Release浏览与Diff、Hero Catalog v2、英雄／技能／单位／物品／属性图鉴、独立图片资产、地图、静态寻路与近似地面视野、浏览器缓存、共享工作台及业务快照同步。比赛、玩家、实时对局、replay和远程production尚未落地。
 
 单位与物品仍是匹配Catalog固定Git来源的只读模型；地图使用独立文件包。[数据流](docs/architecture/data-flow.md)维护版本与存储关系，活动状态见[current](docs/current.md)，专项合同按[导航](docs/README.md#按任务读取)。
 

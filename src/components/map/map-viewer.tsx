@@ -18,8 +18,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import {
+  VisionController,
+  type VisionPlanner,
+  drawVision,
+  type VisionTexture,
+} from "./vision-panel";
 import { TerrainLegend } from "./terrain-legend";
 import { MapEconomyPanel } from "./economy-panel";
+import { CampHoverCard } from "./camp-hover-card";
 import { RoutePanel, useRoutePlanner } from "./route-planner";
 import { currentField } from "@/domain/map/currents";
 import {
@@ -107,6 +114,12 @@ export function MapViewer({
   const locale = useLocale();
   const planner = useRoutePlanner(data);
   const routeFrame = useRef(planner);
+  const [visionEnabled, setVisionEnabled] = useState(false);
+  const [visionAdding, setVisionAdding] = useState(false);
+  const sightFrame = useRef<{
+    sight: VisionPlanner;
+    texture: VisionTexture | null;
+  }>({ sight: null!, texture: null });
   const [campLayerHover, setCampLayerHover] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
@@ -143,9 +156,9 @@ export function MapViewer({
   const [measurement, setMeasurement] = useState<Position[]>([]);
   const [zoom, setZoom] = useState(1);
   const [time, setTime] = useState(0);
-  const [showGold, setShowGold] = useState(true);
+  const [showGold, setShowGold] = useState(false);
   const [showExperience, setShowExperience] = useState(false);
-  const [showTimings, setShowTimings] = useState(true);
+  const [showTimings, setShowTimings] = useState(false);
   const [showLanes, setShowLanes] = useState(true);
   const [showCurrents, setShowCurrents] = useState(false);
   const [barracks, setBarracks] = useState<BarracksState>("normal");
@@ -158,6 +171,29 @@ export function MapViewer({
   const [terrainLayer, setTerrainLayer] = useState<string>("");
   const [terrainError, setTerrainError] = useState(false);
   const redraw = useRef<() => void>(() => {});
+  const updateVisionFrame = useCallback(
+    (
+      planner: VisionPlanner,
+      texture: VisionTexture | null,
+      repaint: boolean,
+    ) => {
+      const changed = sightFrame.current.sight?.enabled !== planner.enabled;
+      const adding = planner.enabled && planner.tool === "add";
+      const wasAdding =
+        sightFrame.current.sight?.enabled &&
+        sightFrame.current.sight?.tool === "add";
+      const enteringAdd = adding && !wasAdding;
+      if (adding !== !!wasAdding) setVisionAdding(adding);
+      sightFrame.current = { sight: planner, texture };
+      if (changed) setVisionEnabled(planner.enabled);
+      if (enteringAdd) {
+        controls.current?.hover(null);
+        setCampLayerHover(false);
+      }
+      if (repaint) redraw.current();
+    },
+    [],
+  );
   useLayoutEffect(() => {
     routeFrame.current = planner;
   });
@@ -428,6 +464,64 @@ export function MapViewer({
       dragged = false;
     let last: Position | null = null;
     const pointers = new Map<number, Position>();
+    let visionDrag: {
+      id: string;
+      pointerId: number;
+      start: Position;
+      original: Position;
+      position: Position;
+      moving: boolean;
+    } | null = null;
+    let previewTimer: ReturnType<typeof setTimeout> | null = null;
+    let queuedPreview: { id: string; position: Position } | null = null;
+    const queuePreview = (value: typeof queuedPreview) => {
+      queuedPreview = value;
+      if (!value) {
+        if (previewTimer) clearTimeout(previewTimer);
+        previewTimer = null;
+        sightFrame.current.sight.setPreview(null);
+      } else if (!previewTimer) {
+        previewTimer = setTimeout(() => {
+          previewTimer = null;
+          sightFrame.current.sight.setPreview(queuedPreview);
+        }, 0);
+      }
+    };
+    const sourceAt = (position: Position) => {
+      const sight = sightFrame.current.sight;
+      if (
+        !sight.enabled ||
+        sight.tool !== null ||
+        live.current.measure ||
+        routeFrame.current.enabled
+      )
+        return null;
+      return (
+        [...sight.visibleSources]
+          .reverse()
+          .map((source) => ({
+            source,
+            distance: Math.hypot(
+              screen(source).x - position.x,
+              screen(source).y - position.y,
+            ),
+          }))
+          .filter(
+            (hit) =>
+              hit.distance <= Math.max(14, 32 * scale * camera.current.zoom),
+          )
+          .sort((a, b) => a.distance - b.distance)[0]?.source ?? null
+      );
+    };
+    const cancelVisionDrag = () => {
+      if (!visionDrag) return;
+      queuePreview(null);
+      if (visionDrag.moving) sightFrame.current.sight.endDrag(visionDrag.id);
+      pointers.delete(visionDrag.pointerId);
+      visionDrag = null;
+      last = null;
+      schedule();
+    };
     const lookup = pointIndex(markers);
     const screen = (p: Position) =>
       toScreen(p.x, p.y, camera.current, scale, width, height);
@@ -605,9 +699,9 @@ export function MapViewer({
         ctx.font = "10px system-ui";
         ctx.textAlign = "center";
         const point = byId.get(pointId);
-        if (!point || !labels.gold) return;
+        if (!point) return;
         const at = screen(point),
-          label = labels.gold;
+          label = labels.gold ?? t("未收录");
         if (
           at.x < -160 ||
           at.y < -30 ||
@@ -615,7 +709,7 @@ export function MapViewer({
           at.y > height + 100
         )
           return;
-        if (!extra && showGold) {
+        if (extra || showGold) {
           ctx.fillStyle = "#091219dc";
           const half = textWidth(label) / 2 + 3;
           ctx.fillRect(at.x - half, at.y - 25, half * 2, 14);
@@ -623,17 +717,16 @@ export function MapViewer({
           ctx.fillText(label, at.x, at.y - 18);
         }
         let labelOffset = 34;
-        if (showTimings) {
-          for (const line of labels.timing) {
-            if (!extra) {
-              const half = textWidth(line) / 2 + 3;
-              ctx.fillStyle = "#091219f2";
-              ctx.fillRect(at.x - half, at.y - labelOffset - 8, half * 2, 15);
-              ctx.fillStyle = "#d7ead5";
-              ctx.fillText(line, at.x, at.y - labelOffset);
-            }
-            labelOffset += 16;
+        for (const line of labels.timing) {
+          if (extra || showTimings) {
+            const half = textWidth(line) / 2 + 3;
+            ctx.fillStyle = "#091219f2";
+            ctx.fillRect(at.x - half, at.y - labelOffset - 8, half * 2, 15);
+            ctx.fillStyle = "#d7ead5";
+            ctx.fillText(line, at.x, at.y - labelOffset);
           }
+          // Keep XP in the same slot when hover reveals the timing rows.
+          labelOffset += 16;
         }
         if (extra || showExperience) {
           const xp = t("经验 {value0}", {
@@ -895,6 +988,15 @@ export function MapViewer({
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.drawImage(background, 0, 0);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawVision(
+        ctx,
+        sightFrame.current.sight,
+        sightFrame.current.texture,
+        screen,
+        data,
+        visionDrag ?? undefined,
+      );
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       if (layers.has("camp")) {
@@ -994,13 +1096,9 @@ export function MapViewer({
         ctx.restore();
       }
       for (const zone of activeZones) drawZone(zone, true);
-      if (!showExperience)
-        for (const [id, labels] of campLabels)
-          if (
-            campLayerHover ||
-            (byId.has(id) && activeCamps.has(byId.get(id)!))
-          )
-            drawCampLabel(id, labels, true);
+      for (const [id, labels] of campLabels)
+        if (campLayerHover || (byId.has(id) && activeCamps.has(byId.get(id)!)))
+          drawCampLabel(id, labels, true);
       for (const label of zoneLabels) {
         ctx.font = "10px system-ui";
         ctx.textAlign = "center";
@@ -1234,7 +1332,7 @@ export function MapViewer({
     };
     const down = (e: PointerEvent) => {
       leave();
-      if (e.button !== 0) return;
+      if (e.button !== 0 || visionDrag) return;
       canvas.focus({ preventScroll: true });
       canvas.setPointerCapture(e.pointerId);
       const p = point(e);
@@ -1242,9 +1340,74 @@ export function MapViewer({
       last = p;
       if (pointers.size === 1) dragged = false;
       else dragged = true;
+      const source = pointers.size === 1 ? sourceAt(p) : null;
+      if (source) {
+        visionDrag = {
+          id: source.id,
+          pointerId: e.pointerId,
+          start: p,
+          original: { x: source.x, y: source.y },
+          position: { x: source.x, y: source.y },
+          moving: false,
+        };
+        sightFrame.current.sight.selectSource(source.id);
+        setSelected(null);
+        schedule();
+      }
     };
     const move = (e: PointerEvent) => {
       const p = point(e);
+      if (visionDrag && visionDrag.pointerId === e.pointerId) {
+        if (
+          !visionDrag.moving &&
+          Math.hypot(p.x - visionDrag.start.x, p.y - visionDrag.start.y) <= 3
+        )
+          return;
+        if (!visionDrag.moving) sightFrame.current.sight.beginDrag();
+        visionDrag.moving = true;
+        const start = world(visionDrag.start),
+          current = world(p);
+        visionDrag.position = sightFrame.current.sight.snap({
+          x: Math.max(
+            data.bounds.minX,
+            Math.min(
+              data.bounds.maxX - 1,
+              visionDrag.original.x + current.x - start.x,
+            ),
+          ),
+          y: Math.max(
+            data.bounds.minY,
+            Math.min(
+              data.bounds.maxY - 1,
+              visionDrag.original.y + current.y - start.y,
+            ),
+          ),
+        });
+        queuePreview({ id: visionDrag.id, position: visionDrag.position });
+        canvas.style.cursor = "grabbing";
+        schedule();
+        return;
+      }
+      const planner = sightFrame.current.sight;
+      if (
+        !pointers.size &&
+        planner.enabled &&
+        planner.tool === "add" &&
+        !sourceAt(p)
+      ) {
+        const at = world(p);
+        queuePreview(
+          at.x >= data.bounds.minX &&
+            at.x < data.bounds.maxX &&
+            at.y >= data.bounds.minY &&
+            at.y < data.bounds.maxY
+            ? {
+                id: "cursor",
+                position: { x: Math.round(at.x), y: Math.round(at.y) },
+              }
+            : null,
+        );
+      } else if (!pointers.size) queuePreview(null);
       if (pointers.has(e.pointerId)) {
         const before = [...pointers.values()];
         pointers.set(e.pointerId, p);
@@ -1293,8 +1456,12 @@ export function MapViewer({
       schedule(routeFrame.current.enabled && routeFrame.current.drafting);
     };
     function updateHover(p: Position) {
-      const target = hit(p);
+      const adding =
+        sightFrame.current.sight.enabled &&
+        sightFrame.current.sight.tool === "add";
+      const target = adding ? null : hit(p);
       const candidates =
+        !adding &&
         !target &&
         !live.current.measure &&
         !routeFrame.current.enabled &&
@@ -1325,9 +1492,11 @@ export function MapViewer({
         setHovered(target);
         paintNeeded = true;
       }
-      canvas!.style.cursor =
-        live.current.measure ||
-        (routeFrame.current.enabled && routeFrame.current.drafting)
+      canvas!.style.cursor = sourceAt(p)
+        ? "grab"
+        : sightFrame.current.sight.tool ||
+            live.current.measure ||
+            (routeFrame.current.enabled && routeFrame.current.drafting)
           ? "crosshair"
           : target ||
               laneIds.length ||
@@ -1337,9 +1506,37 @@ export function MapViewer({
     }
     const up = (e: PointerEvent) => {
       if (!pointers.has(e.pointerId)) return;
+      if (visionDrag && visionDrag.pointerId === e.pointerId) {
+        queuePreview(null);
+        const drag = visionDrag;
+        visionDrag = null;
+        pointers.delete(e.pointerId);
+        if (drag.moving)
+          sightFrame.current.sight.endDrag(
+            drag.id,
+            e.type === "pointercancel" ? undefined : drag.position,
+          );
+        last = null;
+        canvas.style.cursor = "grab";
+        schedule();
+        return;
+      }
       pointers.delete(e.pointerId);
       if (e.type === "pointerup" && !dragged) {
-        if (live.current.measure || routeFrame.current.enabled) {
+        const position = world(point(e));
+        const rounded = {
+          x: Math.round(position.x),
+          y: Math.round(position.y),
+        };
+        if (
+          rounded.x >= data.bounds.minX &&
+          rounded.x < data.bounds.maxX &&
+          rounded.y >= data.bounds.minY &&
+          rounded.y < data.bounds.maxY &&
+          sightFrame.current.sight.pick(rounded, hit(point(e)))
+        ) {
+          schedule();
+        } else if (live.current.measure || routeFrame.current.enabled) {
           const w = world(point(e));
           if (
             w.x >= data.bounds.minX &&
@@ -1397,6 +1594,7 @@ export function MapViewer({
     };
     const wheel = (e: WheelEvent) => {
       e.preventDefault();
+      if (visionDrag) return;
       leave();
       const p = point(e);
       camera.current = zoomAt(
@@ -1436,6 +1634,10 @@ export function MapViewer({
       schedule();
     };
     const key = (e: KeyboardEvent) => {
+      if (visionDrag) {
+        e.preventDefault();
+        return;
+      }
       if (
         [
           "ArrowLeft",
@@ -1454,6 +1656,7 @@ export function MapViewer({
       else if (e.key === "+" || e.key === "=") zoomBy(1.5);
       else if (e.key === "-") zoomBy(1 / 1.5);
       else if (e.key === "Escape") {
+        sightFrame.current.sight.stop();
         setSelected(null);
         setMeasurement([]);
         if (routeFrame.current.enabled) routeFrame.current.stop();
@@ -1469,6 +1672,7 @@ export function MapViewer({
       }
     };
     const leave = () => {
+      if (!visionDrag) queuePreview(null);
       if (pointerHint) {
         pointerHint = null;
         schedule();
@@ -1487,6 +1691,11 @@ export function MapViewer({
       reset,
       zoom: zoomBy,
       hover: (p) => {
+        if (
+          sightFrame.current.sight.enabled &&
+          sightFrame.current.sight.tool === "add"
+        )
+          p = null;
         pendingHover = null;
         if (hoverId === (p?.id ?? null) && !laneHover.current.length) return;
         hoverId = p?.id ?? null;
@@ -1509,7 +1718,18 @@ export function MapViewer({
     };
     const exitTool = (e: KeyboardEvent | MouseEvent) => {
       if (e.type === "keydown" && (e as KeyboardEvent).key !== "Escape") return;
-      if (!live.current.measure && !routeFrame.current.enabled) return;
+      if (visionDrag) {
+        e.preventDefault();
+        cancelVisionDrag();
+        return;
+      }
+      if (
+        !live.current.measure &&
+        !routeFrame.current.enabled &&
+        !sightFrame.current.sight.tool
+      )
+        return;
+      sightFrame.current.sight.stop();
       e.preventDefault();
       setMeasure(false);
       setMeasurement([]);
@@ -1531,6 +1751,7 @@ export function MapViewer({
     observer.observe(host);
     resize();
     return () => {
+      if (previewTimer) clearTimeout(previewTimer);
       document.removeEventListener("keydown", exitTool, true);
       document.removeEventListener("contextmenu", exitTool);
       observer.disconnect();
@@ -1970,6 +2191,7 @@ export function MapViewer({
                   className={`${buttonStyle} !px-1 !py-1.5 !text-[10px] ${measure ? activeToolStyle : ""}`}
                   aria-pressed={measure}
                   onClick={() => {
+                    sightFrame.current.sight.stop();
                     setMeasure(!measure);
                     planner.stop();
                     setMeasurement([]);
@@ -1981,12 +2203,25 @@ export function MapViewer({
                   className={`${buttonStyle} !px-1 !py-1.5 !text-[10px] ${planner.enabled ? activeToolStyle : ""}`}
                   aria-pressed={planner.enabled}
                   onClick={() => {
+                    sightFrame.current.sight.stop();
                     planner.toggle();
                     setMeasure(false);
                     setMeasurement([]);
                   }}
                 >
                   {t("寻路")}
+                </button>
+                <button
+                  className={`${buttonStyle} !px-1 !text-[10px] ${visionEnabled ? activeToolStyle : ""}`}
+                  disabled={!data.visionScene}
+                  aria-pressed={visionEnabled}
+                  onClick={() => {
+                    sightFrame.current.sight.toggle();
+                    planner.stop();
+                    setMeasure(false);
+                  }}
+                >
+                  {t("视野")}
                 </button>
               </div>
             </div>
@@ -2054,7 +2289,25 @@ export function MapViewer({
             </p>
           </section>
         </div>
-        <aside aria-label={t("选中对象属性与操作")} className="min-w-0 text-xs">
+        <aside
+          aria-label={t("选中对象属性与操作")}
+          className="relative min-w-0 text-xs"
+        >
+          {!measure &&
+            !planner.enabled &&
+            !visionAdding &&
+            hovered?.kind === "camp" && (
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-20">
+                <CampHoverCard
+                  data={data}
+                  point={hovered}
+                  time={time}
+                  includeChildren={includeChildren}
+                  gold={hoveredCampLabels?.gold ?? null}
+                  xp={hoveredCampLabels?.xp ?? t("未收录")}
+                />
+              </div>
+            )}
           {measurement.length > 0 && (
             <section
               aria-label={t("地图操作")}
@@ -2070,6 +2323,15 @@ export function MapViewer({
               )}
             </section>
           )}
+          <VisionController
+            onFrame={updateVisionFrame}
+            selected={selected}
+            data={data}
+            activate={() => {
+              planner.stop();
+              setMeasure(false);
+            }}
+          />
           <RoutePanel planner={planner} data={data} />
           <TerrainLegend layer={terrainLayer} />
           <TerrainLegend layer={showCurrents ? "currents" : ""} />
@@ -2346,13 +2608,27 @@ export function MapViewer({
                 <label
                   key={kind}
                   onPointerEnter={() => {
-                    if (kind === "camp") setCampLayerHover(true);
+                    if (
+                      kind === "camp" &&
+                      !(
+                        sightFrame.current.sight.enabled &&
+                        sightFrame.current.sight.tool === "add"
+                      )
+                    )
+                      setCampLayerHover(true);
                   }}
                   onPointerLeave={() => {
                     if (kind === "camp") setCampLayerHover(false);
                   }}
                   onFocus={() => {
-                    if (kind === "camp") setCampLayerHover(true);
+                    if (
+                      kind === "camp" &&
+                      !(
+                        sightFrame.current.sight.enabled &&
+                        sightFrame.current.sight.tool === "add"
+                      )
+                    )
+                      setCampLayerHover(true);
                   }}
                   onBlur={() => {
                     if (kind === "camp") setCampLayerHover(false);

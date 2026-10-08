@@ -39,12 +39,12 @@ export function AppShell({
               aria-label={mapOnly ? t("Medota2 地图") : t("Medota2 英雄图鉴")}
             >
               <Image
-                src="/brand/medota2-rook-knight.png"
+                src="/brand/medota2-flowing-m.png"
                 alt=""
-                width={22}
-                height={22}
+                width={20}
+                height={20}
                 priority
-                className="size-[22px] object-contain"
+                className="size-5 shrink-0 object-contain"
               />
               <strong className="hidden text-xs font-semibold tracking-wide sm:inline">
                 Medota2

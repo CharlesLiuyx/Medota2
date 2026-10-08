@@ -208,6 +208,16 @@ export const mapPackageSchema = z
   });
 export type MapPackage = z.infer<typeof mapPackageSchema>;
 export type MapViewData = {
+  visionPresets?: {
+    catalogId: string;
+    clientVersion: string;
+    sourceCommit: string;
+    presets: import("./vision-sources").VisionPreset[];
+  };
+  visionScene?: {
+    scene: import("./vision").VisionScene;
+    datasetRevision: string;
+  };
   unitNames?: Record<string, { "zh-CN": string; en: string }>;
   visions?: Record<
     string,

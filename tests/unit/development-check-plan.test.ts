@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createPlan } from "../../scripts/development/check-plan.mjs";
+import {
+  createPlan,
+  warmRoutesForScopes,
+} from "../../scripts/development/check-plan.mjs";
 
 const hiddenFiles = vi.hoisted(() => new Set<string>());
 vi.mock("node:fs", async (importOriginal) => {
@@ -196,7 +199,7 @@ describe("development check scope", () => {
       "tests/e2e/heroes.spec.ts",
     ]);
   });
-  it("checks file-backed map algorithms and UI without Catalog work", () => {
+  it("checks map algorithms without Catalog work and maps interactive UI to its browser flow", () => {
     for (const file of [
       "src/domain/map/routing.ts",
       "src/components/map/map-viewer.tsx",
@@ -208,8 +211,8 @@ describe("development check scope", () => {
       expect(args).toContain("tests/unit/map-routing.test.ts");
       expect(args).toContain("tests/unit/map-viewer.test.tsx");
       expect(args).not.toContain("tests/unit/hero-adapter.test.ts");
-      expect(plan.browser).toBe(false);
-      expect(plan.database).toBe(false);
+      expect(plan.browser).toBe(file === "src/components/map/map-viewer.tsx");
+      expect(plan.tasks.some((task) => task.id === "database")).toBe(false);
       expect(plan.tasks.some((task) => task.id === "benchmark")).toBe(false);
     }
   });
@@ -402,5 +405,40 @@ it("routes reusable table changes to grouped-table coverage and changes journeys
     expect(
       selectedJourneys([path])("heroes changes: sticky merged items"),
     ).toBe(true);
+  }
+});
+
+it("includes vision lifecycle checks and the map browser flow for Web vision inputs", () => {
+  for (const path of [
+    "src/components/map/vision-panel.tsx",
+    "src/components/map/vision.worker.ts",
+    "src/server/map/vision.ts",
+  ]) {
+    const plan = createPlan([path]);
+    const unit = plan.tasks.find((task) => task.id === "unit")!;
+    expect(unit.args).toContain("tests/unit/map-vision-client.test.ts");
+    expect(unit.args).toContain("tests/unit/map-vision-panel.test.tsx");
+    const browser = plan.tasks.find((task) => task.id === "journeys")!;
+    expect(browser.args.join(" ")).toContain("map:");
+    expect(plan.tasks.some((task) => task.id === "database")).toBe(false);
+  }
+  expect(warmRoutesForScopes(["map"])).toContain("map");
+});
+
+it("keeps map presets and minimap database assets within map journeys and their import checks", () => {
+  for (const path of [
+    "src/server/map/vision-presets.ts",
+    "src/importers/valve-assets/hero-minimap-assets.ts",
+    "src/app/map/hero-icons/[key]/route.ts",
+  ]) {
+    const plan = createPlan([path]);
+    const args = plan.tasks.find((t) => t.id === "unit")!.args;
+    expect(
+      args.length === 1 ||
+        args.includes("tests/unit/hero-minimap-assets.test.ts"),
+    ).toBe(true);
+    expect(
+      plan.tasks.find((t) => t.id === "journeys")?.args.join(" "),
+    ).toContain("map:");
   }
 });

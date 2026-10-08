@@ -1387,7 +1387,7 @@
               <div>
                 <h3>已形成产品闭环</h3>
                 <p>
-                  英雄、技能、单位、物品、属性图鉴；版本化地图与静态寻路；图片入库；英雄／技能目录浏览器缓存；共享开发工作台；完整业务快照同步。
+                  英雄、技能、单位、物品、属性图鉴；版本化地图、静态寻路与近似地面视野；图片入库；英雄／技能目录浏览器缓存；共享开发工作台；完整业务快照同步。
                 </p>
               </div>
               <div>
@@ -1840,26 +1840,28 @@
                       ><b>作用</b> 多个地图版本可并存，逐文件验证完整性。</span
                     >
                   </button>
-                  <div class="edge" data-relation="选择版本后加载">
-                    <span>选择版本后加载</span><b aria-hidden="true">→</b>
+                  <div class="edge" data-relation="同一版本资源与视野场景">
+                    <span>同一版本资源与视野场景</span
+                    ><b aria-hidden="true">→</b>
                   </div>
                   <button
                     class="node"
                     data-key="page"
-                    data-name="地图浏览与静态寻路"
-                    data-definition="加载所选地图，在浏览器绘制并估算路线。"
-                    data-why="支持查看空间关系、测距和比较路线。"
-                    data-detail="紧凑地图工作区：28px顶栏统一Release版本与核验状态，时间行仅占画布宽度并保留来源说明，普通兵筛选在时间左侧，游戏状态／野区／兵线路径以细竖线分组；左侧64px地形／测距／寻路工具轨和属性栏从顶部开始，地形图例去掉顶部外边距；时间下拉压到22px，桌面地图视区增至100dvh减96px；湍流为顶部独立开关，可与导航／高度叠加；缩放移到视口左上问号右侧，点击比例数字复位100%，原右侧空竖栏删除并扩宽画布；200px属性栏，选中营地持续显示边界、名称、经验和高度；图层勾选筛选独立纵排放在对象属性下方，点位搜索与列表保留在地图下方。地图各自构建号保留，缺全局版本覆盖不混用其他地图；静态估算及引擎语义限制继续适用。已准备独立离线视野算法：选定Dataset树木与验哈希VHCG→树圆和粗高度遮挡→可见性网格；支持多来源及砍树情景，尚未接入此页面，不宣称游戏引擎一致。"
-                    data-files='["src/components/map/map-viewer.tsx", "src/components/map/terrain-legend.tsx", "src/app/globals.css", "src/components/map/route-planner.tsx", "src/components/map/header-status.tsx", "src/components/release-navigation.tsx", "src/app/map/page.tsx", "src/domain/map/routing.ts", "src/domain/map/vision.ts", "src/server/map/vision.ts", "src/workers/sample-map-vision.ts", "docs/work/map-vision-occlusion.md", "docs/specs/map-explorer.md"]'
+                    data-name="地图浏览、寻路与近似视野"
+                    data-definition="加载所选地图，绘制路线和版本绑定的近似视野。"
+                    data-why="支持查看空间关系、比较路线和解释视野遮挡。"
+                    data-detail="紧凑地图工作区：28px顶栏统一Release版本与核验状态，时间行仅占画布宽度并保留来源说明，普通兵筛选在时间左侧，游戏状态／野区／兵线路径以细竖线分组；左侧64px地形／测距／寻路工具轨和属性栏从顶部开始，地形图例去掉顶部外边距；时间下拉压到22px，桌面地图视区增至100dvh减96px；湍流为顶部独立开关，可与导航／高度叠加；缩放移到视口左上问号右侧，点击比例数字复位100%，原右侧空竖栏删除并扩宽画布；200px属性栏；进入默认金币／经验／拉叠秒数关闭、兵线路径开启、湍流关闭，时间0:00与普通兵完整兵营；悬停或选中营地完整显示金币、经验、拉叠时间、边界、名称和高度，悬停右栏以不占布局、不拦截指针的浮层补充组合与单位数量，离开恢复，预览不重建静态底图；图层勾选筛选独立纵排放在对象属性下方，点位搜索与列表保留在地图下方。地图各自构建号保留，缺全局版本覆盖不混用其他地图；静态估算及引擎语义限制继续适用。近似视野已接入：选定Dataset含Z树木与验哈希VHCG→原生细采样及接缝子格、revision核对→独立Worker v2比较来源／树木有效高度并逐格检查地形→天辉绿／夜魇粉／双方白的独立可见性网格及选点原因。最多8个来源，按阵营独立计算、独立昼夜半径、移动与砍树恢复；开启连续放置侦查守卫，Esc转选中并拖动；来源与查询对齐原生GNV的64单位格中心；英雄按同版本hull占地绘制，取消图标外框；添加预览不画Icon，屏蔽对象／营地／兵线Hover，Esc恢复；可选岗哨反隐圆及圈内敌方侦查高亮、默认斧王及搜索英雄。参数按Release选定Catalog，英雄小地图图标按Catalog/source commit清单和内容hash从本地图片库读取，不替换横版头像head；悬停与拖动实时预览，标记按帧绘制、位置按帧合并，每队一个运行任务并合并最新待算位置，松开提交坐标；顶部三项阵营选择固定一行，三段说明合并至标题右上角HoverTooltip，状态不显示计算用时；高频视野状态隔离在独立组件，避免整页重渲染；取消拖动恢复原位，静态底图不重建；场景变化撤掉旧结果并取消，任务序号隔离迟到消息，4份完整结果缓存绑定revision、算法和全部有效输入；全图高度与树木一次准备；默认单来源局部格按16MiB内存和IndexedDB存储，持久键含revision／场景准备版本／算法／格式，全库2048条且每条数组≤32KiB，来源ID不影响复用；砍树只重算相关首阻挡和未知格，恢复直接取默认值，停留后可中断地预热8邻格；取消固定33ms等待、侧栏按显示状态更新、覆盖像素裁剪到来源矩形；合并优先级及格中心与离线基准一致。切版卸载重置，语种切换保持；来源／查询显示地面Z；未知高度不能仅凭XY树圆判阻挡。旧版缺高度保留未知，不借用6944。视野砍树不修改寻路，原范围圈仍是距离参考；模型未校准引擎，不含专用FoW、肉山／飞行、隐身和时间延迟。"
+                    data-files='["src/components/map/map-viewer.tsx", "src/components/map/camp-hover-card.tsx", "src/components/map/terrain-legend.tsx", "src/app/globals.css", "src/components/map/route-planner.tsx", "src/components/map/header-status.tsx", "src/components/release-navigation.tsx", "src/app/map/page.tsx", "src/domain/map/routing.ts", "src/domain/map/vision.ts", "src/components/map/vision-panel.tsx", "src/components/map/vision-hero-picker.tsx", "src/domain/map/vision-sources.ts", "src/server/map/vision-presets.ts", "src/server/repositories/hero-map-assets.ts", "src/server/map/hero-icons.ts", "src/data/map/hero-minimap-icons.v1.json", "src/workers/import-hero-minimap-assets.ts", "src/components/map/vision-client.ts", "src/components/map/vision.worker.ts", "src/components/map/vision-tile-store.ts", "src/server/map/store.ts", "src/server/map/vision.ts", "tests/journeys/map-vision.spec.ts", "src/workers/sample-map-vision.ts", "docs/work/map-vision-occlusion.md", "docs/specs/map-explorer.md"]'
                     data-node-id="data-graph-mapview"
                     aria-pressed="false"
                   >
                     <span class="node-type">页面／报告</span
-                    ><strong>地图浏览与静态寻路</strong
+                    ><strong>地图浏览、寻路与近似视野</strong
                     ><span class="node-summary"
-                      >加载所选地图，在浏览器绘制并估算路线。</span
+                      >加载所选地图，绘制路线和版本绑定的近似视野。</span
                     ><span class="node-why"
-                      ><b>作用</b> 支持查看空间关系、测距和比较路线。</span
+                      ><b>作用</b>
+                      支持查看空间关系、比较路线和解释视野遮挡。</span
                     >
                   </button>
                 </div>
@@ -2012,7 +2014,10 @@
                 <a href="../../docs/architecture/data-flow.md">数据流合同</a> ·
                 <a href="../../docs/specs/unit-catalog.md">单位边界</a> ·
                 <a href="../../docs/specs/item-catalog.md">物品与配方边界</a> ·
-                <a href="../../docs/specs/map-explorer.md">地图边界</a>
+                <a href="../../docs/specs/map-explorer.md">地图边界</a> ·
+                <a href="../../docs/work/map-vision-occlusion.md"
+                  >近似视野与校准边界</a
+                >
               </div>
             </figure>
             <figure
@@ -4290,7 +4295,7 @@
         PostgreSQL:
           "关系数据库。持久保存目录、关系、图片以及版本指针，并用事务和约束保护一致性。",
         Worker:
-          "专门执行任务的工作进程或线程。导入任务在独立进程运行，地图寻路则放在浏览器后台线程。",
+          "专门执行任务的工作进程或线程。导入任务在独立进程运行，地图寻路与近似视野分别放在独立浏览器后台线程，支持取消和旧结果隔离。",
         LoD: "Level of Detail，多尺寸细节版本。图片按使用尺寸生成变体，减少列表加载开销。",
         CDN: "Content Delivery Network，内容分发网络。图片可以从其下载，但下载地址本身不能证明所属游戏版本。",
         QA: "Quality Assurance，质量核对。参考来源只产生差异证据，不能自动取代规范来源的数值。",

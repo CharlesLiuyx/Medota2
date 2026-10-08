@@ -72,6 +72,7 @@ for (const path of [
   ]);
 
 const journeyPatterns = {
+  map: "map:",
   heroes: "heroes:",
   abilities: "abilities:",
   tooltips: "heroes and abilities:",
@@ -149,9 +150,15 @@ const mapTests = [
   "map-versions",
   "map-vision",
   "map-vision-source",
+  "map-vision-sources",
+  "map-hero-assets",
+  "map-vision-client",
 ]
   .map((name) => `tests/unit/${name}.test.ts`)
-  .concat("tests/unit/map-viewer.test.tsx");
+  .concat(
+    "tests/unit/map-viewer.test.tsx",
+    "tests/unit/map-vision-panel.test.tsx",
+  );
 const unitTests = ["unit-adapter", "unit-source", "unit-assets"].map(
   (name) => `tests/unit/${name}.test.ts`,
 );
@@ -245,7 +252,11 @@ export function createPlan(inputPaths) {
   const flowPaths = runtimePaths.filter((path) => !focused.includes(path));
   const wide = flowPaths.some((path) => toolchain.test(path));
   const nonMap = flowPaths.filter((path) => !mapOnly.test(path));
-  const hasMap = flowPaths.some((path) => mapScope.test(path));
+  const hasMap = flowPaths.some(
+    (path) =>
+      mapScope.test(path) ||
+      /hero-minimap|hero-map-assets|vision-presets|hero-icons/.test(path),
+  );
   const hasUnits = flowPaths.some((path) => unitScope.test(path));
   const catalogData =
     wide ||
@@ -363,6 +374,10 @@ export function createPlan(inputPaths) {
       ["infinite-list", "infinite-catalog", "detail-infinite-lists"].forEach(
         (name) => unitFiles.add(`tests/unit/${name}.test.tsx`),
       );
+    if (
+      paths.some((path) => /hero-minimap|hero-icons|vision-presets/.test(path))
+    )
+      unitFiles.add("tests/unit/hero-minimap-assets.test.ts");
     if (paths.some((path) => /assets|asset-route|valve-asset/.test(path)))
       ["catalog-assets", "asset-route"].forEach((name) =>
         unitFiles.add(`tests/unit/${name}.test.ts`),
@@ -383,6 +398,18 @@ export function createPlan(inputPaths) {
       );
   }
   const journeys = new Set();
+  if (
+    wide ||
+    flowPaths.some((path) =>
+      /hero-minimap|hero-map-assets|vision-presets|hero-icons/.test(path),
+    ) ||
+    flowPaths.some((path) =>
+      /^src\/(?:components\/map\/|server\/map\/(?:store|vision)\.ts|app\/map\/)/.test(
+        path,
+      ),
+    )
+  )
+    journeys.add("map");
   const shared = flowPaths.some((path) => sharedUi.test(path));
   const localeRuntime = flowPaths.some((path) =>
     /^src\/(?:i18n\/|proxy\.ts$)/.test(path),
@@ -587,7 +614,12 @@ export function warmRoutesForScopes(scopes) {
     return allWarmRoutes;
   const modules = new Set(["heroes", "abilities"]);
   for (const scope of scopes) {
-    if (scope === "units" || scope === "items" || scope === "changes")
+    if (
+      scope === "map" ||
+      scope === "units" ||
+      scope === "items" ||
+      scope === "changes"
+    )
       modules.add(scope);
     if (scope === "attributes")
       for (const name of [

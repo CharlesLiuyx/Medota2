@@ -79,3 +79,15 @@ pnpm data:import:item-assets:local
 ## 完整版本收录
 
 未来版本更新统一收录全部产品实体。Catalog和英雄／技能图片完成后，按上节为候选准备单位图片状态和完整物品图片，并准备同补丁完整地图Collection；缺项候选继续隐藏。`data:promote:catalog`再次核对固定来源、英雄／技能／命石／关系／双语文本、完整单位／物品身份与图片状态、地图和资源校验，再应用原有Review和覆盖率门禁，详见[实体版本合同](../specs/entity-versions.md)。
+
+## 英雄小地图图标
+
+地图来源标记使用官方Steam static的`dota_react/heroes/icons/<hero>.png`，区别于图鉴横版头像。为明确的Catalog集合导入：
+
+```bash
+pnpm data:import:hero-minimap-assets:local --catalog-versions ff83d8f6-f828-4a50-a2d4-42f59624e671,3afd349f-9081-4c11-9c0d-8be765137ec9
+```
+
+开发sandbox使用`pnpm data:import:hero-minimap-assets`并传相同参数格式、该环境实际Catalog UUID。命令拒绝未知／Red／rejected Catalog，先下载完整英雄集合并验证图片与四级LoD，再事务追加现有图片对象，最后原子生成`src/data/map/hero-minimap-icons.v1.json`。清单以内容hash为版本，保留Catalog/source commit、URL及原图hash；图片metadata记录导入时间、转换器、schema及未知客户端构建。重复导入相同字节复用对象，不修改Catalog或现有资产head；失败不得留下部分清单。原生图标可能为32×31等非正方形，保留原始尺寸和透明度。
+
+没有新增migration。导入增加本机业务数据，应在`pnpm data:status`中视作本地修改；已授权交接时由完整业务快照携带数据库对象，代码只携带清单。此命令不授权上传、推送或发布Valve图片。

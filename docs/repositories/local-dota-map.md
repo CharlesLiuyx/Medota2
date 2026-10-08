@@ -167,4 +167,4 @@ Valve 提供 Dota 集成的 Source 2 Filmmaker；工具通过 Dota 2 的 Worksho
 
 本机6944地图SHA-1仍为`412137a154d86cd4ba61da98692a5fb15e1cb79a`；复用现有文件包的2475树木与哈希绑定VHCG，离线准备64单位地面样本。算法树圆半径64和高度分层128是可调模型参数，不是Valve常量，也不采用导航阻挡半径作为视野证据。
 
-本版FGD定义`ent_fow_blocker_node.TargetNode`连线和`ent_fow_revealer.visionrange`；已抽查原生dump存在重复targetname且缺TargetNode，首版没有按文件顺序推测连线。专用线／区域、树Z、真正FoW高度和运行时状态继续未覆盖。输入身份、近似口径、结果与复现见[视野准备](../work/map-vision-occlusion.md)及[验收](../history/2026-10-08-map-vision-preparation.md)。原Dataset、来源provenance与游戏文件未修改，未进行游戏内校准。
+本版FGD定义`ent_fow_blocker_node.TargetNode`连线和`ent_fow_revealer.visionrange`；已抽查原生dump存在重复targetname且缺TargetNode，首版没有按文件顺序推测连线。后续Z修正已保留树木实体高度，并保留VHCG的32单位细采样和原点；2475棵树实体Z与原生采样的差值均不超过64，5万个确定性坐标的新场景查询与原生heightAt一致。专用线／区域、真正FoW高度和运行时状态继续未覆盖；有效树高128仍是近似参数，详见[Z修正验收](../history/2026-10-08-map-vision-web.md#z轴修正)。输入身份、近似口径、结果与复现见[视野准备](../work/map-vision-occlusion.md)及[验收](../history/2026-10-08-map-vision-preparation.md)。原Dataset、来源provenance与游戏文件未修改，未进行游戏内校准。

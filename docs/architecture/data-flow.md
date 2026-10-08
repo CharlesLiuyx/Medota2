@@ -24,6 +24,9 @@ flowchart TD
     P[核验后的图片来源] --> A[独立 Asset Dataset 与 head]
     C -. Catalog 绑定 .-> A
     A --> W
+    P --> MI[英雄小地图图标对象与内容寻址清单]
+    C -. 显式Catalog及source commit绑定 .-> MI
+    MI --> W
     M[固定公开来源或原生地图资源] --> D[不可变地图文件包]
     D --> S[地图集合与显式版本选择]
     S --> W
@@ -47,7 +50,9 @@ flowchart TD
 
 Hero／Ability玩法以VPK为规范来源；dotaconstants只作QA/reference及有记录的图片路径映射。地图、图片和游戏定义可能具有不同版本证据，未确认的客户端版本保留为空。比如图鉴6918不能为地图6944或CDN图片提供隐含版本认证。
 
-地图Collection优先于单包配置；显式未知版本拒绝，不能回退另一地图。没有文件包时的有限来源读取兼容路径见[地图 Spec](../specs/map-explorer.md)。浏览器持久化当前覆盖英雄／技能目录；页面壳和未获取详情不因此完全离线。
+地图Collection优先于单包配置；显式未知版本拒绝，不能回退另一地图。没有文件包时的有限来源读取兼容路径见[地图 Spec](../specs/map-explorer.md)。视野场景在选定地图包后从含Z树木和验哈希VHCG派生，按原生细采样及格相位保留高度（必要时保存接缝子格），核对Dataset revision；算法v2按来源／树木高度和逐格地形遮挡判定；浏览器Worker输出近似网格，最多4份完整结果按revision、算法、来源及树状态缓存，全图静态场景一次准备，默认单来源局部格以内存16MiB和浏览器IndexedDB缓存（revision／场景准备版本／算法／格式键，全库2048条、每条数组≤32KiB），来源ID不影响复用，砍树只重算受影响首阻挡格及未知格，空闲预热8邻格；按阵营独立计算，悬停／拖动位置按帧合并，每队一项运行任务和最新待算位置，实时输出预览、松开提交最终位置，切版卸载，不写回Dataset或coverage。
+
+浏览器持久化当前覆盖英雄／技能目录；页面壳和未获取详情不因此完全离线。
 
 ## 跨工作区同步
 
@@ -59,7 +64,10 @@ flowchart LR
     K --> F[另一工作区获取并验证]
     F --> R[复用未变数据库或恢复独立候选]
     R --> A[原子选择数据库与来源及地图]
-    A --> W[本机Web和状态核验]
+    A --> W
+    P --> MI[英雄小地图图标对象与内容寻址清单]
+    C -. 显式Catalog及source commit绑定 .-> MI
+    MI --> W[本机Web和状态核验]
 ```
 
 | 层           | 权威与责任                                                                                                     |
@@ -90,3 +98,7 @@ flowchart LR
 ## 统一版本与变化
 
 [Release](../specs/entity-versions.md)索引组合已发布完整Catalog与有依据的地图入口；新版本先通过全实体核验，旧仅地图入口规范化为完整版本别名，URL release和顶栏为消费者选择完整状态。Catalog head仅选择默认，历史资料、资产和单位来源各自固定；图鉴和地图构建号保持独立。版本间Diff由两个完整端点投影派生，保留来源、实现升级、未知结构和覆盖缺项；当前地图区域身份与完整机制尚未覆盖。索引／比较入口为 `src/server/services/releases.ts` 与 `src/server/services/entity-version-diff.ts`，存储与同步格式复用既有快照。
+
+英雄小地图图标是用途独立的小型内容寻址清单：`hero-minimap-icons.v1.json`只保存Catalog/source commit及官方URL、原图和对象SHA-256；图片和四级LoD仍由`asset_objects`／`asset_blobs`／`asset_variants`保存。显式导入器下载并验证完整英雄集合后事务追加对象，成功后原子写清单；不更改原有头像head。地图只读接口按英雄身份、用途provider及对象hash读取，旧hash仍指向原对象，运行时离线。CDN来源的commit／客户端构建为空。完整业务快照自动包含这些现有表中的对象；新增清单必须和完整业务数据一起交接，只有代码没有图片时显示待补充。该补充不新增schema或数据库迁移。
+
+地图英雄用途投影先按Catalog/source commit读取已有小地图图标引用，并逐文件验Catalog原始hash后解析英雄BoundsHullName，只有同客户端已审阅hull半径可用于占地；地图再引用这份英雄身份投影。来源／查询／覆盖通过验哈希GNV共享原生格原点，底图边界不再决定原生地图格偏移。原生HUD图集与单位小地图用途补充待[Windows提取](../work/map-vision-occlusion.md#windows原生小地图资产待办)，没有将准备好的引用视作图片已入库。

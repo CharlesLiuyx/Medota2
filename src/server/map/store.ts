@@ -4,6 +4,8 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import { readVisionScene } from "./vision";
+import { readVisionPresets } from "./vision-presets";
 import { readRoutingData } from "./navigation";
 import { loadLocalEnv } from "@/config/env";
 import { parseOverview } from "@/importers/dota-map/adapter";
@@ -53,6 +55,9 @@ export async function getMapPageData(id?: string, catalogId?: string | null) {
   try {
     const pkg = await readMapPackage(id);
     if (pkg) {
+      const preparedVision = await readVisionScene(pkg.root);
+      if (preparedVision.identity.datasetRevision !== pkg.revision)
+        throw new Error("Vision dataset revision mismatch");
       const { watcherRules, visions, ...routing } = await readRoutingData(
         pkg.root,
         pkg.map,
@@ -89,6 +94,11 @@ export async function getMapPageData(id?: string, catalogId?: string | null) {
         catalogPatch,
         catalogClient: meta?.clientVersion ?? null,
         data: {
+          visionPresets: meta ? await readVisionPresets(meta) : undefined,
+          visionScene: {
+            scene: preparedVision.scene,
+            datasetRevision: pkg.revision,
+          },
           unitNames,
           routing,
           watcherRules,

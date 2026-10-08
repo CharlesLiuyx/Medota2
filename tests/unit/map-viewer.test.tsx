@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
+import { visionPresets } from "../fixtures/map-vision-presets";
 import { LocaleProvider } from "@/i18n/provider";
+import { VisionClient } from "@/components/map/vision-client";
 import { RouteClient } from "@/components/map/route-client";
 import {
   act,
@@ -61,6 +63,10 @@ it("coalesces dense-map pointer input, reuses the scene, and keeps the canvas in
     {},
     {
       get: (_, key) => {
+        if (key === "createImageData")
+          return (w: number, h: number) => ({
+            data: new Uint8ClampedArray(w * h * 4),
+          });
         if (key === "measureText") return () => ({ width: 30 });
         if (key === "drawImage")
           return (image: CanvasImageSource) => {
@@ -331,7 +337,7 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
               maxUpgrade: 0,
               stack: [54, 55],
               stackDirection: null,
-              pulls: [],
+              pulls: [{ team: "radiant", windows: [[15, 17]], direction: 90 }],
             },
           ],
           sources: [],
@@ -378,6 +384,14 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
   expect(paint.some((s) => s.startsWith("arc:300,300,"))).toBe(false);
   expect(paint).not.toContain("set:lineWidth:5");
   expect(
+    (screen.getByRole("checkbox", { name: "野区金币" }) as HTMLInputElement)
+      .checked,
+  ).toBe(false);
+  expect(
+    (screen.getByRole("checkbox", { name: "兵线路径" }) as HTMLInputElement)
+      .checked,
+  ).toBe(true);
+  expect(
     (screen.getByRole("checkbox", { name: "野区经验" }) as HTMLInputElement)
       .checked,
   ).toBe(false);
@@ -387,7 +401,10 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
         name: "拉野/叠野秒数",
       }) as HTMLInputElement
     ).checked,
-  ).toBe(true);
+  ).toBe(false);
+  expect(paint.some((s) => s.startsWith("fillText:10–20,"))).toBe(false);
+  expect(paint.some((s) => s.includes("叠 54–55秒"))).toBe(false);
+  expect(paint.some((s) => s.includes("天拉 15–17秒"))).toBe(false);
   expect(paint.some((s) => s.includes("Z 轴范围"))).toBe(false);
   // MouseEvent supplies screen coordinates in jsdom, which has no native PointerEvent.
   fireEvent(
@@ -426,6 +443,19 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
     }),
   );
   flush(3);
+  expect(paint.some((s) => s.startsWith("fillText:10–20,"))).toBe(true);
+  expect(paint.some((s) => s.includes("叠 54–55秒"))).toBe(true);
+  expect(paint.some((s) => s.includes("天拉 15–17秒"))).toBe(true);
+  expect(paint.some((s) => s.startsWith("fillText:经验 50,"))).toBe(true);
+  const hoverCard = screen.getByRole("region", { name: "营地组合详情" });
+  expect(hoverCard.textContent).toContain("金币 10–20");
+  expect(hoverCard.textContent).toContain("经验 50");
+  expect(hoverCard.textContent).toContain(":54–:55");
+  expect(hoverCard.textContent).toContain("天辉拉野：:15–:17");
+  expect(hoverCard.textContent).toContain("Z 轴 128.0");
+  expect(hoverCard.textContent).toContain("Z 轴范围：-128.0～256.0");
+  expect(hoverCard.textContent).toContain("测试野怪");
+  expect(hoverCard.textContent).toContain("×1");
   expect(paint).toContain("set:lineWidth:5");
   expect(paint.some((s) => s.includes("Z 轴范围：-128～256"))).toBe(true);
   expect(paint.indexOf("set:lineWidth:5")).toBeGreaterThan(
@@ -434,6 +464,18 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
   expect(paint.at(-1)).toBe("fillText:营地,328.8,323");
   expect(paint.some((s) => s.startsWith("arc:328.8,300,4,"))).toBe(true);
   expect(paint.some((s) => s.startsWith("arc:328.8,300,11,"))).toBe(false);
+  for (const name of ["野区金币", "野区经验", "拉野/叠野秒数"]) {
+    fireEvent.click(screen.getByRole("checkbox", { name }));
+    paint.length = 0;
+    flush(3.01);
+    expect(paint.some((s) => s.startsWith("fillText:10–20,"))).toBe(true);
+    expect(paint.some((s) => s.includes("叠 54–55秒"))).toBe(true);
+    expect(paint.some((s) => s.includes("天拉 15–17秒"))).toBe(true);
+    expect(paint.some((s) => s.startsWith("fillText:经验 50,"))).toBe(true);
+  }
+  for (const name of ["野区金币", "野区经验", "拉野/叠野秒数"])
+    fireEvent.click(screen.getByRole("checkbox", { name }));
+  flush(3.02);
   (canvas as HTMLCanvasElement).setPointerCapture = vi.fn();
   for (const type of ["pointerdown", "pointerup"]) {
     fireEvent(
@@ -449,6 +491,7 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
   paint.length = 0;
   fireEvent.pointerLeave(canvas);
   flush(3.1);
+  expect(screen.queryByRole("region", { name: "营地组合详情" })).toBeNull();
   expect(paint).toContain("set:lineWidth:5");
   expect(paint.some((s) => s.includes("Z 轴范围：-128～256"))).toBe(true);
   expect(paint.some((s) => s.startsWith("fillText:经验 50,"))).toBe(true);
@@ -523,10 +566,14 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
   const campButton = screen.getByRole("button", { name: "营地 10, 0" });
   fireEvent.pointerEnter(campButton);
   flush(5);
+  expect(
+    screen.getByRole("region", { name: "营地组合详情" }).textContent,
+  ).toContain("金币 10–20");
   expect(paint).toContain("set:lineWidth:5");
   paint.length = 0;
   fireEvent.pointerLeave(campButton);
   flush(6);
+  expect(screen.queryByRole("region", { name: "营地组合详情" })).toBeNull();
   expect(paint).not.toContain("set:lineWidth:5");
   const campLayer = screen
     .getByRole("checkbox", { name: /野怪营地/ })
@@ -775,4 +822,198 @@ it("toggles currents independently of terrain, invalidates the scene, and resets
   expect(Number(canvas.dataset.backgroundBuilds)).toBe(builds + 2);
   fireEvent.click(screen.getByRole("button", { name: "底图" }));
   flush();
+});
+
+it("aligns vision on 2x displays and coalesces dragging with bounded live calculations and no background rebuilds", async () => {
+  const runs = vi.spyOn(VisionClient.prototype, "run");
+  vi.stubGlobal("Worker", undefined);
+  vi.stubGlobal("devicePixelRatio", 2);
+  const frames = new Map<number, FrameRequestCallback>();
+  let frameId = 0;
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) => {
+    frames.set(++frameId, callback);
+    return frameId;
+  });
+  vi.stubGlobal("cancelAnimationFrame", (id: number) => frames.delete(id));
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(400);
+  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(400);
+  const markers: {
+    canvas: HTMLCanvasElement;
+    x: number;
+    y: number;
+    transform: number[];
+  }[] = [];
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(
+    function (this: HTMLCanvasElement) {
+      let transform: number[] = [];
+      return new Proxy(
+        {},
+        {
+          get: (_, name) => {
+            if (name === "setTransform")
+              return (...values: number[]) => {
+                transform = values;
+              };
+            if (name === "fillRect")
+              return (x: number, y: number, w: number, h: number) => {
+                if (w === 96 && h === 96)
+                  markers.push({
+                    canvas: this,
+                    x: x + w / 2,
+                    y: y + h / 2,
+                    transform,
+                  });
+              };
+            if (name === "createImageData")
+              return (w: number, h: number) => ({
+                data: new Uint8ClampedArray(w * h * 4),
+              });
+            if (name === "measureText") return () => ({ width: 20 });
+            return () => {};
+          },
+          set: () => true,
+        },
+      ) as CanvasRenderingContext2D;
+    },
+  );
+  const bounds = { minX: -128, maxX: 128, minY: -128, maxY: 128 };
+  render(
+    <MapViewer
+      data={{
+        bounds,
+        visionPresets,
+        points: [],
+        imageUrl: null,
+        clientVersion: "fixture",
+        coverage: null,
+        visionScene: {
+          datasetRevision: "fixture",
+          scene: {
+            bounds,
+            trees: [],
+            terrain: {
+              cell: 64,
+              width: 4,
+              height: 4,
+              origin: { x: -128, y: -128 },
+              values: Array(16).fill(0),
+            },
+          },
+        },
+      }}
+    />,
+  );
+  const canvas = screen.getByLabelText(/交互地图/) as HTMLCanvasElement;
+  canvas.setPointerCapture = vi.fn();
+  const flush = () =>
+    act(() => {
+      const batch = [...frames.values()];
+      frames.clear();
+      batch.forEach((callback) => callback(0));
+    });
+  flush();
+  fireEvent.click(screen.getByRole("button", { name: "视野" }));
+
+  for (const type of ["pointerdown", "pointerup"])
+    fireEvent(
+      canvas,
+      new MouseEvent(type, {
+        clientX: 200,
+        clientY: 200,
+        button: 0,
+        bubbles: true,
+      }),
+    );
+  await waitFor(() => expect(screen.getByText(/视野计算完成/)).toBeTruthy());
+  flush();
+  expect(
+    markers.filter((marker) => marker.canvas === canvas).at(-1),
+  ).toMatchObject({ x: 248, y: 152, transform: [2, 0, 0, 2, 0, 0] });
+  fireEvent.keyDown(canvas, { key: "Escape" });
+  expect(
+    screen
+      .getByRole("button", { name: "选中模式" })
+      .getAttribute("aria-pressed"),
+  ).toBe("true");
+  const backgroundBuilds = canvas.dataset.backgroundBuilds;
+  const sourceLabel = screen.getByRole("button", {
+    name: /^来源 1 ·/,
+  }).textContent;
+  expect(runs).toHaveBeenCalledTimes(1);
+  fireEvent(
+    canvas,
+    new MouseEvent("pointerdown", {
+      clientX: 248,
+      clientY: 152,
+      button: 0,
+      bubbles: true,
+    }),
+  );
+  for (let i = 1; i <= 500; i++)
+    fireEvent(
+      canvas,
+      new MouseEvent("pointermove", {
+        clientX: 248 + i * 0.16,
+        clientY: 152 + i * 0.04,
+        bubbles: true,
+      }),
+    );
+  expect(frames.size).toBe(1);
+  flush();
+  await waitFor(() => expect(runs).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(screen.getByText(/视野计算完成/)).toBeTruthy());
+  expect(screen.getByRole("button", { name: /^来源 1 ·/ }).textContent).toBe(
+    sourceLabel,
+  );
+  expect(canvas.dataset.backgroundBuilds).toBe(backgroundBuilds);
+  expect(runs).toHaveBeenCalledTimes(2);
+  const preview = markers.filter((marker) => marker.canvas === canvas).at(-1)!;
+  expect(preview.x).toBeCloseTo(344, 0);
+  expect(preview.y).toBeCloseTo(152, 0);
+  fireEvent(
+    canvas,
+    new MouseEvent("pointerup", {
+      clientX: 328,
+      clientY: 172,
+      button: 0,
+      bubbles: true,
+    }),
+  );
+  await waitFor(() => expect(screen.getByText(/视野计算完成/)).toBeTruthy());
+  expect(runs).toHaveBeenCalledTimes(3);
+  expect(
+    screen.getByRole("button", { name: /^来源 1 ·/ }).textContent,
+  ).not.toBe(sourceLabel);
+  flush();
+  const movedLabel = screen.getByRole("button", {
+    name: /^来源 1 ·/,
+  }).textContent;
+  fireEvent(
+    canvas,
+    new MouseEvent("pointerdown", {
+      clientX: preview.x,
+      clientY: preview.y,
+      button: 0,
+      bubbles: true,
+    }),
+  );
+  fireEvent(
+    canvas,
+    new MouseEvent("pointermove", {
+      clientX: preview.x + 40,
+      clientY: preview.y + 40,
+      bubbles: true,
+    }),
+  );
+  fireEvent(canvas, new MouseEvent("pointercancel", { bubbles: true }));
+  expect(screen.getByRole("button", { name: /^来源 1 ·/ }).textContent).toBe(
+    movedLabel,
+  );
 });

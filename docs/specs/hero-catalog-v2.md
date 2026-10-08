@@ -280,6 +280,8 @@ alias 和 generated fallback 都是正式入库的图片对象，不是请求 40
 
 资产使用独立的不可变 `asset_dataset_versions` 和 `asset_dataset_heads`，不参与 Hero Catalog 的玩法幂等身份。每个 asset dataset 绑定到一个具体 Catalog dataset；来源图片、manifest、provider 或 LoD policy 变化可以创建并提升新资产版本，而不重建玩法 Catalog。
 
+地图英雄小地图图标另以内容寻址用途清单绑定所选Catalog/source commit，复用已有资产对象与四级LoD，不覆盖此处的横版头像head。清单只含来源和hash，图片字节仍在数据库；读取与导入规则见[地图Spec](map-explorer.md#近似地面视野模拟)和[导入手册](../operations/catalog-import.md#英雄小地图图标)。
+
 提升 asset head 前必须验证：目标 Catalog 的全部 Hero 和全部 accepted Ability 各有一个 icon binding，且每个 binding 都有四个可显示 LoD。该门禁包括 `current`、`indirect`、`defined_unbound`、`template` 和 `deprecated` Ability，并校验精确实体键集合、binding/object 来源一致性与 blob 内容 SHA-256。原生资源缺失不会降低 display coverage，因为 importer 会生成 fallback；只有最终图片或任一 LoD 无法生成、校验或持久化时，整个资产事务才失败。已有 asset head 的原生覆盖下降时默认拒绝 promotion，必须显式批准 fallback downgrade。切换到不同 Catalog 时以 `exact / total` 和 `(exact + alias) / total` 的比例比较当前与目标资产 head，避免新增 fallback 实体绕过绝对数量检查，也避免删除实体造成误报；override 必须在实际 Catalog promotion 调用中再次显式提供。
 
 Hero Catalog promotion/rollback 必须先确认目标 Catalog 已有匹配且完整的 asset head；候选和历史 Catalog 可以通过 `data:import:assets --catalog-version <uuid>` 预先回填。Catalog 与 asset 发布各有 advisory lock；Catalog 导入和 promotion 必须固定先取得 Catalog lock、再取得 asset lock，使完整性与跨 Catalog 覆盖率比较不会和独立资产更新竞争同一 head。
@@ -625,3 +627,5 @@ Hero与Ability查询按同一Catalog版本读取实体、关系及本地化，�
 英雄总表既支持旧版内联 DOTAHeroes，也支持新版 #base heroes/npc_dota_hero_*.txt。只解析同一已校验 selector 内的包含文件，拒绝缺失、越界、重复与循环；不从磁盘补读未锁定文件。英雄原始路径／行号随拆分记录。技能同时支持 DOTAAbilities 与英雄对象内 AbilityDefinitions；天赋与关系使用实际英雄来源文件。旧快照解析合同保留，文件搬迁不当作游戏值变化。
 
 本机 local-preview 的 importer_version 追加当前转换代码与依赖文件 SHA-256，避免同一 Git HEAD 下不同未提交实现复用不可变候选。正式导入仍要求干净 checkout。本机更新证据见 [7.41f 更新报告](../work/7.41f-update.md)。
+
+地图用途的英雄图标与碰撞半径由`src/server/repositories/hero-map-assets.ts`按英雄身份提供。现存Catalog部分hero source record只保存归一化来源摘要，因此hull字段从已登记文件hash核验的固定源读取，支持base继承；不回写不可变Catalog。6944复用已审阅hull规则，6918没有同版本核验时显示未知。用途与图片导入边界见[地图Spec](map-explorer.md#近似地面视野模拟)。

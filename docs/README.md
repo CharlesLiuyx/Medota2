@@ -86,6 +86,7 @@
 | [地图](specs/map-explorer.md)                                               | active     | 地图数据、操作、计算与估算边界                     |
 | [视野模拟准备与后续接入](work/map-vision-occlusion.md)                      | active     | 近似算法、离线复现、Web接入与可选精度升级          |
 | [视野算法准备验收](history/2026-10-08-map-vision-preparation.md)            | historical | 6944离线样例、算法检查与未覆盖范围                 |
+| [视野Web接入验收](history/2026-10-08-map-vision-web.md)                     | historical | 连续放点、双阵营实时预览、检查与性能证据           |
 | [工作台](specs/development-workbench.md)                                    | active     | 共享开发、反馈、检查与产物合同                     |
 | [开发数据同步](specs/development-data-sync.md)                              | active     | 快照、切换、内容一致性协议                         |
 | [隔离验证](specs/environment-isolation-and-verification.md)                 | active     | 显式isolated运行与数据库合同                       |
@@ -131,6 +132,7 @@
 | [地图紧凑UI](history/2026-10-07-map-compact-ui.md)                          | historical | 本轮布局与验证                                     |
 | [地图顶栏分组](history/2026-10-08-map-toolbar.md)                           | historical | 顶栏收窄、状态分组、工具轨与属性栏上移及本机验证   |
 | [地图工具栏移左](history/2026-10-08-map-left-tools.md)                      | historical | 工具移左、顶部湍流开关、缩放数字复位与地图视区加高 |
+| [地图默认配置与营地悬停](history/2026-10-08-map-camp-hover.md)              | historical | 默认开关、完整悬停、固定浮层与本机验证             |
 | [2026-10-08全部本地变更发布](history/2026-10-08-main-publication.md)        | historical | 本轮组合检查、完整快照、精确提交CI及接手边界       |
 | [发布流程优化](history/2026-10-07-publication-optimization.md)              | reference  | 候选门禁、fixture前置、阶段收据、CI续接与验证边界  |
 | [数据库读取稳定性](history/2026-10-08-database-read-resilience.md)          | reference  | 变化页池等待超时、端点快照、连接恢复及本机测量     |
