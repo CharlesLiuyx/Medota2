@@ -99,6 +99,8 @@ pnpm verify                     # 显式全量诊断，包含覆盖率
 
 Windows测试运行器为Next生成的配置路径使用正斜杠；若fixture服务报`@/…`模块不存在，先检查该次`tsconfig.next.json`的`extends`及`MEDOTA2_NEXT_TSCONFIG`，修正生成器后重新运行原检查，不修改产品别名或放宽启动超时。
 
+Windows的`pnpm test`默认最多4个worker，适用于多核机器上的Git／子进程fixture；不放宽原有测试超时。并发对照可用`pnpm test --maxWorkers=4`复现。
+
 浏览流程globalSetup会只读预热目录／首条详情及其客户端脚本块，排除开发编译耗时后仍使用原导航断言与时限；此步骤只获取当前同源页面引用的Next静态脚本，按URL去重。
 
 CI 在安装 Chromium 或准备数据库前计算范围，调用同一个 `pnpm check`，并取消同分支已过期的运行。仅完整输入与执行条件一致时复用结果；本地与 CI 分别记录。默认无覆盖率门槛。

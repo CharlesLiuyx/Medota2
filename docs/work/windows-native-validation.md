@@ -15,6 +15,7 @@
 - 2026-10-06 后续本机复核补充：最后一轮浏览首条英雄流程在图片解码断言超时，随后的三个流程连接拒绝；重启日志曾显示Next Ready并完成路由预热，随后supervisor／Web进程消失且3000无监听。ready JSON为残留状态，不能证明服务仍存活。前台直接运行同一supervisor后，英雄和技能query/filter/detail流程2/2通过，健康检查与页面HTTP 200；未改源码、依赖或Node配置。独立构建worker的3221225477（0xC0000005）没有与预览退出相关联的证据，间歇退出根因仍待复现。原始日志位于执行环境的`.medota2/sessions/preview-failure-diagnosis-20261006.md`及`preview-failure-diagnostic-test-20261006.log`，仓库不保证包含这些本机附件。
 - 更早的构建产物符号链接EPERM已有普通文件复制修复；过期产物和早期通过记录均不能代替最新组合结果。
 - 2026-10-09发布前fixture服务无法解析`@/i18n/locale`，120秒启动失败。基线`bed8de6`上的修复将共享／独立测试生成的Next配置与tsconfig相对路径统一为正斜杠；Node22.23.3下英雄查询／筛选／详情和固定移速两条fixture流程通过，无flaky。复现：`pnpm exec tsx src/workers/run-shared-tests.ts journeys --fixture --retries=1 --warm-scopes=heroes --grep 'heroes:'`。本机证据为`.medota2/sessions/publish-windows-path-check.log`；该局部结果不解除其他浏览／构建限制。
+- 同轮20逻辑CPU默认单测并发出现6项5秒超时及后续EBUSY，未发现残留测试进程；同一源码以`pnpm test --maxWorkers=4`通过87文件、452测试，耗时32.29秒。Windows单测默认并发上限调整为4，原断言／时限不变。本机对照证据为`.medota2/sessions/publish-all-20261009-repair.log`和`publish-windows-unit-concurrency.log`，不将一次通过视为所有平台稳定性证明。
 - 来源：[历史整合记录](../history/2026-10-06-current.md#windows-拉取远端并整合本地工作2026-10-06)、[发布前检查](../history/2026-10-06-current.md#windows-本地变更交接-main2026-10-06)。本机附件是Windows的 `.medota2/sessions/pull-remote-*-20261006.log`、`push-main-check-20261006.log`；其他机器不保证持有。
 
 ## 接手与解除条件

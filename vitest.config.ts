@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import { availableParallelism } from "node:os";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -10,6 +11,11 @@ export default defineConfig({
   test: {
     include: ["tests/unit/**/*.test.{ts,tsx}"],
     environment: "node",
+    // Concurrent Git/process fixtures can exhaust their deadline on Windows.
+    maxWorkers:
+      process.platform === "win32"
+        ? Math.min(4, availableParallelism())
+        : undefined,
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
