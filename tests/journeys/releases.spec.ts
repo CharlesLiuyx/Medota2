@@ -653,7 +653,7 @@ test("heroes changes: compact entity tables keep ranking, tooltips and continuou
   await expect(heroSection.locator("[data-direction-count]")).toHaveCount(0);
 });
 
-test("heroes global language persists across catalogs, details, history and reload", async ({
+test("heroes global language persists across catalogs, details and reload", async ({
   page,
   context,
 }) => {
@@ -708,6 +708,26 @@ test("heroes global language persists across catalogs, details, history and relo
   ).toBeVisible();
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  expect(
+    (await context.cookies()).find((c) => c.name === "medota2-locale")?.value,
+  ).toBe("en");
+});
+
+test("heroes global language persists through cookies, history and map navigation", async ({
+  page,
+  context,
+}) => {
+  // These flows keep their own 30s budget: repeated full catalog reloads can
+  // otherwise leave less than a second for the final navigation on CI.
+  await page.goto("/heroes?lang=en");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await expect
+    .poll(
+      async () =>
+        (await context.cookies()).find((c) => c.name === "medota2-locale")
+          ?.value,
+    )
+    .toBe("en");
   await page.goto("/heroes");
   await expect(
     page.getByRole("heading", { name: "Hero Catalog", exact: true }),
