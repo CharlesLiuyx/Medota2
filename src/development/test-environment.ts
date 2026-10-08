@@ -105,10 +105,20 @@ export async function withTestEnvironment<T>(
       MEDOTA2_NETWORK_POLICY: "loopback-only",
       MEDOTA2_ARTIFACT_ROOT: runRoot,
       MEDOTA2_TEST_WEB_PORT: String(context.webPort),
-      NEXT_DIST_DIR: relative(process.cwd(), context.nextDistDirectory),
-      MEDOTA2_NEXT_TSCONFIG: relative(process.cwd(), context.nextTsconfigPath),
+      NEXT_DIST_DIR: relative(
+        process.cwd(),
+        context.nextDistDirectory,
+      ).replaceAll("\\", "/"),
+      MEDOTA2_NEXT_TSCONFIG: relative(
+        process.cwd(),
+        context.nextTsconfigPath,
+      ).replaceAll("\\", "/"),
     };
-    const fromRun = relative(context.runRoot, process.cwd());
+    // Turbopack reads these as config paths, including on Windows.
+    const fromRun = relative(context.runRoot, process.cwd()).replaceAll(
+      "\\",
+      "/",
+    );
     await writeJson(context.nextTsconfigPath, {
       extends: `${fromRun}/tsconfig.json`,
       include: [

@@ -97,6 +97,8 @@ pnpm verify                     # 显式全量诊断，包含覆盖率
 
 日常固定数据测试复用一套 PostgreSQL，相关写入排队；浏览器状态和报告每次独立。测试 API 固定数据版本，相关代码或数据变化时结果作废。`check` 的证据位于 `.medota2/checks/`，测试报告位于 `.medota2/shared-tests/runs/`；独立验证仍在 `.medota2/test-runs/`。
 
+Windows测试运行器为Next生成的配置路径使用正斜杠；若fixture服务报`@/…`模块不存在，先检查该次`tsconfig.next.json`的`extends`及`MEDOTA2_NEXT_TSCONFIG`，修正生成器后重新运行原检查，不修改产品别名或放宽启动超时。
+
 浏览流程globalSetup会只读预热目录／首条详情及其客户端脚本块，排除开发编译耗时后仍使用原导航断言与时限；此步骤只获取当前同源页面引用的Next静态脚本，按URL去重。
 
 CI 在安装 Chromium 或准备数据库前计算范围，调用同一个 `pnpm check`，并取消同分支已过期的运行。仅完整输入与执行条件一致时复用结果；本地与 CI 分别记录。默认无覆盖率门槛。

@@ -62,6 +62,8 @@
 
 TypeScript 源码检查使用 `tsconfig.check.json`，其增量文件单独存放在 `.medota2/typecheck/`。它不依赖开发 Web 正在重建的 `.next` 类型；Next.js 生成的路由约束由正式构建验证。
 
+共享fixture和独立测试运行器传给Next的配置／产物相对路径，以及生成的tsconfig继承与包含路径，统一使用正斜杠。Windows文件系统路径只在文件操作边界保留原生表示，避免Turbopack无法解析继承配置中的模块别名。
+
 静态检查通过记录可跨调用复用；release自行管理构建产物身份。浏览器、数据库检查每次重新确认当前状态；共享页面测试记录 Catalog/Asset 版本，前后版本变化时作废。这里优先用简单、可解释的规则，暂不为动态数据库结果建立复杂缓存。
 
 CI 取消相同分支旧运行，按规划安装 Chromium，调用相同的 `pnpm check --base REF`。操作系统和 CI 身份参与摘要，不把本机通过记录当作 Linux CI 的通过记录。覆盖率只在显式 `pnpm verify` 或 `pnpm test:coverage` 中启用。

@@ -690,13 +690,20 @@ function buildTestEnvironment(context: TestRunContext): NodeJS.ProcessEnv {
     MEDOTA2_NEXT_TSCONFIG: relative(
       context.workspaceRoot,
       context.nextTsconfigPath,
-    ),
-    NEXT_DIST_DIR: relative(context.workspaceRoot, context.nextDistDirectory),
+    ).replaceAll("\\", "/"),
+    NEXT_DIST_DIR: relative(
+      context.workspaceRoot,
+      context.nextDistDirectory,
+    ).replaceAll("\\", "/"),
   };
 }
 
 async function writeRunNextTsconfig(context: TestRunContext): Promise<void> {
-  const workspaceFromRun = relative(context.runRoot, context.workspaceRoot);
+  // Turbopack reads these as config paths, including on Windows.
+  const workspaceFromRun = relative(
+    context.runRoot,
+    context.workspaceRoot,
+  ).replaceAll("\\", "/");
   const fromWorkspace = (path: string): string => `${workspaceFromRun}/${path}`;
   const config = {
     extends: fromWorkspace("tsconfig.json"),
