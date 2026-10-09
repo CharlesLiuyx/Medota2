@@ -138,6 +138,7 @@
 | [地图工具与情景显示](history/2026-10-09-map-tools-scenarios.md)             | historical | 工具字号／Esc、兵营状态与紧凑视野来源卡片          |
 | [地图英雄显示与悬停](history/2026-10-09-map-hero-interactions.md)           | reference  | 英雄占格、选择、悬停放大、同版视野／移速及验证     |
 | [2026-10-08全部本地变更发布](history/2026-10-08-main-publication.md)        | historical | 本轮组合检查、完整快照、精确提交CI及接手边界       |
+| [2026-10-09全部本地变更发布](history/2026-10-09-main-publication.md)        | reference  | 地图组合检查、v3资产快照、精确提交CI及接手边界     |
 | [地图Web与品牌发布](history/2026-10-08-map-web-publication.md)              | historical | 近似视野、营地、英雄图标、快照与语言旅程CI修复     |
 | [发布流程优化](history/2026-10-07-publication-optimization.md)              | reference  | 候选门禁、fixture前置、阶段收据、CI续接与验证边界  |
 | [数据库读取稳定性](history/2026-10-08-database-read-resilience.md)          | reference  | 变化页池等待超时、端点快照、连接恢复及本机测量     |
