@@ -12,6 +12,10 @@ export type NavGrid = {
   x: number;
   y: number;
   walkable: string;
+  /** Known GNV flags with bit 16, matching the navigation purple overlay. */
+  noWard?: string;
+  /** Known flags without bit 16; unlike walkability this permits ward cliffs. */
+  wardable?: string;
 };
 export type RoutingData = {
   grid: NavGrid | null;

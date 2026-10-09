@@ -134,6 +134,9 @@
 | [地图顶栏分组](history/2026-10-08-map-toolbar.md)                           | historical | 顶栏收窄、状态分组、工具轨与属性栏上移及本机验证   |
 | [地图工具栏移左](history/2026-10-08-map-left-tools.md)                      | historical | 工具移左、顶部湍流开关、缩放数字复位与地图视区加高 |
 | [地图默认配置与营地悬停](history/2026-10-08-map-camp-hover.md)              | historical | 默认开关、完整悬停、固定浮层与本机验证             |
+| [地图资产包接入](history/2026-10-09-map-assets-integration.md)              | reference  | v3图片、逐点映射、单位缺图补充与本地验证           |
+| [地图工具与情景显示](history/2026-10-09-map-tools-scenarios.md)             | historical | 工具字号／Esc、兵营状态与紧凑视野来源卡片          |
+| [地图英雄显示与悬停](history/2026-10-09-map-hero-interactions.md)           | reference  | 英雄占格、选择、悬停放大、同版视野／移速及验证     |
 | [2026-10-08全部本地变更发布](history/2026-10-08-main-publication.md)        | historical | 本轮组合检查、完整快照、精确提交CI及接手边界       |
 | [地图Web与品牌发布](history/2026-10-08-map-web-publication.md)              | historical | 近似视野、营地、英雄图标、快照与语言旅程CI修复     |
 | [发布流程优化](history/2026-10-07-publication-optimization.md)              | reference  | 候选门禁、fixture前置、阶段收据、CI续接与验证边界  |

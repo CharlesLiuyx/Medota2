@@ -2,7 +2,10 @@ import "server-only";
 import manifest from "@/data/map/hero-minimap-icons.v1.json";
 import { getWebDatabase } from "@/server/db/client";
 import type { ActiveDatasetMeta } from "@/server/repositories/heroes";
+import { nativeHeroIconUrl } from "./package-icons";
 export function heroMinimapUrl(meta: ActiveDatasetMeta, key: string) {
+  const native = nativeHeroIconUrl(meta, key);
+  if (native) return native;
   if (
     !manifest.catalogs.some(
       (c) =>

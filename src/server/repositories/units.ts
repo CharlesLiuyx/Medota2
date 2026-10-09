@@ -52,8 +52,9 @@ export async function getUnitPortraits(catalogVersion: string) {
     key: string;
     version: string;
     resolution: "portrait" | "shared_portrait" | "related_icon" | "unavailable";
+    relation: string | null;
   }>(
-    `SELECT b.unit_key AS key, h.dataset_version_id AS version, b.resolution FROM unit_asset_heads h JOIN unit_asset_bindings b ON b.dataset_version_id=h.dataset_version_id WHERE h.catalog_dataset_version_id=$1`,
+    `SELECT b.unit_key AS key, h.dataset_version_id AS version, b.resolution, b.provenance->>'relation' AS relation FROM unit_asset_heads h JOIN unit_asset_bindings b ON b.dataset_version_id=h.dataset_version_id WHERE h.catalog_dataset_version_id=$1`,
     [catalogVersion],
   );
   return Object.fromEntries(

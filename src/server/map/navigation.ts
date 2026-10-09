@@ -188,6 +188,12 @@ export async function readRoutingData(
           height: nav.height,
           x: nav.bounds.minX,
           y: nav.bounds.minY,
+          noWard: Array.from(nav.cells, (f) =>
+            f & 16 && !(f & ~21) ? "1" : "0",
+          ).join(""),
+          wardable: Array.from(nav.cells, (f) =>
+            !(f & 16) && !(f & ~21) ? "1" : "0",
+          ).join(""),
           // Unknown bits stay blocked; no-ward bit 16 does not block hero movement.
           walkable: Array.from(nav.cells, (f) =>
             f & 1 && !(f & ~21) ? "1" : "0",

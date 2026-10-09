@@ -22,13 +22,28 @@ import {
   VisionController,
   type VisionPlanner,
   drawVision,
+  visionHeroIconSize,
   type VisionTexture,
 } from "./vision-panel";
+import { ShortcutKey } from "./shortcut-key";
 import { TerrainLegend } from "./terrain-legend";
+import { MapIconLibrary } from "./icon-library";
 import { MapEconomyPanel } from "./economy-panel";
 import { CampHoverCard } from "./camp-hover-card";
 import { RoutePanel, useRoutePlanner } from "./route-planner";
+import { createPinchAcceleration, wheelPixels } from "@/domain/map/gestures";
+import { paintGrid, prepareGridPaint } from "./grid-painter";
+import {
+  HEIGHT_PALETTE_KEY,
+  recolorHeightPixels,
+} from "@/domain/map/height-palette";
+import { highGroundRaster } from "@/domain/map/high-ground";
 import { currentField } from "@/domain/map/currents";
+import {
+  heroVisionFootprint,
+  type PlacedVisionSource,
+  type VisionPreset,
+} from "@/domain/map/vision-sources";
 import {
   treeCells,
   obstacleCells,
@@ -67,6 +82,7 @@ type Position = {
   x: number;
   y: number;
 };
+type HeroHover = { source: PlacedVisionSource; preset: VisionPreset };
 type MapControls = {
   reset(): void;
   zoom(factor: number): void;
@@ -90,10 +106,23 @@ const layerOrder: MapLayer[] = [
   "other",
   "ancient",
 ];
+const TERRAIN_KEYS: Record<string, string> = {
+  "": "1",
+  navigation: "2",
+  height: "3",
+};
 const activeToolStyle =
   "bg-cyan-300/20 !text-cyan-100 ring-1 ring-inset ring-cyan-200/80 font-semibold shadow-[inset_0_-2px_0_#89eaff]";
 const buttonStyle =
   "rounded px-2.5 py-1.5 text-xs text-[var(--text-secondary)] hover:bg-white/5 disabled:opacity-35";
+const barracksDestroyed = (point: MapPoint, state: BarracksState) => {
+  if (point.kind !== "barracks" || state === "normal") return false;
+  if (state === "both" || state === "mega") return true;
+  const unit = point.properties.mapunitname ?? point.properties.subType ?? "";
+  return state === "melee"
+    ? unit.includes("melee") || point.label === "近战兵营"
+    : unit.includes("range") || point.label === "远程兵营";
+};
 const displayTeam = (p: MapPoint) => p.team;
 const watcherLabel = (p: MapPoint, locale: Locale) =>
   p.kind === "watcher"
@@ -120,10 +149,14 @@ export function MapViewer({
     sight: VisionPlanner;
     texture: VisionTexture | null;
   }>({ sight: null!, texture: null });
-  const [campLayerHover, setCampLayerHover] = useState(false);
+  const [hoveredLayer, setHoveredLayer] = useState<MapLayer | null>(null);
+  const campLayerHover = hoveredLayer === "camp";
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const surfaceRef = useRef<HTMLDivElement>(null);
-  const cornerRef = useRef<HTMLDivElement>(null);
+  const heroHoverCardRef = useRef<HTMLDivElement>(null);
+  const hoveredSourceRef = useRef<string | null>(null);
+  const hoveredHeroRef = useRef<HeroHover | null>(null);
+  const [hoveredHero, setHoveredHero] = useState<HeroHover | null>(null);
   const pickHintRef = useRef<HTMLDivElement>(null);
   const rulerRef = useRef<HTMLDivElement>(null);
   const rulerLabelRef = useRef<HTMLSpanElement>(null);
@@ -142,7 +175,6 @@ export function MapViewer({
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<MapPoint | null>(null);
   const [hovered, setHovered] = useState<MapPoint | null>(null);
-  const [measure, setMeasure] = useState(false);
   const [customRange, setCustomRange] = useState<{
     id: string;
     value: number;
@@ -153,8 +185,7 @@ export function MapViewer({
     setCustomRange(selected ? { id: selected.id, value } : null);
   const vision = selected ? data.visions?.[selected.id] : undefined;
   const rangeMax = Math.max(3000, vision?.day ?? 0, vision?.night ?? 0);
-  const [measurement, setMeasurement] = useState<Position[]>([]);
-  const [zoom, setZoom] = useState(1);
+  const zoomLabelRef = useRef<HTMLButtonElement>(null);
   const [time, setTime] = useState(0);
   const [showGold, setShowGold] = useState(false);
   const [showExperience, setShowExperience] = useState(false);
@@ -167,7 +198,11 @@ export function MapViewer({
   const [includeChildren, setIncludeChildren] = useState(true);
   const [imageError, setImageError] = useState(false);
   const texture = useRef<HTMLImageElement | null>(null);
-  const overlayTextures = useRef(new Map<string, HTMLImageElement>());
+  const overlayTextures = useRef(
+    new Map<string, HTMLImageElement | HTMLCanvasElement>(),
+  );
+  const markerTextures = useRef(new Map<string, HTMLImageElement>());
+  const [markerImageError, setMarkerImageError] = useState(false);
   const [terrainLayer, setTerrainLayer] = useState<string>("");
   const [terrainError, setTerrainError] = useState(false);
   const redraw = useRef<() => void>(() => {});
@@ -178,6 +213,14 @@ export function MapViewer({
       repaint: boolean,
     ) => {
       const changed = sightFrame.current.sight?.enabled !== planner.enabled;
+      const toolChanged =
+        changed || sightFrame.current.sight?.tool !== planner.tool;
+      if (toolChanged && canvasRef.current)
+        canvasRef.current.style.cursor = planner.enabled
+          ? planner.tool === null
+            ? "default"
+            : "crosshair"
+          : "default";
       const adding = planner.enabled && planner.tool === "add";
       const wasAdding =
         sightFrame.current.sight?.enabled &&
@@ -185,10 +228,50 @@ export function MapViewer({
       const enteringAdd = adding && !wasAdding;
       if (adding !== !!wasAdding) setVisionAdding(adding);
       sightFrame.current = { sight: planner, texture };
+      if (
+        !planner.enabled ||
+        planner.tool !== null ||
+        !planner.visibleSources.some(
+          (source) => source.id === hoveredSourceRef.current,
+        )
+      ) {
+        hoveredSourceRef.current = null;
+        if (canvasRef.current)
+          canvasRef.current.dataset.hoveredVisionSource = "";
+      }
+      const previousHover = hoveredHeroRef.current;
+      if (previousHover) {
+        const source = planner.visibleSources.find(
+          (s) => s.id === previousHover.source.id,
+        );
+        const preset = planner.presets.find((p) => p.key === source?.presetKey);
+        if (
+          !planner.enabled ||
+          planner.tool !== null ||
+          !source ||
+          source.kind !== "hero" ||
+          !preset
+        ) {
+          hoveredHeroRef.current = null;
+          setHoveredHero(null);
+        } else if (
+          source !== previousHover.source ||
+          preset !== previousHover.preset
+        ) {
+          hoveredHeroRef.current = { source, preset };
+          setHoveredHero(hoveredHeroRef.current);
+        }
+      }
+      if (canvasRef.current && planner.enabled)
+        canvasRef.current.style.cursor = planner.placementError
+          ? "not-allowed"
+          : planner.tool === null
+            ? "default"
+            : "crosshair";
       if (changed) setVisionEnabled(planner.enabled);
       if (enteringAdd) {
         controls.current?.hover(null);
-        setCampLayerHover(false);
+        setHoveredLayer(null);
       }
       if (repaint) redraw.current();
     },
@@ -197,6 +280,9 @@ export function MapViewer({
   useLayoutEffect(() => {
     routeFrame.current = planner;
   });
+  useLayoutEffect(() => {
+    redraw.current();
+  }, [hoveredHero]);
   useLayoutEffect(() => {
     redraw.current();
   }, [
@@ -224,6 +310,21 @@ export function MapViewer({
       result.set(p.kind, (result.get(p.kind) ?? 0) + 1);
     return result;
   }, [data.points]);
+  const layerIcons = useMemo(() => {
+    const result = new Map<
+      MapLayer,
+      NonNullable<MapViewData["mapIcons"]>["icons"][number]
+    >();
+    const assets = new Map(
+      data.mapIcons?.icons.map((icon) => [icon.key, icon]),
+    );
+    for (const point of data.points) {
+      const key = data.mapIcons?.points[point.id];
+      const icon = key ? assets.get(key) : undefined;
+      if (icon && !result.has(point.kind)) result.set(point.kind, icon);
+    }
+    return result;
+  }, [data]);
   const visible = useMemo(
     () =>
       data.points.filter(
@@ -334,15 +435,15 @@ export function MapViewer({
     () => ({
       selected,
       range,
-      measurement,
-      measure,
       layers,
       query,
       terrainLayer,
+      barracks,
       showCurrents,
       showGold,
       showLanes,
       campLayerHover,
+      hoveredLayer,
       showExperience,
       showTimings,
       campLabels,
@@ -350,15 +451,15 @@ export function MapViewer({
     [
       selected,
       range,
-      measurement,
-      measure,
       layers,
       query,
       terrainLayer,
+      barracks,
       showCurrents,
       showGold,
       showLanes,
       campLayerHover,
+      hoveredLayer,
       showExperience,
       showTimings,
       campLabels,
@@ -391,13 +492,65 @@ export function MapViewer({
     };
   }, [data.imageUrl]);
   useEffect(() => {
+    const assets = data.mapIcons;
+    if (!assets) return;
+    let disposed = false;
+    const images: HTMLImageElement[] = [];
+    for (const key of new Set(Object.values(assets.points))) {
+      const icon = assets.icons.find((i) => i.key === key);
+      if (!icon) continue;
+      const image = new Image();
+      images.push(image);
+      image.onload = () => {
+        if (disposed) return;
+        markerTextures.current.set(key, image);
+        redraw.current();
+      };
+      image.onerror = () => {
+        if (!disposed) setMarkerImageError(true);
+      };
+      image.src = icon.url;
+    }
+    return () => {
+      disposed = true;
+      images.forEach((image) => {
+        image.onload = null;
+        image.onerror = null;
+      });
+    };
+  }, [data.mapIcons]);
+  const heightPaletteKey = HEIGHT_PALETTE_KEY;
+  useEffect(() => {
     let disposed = false;
     overlayTextures.current.clear();
     for (const layer of data.rasterLayers ?? []) {
       const img = new Image();
       img.onload = () => {
         if (!disposed) {
-          overlayTextures.current.set(layer.id, img);
+          let rendered: HTMLImageElement | HTMLCanvasElement = img;
+          if (layer.id === "height") {
+            const tile = document.createElement("canvas");
+            tile.width = img.naturalWidth;
+            tile.height = img.naturalHeight;
+            const context = tile.getContext("2d");
+            if (context) {
+              context.drawImage(img, 0, 0);
+              const pixels = context.getImageData(
+                0,
+                0,
+                tile.width,
+                tile.height,
+              );
+              const changed = recolorHeightPixels(pixels.data);
+              if (canvasRef.current) {
+                canvasRef.current.dataset.heightPalettePixels = String(changed);
+                canvasRef.current.dataset.heightPalette = heightPaletteKey;
+              }
+              context.putImageData(pixels, 0, 0);
+              rendered = tile;
+            }
+          }
+          overlayTextures.current.set(layer.id, rendered);
           redraw.current();
         }
       };
@@ -409,7 +562,7 @@ export function MapViewer({
     return () => {
       disposed = true;
     };
-  }, [data.rasterLayers]);
+  }, [heightPaletteKey, data.rasterLayers]);
   useEffect(() => {
     const canvas = canvasRef.current,
       host = surfaceRef.current;
@@ -420,14 +573,34 @@ export function MapViewer({
     if (!output || !backgroundContext) return;
     let ctx = output!;
     let backgroundKey = "";
+    let backgroundCamera = { ...camera.current };
+    let backgroundPadding = 0;
+    let controlHeld = false;
+    const modifiers = (e: KeyboardEvent) => {
+      controlHeld = e.ctrlKey;
+    };
+    const clearModifiers = () => {
+      controlHeld = false;
+    };
     let backgroundImage: HTMLImageElement | null = null;
-    let backgroundRaster: HTMLImageElement | undefined;
+    let backgroundRaster: HTMLImageElement | HTMLCanvasElement | undefined;
     let backgroundLabels: typeof live.current.campLabels | null = null;
+    let highGround:
+      | {
+          canvas: HTMLCanvasElement;
+          raster: NonNullable<ReturnType<typeof highGroundRaster>>;
+        }
+      | null
+      | undefined;
     let backgroundBuilds = 0;
     let paints = 0;
     let hitTests = 0;
     let pendingHover: Position | null = null;
     let pointerHint: Position | null = null;
+    let eventRect: DOMRect | null = null;
+    const invalidateRect = () => {
+      eventRect = null;
+    };
     let paintNeeded = true;
     const byId = new Map(visible.map((p) => [p.id, p]));
     const markers = visible.filter((p) => p.kind !== "tree");
@@ -443,6 +616,29 @@ export function MapViewer({
           treesAtCell.set(cell, bin);
         }
       }
+    const noWardCells = Array.from(treeGrid.noWard ?? "").flatMap(
+      (flag, index) => (flag === "1" ? [index] : []),
+    );
+    const noWardPaint = prepareGridPaint(treeGrid, noWardCells);
+    const treePaint = prepareGridPaint(treeGrid, treeBlocks);
+    const buildingPaint = prepareGridPaint(treeGrid, buildingBlocks);
+    const currentCells = currents
+      ? Array.from(currents.bonus.keys()).filter((i) => currents.bonus[i] > 0)
+      : [];
+    const currentPaint = prepareGridPaint(treeGrid, currentCells);
+    const currentArrows = currentCells
+      .filter(
+        (i) =>
+          (i % treeGrid.width) % 3 === 0 &&
+          Math.floor(i / treeGrid.width) % 3 === 0,
+      )
+      .map((i) => ({
+        x: treeGrid.x + ((i % treeGrid.width) + 0.5) * treeGrid.cell,
+        y: treeGrid.y + (Math.floor(i / treeGrid.width) + 0.5) * treeGrid.cell,
+        angle: Math.atan2(-currents!.y[i], currents!.x[i]),
+      }));
+    const pinchAcceleration = createPinchAcceleration();
+    const touchAcceleration = createPinchAcceleration();
     // Cache glyph metrics rather than measure identical labels on every frame.
     const textWidths = new Map<string, number>();
     const textWidth = (text: string) => {
@@ -471,6 +667,7 @@ export function MapViewer({
       original: Position;
       position: Position;
       moving: boolean;
+      selectionOnly: boolean;
     } | null = null;
     let previewTimer: ReturnType<typeof setTimeout> | null = null;
     let queuedPreview: { id: string; position: Position } | null = null;
@@ -489,12 +686,7 @@ export function MapViewer({
     };
     const sourceAt = (position: Position) => {
       const sight = sightFrame.current.sight;
-      if (
-        !sight.enabled ||
-        sight.tool !== null ||
-        live.current.measure ||
-        routeFrame.current.enabled
-      )
+      if (!sight.enabled || sight.tool !== null || routeFrame.current.enabled)
         return null;
       return (
         [...sight.visibleSources]
@@ -506,10 +698,72 @@ export function MapViewer({
               screen(source).y - position.y,
             ),
           }))
-          .filter(
-            (hit) =>
-              hit.distance <= Math.max(14, 32 * scale * camera.current.zoom),
-          )
+          .filter((hit) => {
+            const preset = sight.presets.find(
+              (p) => p.key === hit.source.presetKey,
+            );
+            if (hit.source.kind !== "hero" && preset?.imageAnchor) {
+              const size = visionHeroIconSize(
+                Math.max(20, 64 * scale * camera.current.zoom),
+                hoveredSourceRef.current === hit.source.id,
+              );
+              const at = screen(hit.source);
+              const left = at.x - size * preset.imageAnchor[0];
+              const top = at.y - size * preset.imageAnchor[1];
+              return (
+                hit.distance <= 14 ||
+                (position.x >= left &&
+                  position.x <= left + size &&
+                  position.y >= top &&
+                  position.y <= top + size)
+              );
+            }
+            const footprint =
+              hit.source.kind === "hero"
+                ? heroVisionFootprint(
+                    hit.source,
+                    preset?.collisionRadius,
+                    sight.gridBounds,
+                  )
+                : null;
+            if (footprint) {
+              const a = screen({
+                x: footprint.bounds.minX,
+                y: footprint.bounds.maxY,
+              });
+              const b = screen({
+                x: footprint.bounds.maxX,
+                y: footprint.bounds.minY,
+              });
+              const hovered =
+                hoveredHeroRef.current?.source.id === hit.source.id;
+              const iconSize = visionHeroIconSize(
+                Math.min(b.x - a.x, b.y - a.y),
+                hovered,
+              );
+              const center = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+              return (
+                hit.distance <= 14 ||
+                (Math.abs(position.x - center.x) <= iconSize / 2 &&
+                  Math.abs(position.y - center.y) <= iconSize / 2)
+              );
+            }
+            if (hoveredSourceRef.current === hit.source.id) {
+              const half =
+                visionHeroIconSize(
+                  Math.max(20, 64 * scale * camera.current.zoom),
+                  true,
+                ) / 2;
+              const at = screen(hit.source);
+              return (
+                Math.abs(position.x - at.x) <= half &&
+                Math.abs(position.y - at.y) <= half
+              );
+            }
+            return (
+              hit.distance <= Math.max(14, 32 * scale * camera.current.zoom)
+            );
+          })
           .sort((a, b) => a.distance - b.distance)[0]?.source ?? null
       );
     };
@@ -553,23 +807,19 @@ export function MapViewer({
       const {
         selected,
         range,
-        measurement,
         layers,
         query,
         terrainLayer,
+        barracks,
         showCurrents,
         showGold,
         showLanes,
         campLayerHover,
+        hoveredLayer,
         showExperience,
         showTimings,
         campLabels,
       } = live.current;
-      const zoneLabels: {
-        x: number;
-        y: number;
-        text: string;
-      }[] = [];
       const hoverPoint = byId.get(hoverId ?? "");
       const activeCamps = new Set(
         [byId.get(selected?.id ?? ""), hoverPoint].filter(
@@ -608,7 +858,13 @@ export function MapViewer({
       };
       const drawMarker = (p: MapPoint, active: boolean) => {
         const s = screen(p);
-        if (s.x < -40 || s.y < -40 || s.x > width + 40 || s.y > height + 40)
+        const padding = ctx === backgroundContext ? backgroundPadding : 0;
+        if (
+          s.x < -40 - padding ||
+          s.y < -40 - padding ||
+          s.x > width + 40 + padding ||
+          s.y > height + 40 + padding
+        )
           return;
         if (p.kind === "tree") {
           if (active)
@@ -637,50 +893,99 @@ export function MapViewer({
                 : active
                   ? 11
                   : 8;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
-        ctx.fillStyle = active ? "#f3e6bd" : "#10191fe8";
-        ctx.fill();
-        ctx.strokeStyle =
-          displayTeam(p) === "radiant"
-            ? "#7fcca1"
-            : displayTeam(p) === "dire"
-              ? "#e18b80"
-              : p.kind === "watcher"
-                ? "#adb6be"
-                : MAP_LAYERS[p.kind].color;
-        ctx.lineWidth =
-          p.kind === "shop" ? 0.4 : p.kind === "camp" ? 0.75 : active ? 2 : 1.5;
-        ctx.stroke();
-        if (p.kind === "camp") {
+        const destroyed = barracksDestroyed(p, barracks);
+        ctx.save();
+        if (destroyed) ctx.globalAlpha = 0.3;
+        const nativeKey = data.mapIcons?.points[p.id];
+        const nativeImage = nativeKey
+          ? markerTextures.current.get(nativeKey)
+          : null;
+        if (nativeImage) {
+          const size =
+            (p.kind === "camp" || p.kind === "other" ? 16 : 24) *
+            Math.min(1, Math.max(0.6, width / 500)) *
+            Math.min(2, Math.sqrt(camera.current.zoom)) *
+            (active ? 1.2 : 1);
+          const ratio =
+            size /
+            Math.max(nativeImage.naturalWidth, nativeImage.naturalHeight);
+          const w = nativeImage.naturalWidth * ratio,
+            h = nativeImage.naturalHeight * ratio;
+          ctx.save();
+          ctx.shadowColor = "#000";
+          ctx.shadowBlur = 3;
+          ctx.imageSmoothingEnabled = true;
+          ctx.drawImage(nativeImage, s.x - w / 2, s.y - h / 2, w, h);
+          ctx.restore();
+        } else {
           ctx.beginPath();
-          ctx.arc(s.x, s.y, 1.25, 0, Math.PI * 2);
-          ctx.fillStyle = active ? "#10191f" : MAP_LAYERS.camp.color;
+          ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
+          ctx.fillStyle = active ? "#f3e6bd" : "#10191fe8";
           ctx.fill();
+          ctx.strokeStyle =
+            displayTeam(p) === "radiant"
+              ? "#7fcca1"
+              : displayTeam(p) === "dire"
+                ? "#e18b80"
+                : p.kind === "watcher"
+                  ? "#adb6be"
+                  : MAP_LAYERS[p.kind].color;
+          ctx.lineWidth =
+            p.kind === "shop"
+              ? 0.4
+              : p.kind === "camp"
+                ? 0.75
+                : active
+                  ? 2
+                  : 1.5;
+          ctx.stroke();
+          if (p.kind === "camp") {
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, 1.25, 0, Math.PI * 2);
+            ctx.fillStyle = active ? "#10191f" : MAP_LAYERS.camp.color;
+            ctx.fill();
+          }
+          if (radius > 4) {
+            ctx.font = "11px system-ui";
+            ctx.fillStyle = active
+              ? "#10191f"
+              : p.kind === "watcher"
+                ? displayTeam(p) === "radiant"
+                  ? "#7fcca1"
+                  : displayTeam(p) === "dire"
+                    ? "#e18b80"
+                    : "#adb6be"
+                : MAP_LAYERS[p.kind].color;
+            ctx.fillText(
+              p.kind === "watcher"
+                ? {
+                    radiant: t("天"),
+                    dire: t("夜"),
+                    neutral: t("中"),
+                    unknown: "?",
+                  }[displayTeam(p)]
+                : MAP_LAYERS[p.kind].symbol,
+              s.x,
+              s.y,
+            );
+          }
         }
-        if (radius > 4) {
-          ctx.font = "11px system-ui";
-          ctx.fillStyle = active
-            ? "#10191f"
-            : p.kind === "watcher"
-              ? displayTeam(p) === "radiant"
-                ? "#7fcca1"
-                : displayTeam(p) === "dire"
-                  ? "#e18b80"
-                  : "#adb6be"
-              : MAP_LAYERS[p.kind].color;
-          ctx.fillText(
-            p.kind === "watcher"
-              ? {
-                  radiant: t("天"),
-                  dire: t("夜"),
-                  neutral: t("中"),
-                  unknown: "?",
-                }[displayTeam(p)]
-              : MAP_LAYERS[p.kind].symbol,
-            s.x,
-            s.y,
-          );
+        ctx.restore();
+        if (destroyed) {
+          const half = 8 * Math.min(2, Math.sqrt(camera.current.zoom));
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(s.x - half, s.y - half);
+          ctx.lineTo(s.x + half, s.y + half);
+          ctx.moveTo(s.x + half, s.y - half);
+          ctx.lineTo(s.x - half, s.y + half);
+          ctx.strokeStyle = "#10191f";
+          ctx.lineWidth = 4;
+          ctx.stroke();
+          ctx.strokeStyle = "#ef8a83";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.restore();
         }
         if (!active && camera.current.zoom >= 3 && p.kind !== "other") {
           ctx.font = "11px system-ui";
@@ -700,43 +1005,74 @@ export function MapViewer({
         ctx.textAlign = "center";
         const point = byId.get(pointId);
         if (!point) return;
-        const at = screen(point),
-          label = labels.gold ?? t("未收录");
+        const volume =
+          point.properties.volumename ?? point.properties.triggerName;
+        const zones = (data.zones ?? []).filter(
+          (zone) =>
+            zone.label.replace(/^\[PR#\]/, "") ===
+            volume?.replace(/^\[PR#\]/, ""),
+        );
+        const vertices = zones.flatMap((zone) => zone.vertices);
+        const at = vertices.length
+          ? screen({
+              x:
+                (Math.min(...vertices.map((v) => v.x)) +
+                  Math.max(...vertices.map((v) => v.x))) /
+                2,
+              y: Math.max(...vertices.map((v) => v.y)),
+            })
+          : screen(point);
+        const padding = ctx === backgroundContext ? backgroundPadding : 0;
         if (
-          at.x < -160 ||
-          at.y < -30 ||
-          at.x > width + 160 ||
-          at.y > height + 100
+          at.x < -160 - padding ||
+          at.y < -30 - padding ||
+          at.x > width + 160 + padding ||
+          at.y > height + 100 + padding
         )
           return;
-        if (extra || showGold) {
-          ctx.fillStyle = "#091219dc";
-          const half = textWidth(label) / 2 + 3;
-          ctx.fillRect(at.x - half, at.y - 25, half * 2, 14);
-          ctx.fillStyle = "#f0cd86";
-          ctx.fillText(label, at.x, at.y - 18);
-        }
-        let labelOffset = 34;
-        for (const line of labels.timing) {
-          if (extra || showTimings) {
-            const half = textWidth(line) / 2 + 3;
+        const bottom = vertices.length
+          ? screen({ x: point.x, y: Math.min(...vertices.map((v) => v.y)) }).y
+          : screen(point).y;
+        const groups = [
+          {
+            rows: labels.timing.map((text) => ({
+              text,
+              color: "#d7ead5",
+              visible: showTimings,
+            })),
+            y: at.y - (vertices.length ? 10 : 18),
+            step: -16,
+          },
+          {
+            rows: [
+              {
+                text: labels.gold ?? t("未收录"),
+                color: "#f0cd86",
+                visible: showGold,
+              },
+              {
+                text: t("经验 {value0}", { value0: labels.xp }),
+                color: "#a6daf4",
+                visible: showExperience,
+              },
+            ],
+            y: Math.max(bottom + 10, screen(point).y + 39),
+            step: 16,
+          },
+        ];
+        for (const group of groups) {
+          // Keep enabled rows fixed; hover fills the rest within the same side.
+          const rows = group.rows.filter((row) => row.visible);
+          if (extra) rows.push(...group.rows.filter((row) => !row.visible));
+          let y = group.y;
+          for (const row of rows) {
+            const half = textWidth(row.text) / 2 + 3;
             ctx.fillStyle = "#091219f2";
-            ctx.fillRect(at.x - half, at.y - labelOffset - 8, half * 2, 15);
-            ctx.fillStyle = "#d7ead5";
-            ctx.fillText(line, at.x, at.y - labelOffset);
+            ctx.fillRect(at.x - half, y - 8, half * 2, 15);
+            ctx.fillStyle = row.color;
+            ctx.fillText(row.text, at.x, y);
+            y += group.step;
           }
-          // Keep XP in the same slot when hover reveals the timing rows.
-          labelOffset += 16;
-        }
-        if (extra || showExperience) {
-          const xp = t("经验 {value0}", {
-            value0: labels.xp,
-          });
-          const halfXp = textWidth(xp) / 2 + 3;
-          ctx.fillStyle = "#091219f2";
-          ctx.fillRect(at.x - halfXp, at.y - labelOffset - 8, halfXp * 2, 15);
-          ctx.fillStyle = "#a6daf4";
-          ctx.fillText(xp, at.x, at.y - labelOffset);
         }
       };
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -748,14 +1084,22 @@ export function MapViewer({
         canvas.width = Math.round(width * dpr);
         canvas.height = Math.round(height * dpr);
       }
+      // Keep a bounded border around the viewport so panning only composites pixels.
+      const padding = Math.min(192, Math.ceil(Math.min(width, height) / 4));
+      const shift = () => ({
+        x:
+          (backgroundCamera.x - camera.current.x) * scale * camera.current.zoom,
+        y:
+          (camera.current.y - backgroundCamera.y) * scale * camera.current.zoom,
+      });
+      const offset = shift();
       const key = [
-        camera.current.x,
-        camera.current.y,
         camera.current.zoom,
         width,
         height,
         dpr,
         terrainLayer,
+        barracks,
         showCurrents,
         showLanes,
         showGold,
@@ -763,10 +1107,14 @@ export function MapViewer({
         showTimings,
         layers.has("camp"),
         query,
+        markerTextures.current.size,
+        sightFrame.current.sight.enabled,
       ].join("|");
       const rasterImage = overlayTextures.current.get(terrainLayer);
       if (
         key !== backgroundKey ||
+        Math.abs(offset.x) > backgroundPadding ||
+        Math.abs(offset.y) > backgroundPadding ||
         texture.current !== backgroundImage ||
         rasterImage !== backgroundRaster ||
         campLabels !== backgroundLabels
@@ -776,13 +1124,22 @@ export function MapViewer({
         backgroundImage = texture.current;
         backgroundRaster = rasterImage;
         backgroundBuilds++;
-        if (background.width !== canvas.width) background.width = canvas.width;
-        if (background.height !== canvas.height)
-          background.height = canvas.height;
+        backgroundCamera = { ...camera.current };
+        backgroundPadding = padding;
+        const backingWidth = Math.round((width + padding * 2) * dpr);
+        const backingHeight = Math.round((height + padding * 2) * dpr);
+        if (background.width !== backingWidth) background.width = backingWidth;
+        if (background.height !== backingHeight)
+          background.height = backingHeight;
         ctx = backgroundContext!;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.setTransform(dpr, 0, 0, dpr, padding * dpr, padding * dpr);
         ctx.fillStyle = "#0b131a";
-        ctx.fillRect(0, 0, width, height);
+        ctx.fillRect(
+          -padding,
+          -padding,
+          width + padding * 2,
+          height + padding * 2,
+        );
         const topLeft = screen({ x: data.bounds.minX, y: data.bounds.maxY });
         const bottomRight = screen({
           x: data.bounds.maxX,
@@ -853,140 +1210,152 @@ export function MapViewer({
           ctx.restore();
         }
         if (showCurrents && currents) {
+          paintGrid(
+            ctx,
+            currentPaint,
+            treeGrid,
+            camera.current,
+            {
+              width: width + padding * 2,
+              height: height + padding * 2,
+              scale,
+              dpr,
+            },
+            {
+              fill: "#38bfc950",
+              border: "#64e5ec66",
+              inner: "#64e5ec22",
+              innerAlpha: 1,
+              width: 0.5,
+            },
+          );
           ctx.save();
-          ctx.beginPath();
-          const side = treeGrid.cell * scale * camera.current.zoom;
-          const arrows: {
-            x: number;
-            y: number;
-            angle: number;
-          }[] = [];
-          for (let i = 0; i < currents.bonus.length; i++) {
-            if (!currents.bonus[i]) continue;
-            const col = i % treeGrid.width,
-              row = Math.floor(i / treeGrid.width),
-              at = screen({
-                x: treeGrid.x + col * treeGrid.cell,
-                y: treeGrid.y + (row + 1) * treeGrid.cell,
-              });
-            if (
-              at.x + side < 0 ||
-              at.y + side < 0 ||
-              at.x > width ||
-              at.y > height
-            )
-              continue;
-            ctx.rect(at.x, at.y, side, side);
-            if (col % 3 === 0 && row % 3 === 0)
-              arrows.push({
-                x: at.x + side / 2,
-                y: at.y + side / 2,
-                angle: Math.atan2(-currents.y[i], currents.x[i]),
-              });
-          }
-          ctx.fillStyle = "#38bfc950";
-          ctx.fill();
-          ctx.strokeStyle = "#64e5ec22";
-          ctx.lineWidth = 0.5;
-          ctx.stroke();
-          // Preserve the outline while reducing the internal cell divisions.
-          ctx.beginPath();
-          for (let i = 0; i < currents.bonus.length; i++) {
-            if (!currents.bonus[i]) continue;
-            const col = i % treeGrid.width,
-              row = Math.floor(i / treeGrid.width);
-            const at = screen({
-              x: treeGrid.x + col * treeGrid.cell,
-              y: treeGrid.y + (row + 1) * treeGrid.cell,
-            });
-            const edge = (x1: number, y1: number, x2: number, y2: number) => {
-              ctx.moveTo(x1, y1);
-              ctx.lineTo(x2, y2);
-            };
-            if (col === 0 || !currents.bonus[i - 1])
-              edge(at.x, at.y, at.x, at.y + side);
-            if (col === treeGrid.width - 1 || !currents.bonus[i + 1])
-              edge(at.x + side, at.y, at.x + side, at.y + side);
-            if (!currents.bonus[i + treeGrid.width])
-              edge(at.x, at.y, at.x + side, at.y);
-            if (!currents.bonus[i - treeGrid.width])
-              edge(at.x, at.y + side, at.x + side, at.y + side);
-          }
-          ctx.strokeStyle = "#64e5ec66";
-          ctx.stroke();
           ctx.strokeStyle = "#b7fbff";
           ctx.lineWidth = 1.5;
           ctx.beginPath();
-          for (const p of arrows) {
-            const size = Math.max(3, Math.min(7, side * 0.7));
+          const size = Math.max(
+            3,
+            Math.min(7, treeGrid.cell * scale * camera.current.zoom * 0.7),
+          );
+          for (const arrow of currentArrows) {
+            const p = screen(arrow);
+            if (
+              p.x < -size - padding ||
+              p.x > width + size + padding ||
+              p.y < -size - padding ||
+              p.y > height + size + padding
+            )
+              continue;
             ctx.moveTo(
-              p.x - Math.cos(p.angle - 0.6) * size,
-              p.y - Math.sin(p.angle - 0.6) * size,
+              p.x - Math.cos(arrow.angle - 0.6) * size,
+              p.y - Math.sin(arrow.angle - 0.6) * size,
             );
             ctx.lineTo(p.x, p.y);
             ctx.lineTo(
-              p.x - Math.cos(p.angle + 0.6) * size,
-              p.y - Math.sin(p.angle + 0.6) * size,
+              p.x - Math.cos(arrow.angle + 0.6) * size,
+              p.y - Math.sin(arrow.angle + 0.6) * size,
             );
           }
           ctx.stroke();
+          ctx.restore();
+        }
+        const showHighGround = sightFrame.current.sight.enabled;
+        if (showHighGround && highGround === undefined) {
+          const raster = highGroundRaster(
+            data.visionScene?.scene.terrain ?? null,
+          );
+          highGround = null;
+          if (raster) {
+            const tile = document.createElement("canvas");
+            tile.width = raster.width;
+            tile.height = raster.height;
+            const tileContext = tile.getContext("2d");
+            if (tileContext) {
+              const pixels = tileContext.createImageData(
+                raster.width,
+                raster.height,
+              );
+              pixels.data.set(raster.pixels);
+              tileContext.putImageData(pixels, 0, 0);
+              highGround = { canvas: tile, raster };
+            }
+          }
+        }
+        canvas.dataset.highGround =
+          showHighGround && highGround ? "visible" : "hidden";
+        if (showHighGround && highGround) {
+          const { raster, canvas: tile } = highGround;
+          const a = screen({
+            x: raster.origin.x,
+            y: raster.origin.y + raster.height * raster.cell,
+          });
+          const b = screen({
+            x: raster.origin.x + raster.width * raster.cell,
+            y: raster.origin.y,
+          });
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(
+            topLeft.x,
+            topLeft.y,
+            bottomRight.x - topLeft.x,
+            bottomRight.y - topLeft.y,
+          );
+          ctx.clip();
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(tile, a.x, a.y, b.x - a.x, b.y - a.y);
           ctx.restore();
         }
         if (layers.has("camp") && !query.trim())
           for (const zone of data.zones ?? []) drawZone(zone, false);
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        const drawCells = (cells: number[], color: string, border: string) => {
-          const occupied = new Set(cells),
-            side = treeGrid.cell * scale * camera.current.zoom;
-          ctx.beginPath();
-          for (const i of cells) {
-            const at = screen({
-              x: treeGrid.x + (i % treeGrid.width) * treeGrid.cell,
-              y:
-                treeGrid.y +
-                (Math.floor(i / treeGrid.width) + 1) * treeGrid.cell,
-            });
-            ctx.rect(at.x, at.y, side, side);
-          }
-          ctx.fillStyle = color;
-          ctx.fill();
-          ctx.strokeStyle = border;
-          ctx.lineWidth = 0.35;
-          ctx.globalAlpha = 0.2;
-          ctx.stroke();
-          ctx.globalAlpha = 1;
-          ctx.beginPath();
-          for (const i of cells) {
-            const x = i % treeGrid.width,
-              y = Math.floor(i / treeGrid.width);
-            const at = screen({
-              x: treeGrid.x + x * treeGrid.cell,
-              y: treeGrid.y + (y + 1) * treeGrid.cell,
-            });
-            const edge = (x1: number, y1: number, x2: number, y2: number) => {
-              ctx.moveTo(x1, y1);
-              ctx.lineTo(x2, y2);
-            };
-            if (x === 0 || !occupied.has(i - 1))
-              edge(at.x, at.y, at.x, at.y + side);
-            if (x === treeGrid.width - 1 || !occupied.has(i + 1))
-              edge(at.x + side, at.y, at.x + side, at.y + side);
-            if (!occupied.has(i + treeGrid.width))
-              edge(at.x, at.y, at.x + side, at.y);
-            if (!occupied.has(i - treeGrid.width))
-              edge(at.x, at.y + side, at.x + side, at.y + side);
-          }
-          ctx.stroke();
+        const viewport = {
+          width: width + padding * 2,
+          height: height + padding * 2,
+          scale,
+          dpr,
         };
-        drawCells(treeBlocks, MAP_LAYERS.tree.color, "#183127");
-        drawCells(buildingBlocks, "#dfb27180", "#493922");
+        canvas.dataset.noWard =
+          showHighGround && noWardCells.length ? "visible" : "hidden";
+        const noWardTilesDrawn = showHighGround
+          ? paintGrid(ctx, noWardPaint, treeGrid, camera.current, viewport, {
+              fill: "#e25bb780",
+              border: "#fca5e1",
+              width: 0.65,
+              innerAlpha: 0.1,
+            })
+          : 0;
+        const treeTilesDrawn = paintGrid(
+          ctx,
+          treePaint,
+          treeGrid,
+          camera.current,
+          viewport,
+          { fill: MAP_LAYERS.tree.color, border: "#183127" },
+        );
+        const buildingTilesDrawn = paintGrid(
+          ctx,
+          buildingPaint,
+          treeGrid,
+          camera.current,
+          viewport,
+          { fill: "#dfb27180", border: "#493922" },
+        );
+        canvas.dataset.gridTilesDrawn = String(
+          treeTilesDrawn + buildingTilesDrawn + noWardTilesDrawn,
+        );
         for (const p of markers) drawMarker(p, false);
         for (const [id, labels] of campLabels) drawCampLabel(id, labels, false);
       }
       ctx = output!;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.drawImage(background, 0, 0);
+      const translated = shift();
+      ctx.drawImage(
+        background,
+        (translated.x - backgroundPadding) * dpr,
+        (translated.y - backgroundPadding) * dpr,
+      );
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       drawVision(
         ctx,
@@ -995,7 +1364,41 @@ export function MapViewer({
         screen,
         data,
         visionDrag ?? undefined,
+        hoveredSourceRef.current,
       );
+      const heroHover = hoveredHeroRef.current;
+      if (heroHover && heroHoverCardRef.current) {
+        const at = screen(heroHover.source);
+        const footprint = heroVisionFootprint(
+          heroHover.source,
+          heroHover.preset.collisionRadius,
+          sightFrame.current.sight.gridBounds,
+        );
+        const baseSize = footprint
+          ? Math.min(
+              footprint.bounds.maxX - footprint.bounds.minX,
+              footprint.bounds.maxY - footprint.bounds.minY,
+            ) *
+            scale *
+            camera.current.zoom
+          : Math.max(20, 64 * scale * camera.current.zoom);
+        const iconSize = visionHeroIconSize(baseSize, true);
+        const card = heroHoverCardRef.current;
+        const cardWidth = card.offsetWidth || 176;
+        const cardHeight = card.offsetHeight || 112;
+        const right = at.x + iconSize / 2 + 12;
+        const left = at.x - iconSize / 2 - 12 - cardWidth;
+        const fitsRight = right + cardWidth <= width - 8;
+        const fitsLeft = left >= 8;
+        const x = fitsRight ? right : fitsLeft ? left : at.x - cardWidth / 2;
+        let y =
+          fitsRight || fitsLeft
+            ? at.y - cardHeight / 2
+            : at.y - iconSize / 2 - 12 - cardHeight;
+        if (y < 8) y = at.y + iconSize / 2 + 12;
+        card.style.left = `${Math.max(8, Math.min(width - cardWidth - 8, x))}px`;
+        card.style.top = `${Math.max(8, Math.min(height - cardHeight - 8, y))}px`;
+      }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -1007,26 +1410,6 @@ export function MapViewer({
           const active = campLayerHover || !!activeCamp;
           if (query.trim() && !active) continue;
           if (active) activeZones.push(zone);
-          if (
-            activeCamp &&
-            zone.zMin !== undefined &&
-            zone.zMax !== undefined
-          ) {
-            const anchor = screen({
-              x:
-                zone.vertices.reduce((s, v) => s + v.x, 0) /
-                zone.vertices.length,
-              y: Math.min(...zone.vertices.map((v) => v.y)),
-            });
-            zoneLabels.push({
-              x: anchor.x,
-              y: Math.max(anchor.y + 12, screen(activeCamp).y + 42),
-              text: t("Z 轴范围：{value0}～{value1}", {
-                value0: Math.round(zone.zMin),
-                value1: Math.round(zone.zMax),
-              }),
-            });
-          }
         }
       }
       const vision = selected ? data.visions?.[selected.id] : undefined;
@@ -1070,7 +1453,7 @@ export function MapViewer({
       const activePoints = new Set([
         byId.get(selected?.id ?? ""),
         byId.get(hoverId ?? ""),
-        ...(campLayerHover ? markers.filter((p) => p.kind === "camp") : []),
+        ...(hoveredLayer ? visible.filter((p) => p.kind === hoveredLayer) : []),
       ]);
       for (const p of activePoints) if (p) drawMarker(p, true);
       // Selected and hovered camps share the same foreground emphasis.
@@ -1099,16 +1482,6 @@ export function MapViewer({
       for (const [id, labels] of campLabels)
         if (campLayerHover || (byId.has(id) && activeCamps.has(byId.get(id)!)))
           drawCampLabel(id, labels, true);
-      for (const label of zoneLabels) {
-        ctx.font = "10px system-ui";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        const half = textWidth(label.text) / 2 + 4;
-        ctx.fillStyle = "#07151ef2";
-        ctx.fillRect(label.x - half, label.y - 8, half * 2, 16);
-        ctx.fillStyle = "#b9f4ff";
-        ctx.fillText(label.text, label.x, label.y);
-      }
       const routing = routeFrame.current;
       if (routing.enabled) {
         ctx.save();
@@ -1169,41 +1542,8 @@ export function MapViewer({
         }
         ctx.restore();
       }
-      if (measurement.length) {
-        ctx.strokeStyle = "#efdba5";
-        ctx.fillStyle = "#efdba5";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        measurement.forEach((p, i) => {
-          const s = screen(p);
-          if (i === 0) ctx.moveTo(s.x, s.y);
-          else ctx.lineTo(s.x, s.y);
-        });
-        ctx.stroke();
-        for (const p of measurement) {
-          const s = screen(p);
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-      const imageLeft = screen({ x: data.bounds.minX, y: data.bounds.minY }),
-        imageRight = screen({ x: data.bounds.maxX, y: data.bounds.minY }),
-        imageTop = screen({ x: data.bounds.minX, y: data.bounds.maxY });
-      const cornerWidth = (imageRight.x - imageLeft.x) * 0.28,
-        cornerHeight = (imageLeft.y - imageTop.y) * 0.09;
-      if (cornerRef.current) {
-        Object.assign(cornerRef.current.style, {
-          left: `${imageLeft.x + 6}px`,
-          top: `${imageLeft.y - cornerHeight}px`,
-          width: `${Math.max(0, cornerWidth - 12)}px`,
-          height: `${Math.max(0, cornerHeight - 6)}px`,
-        });
-      }
-      // A 1/2/5 ruler in actual world units, clipped to the same empty corner.
-      const rawUnits =
-          Math.min(80, Math.max(1, cornerWidth - 16)) /
-          (scale * camera.current.zoom),
+      // A 1/2/5 ruler in actual world units within the fixed viewport hint.
+      const rawUnits = 80 / (scale * camera.current.zoom),
         power = 10 ** Math.floor(Math.log10(rawUnits));
       const units =
         [5, 2, 1].map((n) => n * power).find((n) => n <= rawUnits) ?? power;
@@ -1289,9 +1629,13 @@ export function MapViewer({
       canvas.dataset.paints = String(++paints);
       canvas.dataset.backgroundBuilds = String(backgroundBuilds);
       canvas.dataset.hitTests = String(hitTests);
-      if (Number(canvas.dataset.zoom) !== camera.current.zoom)
-        setZoom(camera.current.zoom);
+      const zoomText = `${Math.round(camera.current.zoom * 100)}%`;
+      if (zoomLabelRef.current && zoomLabelRef.current.textContent !== zoomText)
+        zoomLabelRef.current.textContent = zoomText;
       canvas.dataset.zoom = String(camera.current.zoom);
+      canvas.dataset.cameraX = String(camera.current.x);
+      canvas.dataset.cameraY = String(camera.current.y);
+      invalidateRect();
       canvas.dataset.drawMs = (performance.now() - started).toFixed(2);
     }
     const schedule = (paint = true) => {
@@ -1300,6 +1644,7 @@ export function MapViewer({
     };
     redraw.current = schedule;
     const resize = () => {
+      invalidateRect();
       width = host.clientWidth;
       height = host.clientHeight;
       if (width <= 0 || height <= 0) return;
@@ -1309,13 +1654,17 @@ export function MapViewer({
       schedule();
     };
     const point = (e: MouseEvent | PointerEvent) => {
-      const rect = canvas.getBoundingClientRect();
+      const rect = eventRect ?? (eventRect = canvas.getBoundingClientRect());
       return { x: e.clientX - rect.left, y: e.clientY - rect.top };
     };
     const hit = (p: Position) => {
       hitTests++;
       const w = world(p),
-        radius = 14 / (scale * camera.current.zoom);
+        radius =
+          (data.mapIcons
+            ? Math.max(14, 14 * Math.min(2, Math.sqrt(camera.current.zoom)))
+            : 14) /
+          (scale * camera.current.zoom);
       let closest: MapPoint | null = null,
         best = Infinity;
       for (const item of [
@@ -1331,16 +1680,31 @@ export function MapViewer({
       return closest;
     };
     const down = (e: PointerEvent) => {
+      const hitSource = sourceAt(point(e));
       leave();
-      if (e.button !== 0 || visionDrag) return;
+      if (e.button !== 0) return;
+      if (
+        visionDrag &&
+        e.pointerType === "touch" &&
+        e.pointerId !== visionDrag.pointerId
+      ) {
+        const firstId = visionDrag.pointerId,
+          first = pointers.get(firstId);
+        cancelVisionDrag();
+        if (first) pointers.set(firstId, first);
+      }
+      if (visionDrag) return;
       canvas.focus({ preventScroll: true });
       canvas.setPointerCapture(e.pointerId);
       const p = point(e);
       pointers.set(e.pointerId, p);
       last = p;
       if (pointers.size === 1) dragged = false;
-      else dragged = true;
-      const source = pointers.size === 1 ? sourceAt(p) : null;
+      else {
+        dragged = true;
+        touchAcceleration.reset();
+      }
+      const source = pointers.size === 1 ? hitSource : null;
       if (source) {
         visionDrag = {
           id: source.id,
@@ -1349,8 +1713,9 @@ export function MapViewer({
           original: { x: source.x, y: source.y },
           position: { x: source.x, y: source.y },
           moving: false,
+          selectionOnly: e.shiftKey,
         };
-        sightFrame.current.sight.selectSource(source.id);
+        sightFrame.current.sight.selectSource(source.id, e.shiftKey);
         setSelected(null);
         schedule();
       }
@@ -1358,6 +1723,7 @@ export function MapViewer({
     const move = (e: PointerEvent) => {
       const p = point(e);
       if (visionDrag && visionDrag.pointerId === e.pointerId) {
+        if (visionDrag.selectionOnly) return;
         if (
           !visionDrag.moving &&
           Math.hypot(p.x - visionDrag.start.x, p.y - visionDrag.start.y) <= 3
@@ -1367,24 +1733,18 @@ export function MapViewer({
         visionDrag.moving = true;
         const start = world(visionDrag.start),
           current = world(p);
-        visionDrag.position = sightFrame.current.sight.snap({
-          x: Math.max(
-            data.bounds.minX,
-            Math.min(
-              data.bounds.maxX - 1,
-              visionDrag.original.x + current.x - start.x,
-            ),
-          ),
-          y: Math.max(
-            data.bounds.minY,
-            Math.min(
-              data.bounds.maxY - 1,
-              visionDrag.original.y + current.y - start.y,
-            ),
-          ),
-        });
+        visionDrag.position = {
+          x: visionDrag.original.x + current.x - start.x,
+          y: visionDrag.original.y + current.y - start.y,
+        };
         queuePreview({ id: visionDrag.id, position: visionDrag.position });
-        canvas.style.cursor = "grabbing";
+        canvas.style.cursor = sightFrame.current.sight.placementIssue(
+          visionDrag.position,
+          sightFrame.current.sight.sources.find((s) => s.id === visionDrag!.id)
+            ?.kind,
+        )
+          ? "not-allowed"
+          : "default";
         schedule();
         return;
       }
@@ -1392,7 +1752,8 @@ export function MapViewer({
       if (
         !pointers.size &&
         planner.enabled &&
-        planner.tool === "add" &&
+        (planner.tool === "add" ||
+          planner.sources.some((source) => source.id === planner.tool)) &&
         !sourceAt(p)
       ) {
         const at = world(p);
@@ -1402,7 +1763,7 @@ export function MapViewer({
             at.y >= data.bounds.minY &&
             at.y < data.bounds.maxY
             ? {
-                id: "cursor",
+                id: planner.tool === "add" ? "cursor" : planner.tool!,
                 position: { x: Math.round(at.x), y: Math.round(at.y) },
               }
             : null,
@@ -1427,7 +1788,13 @@ export function MapViewer({
             const anchor = world(previousCenter);
             camera.current = zoomAt(
               camera.current,
-              distance(after) / distance(before),
+              Math.exp(
+                Math.log(distance(after) / distance(before)) *
+                  touchAcceleration.gain(
+                    Math.log(distance(after) / distance(before)),
+                    e.timeStamp,
+                  ),
+              ),
               center.x,
               center.y,
               scale,
@@ -1459,11 +1826,27 @@ export function MapViewer({
       const adding =
         sightFrame.current.sight.enabled &&
         sightFrame.current.sight.tool === "add";
-      const target = adding ? null : hit(p);
+      const source = sourceAt(p);
+      if (hoveredSourceRef.current !== (source?.id ?? null)) {
+        hoveredSourceRef.current = source?.id ?? null;
+        canvas!.dataset.hoveredVisionSource = source?.id ?? "";
+        paintNeeded = true;
+      }
+      const hero = source?.kind === "hero" ? source : null;
+      const preset = hero
+        ? sightFrame.current.sight.presets.find((p) => p.key === hero.presetKey)
+        : null;
+      if ((hoveredHeroRef.current?.source.id ?? null) !== (hero?.id ?? null)) {
+        hoveredHeroRef.current =
+          hero && preset ? { source: hero, preset } : null;
+        setHoveredHero(hoveredHeroRef.current);
+        paintNeeded = true;
+      }
+      const target = adding || source ? null : hit(p);
       const candidates =
         !adding &&
+        !source &&
         !target &&
-        !live.current.measure &&
         !routeFrame.current.enabled &&
         live.current.showLanes
           ? (data.lanePaths ?? [])
@@ -1492,17 +1875,17 @@ export function MapViewer({
         setHovered(target);
         paintNeeded = true;
       }
-      canvas!.style.cursor = sourceAt(p)
-        ? "grab"
-        : sightFrame.current.sight.tool ||
-            live.current.measure ||
-            (routeFrame.current.enabled && routeFrame.current.drafting)
-          ? "crosshair"
-          : target ||
-              laneIds.length ||
-              (routeFrame.current.enabled && !routeFrame.current.drafting)
-            ? "pointer"
-            : "grab";
+      const planner = sightFrame.current.sight;
+      const movingSource = planner.sources.find((s) => s.id === planner.tool);
+      const placing =
+        planner.enabled && (planner.tool === "add" || !!movingSource);
+      canvas!.style.cursor =
+        placing && planner.placementIssue(world(p), movingSource?.kind)
+          ? "not-allowed"
+          : (planner.enabled && planner.tool !== null) ||
+              (routeFrame.current.enabled && routeFrame.current.drafting)
+            ? "crosshair"
+            : "default";
     }
     const up = (e: PointerEvent) => {
       if (!pointers.has(e.pointerId)) return;
@@ -1517,7 +1900,7 @@ export function MapViewer({
             e.type === "pointercancel" ? undefined : drag.position,
           );
         last = null;
-        canvas.style.cursor = "grab";
+        canvas.style.cursor = "default";
         schedule();
         return;
       }
@@ -1536,76 +1919,84 @@ export function MapViewer({
           sightFrame.current.sight.pick(rounded, hit(point(e)))
         ) {
           schedule();
-        } else if (live.current.measure || routeFrame.current.enabled) {
+        } else if (routeFrame.current.enabled) {
           const w = world(point(e));
-          if (
+          const routing = routeFrame.current;
+          const inside =
             w.x >= data.bounds.minX &&
             w.x <= data.bounds.maxX &&
             w.y >= data.bounds.minY &&
-            w.y <= data.bounds.maxY
-          )
-            if (routeFrame.current.enabled) {
-              const routing = routeFrame.current;
-              if (routing.drafting) routing.pick(w);
-              else {
-                const candidates = routing.overlays
-                  .map((o) => ({
-                    id: o.id,
-                    variant: routeKey(o.route),
-                    active: o.active,
-                    d: Math.min(
-                      ...o.route.legs.map((leg) => distanceToPath(w, leg)),
-                      ...(o.route.legs.length === 2
-                        ? [
-                            distanceToPath(w, [
-                              o.route.legs[0].at(-1)!,
-                              o.route.legs[1][0],
-                            ]),
-                          ]
-                        : []),
-                    ),
-                  }))
-                  .filter((o) => o.d * scale * camera.current.zoom <= 8)
-                  .sort((a, b) => a.d - b.d);
-                const nearest = candidates[0]?.d ?? Infinity;
-                const hits = candidates
-                  .filter(
-                    (c) => (c.d - nearest) * scale * camera.current.zoom < 2,
-                  )
-                  .sort(
-                    (a, b) => a.id - b.id || a.variant.localeCompare(b.variant),
-                  );
-                const candidate =
-                  hits[(hits.findIndex((c) => c.active) + 1) % hits.length];
-                if (candidate)
-                  routing.selectRoute(candidate.id, candidate.variant);
-                else setSelected(hit(point(e)));
-              }
-              pointerHint = point(e);
-              schedule();
-            } else
-              setMeasurement((previous) =>
-                previous.length === 1 ? [...previous, w] : [w],
+            w.y <= data.bounds.maxY;
+          if (routing.drafting && routing.points.length === 1) {
+            if (inside) routing.pick(w);
+          } else {
+            const candidates = routing.overlays
+              .map((o) => ({
+                id: o.id,
+                variant: routeKey(o.route),
+                active: o.active,
+                d: Math.min(
+                  ...o.route.legs.map((leg) => distanceToPath(w, leg)),
+                  ...(o.route.legs.length === 2
+                    ? [
+                        distanceToPath(w, [
+                          o.route.legs[0].at(-1)!,
+                          o.route.legs[1][0],
+                        ]),
+                      ]
+                    : []),
+                ),
+              }))
+              .filter((o) => o.d * scale * camera.current.zoom <= 8)
+              .sort((a, b) => a.d - b.d);
+            const nearest = candidates[0]?.d ?? Infinity;
+            const hits = candidates
+              .filter((c) => (c.d - nearest) * scale * camera.current.zoom < 2)
+              .sort(
+                (a, b) => a.id - b.id || a.variant.localeCompare(b.variant),
               );
-        } else setSelected(hit(point(e)));
+            const candidate =
+              hits[(hits.findIndex((c) => c.active) + 1) % hits.length];
+            if (candidate) routing.selectRoute(candidate.id, candidate.variant);
+            else if (!routing.drafting) routing.clear();
+            else if (inside) routing.pick(w);
+          }
+          setSelected(null);
+          pointerHint = point(e);
+          schedule();
+        } else {
+          const sight = sightFrame.current.sight;
+          if (sight.enabled && sight.tool === null && !e.shiftKey)
+            sight.selectSource(null);
+          setSelected(hit(point(e)));
+        }
       }
       last = pointers.values().next().value ?? null;
-      setZoom(camera.current.zoom);
     };
     const wheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (visionDrag) return;
+      if (visionDrag || width <= 0 || height <= 0) return;
       leave();
-      const p = point(e);
-      camera.current = zoomAt(
-        camera.current,
-        Math.exp(-Math.max(-200, Math.min(200, e.deltaY)) * 0.003),
-        p.x,
-        p.y,
-        scale,
-        width,
-        height,
-      );
+      const delta = wheelPixels(e, { width, height });
+      if (e.ctrlKey || e.metaKey) {
+        const p = point(e);
+        const amount = Math.max(-80, Math.min(80, delta.y));
+        const gain = pinchAcceleration.gain(amount, e.timeStamp);
+        camera.current = zoomAt(
+          camera.current,
+          Math.exp(-amount * (e.metaKey || controlHeld ? 0.016 : 0.008) * gain),
+          p.x,
+          p.y,
+          scale,
+          width,
+          height,
+        );
+      } else {
+        pinchAcceleration.reset();
+        // Native trackpad scrolling already supplies momentum; do not add a second spring.
+        camera.current.x += delta.x / (scale * camera.current.zoom);
+        camera.current.y -= delta.y / (scale * camera.current.zoom);
+      }
       constrain();
       schedule();
     };
@@ -1616,7 +2007,6 @@ export function MapViewer({
         y: (data.bounds.minY + data.bounds.maxY) / 2,
         zoom: 1,
       };
-      setZoom(1);
       schedule();
     };
     const zoomBy = (factor: number) => {
@@ -1630,7 +2020,6 @@ export function MapViewer({
         width,
         height,
       );
-      setZoom(camera.current.zoom);
       schedule();
     };
     const key = (e: KeyboardEvent) => {
@@ -1658,10 +2047,9 @@ export function MapViewer({
       else if (e.key === "Escape") {
         sightFrame.current.sight.stop();
         setSelected(null);
-        setMeasurement([]);
         if (routeFrame.current.enabled) routeFrame.current.stop();
-        setMeasure(false);
       } else {
+        leave();
         const step = 70 / (scale * camera.current.zoom);
         if (e.key === "ArrowLeft") camera.current.x -= step;
         if (e.key === "ArrowRight") camera.current.x += step;
@@ -1672,6 +2060,16 @@ export function MapViewer({
       }
     };
     const leave = () => {
+      if (hoveredSourceRef.current) {
+        hoveredSourceRef.current = null;
+        canvas.dataset.hoveredVisionSource = "";
+        schedule();
+      }
+      if (hoveredHeroRef.current) {
+        hoveredHeroRef.current = null;
+        setHoveredHero(null);
+        schedule();
+      }
       if (!visionDrag) queuePreview(null);
       if (pointerHint) {
         pointerHint = null;
@@ -1711,33 +2109,106 @@ export function MapViewer({
           y: p.y,
           zoom: Math.max(3, camera.current.zoom),
         };
-        setZoom(camera.current.zoom);
         setSelected(p);
         schedule();
       },
     };
     const exitTool = (e: KeyboardEvent | MouseEvent) => {
-      if (e.type === "keydown" && (e as KeyboardEvent).key !== "Escape") return;
+      const escape = e.type === "keydown";
+      if (escape && (e as KeyboardEvent).key !== "Escape") return;
       if (visionDrag) {
         e.preventDefault();
+        e.stopPropagation();
         cancelVisionDrag();
         return;
       }
+      const sight = sightFrame.current.sight;
+      const interaction = routeFrame.current.enabled || sight.tool;
       if (
-        !live.current.measure &&
-        !routeFrame.current.enabled &&
-        !sightFrame.current.sight.tool
+        !interaction &&
+        !(escape && (sight.enabled || live.current.terrainLayer))
       )
         return;
-      sightFrame.current.sight.stop();
       e.preventDefault();
-      setMeasure(false);
-      setMeasurement([]);
-      routeFrame.current.stop();
+      e.stopPropagation();
+      if (interaction) {
+        sight.stop();
+        routeFrame.current.stop();
+      } else if (sight.enabled) {
+        sight.toggle();
+      } else {
+        setTerrainLayer("");
+      }
       pointers.clear();
       leave();
-      canvas!.style.cursor = "grab";
+      canvas!.style.cursor = "default";
     };
+    const shortcut = (e: KeyboardEvent) => {
+      if (
+        e.defaultPrevented ||
+        e.repeat ||
+        e.isComposing ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.altKey ||
+        visionDrag ||
+        pointers.size ||
+        (e.target instanceof Element &&
+          e.target.closest(
+            'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="combobox"], [role="listbox"]',
+          ))
+      )
+        return;
+      const key = e.key.toLowerCase();
+      if (key === "delete" || key === "backspace") {
+        const sight = sightFrame.current.sight;
+        if (
+          !sight.enabled ||
+          sight.tool !== null ||
+          routeFrame.current.enabled ||
+          !sight.visibleSources.some((source) =>
+            sight.selectedSources.includes(source.id),
+          )
+        )
+          return;
+        e.preventDefault();
+        e.stopPropagation();
+        sight.removeSelected();
+        leave();
+        return;
+      }
+      const terrain = (
+        { "1": "", "2": "navigation", "3": "height" } as Record<string, string>
+      )[key];
+      if (terrain !== undefined && sightFrame.current.sight.enabled) {
+        const kind = ({ "1": "observer", "2": "sentry", "3": "hero" } as const)[
+          key as "1" | "2" | "3"
+        ];
+        routeFrame.current.stop();
+        sightFrame.current.sight.togglePlacement(kind);
+      } else if (terrain !== undefined) {
+        if (
+          terrain &&
+          !data.rasterLayers?.some((layer) => layer.id === terrain)
+        )
+          return;
+        setTerrainLayer(terrain);
+      } else if (key === "q" && data.visionScene) {
+        if (!sightFrame.current.sight.enabled)
+          sightFrame.current.sight.toggle();
+        routeFrame.current.stop();
+      } else if (key === "w") {
+        sightFrame.current.sight.stop();
+        if (!routeFrame.current.enabled) routeFrame.current.toggle();
+      } else return;
+      e.preventDefault();
+      e.stopPropagation();
+      leave();
+    };
+    document.addEventListener("keydown", modifiers, true);
+    document.addEventListener("keyup", modifiers, true);
+    window.addEventListener("blur", clearModifiers);
+    document.addEventListener("keydown", shortcut);
     document.addEventListener("keydown", exitTool, true);
     document.addEventListener("contextmenu", exitTool);
     canvas.addEventListener("pointerdown", down);
@@ -1746,12 +2217,20 @@ export function MapViewer({
     canvas.addEventListener("pointercancel", up);
     canvas.addEventListener("pointerleave", leave);
     canvas.addEventListener("wheel", wheel, { passive: false });
+    window.addEventListener("scroll", invalidateRect, {
+      capture: true,
+      passive: true,
+    });
     canvas.addEventListener("keydown", key);
     const observer = new ResizeObserver(resize);
     observer.observe(host);
     resize();
     return () => {
       if (previewTimer) clearTimeout(previewTimer);
+      document.removeEventListener("keydown", modifiers, true);
+      document.removeEventListener("keyup", modifiers, true);
+      window.removeEventListener("blur", clearModifiers);
+      document.removeEventListener("keydown", shortcut);
       document.removeEventListener("keydown", exitTool, true);
       document.removeEventListener("contextmenu", exitTool);
       observer.disconnect();
@@ -1764,6 +2243,7 @@ export function MapViewer({
       canvas.removeEventListener("pointercancel", up);
       canvas.removeEventListener("pointerleave", leave);
       canvas.removeEventListener("wheel", wheel);
+      window.removeEventListener("scroll", invalidateRect, true);
       canvas.removeEventListener("keydown", key);
     };
   }, [
@@ -1797,21 +2277,12 @@ export function MapViewer({
       )),
     [visible, focusPoint, hoverPoint, locale],
   );
-  const distance =
-    measurement.length === 2
-      ? Math.round(
-          Math.hypot(
-            measurement[1].x - measurement[0].x,
-            measurement[1].y - measurement[0].y,
-          ),
-        )
-      : null;
   const hoveredCamp = data.economy?.camps.find(
     (c) => c.pointId === hovered?.id,
   );
   const hoveredCampLabels = campLabels.get(hovered?.id ?? "");
   const lanePreviews =
-    showLanes && !measure && !planner.enabled
+    showLanes && !planner.enabled
       ? (data.lanePaths ?? [])
           .filter((r) => hoveredLanes.includes(r.id))
           .map((route) => ({
@@ -1825,7 +2296,9 @@ export function MapViewer({
     <div>
       <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_200px]">
         <div className="min-w-0">
-          <div className="map-stage grid grid-cols-[64px_minmax(0,1fr)] grid-rows-[auto_auto] items-stretch gap-x-1 gap-y-1">
+          <div
+            className={`map-stage grid ${locale === "en" ? "grid-cols-[104px_minmax(0,1fr)]" : "grid-cols-[64px_minmax(0,1fr)]"} grid-rows-[auto_auto] items-stretch gap-x-1 gap-y-1`}
+          >
             <div className="map-time-controls col-start-2 row-start-1 flex flex-wrap items-center gap-x-3 gap-y-1 rounded bg-white/[0.025] px-2 py-0.5 text-[11px]">
               {data.economy && (
                 <>
@@ -1986,17 +2459,60 @@ export function MapViewer({
                 )}
                 className="block h-full w-full touch-none"
               />
+              {hoveredHero && (
+                <div
+                  ref={heroHoverCardRef}
+                  role="tooltip"
+                  aria-label={t("英雄视野信息")}
+                  className="pointer-events-none absolute z-20 w-44 max-w-[calc(100%-16px)] rounded bg-[#101d28f2] p-2 text-[11px] leading-5 shadow-lg"
+                >
+                  <strong className="block text-[12px]">
+                    {locale === "en"
+                      ? hoveredHero.preset.enName
+                      : hoveredHero.preset.zhName}
+                  </strong>
+                  <dl className="mt-1 grid grid-cols-[1fr_auto] gap-x-3 tabular-nums">
+                    <dt className="text-[var(--text-muted)]">
+                      {t("白天视野")}
+                    </dt>
+                    <dd>{formatNumber(locale, hoveredHero.source.day)}</dd>
+                    <dt className="text-[var(--text-muted)]">
+                      {t("夜晚视野")}
+                    </dt>
+                    <dd>{formatNumber(locale, hoveredHero.source.night)}</dd>
+                    <dt className="text-[var(--text-muted)]">
+                      {t("初始移速")}
+                    </dt>
+                    <dd>
+                      {hoveredHero.preset.baseMovementSpeed == null
+                        ? t("未知")
+                        : formatNumber(
+                            locale,
+                            hoveredHero.preset.baseMovementSpeed,
+                          )}
+                    </dd>
+                  </dl>
+                </div>
+              )}
               <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
                 <HoverTooltip
                   className="grid size-5 place-items-center rounded-full border border-white/25 text-[10px] text-[#c9d7e2] hover:bg-white/10"
                   content={
                     <div className="text-xs leading-6">
-                      <p>{t("拖拽平移 · 滚轮或双指缩放")}</p>
-                      <p>{t("测距：点击地图两点，查看平面直线距离。")}</p>
+                      <p>
+                        {t(
+                          "双指滑动平移，捏合缩放；按住 Ctrl／⌘ 滑动可快速缩放，持续同向缩放会加速。",
+                        )}
+                      </p>
+                      <p>
+                        {t(
+                          "1 / 2 / 3：底图 / 导航栅格 / 地面高度；视野开启时改为侦查守卫 / 岗哨守卫 / 英雄。Q / W：视野 / 寻路。",
+                        )}
+                      </p>
                       <p>{t("右键或 Esc 退出当前工具。")}</p>
                       <p>
                         {t(
-                          "寻路：选择起终点后，点击路径切换方案；重合处再次点击轮换。Delete 删除选中路线。",
+                          "寻路：点击路径或路线按钮选中，点击空白回到新建路线；Delete / Backspace 删除所选路线。",
                         )}
                       </p>
                     </div>
@@ -2019,11 +2535,12 @@ export function MapViewer({
                     </button>
                     <button
                       className="h-6 min-w-0 rounded text-center text-[10px] leading-none tracking-tight tabular-nums hover:bg-white/5"
+                      ref={zoomLabelRef}
                       aria-label={t("缩放比例")}
                       title={t("复位地图（0）")}
                       onClick={() => controls.current?.reset()}
                     >
-                      {Math.round(zoom * 100)}%
+                      100%
                     </button>
                     <button
                       className="grid h-6 place-items-center rounded text-xs leading-none hover:bg-white/5"
@@ -2057,38 +2574,26 @@ export function MapViewer({
                 </div>
               )}
               <div
-                ref={cornerRef}
-                className="map-corner-info pointer-events-none absolute flex flex-col justify-end overflow-hidden text-[#b9c7d0]"
+                className="map-corner-info pointer-events-none absolute bottom-3 left-3 flex max-h-[25%] w-max max-w-[min(360px,calc(100%-24px))] flex-col justify-end overflow-hidden rounded bg-[#0b131acc] p-1.5 text-[#b9c7d0]"
                 aria-label={t("地图视口提示")}
               >
                 <div className="map-compass truncate">
                   {t("北 ↑ · 天辉西南 / 夜魇东北")}
                 </div>
                 <div ref={pickHintRef} className="truncate text-cyan-100" />
-                {(hovered || measure) && (
+                {hovered && (
                   <div className="line-clamp-2 shrink-0" role="status">
-                    {measure
-                      ? distance === null
-                        ? measurement.length
-                          ? t("选择第二个点")
-                          : t("依次点击两个点测量直线距离")
-                        : t("直线距离 {value0} 单位", {
-                            value0: formatNumber(locale, distance),
-                          })
-                      : t(
-                          "{value0} · X {value1}, Y {value2}, {value3} {value4}",
-                          {
-                            value0: watcherLabel(hovered!, locale),
-                            value1: Math.round(hovered!.x),
-                            value2: Math.round(hovered!.y),
-                            value3: hovered!.kind === "camp" ? t("Z 轴") : "Z",
-                            value4:
-                              hovered!.z === null
-                                ? t("未知")
-                                : Math.round(hovered!.z),
-                          },
-                        )}
-                    {!measure && hoveredCamp && data.economy && (
+                    {t("{value0} · X {value1}, Y {value2}, {value3} {value4}", {
+                      value0: watcherLabel(hovered!, locale),
+                      value1: Math.round(hovered!.x),
+                      value2: Math.round(hovered!.y),
+                      value3: hovered!.kind === "camp" ? t("Z 轴") : "Z",
+                      value4:
+                        hovered!.z === null
+                          ? t("未知")
+                          : Math.round(hovered!.z),
+                    })}
+                    {hoveredCamp && data.economy && (
                       <p className="truncate">
                         <span className="text-[#e8c781]">
                           <Message
@@ -2159,9 +2664,9 @@ export function MapViewer({
               {!!data.rasterLayers?.length && (
                 <section
                   aria-label={t("地形数据")}
-                  className="flex flex-col items-stretch gap-1 text-[10px]"
+                  className="flex flex-col items-stretch gap-1 text-[14px]"
                 >
-                  <h2 className="py-1 text-center text-[10px] font-semibold text-[var(--text-muted)]">
+                  <h2 className="py-1 text-center text-[14px] font-semibold text-[var(--text-muted)]">
                     {t("地形")}
                   </h2>
                   <div className="flex flex-col gap-0.5">
@@ -2169,11 +2674,25 @@ export function MapViewer({
                       (layer) => (
                         <button
                           key={layer.id}
+                          aria-keyshortcuts={
+                            visionEnabled ? undefined : TERRAIN_KEYS[layer.id]
+                          }
+                          title={`${t(layer.label)}${!visionEnabled && TERRAIN_KEYS[layer.id] ? ` (${TERRAIN_KEYS[layer.id]})` : ""}`}
                           aria-pressed={terrainLayer === layer.id}
                           onClick={() => setTerrainLayer(layer.id)}
-                          className={`${buttonStyle} !px-1 !py-1.5 !text-[10px] ${terrainLayer === layer.id ? "bg-white/10" : ""}`}
+                          className={`${buttonStyle} flex h-14 items-center justify-center gap-1 !px-0.5 !py-1 !text-[14px] ${terrainLayer === layer.id ? "bg-white/10" : ""}`}
                         >
-                          {t(layer.label)}
+                          <span
+                            className={`block min-w-0 flex-1 break-words ${locale === "zh-CN" ? "leading-5" : "text-xs leading-4"}`}
+                          >
+                            {t(layer.label)}
+                          </span>
+                          {TERRAIN_KEYS[layer.id] && (
+                            <ShortcutKey
+                              value={TERRAIN_KEYS[layer.id]}
+                              hidden={visionEnabled}
+                            />
+                          )}
                         </button>
                       ),
                     )}
@@ -2188,40 +2707,31 @@ export function MapViewer({
               )}
               <div className="flex flex-col items-stretch gap-1">
                 <button
-                  className={`${buttonStyle} !px-1 !py-1.5 !text-[10px] ${measure ? activeToolStyle : ""}`}
-                  aria-pressed={measure}
-                  onClick={() => {
-                    sightFrame.current.sight.stop();
-                    setMeasure(!measure);
-                    planner.stop();
-                    setMeasurement([]);
-                  }}
-                >
-                  {t("测距")}
-                </button>
-                <button
-                  className={`${buttonStyle} !px-1 !py-1.5 !text-[10px] ${planner.enabled ? activeToolStyle : ""}`}
-                  aria-pressed={planner.enabled}
-                  onClick={() => {
-                    sightFrame.current.sight.stop();
-                    planner.toggle();
-                    setMeasure(false);
-                    setMeasurement([]);
-                  }}
-                >
-                  {t("寻路")}
-                </button>
-                <button
-                  className={`${buttonStyle} !px-1 !text-[10px] ${visionEnabled ? activeToolStyle : ""}`}
+                  className={`${buttonStyle} flex h-14 items-center justify-center gap-1 !px-0.5 !py-1 !text-[14px] ${visionEnabled ? activeToolStyle : ""}`}
                   disabled={!data.visionScene}
+                  aria-keyshortcuts="Q"
+                  title={`${t("视野")} (Q)`}
                   aria-pressed={visionEnabled}
                   onClick={() => {
                     sightFrame.current.sight.toggle();
                     planner.stop();
-                    setMeasure(false);
                   }}
                 >
-                  {t("视野")}
+                  <span className="min-w-0 flex-1 leading-5">{t("视野")}</span>
+                  <ShortcutKey value="Q" />
+                </button>
+                <button
+                  className={`${buttonStyle} flex h-14 items-center justify-center gap-1 !px-0.5 !py-1 !text-[14px] ${planner.enabled ? activeToolStyle : ""}`}
+                  aria-keyshortcuts="W"
+                  title={`${t("寻路")} (W)`}
+                  aria-pressed={planner.enabled}
+                  onClick={() => {
+                    sightFrame.current.sight.stop();
+                    planner.toggle();
+                  }}
+                >
+                  <span className="min-w-0 flex-1 leading-5">{t("寻路")}</span>
+                  <ShortcutKey value="W" />
                 </button>
               </div>
             </div>
@@ -2277,7 +2787,7 @@ export function MapViewer({
             )}
             <p className="mt-4 text-[10px] leading-5 text-[var(--text-muted)]">
               <Message
-                id="{value0} 测距为平面直线距离；范围圈不计算通行、碰撞、高低坡和战争迷雾。"
+                id="{value0} 范围圈不计算通行、碰撞、高低坡和战争迷雾。"
                 values={{
                   value0: data.coverage
                     ? t(
@@ -2293,10 +2803,10 @@ export function MapViewer({
           aria-label={t("选中对象属性与操作")}
           className="relative min-w-0 text-xs"
         >
-          {!measure &&
-            !planner.enabled &&
+          {!planner.enabled &&
             !visionAdding &&
-            hovered?.kind === "camp" && (
+            hovered?.kind === "camp" &&
+            hovered.id !== selected?.id && (
               <div className="pointer-events-none absolute inset-x-0 top-0 z-20">
                 <CampHoverCard
                   data={data}
@@ -2308,28 +2818,12 @@ export function MapViewer({
                 />
               </div>
             )}
-          {measurement.length > 0 && (
-            <section
-              aria-label={t("地图操作")}
-              className="mb-3 flex flex-wrap items-center gap-1 rounded bg-white/[0.035] p-2"
-            >
-              {measurement.length > 0 && (
-                <button
-                  className={buttonStyle}
-                  onClick={() => setMeasurement([])}
-                >
-                  {t("清除测距")}
-                </button>
-              )}
-            </section>
-          )}
           <VisionController
             onFrame={updateVisionFrame}
             selected={selected}
             data={data}
             activate={() => {
               planner.stop();
-              setMeasure(false);
             }}
           />
           <RoutePanel planner={planner} data={data} />
@@ -2471,28 +2965,32 @@ export function MapViewer({
               <p className="mt-1 font-mono text-[10px]">
                 {Math.round(selected.x)}, {Math.round(selected.y)}
               </p>
-              {selected.kind === "camp" && campLabels.has(selected.id) && (
-                <div className="mt-3 space-y-1 border-t border-white/10 pt-3">
-                  <p>
-                    <Message
-                      id="金币 {value0}"
-                      values={{
-                        value0:
-                          campLabels.get(selected.id)!.gold ?? t("未收录"),
-                      }}
-                    />
-                  </p>
-                  <p>
-                    <Message
-                      id="经验 {value0}"
-                      values={{
-                        value0: campLabels.get(selected.id)!.xp,
-                      }}
-                    />
-                  </p>
-                  {campLabels.get(selected.id)!.timing.map((line) => (
-                    <p key={line}>{line}</p>
-                  ))}
+              {selected.kind === "barracks" && (
+                <p
+                  className={`mt-2 ${barracksDestroyed(selected, barracks) ? "text-[#ef8a83]" : "text-[var(--text-muted)]"}`}
+                >
+                  {barracksDestroyed(selected, barracks)
+                    ? t("兵营已毁（情景）")
+                    : t("兵营完整（情景）")}
+                </p>
+              )}
+              {selected.kind === "camp" && (
+                <div
+                  className="mt-3"
+                  aria-hidden={
+                    hovered?.kind === "camp" && hovered.id !== selected.id
+                      ? true
+                      : undefined
+                  }
+                >
+                  <CampHoverCard
+                    data={data}
+                    point={selected}
+                    time={time}
+                    includeChildren={includeChildren}
+                    gold={campLabels.get(selected.id)?.gold ?? null}
+                    xp={campLabels.get(selected.id)?.xp ?? t("未收录")}
+                  />
                 </div>
               )}
               <button
@@ -2609,29 +3107,29 @@ export function MapViewer({
                   key={kind}
                   onPointerEnter={() => {
                     if (
-                      kind === "camp" &&
+                      layers.has(kind) &&
                       !(
                         sightFrame.current.sight.enabled &&
                         sightFrame.current.sight.tool === "add"
                       )
                     )
-                      setCampLayerHover(true);
+                      setHoveredLayer(kind);
                   }}
                   onPointerLeave={() => {
-                    if (kind === "camp") setCampLayerHover(false);
+                    setHoveredLayer(null);
                   }}
                   onFocus={() => {
                     if (
-                      kind === "camp" &&
+                      layers.has(kind) &&
                       !(
                         sightFrame.current.sight.enabled &&
                         sightFrame.current.sight.tool === "add"
                       )
                     )
-                      setCampLayerHover(true);
+                      setHoveredLayer(kind);
                   }}
                   onBlur={() => {
-                    if (kind === "camp") setCampLayerHover(false);
+                    setHoveredLayer(null);
                   }}
                   className="flex cursor-pointer items-center gap-1.5 rounded px-1 py-1 text-[11px] hover:bg-white/5"
                 >
@@ -2640,6 +3138,7 @@ export function MapViewer({
                     checked={layers.has(kind)}
                     onChange={() => {
                       hoverPoint(null);
+                      setHoveredLayer(null);
                       setLayers((previous) => {
                         const next = new Set(previous);
                         if (next.has(kind)) next.delete(kind);
@@ -2649,12 +3148,24 @@ export function MapViewer({
                     }}
                     className="m-0 size-3.5 shrink-0 accent-[#a4c5bc]"
                   />
-                  <span
-                    className="shrink-0"
-                    style={{ color: MAP_LAYERS[kind].color }}
-                  >
-                    {MAP_LAYERS[kind].symbol}
-                  </span>
+                  {layerIcons.has(kind) ? (
+                    // Native minimap pixels are shared with the Canvas markers.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={layerIcons.get(kind)!.url}
+                      alt=""
+                      width={18}
+                      height={18}
+                      className="size-[18px] shrink-0 object-contain"
+                    />
+                  ) : (
+                    <span
+                      className="inline-grid size-[18px] shrink-0 place-items-center"
+                      style={{ color: MAP_LAYERS[kind].color }}
+                    >
+                      {MAP_LAYERS[kind].symbol}
+                    </span>
+                  )}
                   <span className="min-w-0 flex-1">
                     {t(MAP_LAYERS[kind].label)}
                   </span>
@@ -2679,6 +3190,12 @@ export function MapViewer({
         includeChildren={includeChildren}
         onIncludeChildren={setIncludeChildren}
       />
+      {markerImageError && (
+        <p role="status" className="mt-2 text-xs text-amber-200">
+          {t("部分地图图标加载失败，请刷新重试。")}
+        </p>
+      )}
+      {data.mapIcons && <MapIconLibrary assets={data.mapIcons} />}
       <p className="mt-2 text-[10px] text-[var(--text-muted)]">
         <Message
           id="键盘：方向键平移，＋ / − 缩放，0 复位，Esc 清除选择。{value0}"

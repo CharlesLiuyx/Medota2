@@ -13,6 +13,7 @@ import {
   useSyncExternalStore,
   type ReactNode,
   type HTMLAttributes,
+  type ButtonHTMLAttributes,
 } from "react";
 import { createPortal } from "react-dom";
 import Link from "@/components/version-link";
@@ -83,12 +84,17 @@ export function HoverTooltip({
   href,
   className,
   width,
+  buttonProps,
 }: {
   children: ReactNode;
   content: ReactNode;
   href?: string;
   className?: string;
   width?: number;
+  buttonProps?: Pick<
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    "aria-label" | "aria-pressed" | "onClick" | "disabled"
+  >;
 }) {
   const id = useId();
   const ancestors = useContext(TooltipAncestors);
@@ -222,8 +228,12 @@ export function HoverTooltip({
       ) : (
         <button
           type="button"
+          {...buttonProps}
           {...triggerProps}
-          onClick={(event) => show(event.currentTarget)}
+          onClick={(event) => {
+            show(event.currentTarget);
+            buttonProps?.onClick?.(event);
+          }}
         >
           {children}
         </button>

@@ -152,7 +152,12 @@ const mapTests = [
   "map-vision-source",
   "map-vision-sources",
   "map-hero-assets",
+  "map-package-assets",
   "map-vision-client",
+  "map-high-ground",
+  "map-height-palette",
+  "map-gestures",
+  "map-grid-painter",
 ]
   .map((name) => `tests/unit/${name}.test.ts`)
   .concat(
@@ -382,6 +387,14 @@ export function createPlan(inputPaths) {
       ["catalog-assets", "asset-route"].forEach((name) =>
         unitFiles.add(`tests/unit/${name}.test.ts`),
       );
+    if (
+      paths.some((path) =>
+        /map-package-assets|map-unit-bindings|package-icons|import-map-icons/.test(
+          path,
+        ),
+      )
+    )
+      unitFiles.add("tests/unit/map-package-assets.test.ts");
     if (dbContract)
       [
         "environment-contract",

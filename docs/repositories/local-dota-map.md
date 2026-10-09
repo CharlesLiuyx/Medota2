@@ -219,3 +219,7 @@ Valve 提供 Dota 集成的 Source 2 Filmmaker；工具通过 Dota 2 的 Worksho
 按用户收窄后的范围，v3只在v2基础上新增[devilesk/dota-interactive-map](https://github.com/devilesk/dota-interactive-map/tree/74cf2674358d941f05b0abe9003a91dd4b787d3a)固定提交`74cf2674358d941f05b0abe9003a91dd4b787d3a`的`assets/img/ward_observer.png`和`ward_sentry.png`：黄色侦查／蓝色岗哨，均为32×32透明PNG。该提交`src/js/styleDefinitions.js`的observer／sentry样式明确引用两图，锚点`[0.5,1]`。原字节、Git blob SHA-1、SHA-256、尺寸和ISC LICENSE随包保留；ClientVersion未知，不标为6944或6918，也不覆盖已有VPK眼睛式图标。没有加入该项目的其他图片。
 
 当前交接包为本机`output/map-assets-20261009-v3.zip`，新增图片在`supplements/devilesk/`；原v2文件除说明／总manifest外逐文件hash不变，707个manifest文件ZIP回读通过。SHA-256为`99cf5807c487283be97f9beeef654b7ac0093f190aaf4ea0f380dddbabfa1dca`，大小10,751,203字节。原生取证脚本仍归属v2，不能用旧finalize覆盖v3清单。按用户明确授权，完整包已发布至[私有数据远端附件](https://github.com/CharlesLiuyx/Medota2-dev-data/releases/tag/map-assets-20261009-v3)，独立回下载大小、上述SHA-256及707个manifest文件逐一通过。获取命令见[独立资产包交接](../development-data-sync-runbook.md#独立资产包交接)。尚未入库或改页面，业务lock保持173b0645/601d8a2b；`pnpm sync`不会自动下载独立附件。
+
+### v3本地消费（2026-10-09）
+
+Mac已解压已登记v3 ZIP，707项文件大小／hash全部验证；350可用图片追加到本地图片库，36中文用途文件按别名归并。包内原始资源、错误裁切对照及取证日志仍保留。108个非树点位采用同revision逐点映射，127英雄采用原生图集，两类放置守卫使用devilesk彩色图，两个智慧圣坛仍缺图；泉水明确选用原生24×24 HUD素材。14个同Catalog原缺图单位补充小地图用途关联，未将其标作肖像。应用选择不证明游戏内阵营着色或运行时覆盖逻辑。实现合同见[地图Spec](../specs/map-explorer.md#v3小地图资产)，本轮验证与交接见[验收记录](../history/2026-10-09-map-assets-integration.md)。原独立包和业务lock未改写。

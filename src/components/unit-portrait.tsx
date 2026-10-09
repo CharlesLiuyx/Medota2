@@ -7,6 +7,7 @@ import valveAssetImageLoader from "./valve-asset-image-loader";
 export interface UnitPortraitRef {
   version: string;
   resolution: "portrait" | "shared_portrait" | "related_icon" | "unavailable";
+  relation?: string | null;
 }
 export function UnitPortrait({
   unitKey,
@@ -29,7 +30,9 @@ export function UnitPortrait({
   const label = !available
     ? t("头像待补充")
     : portrait.resolution === "related_icon"
-      ? t("关联技能图标")
+      ? portrait.relation === "unit_minimap"
+        ? t("小地图图标")
+        : t("关联技能图标")
       : portrait.resolution === "shared_portrait"
         ? t("共用模型头像")
         : t("头像");
@@ -46,7 +49,11 @@ export function UnitPortrait({
           fill
           sizes={large ? "56px" : "36px"}
           loading={large ? "eager" : "lazy"}
-          className="object-cover"
+          className={
+            portrait.relation === "unit_minimap"
+              ? "object-contain"
+              : "object-cover"
+          }
           onError={() => setFailed(src)}
         />
       ) : (
@@ -54,7 +61,7 @@ export function UnitPortrait({
       )}
       {available && portrait.resolution === "related_icon" && (
         <span className="absolute bottom-0 right-0 bg-black/70 px-0.5 text-[8px]">
-          {t("技能")}
+          {t(portrait.relation === "unit_minimap" ? "地图" : "技能")}
         </span>
       )}
     </span>

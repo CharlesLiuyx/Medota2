@@ -1,3 +1,4 @@
+import { HEIGHT_BANDS } from "@/domain/map/height-palette";
 import type { MapBounds } from "@/domain/map/schema";
 export function parseGridNav(raw: Buffer) {
   if (raw.length < 32 || raw.readUInt32LE(0) !== 0xfadebead)
@@ -123,15 +124,6 @@ export function terrainPixels(
     rows = Math.ceil((nav.bounds.maxY - nav.bounds.minY) / step);
   if (width * rows > 4_000_000) throw new Error("Height raster too large");
   const elevation = Buffer.alloc(width * rows * 4);
-  const colors = [
-    [52, 132, 218],
-    [88, 170, 72],
-    [206, 194, 72],
-    [228, 144, 56],
-    [214, 84, 62],
-    [176, 86, 176],
-    [180, 190, 205],
-  ];
   for (let row = 0; row < rows; row++)
     for (let col = 0; col < width; col++) {
       const value = height.heightAt(
@@ -140,13 +132,13 @@ export function terrainPixels(
       );
       if (value !== null) {
         const color =
-          colors[
+          HEIGHT_BANDS[
             Math.max(
               0,
-              Math.min(colors.length - 1, Math.floor((value + 64) / 128)),
+              Math.min(HEIGHT_BANDS.length - 1, Math.floor((value + 64) / 128)),
             )
-          ];
-        elevation.set([...color, 150], (row * width + col) * 4);
+          ].stored;
+        elevation.set(color, (row * width + col) * 4);
       }
     }
   return {

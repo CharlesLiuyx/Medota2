@@ -208,6 +208,7 @@ export const mapPackageSchema = z
   });
 export type MapPackage = z.infer<typeof mapPackageSchema>;
 export type MapViewData = {
+  mapIcons?: import("./icons").MapIconSet;
   visionPresets?: {
     catalogId: string;
     clientVersion: string;

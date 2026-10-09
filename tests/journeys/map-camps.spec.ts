@@ -47,16 +47,26 @@ test("map: default overlays and complete camp hover previews", async ({
   await expect(preview).toContainText("×");
   await expect(canvas).toHaveAttribute("data-background-builds", builds!);
   await page.screenshot({ path: testInfo.outputPath("camp-hover-en.png") });
+  const hoverContents = await preview.textContent();
+  await page.mouse.click(rect.x + rect.width / 2, rect.y + rect.height / 2);
+  await page.mouse.move(rect.x + 5, rect.y + 5);
+  await expect(preview).toBeVisible();
+  await expect(preview).toHaveText(hoverContents!);
+  await page.screenshot({ path: testInfo.outputPath("camp-selected-en.png") });
+  await page.getByRole("button", { name: "Close point details" }).click();
+  await expect(preview).toHaveCount(0);
   await page.getByRole("button", { name: "Vision", exact: true }).click();
   await page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2);
   await expect(preview).toHaveCount(0);
   await expect(
     page.getByRole("region", { name: "Vision simulation", exact: true }),
   ).toHaveAttribute("data-vision-preview", /^cursor:/);
+  await expect(canvas).toHaveAttribute("data-high-ground", "visible");
+  const visionBuilds = await canvas.getAttribute("data-background-builds");
   await canvas.press("Escape");
   await page.mouse.move(rect.x + rect.width / 2 + 1, rect.y + rect.height / 2);
   await expect(preview).toBeVisible();
   await page.mouse.move(rect.x + 5, rect.y + 5);
   await expect(preview).toHaveCount(0);
-  await expect(canvas).toHaveAttribute("data-background-builds", builds!);
+  await expect(canvas).toHaveAttribute("data-background-builds", visionBuilds!);
 });

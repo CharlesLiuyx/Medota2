@@ -1,10 +1,14 @@
 "use client";
+import { HEIGHT_BANDS } from "@/domain/map/height-palette";
 import { useTranslations } from "@/i18n/provider";
 export function TerrainLegend({ layer }: { layer: string }) {
   const t = useTranslations();
   if (layer !== "navigation" && layer !== "height" && layer !== "currents")
     return null;
   const navigation = layer === "navigation";
+  const heightColors = HEIGHT_BANDS.map(
+    (band) => `rgb(${band.display.slice(0, 3).join(" ")})`,
+  );
   const rows = navigation
     ? [
         [
@@ -26,13 +30,13 @@ export function TerrainLegend({ layer }: { layer: string }) {
       ]
     : layer === "height"
       ? [
-          ["#3484da", t("蓝 · Z < 64"), ""],
-          ["#58aa48", t("绿 · 64 ≤ Z < 192"), ""],
-          ["#cec248", t("黄 · 192 ≤ Z < 320"), ""],
-          ["#e49038", t("橙 · 320 ≤ Z < 448"), ""],
-          ["#d6543e", t("红 · 448 ≤ Z < 576"), ""],
-          ["#b056b0", t("紫 · 576 ≤ Z < 704"), ""],
-          ["#b4becd", t("浅灰 · Z ≥ 704"), ""],
+          [heightColors[0], t("蓝 · Z < 64"), ""],
+          [heightColors[1], t("绿 · 64 ≤ Z < 192"), ""],
+          [heightColors[2], t("黄 · 192 ≤ Z < 320"), ""],
+          [heightColors[3], t("橙 · 320 ≤ Z < 448"), ""],
+          [heightColors[4], t("红 · 448 ≤ Z < 576"), ""],
+          [heightColors[5], t("紫 · 576 ≤ Z < 704"), ""],
+          [heightColors[6], t("浅灰 · Z ≥ 704"), ""],
         ]
       : [
           [

@@ -211,15 +211,27 @@ export function useRoutePlanner(data: MapViewData) {
   useEffect(() => {
     if (!enabled || activeId === null) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Delete" || e.repeat || e.defaultPrevented) return;
+      if (
+        !["Delete", "Backspace"].includes(e.key) ||
+        e.repeat ||
+        e.defaultPrevented ||
+        e.isComposing ||
+        e.ctrlKey ||
+        e.metaKey ||
+        e.altKey
+      )
+        return;
       if (
         e.target instanceof Element &&
         e.target.closest(
-          'input,textarea,select,[contenteditable="true"],[role="combobox"],[role="listbox"]',
+          'input,textarea,select,[contenteditable]:not([contenteditable="false"]),[role="textbox"],[role="combobox"],[role="listbox"]',
         )
       )
         return;
       e.preventDefault();
+      e.stopPropagation();
+      cache.removeRoute(activeId);
+      setPickError(null);
       setRecords((all) => all.filter((r) => r.id !== activeId));
       setActiveId(null);
       setDraft([]);
@@ -229,7 +241,7 @@ export function useRoutePlanner(data: MapViewData) {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [enabled, activeId]);
+  }, [enabled, activeId, cache]);
   const canPick = (p: Position) =>
     flying || (!!grid && grid.walkable[cellAt(grid, p)] === "1");
   const accept = (next: Position[]) => {
@@ -382,7 +394,7 @@ export function RoutePanel({
                   <strong>{t("寻路估算与操作说明")}</strong>
                   <p>
                     {t(
-                      "选择地图上的起点 A、终点 B，也可选择地标。点击路线切换方案，重合处重复点击轮换；Delete 删除，右键或 Esc 退出工具。",
+                      "选择地图上的起点 A、终点 B，也可选择地标。点击路线或路线按钮选中，重合处重复点击轮换方案；点击空白回到新建路线，下一次点击设置起点。Delete / Backspace 删除所选路线，右键或 Esc 退出工具。",
                     )}
                   </p>
                   <p>
@@ -423,7 +435,8 @@ export function RoutePanel({
             <button
               className="px-1 text-red-200"
               onClick={p.remove}
-              title={t("删除路线（Delete）")}
+              title={t("删除路线（Delete / Backspace）")}
+              aria-keyshortcuts="Delete Backspace"
               aria-label={t("删除路线")}
             >
               ×
@@ -435,7 +448,8 @@ export function RoutePanel({
             {p.records.map((r) => (
               <li key={r.id}>
                 <button
-                  className={`${control} ${p.activeId === r.id ? "ring-1 ring-cyan-200" : ""}`}
+                  className={`${control} border ${p.activeId === r.id ? "border-cyan-200/80 bg-cyan-300/15 text-cyan-100 ring-1 ring-cyan-300/20" : "border-transparent"}`}
+                  data-selected={p.activeId === r.id}
                   aria-pressed={p.activeId === r.id}
                   onClick={() => p.selectRoute(r.id)}
                 >

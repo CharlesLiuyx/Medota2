@@ -16,11 +16,32 @@ import {
   type VisionRequest,
   type VisionSamples,
 } from "@/domain/map/vision";
+import {
+  Move,
+  Trash2,
+  Sun,
+  Moon,
+  AlertTriangle,
+  Eye,
+  CircleCheck,
+  LoaderCircle,
+  Circle,
+  CirclePause,
+  MousePointer2,
+  SquarePlus,
+  ScanEye,
+  Axe,
+  RotateCcw,
+} from "lucide-react";
 import { HoverTooltip } from "@/components/ui/hover-tooltip";
+import { ShortcutKey } from "./shortcut-key";
 import { VisionClient } from "./vision-client";
 
 import {
+  visionPlacementIssue,
   detectedObservers,
+  observersInSentryRange,
+  heroVisionFootprint,
   snapVisionPosition,
   VISION_SOURCE_CELL,
   type PlacedVisionSource,
@@ -56,13 +77,35 @@ export function useVisionPlanner(data: MapViewData) {
   const gridBounds = data.visionScene?.scene.bounds ?? data.bounds;
   const snap = (position: VisionPosition) =>
     snapVisionPosition(position, data.bounds, gridBounds);
-  const [selectedSource, setSelectedSource] = useState<string | null>(null);
+  const [selectedSources, setSelectedSources] = useState<string[]>([]);
+  const singleSelectedSource =
+    selectedSources.length === 1 ? selectedSources[0] : null;
   const [dragging, setDragging] = useState(false);
   const [sources, setSources] = useState<Source[]>([]);
   const [mode, setMode] = useState<Team | "both">("radiant");
   const [placementTeam, setPlacementTeam] = useState<Team>("radiant");
   const team = mode === "both" ? placementTeam : mode;
-  const [preview, setPreview] = useState<Preview>(null);
+  const [preview, setPreviewState] = useState<Preview>(null);
+  const [rejectedPlacement, setRejectedPlacement] =
+    useState<ReturnType<typeof visionPlacementIssue>>(null);
+  const setPreview: typeof setPreviewState = (value) => {
+    setRejectedPlacement(null);
+    setPreviewState(value);
+  };
+  const placementIssue = (
+    position: VisionPosition,
+    kind: Source["kind"] = placementKind,
+  ) =>
+    visionPlacementIssue(position, data.bounds, data.routing?.grid, kind) ??
+    visionPlacementIssue(snap(position), data.bounds, data.routing?.grid, kind);
+  const previewIssue = preview
+    ? placementIssue(
+        preview.position,
+        sources.find((source) => source.id === preview.id)?.kind ??
+          placementKind,
+      )
+    : null;
+
   const [night, setNight] = useState(false);
   const [removed, setRemoved] = useState<string[]>([]);
   const [tool, setToolState] = useState<Tool>(null);
@@ -85,6 +128,7 @@ export function useVisionPlanner(data: MapViewData) {
   const effectivePreview =
     enabled &&
     !cancelled &&
+    !previewIssue &&
     preview &&
     (preview.id !== "cursor" ||
       (tool === "add" && canPlace && sources.length < 8))
@@ -106,6 +150,7 @@ export function useVisionPlanner(data: MapViewData) {
     effectiveSources,
     mode === "both" ? teams : [mode],
   );
+  const sentryRangeIds = observersInSentryRange(effectiveSources, teams);
   const effectiveSourcesKey = JSON.stringify(effectiveSources);
   const requests = useMemo(() => {
     const active = JSON.parse(effectiveSourcesKey) as Source[];
@@ -268,9 +313,17 @@ export function useVisionPlanner(data: MapViewData) {
       ),
     [payload, enabled, target, requests],
   );
+  const syncSelectedHero = (id: string | null) => {
+    const source = visibleSources.find((s) => s.id === id && s.kind === "hero");
+    if (source) {
+      setPlacementKind("hero");
+      setHeroKey(source.presetKey);
+    }
+  };
   const setTool = (value: Tool) => {
     setToolState(value);
     setPreview(null);
+    if (value === null) syncSelectedHero(singleSelectedSource);
   };
   const add = (position: VisionPosition, point?: MapPoint | null) => {
     if (
@@ -281,10 +334,16 @@ export function useVisionPlanner(data: MapViewData) {
       position.y >= data.bounds.maxY
     )
       return;
+    const issue = placementIssue(position, point ? "custom" : placementKind);
+    if (!point && issue) {
+      setPreviewState({ id: "cursor", position });
+      setRejectedPlacement(issue);
+      return;
+    }
     const preset = point ? data.visions?.[point.id] : undefined;
     if (!point && !canPlace) return;
     const id = `source-${++sourceSequence.current}`;
-    setSelectedSource(id);
+    setSelectedSources([id]);
     setSources((previous) => [
       ...previous,
       {
@@ -328,6 +387,9 @@ export function useVisionPlanner(data: MapViewData) {
   }, [imageKey]);
   return {
     enabled,
+    placementIssue,
+    placementError: enabled ? (previewIssue ?? rejectedPlacement) : null,
+    invalidPreview: enabled && preview && previewIssue ? preview : null,
     presets,
     draft,
     canPlace,
@@ -336,20 +398,61 @@ export function useVisionPlanner(data: MapViewData) {
     images,
     effectiveSources,
     detectionIds,
+    sentryRangeIds,
     setPlacementKind(value: VisionPreset["kind"]) {
       setPlacementKind(value);
       setCancelled(false);
       setPreview(null);
       setToolState("add");
     },
+    togglePlacement(value: VisionPreset["kind"]) {
+      if (tool === "add" && placementKind === value) setTool(null);
+      else {
+        setPlacementKind(value);
+        setCancelled(false);
+        setPreview(null);
+        setToolState("add");
+      }
+    },
     setHeroKey(value: string) {
+      const hero = presets.find((p) => p.kind === "hero" && p.key === value);
+      if (
+        !hero ||
+        hero.day === null ||
+        hero.night === null ||
+        hero.detection === null
+      )
+        return;
       setHeroKey(value);
       setCancelled(false);
       setPreview(null);
+      if (
+        enabled &&
+        tool === null &&
+        visibleSources.some(
+          (s) => s.id === singleSelectedSource && s.kind === "hero",
+        )
+      )
+        setSources((previous) =>
+          previous.map((source) =>
+            source.id === singleSelectedSource &&
+            source.kind === "hero" &&
+            source.presetKey !== hero.key
+              ? {
+                  ...source,
+                  presetKey: hero.key,
+                  day: hero.day!,
+                  night: hero.night!,
+                  detection: hero.detection!,
+                }
+              : source,
+          ),
+        );
     },
     snap,
     gridBounds,
-    selectedSource,
+    selectedSource: singleSelectedSource,
+    selectedSources,
     dragging,
     mode,
     team,
@@ -365,7 +468,15 @@ export function useVisionPlanner(data: MapViewData) {
     ),
     preview: effectivePreview,
     setPreview(value: Preview) {
-      const next = value ? { ...value, position: snap(value.position) } : null;
+      const next = value
+        ? {
+            ...value,
+            position:
+              placementIssue(value.position) === "outside"
+                ? value.position
+                : snap(value.position),
+          }
+        : null;
       setPreview((previous) =>
         previous?.id === next?.id &&
         previous?.position.x === next?.position.x &&
@@ -374,8 +485,17 @@ export function useVisionPlanner(data: MapViewData) {
           : next,
       );
     },
-    selectSource(id: string | null) {
-      setSelectedSource(id);
+    selectSource(id: string | null, additive = false) {
+      const next =
+        id === null
+          ? []
+          : additive
+            ? selectedSources.includes(id)
+              ? selectedSources.filter((selected) => selected !== id)
+              : [...selectedSources, id]
+            : [id];
+      setSelectedSources(next);
+      if (next.length === 1) syncSelectedHero(next[0]);
       setToolState(null);
       setPreview(null);
     },
@@ -384,12 +504,16 @@ export function useVisionPlanner(data: MapViewData) {
       setCancelled(false);
     },
     endDrag(id: string, position?: VisionPosition) {
-      if (position)
+      const source = sources.find((s) => s.id === id);
+      const issue =
+        position && source ? placementIssue(position, source.kind) : null;
+      if (position && !issue)
         setSources((ss) =>
           ss.map((s) => (s.id === id ? { ...s, ...snap(position) } : s)),
         );
       setDragging(false);
       setPreview(null);
+      setRejectedPlacement(issue);
     },
     heightAt(position: VisionPosition) {
       return payload ? visionGroundZ(payload.scene, position) : null;
@@ -442,8 +566,22 @@ export function useVisionPlanner(data: MapViewData) {
       );
     },
     remove(id: string) {
-      if (selectedSource === id) setSelectedSource(null);
+      setSelectedSources(selectedSources.filter((selected) => selected !== id));
       setSources((ss) => ss.filter((s) => s.id !== id));
+      setPreview(null);
+    },
+    removeSelected() {
+      const ids = new Set(
+        sources
+          .filter(
+            (s) =>
+              selectedSources.includes(s.id) &&
+              (visibleSources.includes(s) || detectionIds.has(s.id)),
+          )
+          .map((s) => s.id),
+      );
+      setSources((ss) => ss.filter((s) => !ids.has(s.id)));
+      setSelectedSources(selectedSources.filter((id) => !ids.has(id)));
       setPreview(null);
     },
     add,
@@ -461,6 +599,13 @@ export function useVisionPlanner(data: MapViewData) {
               : [...ids, point.id],
           );
       } else {
+        const source = sources.find((s) => s.id === tool);
+        const issue = placementIssue(position, source?.kind);
+        if (issue) {
+          setPreviewState({ id: tool, position });
+          setRejectedPlacement(issue);
+          return true;
+        }
         setSources((ss) =>
           ss.map((s) => (s.id === tool ? { ...s, ...snap(position) } : s)),
         );
@@ -495,12 +640,13 @@ export function VisionController({
       planner.enabled,
       planner.grids,
       planner.preview,
+      planner.invalidPreview,
       planner.mode,
       planner.sources,
       planner.removed,
       planner.target,
       planner.tool,
-      planner.selectedSource,
+      planner.selectedSources,
       planner.dragging,
       planner.images,
       planner.draft,
@@ -564,12 +710,13 @@ export function VisionPanel(props: {
     p.canPlace,
     p.placementKind,
     p.heroKey,
-    p.selectedSource,
+    p.selectedSources,
     p.mode,
     p.team,
     p.placementTeam,
     p.visibleSources,
     [...p.detectionIds],
+    [...p.sentryRangeIds],
     p.sources,
     p.night,
     p.removed,
@@ -579,11 +726,13 @@ export function VisionPanel(props: {
     p.status,
     p.progress,
     p.missingHeight,
+    p.placementError,
   ]);
   if (!p.enabled) return null;
   return (
     <section
       aria-label={t("视野模拟")}
+      data-placement-error={p.placementError ?? ""}
       data-vision-preview={
         p.preview
           ? `${p.preview.id}:${p.preview.position.x},${p.preview.position.y}`
@@ -649,23 +798,163 @@ function VisionPanelContents({
               ? t("缺少高度，结果未知")
               : t("地图范围外，结果未知")
             : "";
+  const statusText = t(
+    (
+      {
+        idle: "等待来源",
+        pending: "等待计算",
+        running: "正在计算视野",
+        done: "视野计算完成",
+        cancelled: "视野计算已取消",
+        error: "视野计算失败",
+      } as Record<string, string>
+    )[p.status],
+  );
+  const statusLabel =
+    statusText +
+    (p.status === "running" ? ` ${Math.round(p.progress * 100)}%` : "");
+  const StatusIcon =
+    p.status === "done"
+      ? CircleCheck
+      : p.status === "pending" || p.status === "running"
+        ? LoaderCircle
+        : p.status === "error"
+          ? AlertTriangle
+          : p.status === "cancelled"
+            ? CirclePause
+            : Circle;
   return (
     <div className="mb-3 space-y-2 rounded bg-white/[0.035] p-2 text-[11px]">
       <div className="flex items-center justify-between gap-1">
-        <h2 className="font-semibold">
+        <h2 className="min-w-0 flex-1 font-semibold">
           {t("视野模拟")} · {t("近似估算")}
         </h2>
+        <span role="status" data-vision-status={p.status} className="shrink-0">
+          <HoverTooltip
+            className={`grid size-5 place-items-center rounded ${p.status === "done" ? "text-emerald-300" : p.status === "error" ? "text-red-300" : p.status === "running" || p.status === "pending" ? "text-cyan-200" : "text-[var(--text-muted)]"}`}
+            buttonProps={{ "aria-label": statusLabel }}
+            content={
+              <div>
+                <p>{statusLabel}</p>
+                {p.removed.length > 0 && (
+                  <p>{t("已移除 {count} 棵树", { count: p.removed.length })}</p>
+                )}
+              </div>
+            }
+          >
+            <StatusIcon
+              aria-hidden="true"
+              className={`size-3.5 ${p.status === "running" || p.status === "pending" ? "animate-spin motion-reduce:animate-none" : ""}`}
+            />
+          </HoverTooltip>
+          <span className="sr-only">{statusLabel}</span>
+          {p.removed.length > 0 && (
+            <span className="sr-only">
+              {t("已移除 {count} 棵树", { count: p.removed.length })}
+            </span>
+          )}
+        </span>
         <HoverTooltip
+          width={360}
           className="shrink-0 rounded-full px-1 text-[var(--text-muted)]"
           content={
-            <div className="space-y-2">
-              {[
-                "同队地面来源取并集；按来源、树木与地形Z判断遮挡。树圆64、有效树高128、高度分层128、覆盖采样64；高度保留原生采样。未校准引擎，不含专用FoW阻挡、肉山／飞行特例、隐身与视野延迟。",
-                "添加模式移动鼠标预览，点击连续放置；Esc或右键进入选中模式，选中后拖动。来源与查询吸附到同一64单位格中心。预览只显示占地；英雄占地按同版本碰撞半径绘制。",
-                "守卫和英雄参数来自所选图鉴版本；自定义半径仅用于情景。岗哨反隐圈高亮范围内敌方侦查守卫，圈内不等于已有地面视野；未模拟通用隐身规则。",
-              ].map((text) => (
-                <p key={text}>{t(text)}</p>
-              ))}
+            <div className="max-h-[min(480px,60dvh)] space-y-3 overflow-y-auto text-xs leading-5">
+              <section>
+                <h3 className="mb-1 font-semibold text-white">
+                  {t("操作方式")}
+                </h3>
+                <ul className="space-y-1">
+                  <li>
+                    {t(
+                      "放置：按1/2/3或点击选择守卫、英雄；再次选择当前项回到选中模式。移动预览，点击连续添加，最多8个来源。",
+                    )}
+                  </li>
+                  <li>
+                    {t(
+                      "移动：Esc进入选中模式，点击来源后拖动；拖动中Esc撤销，选中模式再按Esc关闭工具。",
+                    )}
+                  </li>
+                  <li>
+                    {t("昼夜：切换当前使用的半径；各来源数值可单独编辑。")}
+                  </li>
+                  <li>
+                    {t(
+                      "查询：点击地图查看可见性与遮挡原因。砍树只改变视野情景，可随时恢复。",
+                    )}
+                  </li>
+                </ul>
+              </section>
+              <section className="border-t border-white/10 pt-2">
+                <h3 className="mb-1 font-semibold text-white">
+                  {t("视野颜色")}
+                </h3>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                  {[
+                    ["#2eff88", "天辉"],
+                    ["#f472b6", "夜魇"],
+                    ["#dcf5ff", "双方可见"],
+                    ["#73808e", "遮挡"],
+                    ["#eab308", "未知"],
+                  ].map(([color, label]) => (
+                    <span key={label} className="flex items-center gap-2">
+                      <i
+                        className="size-2.5 rounded-sm"
+                        style={{ background: color }}
+                      />
+                      {t(label)}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-1 text-[var(--text-muted)]">
+                  {t("范围外透明；双方视野独立计算，同队来源合并。")}
+                </p>
+              </section>
+              <section className="border-t border-white/10 pt-2">
+                <h3 className="mb-1 font-semibold text-white">
+                  {t("高地与岗哨标记")}
+                </h3>
+                <p className="text-blue-300">
+                  {t("蓝色轮廓：高地（Z≥192）；紫色填充：更高地面（Z≥320）。")}
+                </p>
+                <p>
+                  {t(
+                    "进入工具自动显示高地，缺少高度处不标注；高地颜色不代表视野。",
+                  )}
+                </p>
+                <p className="text-[#fca5e1]">
+                  {t(
+                    "粉紫网格禁止放置视野点；非法落点显示红叉，点击无效，拖动松手恢复原位。英雄还需可通行格。",
+                  )}
+                </p>
+                <p>
+                  {t(
+                    "选中模式下，点击空白取消选择，Shift 点击增选或取消该点；普通点击单选并可拖动，Delete / Backspace 删除所选视野点。",
+                  )}
+                </p>
+                <p className="text-cyan-200">
+                  {t(
+                    "蓝色眼睛：侦查守卫位于岗哨范围内。金色警示：位于敌方岗哨范围内。",
+                  )}
+                </p>
+                <p className="text-[var(--text-muted)]">
+                  {t("岗哨范围只表示距离关系，不等于已经获得地面视野。")}
+                </p>
+              </section>
+              <details className="border-t border-white/10 pt-2">
+                <summary className="cursor-pointer font-semibold text-white">
+                  {t("计算范围与限制")}
+                </summary>
+                <p className="mt-1">
+                  {t(
+                    "守卫和英雄参数来自当前图鉴版本；位置按64单位格对齐，高地按128单位高度分层。树木与地形共同参与近似遮挡。",
+                  )}
+                </p>
+                <p>
+                  {t(
+                    "模型未校准游戏引擎，不包含专用战争迷雾、飞行视野、通用隐身规则或视野延迟。查询原因不保证是唯一阻挡。",
+                  )}
+                </p>
+              </details>
             </div>
           }
         >
@@ -723,11 +1012,12 @@ function VisionPanelContents({
         </p>
       )}
       <div className="grid grid-cols-3 gap-1" aria-label={t("来源类型")}>
-        {(["observer", "sentry", "hero"] as const).map((kind) => (
+        {(["observer", "sentry", "hero"] as const).map((kind, index) => (
           <button
             key={kind}
-            className={`${button} flex flex-col items-center !px-0.5`}
-            aria-pressed={p.placementKind === kind}
+            className={`${button} relative flex flex-col items-center !px-0.5`}
+            aria-keyshortcuts={String(index + 1)}
+            aria-pressed={p.tool === "add" && p.placementKind === kind}
             aria-label={t(
               kind === "observer"
                 ? "侦查守卫"
@@ -735,8 +1025,14 @@ function VisionPanelContents({
                   ? "岗哨守卫"
                   : "英雄",
             )}
-            onClick={() => p.setPlacementKind(kind)}
+            onClick={() => {
+              activate();
+              p.togglePlacement(kind);
+            }}
           >
+            <span className="absolute right-0.5 top-0.5">
+              <ShortcutKey value={String(index + 1)} />
+            </span>
             <VisionSourceIcon
               preset={p.presets.find(
                 (v) =>
@@ -777,212 +1073,254 @@ function VisionPanelContents({
               })}
         </p>
       )}
-      <div className="flex gap-1">
-        <button
-          className={button}
-          aria-pressed={p.tool === null}
-          onClick={() => p.setTool(null)}
-        >
-          {t("选中模式")}
-        </button>
-        <span className="self-center text-[var(--text-muted)]">
-          {p.tool === "add"
-            ? t("添加模式 · Esc选中")
-            : p.tool === null
-              ? t("点击选中并拖动")
-              : ""}
-        </span>
-      </div>
-      <div className="flex flex-wrap gap-1">
-        <button
-          className={button}
-          aria-pressed={!p.night}
-          onClick={() => p.setNight(false)}
-        >
-          {t("白天")}
-        </button>
-        <button
-          className={button}
-          aria-pressed={p.night}
-          onClick={() => p.setNight(true)}
-        >
-          {t("夜晚")}
-        </button>
-        <button
-          className={button}
-          aria-pressed={p.tool === "add"}
-          disabled={p.sources.length >= 8 || !p.canPlace}
-          onClick={() => choose("add")}
-        >
-          {t("放置来源")}
-        </button>
-        <button
-          className={button}
-          disabled={!selected || p.sources.length >= 8}
-          onClick={() => selected && p.add(selected, selected)}
-        >
-          {t("添加所选对象")}
-        </button>
-        <button
-          className={button}
-          aria-pressed={p.tool === "query"}
-          onClick={() => choose("query")}
-        >
-          {t("查询选点")}
-        </button>
-        <button
-          className={button}
-          aria-pressed={p.tool === "tree"}
-          onClick={() => choose("tree")}
-        >
-          {t("砍树／恢复")}
-        </button>
-        <button
-          className={button}
-          disabled={!p.removed.length}
-          onClick={p.restore}
-        >
-          {t("恢复全部树木")}
-        </button>
-      </div>
-      <p>
-        {t("已移除 {count} 棵树，仅影响视野情景。", {
-          count: p.removed.length,
-        })}
-      </p>
-      {p.tool &&
-        info(
-          p.tool === "tree"
-            ? "点击树木切换砍伐状态；Esc或右键退出。"
-            : "点击地图选点；Esc或右键退出。",
-        )}
-      <ol className="space-y-2">
-        {p.visibleSources.map((s) => (
-          <li
-            key={s.id}
-            data-detected={p.detectionIds.has(s.id) || undefined}
-            className={`space-y-1 border-t pt-1 ${p.detectionIds.has(s.id) ? "border-amber-300 bg-amber-300/10" : "border-white/10"}`}
-          >
-            <div className="flex items-center gap-1">
-              <VisionSourceIcon
-                preset={p.presets.find((v) => v.key === s.presetKey)}
-              />
-              <span>
-                {s.kind === "custom"
-                  ? t("自定义来源")
-                  : (() => {
-                      const preset = p.presets.find(
-                        (v) => v.key === s.presetKey,
-                      );
-                      return preset
-                        ? locale === "en"
-                          ? preset.enName
-                          : preset.zhName
-                        : "—";
-                    })()}
-              </span>
-            </div>
-            {p.detectionIds.has(s.id) && (
-              <p className="text-amber-200">{t("位于敌方岗哨反隐范围内")}</p>
-            )}
-            <button
-              className={button}
-              aria-pressed={p.selectedSource === s.id}
-              onClick={() => p.selectSource(s.id)}
-            >
-              {t("来源 {number}", { number: p.sources.indexOf(s) + 1 })} ·{" "}
-              {t(s.team === "radiant" ? "天辉" : "夜魇")} · {Math.round(s.x)},{" "}
-              {Math.round(s.y)}
-            </button>
-            <p className="text-[var(--text-muted)]">
-              {t("地面 Z：{height}", {
-                height:
-                  p.heightAt(s) === null
-                    ? t("未知")
-                    : Math.round(p.heightAt(s)! * 10) / 10,
-              })}
-              {s.kind === "hero" && (
-                <>
-                  {" "}
-                  ·{" "}
-                  {t("碰撞半径：{radius}", {
-                    radius:
-                      p.presets.find((v) => v.key === s.presetKey)
-                        ?.collisionRadius ?? t("未知"),
-                  })}
-                </>
-              )}
-            </p>
-            {s.kind === "sentry" ? (
-              <p>
-                {t("反隐范围：{radius}；不提供视野", { radius: s.detection })}
-              </p>
-            ) : (
-              <div className="flex gap-1">
-                {(["day", "night"] as const).map((period) => (
-                  <label key={period} className="min-w-0 flex-1">
-                    {period === "day" ? t("白天半径") : t("夜晚半径")}
-                    <input
-                      className="w-full rounded bg-white/5 px-1"
-                      type="number"
-                      min={0}
-                      max={32768}
-                      aria-label={t(
-                        period === "day"
-                          ? "来源 {number} 白天半径"
-                          : "来源 {number} 夜晚半径",
-                        { number: p.sources.indexOf(s) + 1 },
-                      )}
-                      value={s[period]}
-                      onChange={(e) => {
-                        const value = e.target.valueAsNumber;
-                        if (
-                          Number.isFinite(value) &&
-                          value >= 0 &&
-                          value <= 32768
-                        )
-                          p.update(s.id, { [period]: value });
-                      }}
-                    />
-                  </label>
-                ))}
+      <div
+        role="group"
+        aria-label={t("视野操作")}
+        className="grid grid-cols-7 gap-0.5"
+      >
+        {[
+          {
+            label: "选中模式",
+            Icon: MousePointer2,
+            pressed: p.tool === null,
+            action: () => p.setTool(null),
+            hint: "点击单选，Shift 点击多选，点击空白取消选择",
+          },
+          {
+            label: "白天",
+            Icon: Sun,
+            pressed: !p.night,
+            action: () => p.setNight(false),
+          },
+          {
+            label: "夜晚",
+            Icon: Moon,
+            pressed: p.night,
+            action: () => p.setNight(true),
+          },
+          {
+            label: "添加所选对象",
+            Icon: SquarePlus,
+            disabled: !selected || p.sources.length >= 8,
+            action: () => selected && p.add(selected, selected),
+          },
+          {
+            label: "查询选点",
+            Icon: ScanEye,
+            pressed: p.tool === "query",
+            action: () => choose("query"),
+          },
+          {
+            label: "砍树／恢复",
+            Icon: Axe,
+            pressed: p.tool === "tree",
+            action: () => choose("tree"),
+          },
+          {
+            label: "恢复全部树木",
+            Icon: RotateCcw,
+            disabled: !p.removed.length,
+            action: p.restore,
+          },
+        ].map(({ label, Icon, pressed, disabled, action, hint }) => (
+          <HoverTooltip
+            key={label}
+            width={220}
+            className={`${button} grid h-7 min-w-0 place-items-center !p-0`}
+            buttonProps={{
+              "aria-label": t(label),
+              "aria-pressed": pressed,
+              disabled,
+              onClick: action,
+            }}
+            content={
+              <div>
+                <p className="font-semibold">{t(label)}</p>
+                {hint && (
+                  <p className="mt-1 text-[var(--text-muted)]">{t(hint)}</p>
+                )}
               </div>
-            )}
-            <button
-              className={button}
-              aria-pressed={p.tool === s.id}
-              onClick={() => choose(s.id)}
-            >
-              {t("移动来源")}
-            </button>{" "}
-            <button className={button} onClick={() => p.remove(s.id)}>
-              {t("移除来源")}
-            </button>
-          </li>
+            }
+          >
+            <Icon aria-hidden="true" className="size-4" />
+          </HoverTooltip>
         ))}
+      </div>
+      <ol className="space-y-1.5">
+        {p.visibleSources.map((s) => {
+          const preset = p.presets.find((v) => v.key === s.presetKey);
+          const number = p.sources.indexOf(s) + 1;
+          const name =
+            s.kind === "custom"
+              ? t("自定义来源")
+              : preset
+                ? locale === "en"
+                  ? preset.enName
+                  : preset.zhName
+                : "—";
+          const sourceLabel = `${t("来源 {number}", { number })} · ${t(s.team === "radiant" ? "天辉" : "夜魇")} · ${Math.round(s.x)}, ${Math.round(s.y)}`;
+          const detected = p.detectionIds.has(s.id);
+          const inSentryRange = p.sentryRangeIds.has(s.id);
+          return (
+            <li
+              key={s.id}
+              data-detected={detected || undefined}
+              data-sentry-range={inSentryRange || undefined}
+              data-selected={p.selectedSources.includes(s.id)}
+              className={`flex min-w-0 items-center gap-0.5 rounded border px-0.5 py-1 ${p.selectedSources.includes(s.id) ? "border-cyan-200/80 bg-cyan-300/15 ring-1 ring-cyan-300/20" : detected ? "border-amber-300/70 bg-amber-300/10" : inSentryRange ? "border-cyan-300/40 bg-cyan-300/5" : "border-transparent bg-white/[0.025]"}`}
+            >
+              <HoverTooltip
+                className={`relative flex h-6 w-7 shrink-0 items-center justify-center gap-0.5 rounded text-left ${p.selectedSources.includes(s.id) ? "text-cyan-100" : "hover:bg-white/5"}`}
+                buttonProps={{
+                  "aria-label": sourceLabel,
+                  "aria-pressed": p.selectedSources.includes(s.id),
+                  onClick: (event) => p.selectSource(s.id, event.shiftKey),
+                }}
+                content={
+                  <div className="space-y-1">
+                    <p className="font-semibold">{name}</p>
+                    <p>{sourceLabel}</p>
+                    <p>
+                      {t("地面 Z：{height}", {
+                        height:
+                          p.heightAt(s) === null
+                            ? t("未知")
+                            : Math.round(p.heightAt(s)! * 10) / 10,
+                      })}
+                    </p>
+                    {s.kind === "hero" && (
+                      <p>
+                        {t("碰撞半径：{radius}", {
+                          radius: preset?.collisionRadius ?? t("未知"),
+                        })}
+                      </p>
+                    )}
+                    {s.kind === "sentry" && (
+                      <p>
+                        {t("反隐范围：{radius}；不提供视野", {
+                          radius: s.detection,
+                        })}
+                      </p>
+                    )}
+                    {inSentryRange && !detected && (
+                      <p className="text-cyan-200">{t("位于岗哨反隐范围内")}</p>
+                    )}
+                    {detected && (
+                      <p className="text-amber-200">
+                        {t("位于敌方岗哨反隐范围内")}
+                      </p>
+                    )}
+                  </div>
+                }
+              >
+                <VisionSourceIcon preset={preset} size={16} />
+                <span className="sr-only">{name}</span>
+                <span className="shrink-0 text-[9px] text-[var(--text-muted)]">
+                  {number}
+                </span>
+                <span className="sr-only">{sourceLabel}</span>
+                {inSentryRange && !detected && (
+                  <Eye
+                    aria-hidden="true"
+                    className="absolute -right-0.5 -top-1 h-2.5 w-2.5 text-cyan-200"
+                  />
+                )}
+                {detected && (
+                  <AlertTriangle
+                    aria-hidden="true"
+                    className="absolute -right-0.5 -top-1 h-2.5 w-2.5 text-amber-200"
+                  />
+                )}
+              </HoverTooltip>
+              {s.kind !== "sentry" && (
+                <div className="flex min-w-0 flex-1 gap-0.5">
+                  {(["day", "night"] as const).map((period) => {
+                    const Icon = period === "day" ? Sun : Moon;
+                    return (
+                      <label
+                        key={period}
+                        className="flex min-w-0 flex-1 items-center gap-0.5 rounded bg-white/5 px-0.5"
+                      >
+                        <HoverTooltip
+                          content={
+                            period === "day" ? t("白天半径") : t("夜晚半径")
+                          }
+                          className="shrink-0 text-[var(--text-muted)]"
+                        >
+                          <Icon aria-hidden="true" className="h-2.5 w-2.5" />
+                          <span className="sr-only">
+                            {period === "day" ? t("白天半径") : t("夜晚半径")}
+                          </span>
+                        </HoverTooltip>
+                        <input
+                          className="h-6 w-0 min-w-0 flex-1 bg-transparent text-[10px] tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                          type="number"
+                          min={0}
+                          max={32768}
+                          aria-label={t(
+                            period === "day"
+                              ? "来源 {number} 白天半径"
+                              : "来源 {number} 夜晚半径",
+                            { number },
+                          )}
+                          value={s[period]}
+                          onChange={(e) => {
+                            const value = e.target.valueAsNumber;
+                            if (
+                              Number.isFinite(value) &&
+                              value >= 0 &&
+                              value <= 32768
+                            )
+                              p.update(s.id, { [period]: value });
+                          }}
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+              {s.kind === "sentry" && (
+                <span className="min-w-0 flex-1 truncate text-[10px] text-[var(--text-muted)]">
+                  {name}
+                </span>
+              )}
+              <HoverTooltip
+                content={t("移动来源")}
+                className={`grid h-6 w-[18px] shrink-0 place-items-center rounded hover:bg-white/10 ${p.tool === s.id ? "bg-cyan-300/20 text-cyan-100" : "text-[var(--text-secondary)]"}`}
+                buttonProps={{
+                  "aria-label": t("移动来源"),
+                  "aria-pressed": p.tool === s.id,
+                  onClick: () => choose(s.id),
+                }}
+              >
+                <Move aria-hidden="true" className="h-3.5 w-3.5" />
+              </HoverTooltip>
+              <HoverTooltip
+                content={`${t("移除来源")} · Delete`}
+                className="grid h-6 w-[18px] shrink-0 place-items-center rounded text-[var(--text-secondary)] hover:bg-red-400/15 hover:text-red-200"
+                buttonProps={{
+                  "aria-label": t("移除来源"),
+                  onClick: () => p.remove(s.id),
+                }}
+              >
+                <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+              </HoverTooltip>
+            </li>
+          );
+        })}
       </ol>
-      {!p.sources.length && (
-        <span>
-          {info(
-            "最多添加8个来源；双方独立计算，绿色为天辉，粉色为夜魇，白色为双方可见。",
-          )}
-        </span>
-      )}
-      <p role="status" data-vision-status={p.status}>
-        {t(
-          (
+      {p.placementError && (
+        <p role="status" className="text-[11px] text-red-300">
+          {t(
             {
-              idle: "等待来源",
-              pending: "等待计算",
-              running: "正在计算视野",
-              done: "视野计算完成",
-              cancelled: "视野计算已取消",
-              error: "视野计算失败",
-            } as Record<string, string>
-          )[p.status],
-        )}
-        {p.status === "running" ? ` ${Math.round(p.progress * 100)}%` : ""}
-      </p>
+              outside: "地图范围外，不能放置。",
+              "no-ward": "禁放区域，不能放置视野点。",
+              unknown: "此格导航标记未知，不能放置。",
+              blocked: "此处不可通行，不能放置英雄。",
+            }[p.placementError],
+          )}
+        </p>
+      )}
       {(p.status === "running" || p.status === "pending") && (
         <button className={button} onClick={p.cancel}>
           {t("取消视野计算")}
@@ -993,12 +1331,6 @@ function VisionPanelContents({
           {t("重新计算")}
         </button>
       )}
-      <div className="flex gap-1">
-        <span className="text-emerald-300">{t("天辉")}</span> ·{" "}
-        <span className="text-pink-300">{t("夜魇")}</span> ·{" "}
-        <span>{t("双方可见")}</span>
-        {info("灰色为遮挡，黄色为未知，范围外透明；双方独立计算。")}
-      </div>
       {p.target && (
         <div aria-label={t("选点视野原因")} className="space-y-1">
           <p>
@@ -1058,7 +1390,7 @@ export type VisionTexture = {
 const visionPalette = [
   [0, 0, 0, 0],
   [220, 245, 255, 130],
-  [52, 211, 153, 110],
+  [46, 255, 136, 160],
   [244, 114, 182, 110],
   [251, 191, 36, 102],
   [148, 163, 184, 70],
@@ -1128,6 +1460,10 @@ export function visionTexture(
   context.putImageData(pixels, 0, 0);
   return { canvas, col: left, row: bottom };
 }
+export function visionHeroIconSize(size: number, hovered: boolean) {
+  return hovered ? Math.max(32, size * 1.6) : size;
+}
+
 export function drawVision(
   context: CanvasRenderingContext2D,
   p: VisionPlanner,
@@ -1135,6 +1471,7 @@ export function drawVision(
   screen: (p: VisionPosition) => VisionPosition,
   data: MapViewData,
   preview?: { id: string; position: VisionPosition; moving: boolean },
+  hoveredSourceId?: string | null,
 ) {
   if (!p.enabled) return;
   context.save();
@@ -1158,16 +1495,46 @@ export function drawVision(
   }
   context.restore();
   context.save();
-  // Draw the footprint at world scale; keep the asset legible when zoomed out.
+  // Artwork fills the hull's occupied placement-grid bounds at world scale.
   const liveSources = p.effectiveSources.map((source) =>
-    preview?.id === source.id
+    preview?.id === source.id &&
+    !p.placementIssue(preview.position, source.kind)
       ? { ...source, ...p.snap(preview.position) }
       : source,
   );
+  const invalid =
+    preview &&
+    p.placementIssue(
+      preview.position,
+      p.sources.find((source) => source.id === preview.id)?.kind,
+    )
+      ? preview
+      : p.invalidPreview;
+  if (invalid) {
+    const position =
+      p.placementIssue(invalid.position) === "outside"
+        ? invalid.position
+        : p.snap(invalid.position);
+    const at = screen(position);
+    const edge = screen({ x: position.x + VISION_SOURCE_CELL, y: position.y });
+    const size = Math.max(12, Math.abs(edge.x - at.x));
+    context.fillStyle = "#ef444433";
+    context.strokeStyle = "#fca5a5";
+    context.lineWidth = 2;
+    context.fillRect(at.x - size / 2, at.y - size / 2, size, size);
+    context.strokeRect(at.x - size / 2, at.y - size / 2, size, size);
+    context.beginPath();
+    context.moveTo(at.x - 4, at.y - 4);
+    context.lineTo(at.x + 4, at.y + 4);
+    context.moveTo(at.x + 4, at.y - 4);
+    context.lineTo(at.x - 4, at.y + 4);
+    context.stroke();
+  }
   const detected = detectedObservers(
     liveSources,
     p.mode === "both" ? teams : [p.mode],
   );
+  const covered = observersInSentryRange(liveSources, teams);
   const visible = liveSources.filter(
     (source) =>
       p.mode === "both" || source.team === p.mode || detected.has(source.id),
@@ -1187,10 +1554,15 @@ export function drawVision(
       context.stroke();
       context.setLineDash([]);
     });
+  // Keep the selected source and its badge above nearby/overlapping markers.
+  const emphasis = (id: string) =>
+    Number(p.selectedSources.includes(id)) * 2 + Number(id === hoveredSourceId);
+  visible.sort((a, b) => emphasis(a.id) - emphasis(b.id));
   visible.forEach((source) => {
     const at = screen(source);
     const preset = p.presets.find((v) => v.key === source.presetKey);
     const hull = source.kind === "hero" ? preset?.collisionRadius : null;
+    const footprint = heroVisionFootprint(source, hull, p.gridBounds);
     const cellStart = {
       x:
         p.gridBounds.minX +
@@ -1211,11 +1583,7 @@ export function drawVision(
       });
     const color = source.team === "radiant" ? "#a7f3d0" : "#f9a8d4";
     const cursor = source.id === "cursor";
-    const selected = p.selectedSource === source.id;
-    const radius =
-      hull == null
-        ? null
-        : Math.abs(screen({ x: source.x + hull, y: source.y }).x - at.x);
+    const selected = p.selectedSources.includes(source.id);
     context.fillStyle = color;
     context.strokeStyle = detected.has(source.id)
       ? "#fbbf24"
@@ -1224,33 +1592,75 @@ export function drawVision(
         : color;
     context.lineWidth = 1;
     context.globalAlpha = cursor ? 0.45 : 0.6;
-    // World-space collision footprint. Artwork has no separate decorative frame.
-    if (radius !== null) {
-      context.beginPath();
-      context.arc(at.x, at.y, radius, 0, Math.PI * 2);
-      context.fill();
-      context.stroke();
+    // Show exactly the cells intersected by the hull, with no artwork frame.
+    if (footprint) {
+      for (const cell of footprint.cells) {
+        const top = screen({ x: cell.minX, y: cell.maxY });
+        const bottom = screen({ x: cell.maxX, y: cell.minY });
+        context.fillRect(top.x, top.y, bottom.x - top.x, bottom.y - top.y);
+        if (cursor)
+          context.strokeRect(top.x, top.y, bottom.x - top.x, bottom.y - top.y);
+      }
     } else if (source.kind !== "hero") {
       context.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
       if (cursor || selected)
         context.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y);
     }
     context.globalAlpha = 1;
-    const size =
-      radius === null ? Math.max(20, Math.abs(b.x - a.x)) : radius * 2;
+    const iconBounds = footprint?.bounds;
+    const iconTop = iconBounds
+      ? screen({ x: iconBounds.minX, y: iconBounds.maxY })
+      : at;
+    const iconBottom = iconBounds
+      ? screen({ x: iconBounds.maxX, y: iconBounds.minY })
+      : at;
+    const iconCenter = iconBounds
+      ? {
+          x: (iconTop.x + iconBottom.x) / 2,
+          y: (iconTop.y + iconBottom.y) / 2,
+        }
+      : at;
+    const size = iconBounds
+      ? Math.min(
+          Math.abs(iconBottom.x - iconTop.x),
+          Math.abs(iconBottom.y - iconTop.y),
+        )
+      : Math.max(20, Math.abs(b.x - a.x));
     const image = preset?.imageUrl ? p.images[preset.imageUrl] : null;
+    const iconSize = !cursor
+      ? visionHeroIconSize(size, source.id === hoveredSourceId)
+      : size;
     // While choosing a position, expose the exact footprint and underlying grid.
     if (!cursor && image) {
-      const ratio = size / Math.max(image.naturalWidth, image.naturalHeight);
+      const ratio =
+        iconSize / Math.max(image.naturalWidth, image.naturalHeight);
       const w = image.naturalWidth * ratio,
         h = image.naturalHeight * ratio;
-      context.drawImage(image, at.x - w / 2, at.y - h / 2, w, h);
+      context.drawImage(
+        image,
+        iconCenter.x - w * (preset?.imageAnchor?.[0] ?? 0.5),
+        iconCenter.y - h * (preset?.imageAnchor?.[1] ?? 0.5),
+        w,
+        h,
+      );
     } else if (!cursor && !image && source.kind !== "hero") {
       context.fillStyle = color;
-      context.fillRect(at.x - 2, at.y - 2, 4, 4);
+      const dot = source.id === hoveredSourceId ? 8 : 4;
+      context.fillRect(at.x - dot / 2, at.y - dot / 2, dot, dot);
+    }
+    // Selection stays visible above the opaque artwork and follows its grid bounds.
+    if (selected && !cursor && footprint) {
+      context.strokeStyle = "#fde68a";
+      context.lineWidth = 2;
+      context.strokeRect(
+        iconTop.x,
+        iconTop.y,
+        iconBottom.x - iconTop.x,
+        iconBottom.y - iconTop.y,
+      );
     }
     // Missing hull data is not replaced with an invented collision box.
-    if (cursor && radius === null && source.kind === "hero") {
+    if (cursor && !footprint && source.kind === "hero") {
       context.beginPath();
       context.moveTo(at.x - 3, at.y);
       context.lineTo(at.x + 3, at.y);
@@ -1264,19 +1674,109 @@ export function drawVision(
         ? "#fde68a"
         : color;
     context.lineWidth = detected.has(source.id) ? 3 : 1;
-    if (detected.has(source.id)) {
+    if (covered.has(source.id) && !cursor) {
+      const warning = detected.has(source.id);
+      const ringColor = warning ? "#fbbf24" : "#67e8f9";
+      const imageHeight = image
+        ? (image.naturalHeight * iconSize) /
+          Math.max(image.naturalWidth, image.naturalHeight)
+        : iconSize;
+      const centerY =
+        iconCenter.y + imageHeight * (0.5 - (preset?.imageAnchor?.[1] ?? 0.5));
+      const radius = iconSize / 2 + 5;
+      context.save();
+      context.setLineDash([]);
       context.beginPath();
-      context.arc(at.x, at.y, size / 2 + 7, 0, Math.PI * 2);
+      context.arc(iconCenter.x, centerY, radius, 0, Math.PI * 2);
+      context.strokeStyle = "#07131f";
+      context.lineWidth = 5;
       context.stroke();
+      context.strokeStyle = ringColor;
+      context.lineWidth = 2;
+      context.stroke();
+      const badgeX = iconCenter.x - radius + 1,
+        badgeY = centerY - radius + 1;
+      context.beginPath();
+      context.arc(badgeX, badgeY, 7, 0, Math.PI * 2);
+      context.fillStyle = "#101e28";
+      context.fill();
+      context.strokeStyle = ringColor;
+      context.lineWidth = 1.5;
+      context.stroke();
+      if (warning) {
+        context.fillStyle = ringColor;
+        context.font = "bold 10px system-ui";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText("!", badgeX, badgeY);
+      } else {
+        context.beginPath();
+        context.ellipse(badgeX, badgeY, 4, 2.5, 0, 0, Math.PI * 2);
+        context.stroke();
+        context.beginPath();
+        context.arc(badgeX, badgeY, 1, 0, Math.PI * 2);
+        context.fillStyle = ringColor;
+        context.fill();
+      }
+      context.restore();
     }
-    if (source.id !== "cursor") {
-      context.fillStyle = "#fff";
-      context.font = "11px sans-serif";
-      context.fillText(
-        String(p.sources.findIndex((s) => s.id === source.id) + 1),
-        at.x + size / 2 + 3,
-        at.y - size / 2,
-      );
+    if (!cursor) {
+      const number = String(p.sources.findIndex((s) => s.id === source.id) + 1);
+      if (selected) {
+        // Screen-sized brackets follow the artwork anchor, not the collision hull.
+        const ratio = image
+          ? iconSize / Math.max(image.naturalWidth, image.naturalHeight)
+          : 1;
+        const artworkWidth = image ? image.naturalWidth * ratio : iconSize;
+        const artworkHeight = image ? image.naturalHeight * ratio : iconSize;
+        const centerX =
+          iconCenter.x +
+          artworkWidth * (0.5 - (preset?.imageAnchor?.[0] ?? 0.5));
+        const centerY =
+          iconCenter.y +
+          artworkHeight * (0.5 - (preset?.imageAnchor?.[1] ?? 0.5));
+        const halfWidth = Math.max(26, artworkWidth + 8) / 2;
+        const halfHeight = Math.max(26, artworkHeight + 8) / 2;
+        const corner = 5;
+        context.save();
+        context.setLineDash([]);
+        context.lineJoin = "round";
+        context.lineCap = "round";
+        context.beginPath();
+        for (const x of [-1, 1])
+          for (const y of [-1, 1]) {
+            const edgeX = centerX + x * halfWidth;
+            const edgeY = centerY + y * halfHeight;
+            context.moveTo(edgeX - x * corner, edgeY);
+            context.lineTo(edgeX, edgeY);
+            context.lineTo(edgeX, edgeY - y * corner);
+          }
+        context.strokeStyle = "#07131f";
+        context.lineWidth = 4;
+        context.stroke();
+        context.strokeStyle = "#a5f3fc";
+        context.lineWidth = 1.5;
+        context.stroke();
+        const badgeX = centerX + halfWidth + 2;
+        const badgeY = centerY - halfHeight + 2;
+        context.beginPath();
+        context.arc(badgeX, badgeY, 7, 0, Math.PI * 2);
+        context.fillStyle = "#a5f3fc";
+        context.fill();
+        context.strokeStyle = "#07131f";
+        context.lineWidth = 1;
+        context.stroke();
+        context.fillStyle = "#07131f";
+        context.font = "bold 10px sans-serif";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(number, badgeX, badgeY);
+        context.restore();
+      } else {
+        context.fillStyle = "#fff";
+        context.font = "11px sans-serif";
+        context.fillText(number, at.x + iconSize / 2 + 3, at.y - iconSize / 2);
+      }
     }
   });
   for (const id of p.removed) {

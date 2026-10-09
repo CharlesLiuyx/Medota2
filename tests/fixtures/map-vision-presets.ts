@@ -26,6 +26,7 @@ export const visionPresets: NonNullable<MapViewData["visionPresets"]> = {
     },
     {
       key: "npc_dota_hero_axe",
+      baseMovementSpeed: 315,
       kind: "hero",
       collisionRadius: 27,
       zhName: "斧王",
@@ -37,6 +38,7 @@ export const visionPresets: NonNullable<MapViewData["visionPresets"]> = {
     },
     {
       key: "npc_dota_hero_night_stalker",
+      baseMovementSpeed: 295,
       kind: "hero",
       collisionRadius: 27,
       zhName: "暗夜魔王",

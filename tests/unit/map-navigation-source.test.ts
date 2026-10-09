@@ -21,7 +21,11 @@ it("derives navigation from the selected checksum-bound source, blocks unknown f
     const map = {
       provenance: { files: [{ path, sha256: sha256(raw) }] },
     } as MapPackage;
-    expect((await readRoutingData(root, map)).grid?.walkable).toBe("1100");
+    expect((await readRoutingData(root, map)).grid).toMatchObject({
+      walkable: "1100",
+      wardable: "1010", // Known non-walkable terrain can still permit wards.
+      noWard: "0100", // 17 remains walkable; 25 stays in the unknown (yellow) category.
+    });
     expect(
       (
         await readRoutingData(root, {

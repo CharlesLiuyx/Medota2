@@ -91,3 +91,15 @@ pnpm data:import:hero-minimap-assets:local --catalog-versions ff83d8f6-f828-4a50
 开发sandbox使用`pnpm data:import:hero-minimap-assets`并传相同参数格式、该环境实际Catalog UUID。命令拒绝未知／Red／rejected Catalog，先下载完整英雄集合并验证图片与四级LoD，再事务追加现有图片对象，最后原子生成`src/data/map/hero-minimap-icons.v1.json`。清单以内容hash为版本，保留Catalog/source commit、URL及原图hash；图片metadata记录导入时间、转换器、schema及未知客户端构建。重复导入相同字节复用对象，不修改Catalog或现有资产head；失败不得留下部分清单。原生图标可能为32×31等非正方形，保留原始尺寸和透明度。
 
 没有新增migration。导入增加本机业务数据，应在`pnpm data:status`中视作本地修改；已授权交接时由完整业务快照携带数据库对象，代码只携带清单。此命令不授权上传、推送或发布Valve图片。
+
+## 地图资产包与单位缺图补充
+
+从[独立资产包交接](../development-data-sync-runbook.md#独立资产包交接)取得v3 ZIP，核对SHA-256并解压到新的忽略目录。导入器只接受已审阅manifest摘要，并逐项验证707文件，不执行包内脚本。
+
+```sh
+pnpm data:import:map-icons:local --package output/map-assets-20261009-v3
+```
+
+开发sandbox使用`pnpm data:import:map-icons`，参数相同。先准备350图片及四级LoD，再核对本机6944 Catalog和已有单位资产版本所记录的npc_units源hash，事务内追加图片对象并补齐原先unavailable的明确匹配单位。既有单位资产版本必须存在，缺失时先按本页单位头像流程导入；不改Catalog head。事务提交后原子写`src/data/map/package-icons.v1.json`；中断可用同一包重跑，对象与单位补充幂等，既有图片不降级。
+
+清单、实现与完整业务快照须一起交接；本地导入后数据与原lock存在差异是预期状态，不能声称已经跨机器发布。按授权的`pnpm push`流程交接前，运行范围检查、图片HTTP／地图及单位真实浏览；接收环境通过`pnpm sync`消费发布后的完整快照。用户未要求发布时保持本地待审阅。

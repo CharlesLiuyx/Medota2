@@ -95,7 +95,9 @@
     "data:import:item-assets": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/development MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=development MEDOTA2_DATA_CLASS=sandbox tsx src/workers/import-item-assets.ts",
     "data:import:item-assets:local": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/local-review MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=local-review MEDOTA2_DATA_CLASS=production-snapshot MEDOTA2_DATABASE_CONFIRMATION=medota2_local tsx src/workers/import-item-assets.ts",
     "data:import:hero-minimap-assets": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/development MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=development MEDOTA2_DATA_CLASS=sandbox tsx src/workers/import-hero-minimap-assets.ts",
-    "data:import:hero-minimap-assets:local": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/local-review MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=local-review MEDOTA2_DATA_CLASS=production-snapshot MEDOTA2_DATABASE_CONFIRMATION=medota2_local tsx src/workers/import-hero-minimap-assets.ts"
+    "data:import:hero-minimap-assets:local": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/local-review MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=local-review MEDOTA2_DATA_CLASS=production-snapshot MEDOTA2_DATABASE_CONFIRMATION=medota2_local tsx src/workers/import-hero-minimap-assets.ts",
+    "data:import:map-icons": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/development MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=development MEDOTA2_DATA_CLASS=sandbox tsx src/workers/import-map-icons.ts",
+    "data:import:map-icons:local": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/local-review MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=local-review MEDOTA2_DATA_CLASS=production-snapshot MEDOTA2_DATABASE_CONFIRMATION=medota2_local tsx src/workers/import-map-icons.ts"
   },
   "dependencies": {
     "@tailwindcss/postcss": "4.3.3",

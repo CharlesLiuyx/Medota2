@@ -23,3 +23,9 @@
 ```sh
 pnpm check --files src/components/map/map-viewer.tsx src/components/map/camp-hover-card.tsx tests/unit/map-viewer.test.tsx tests/journeys/map-camps.spec.ts docs/specs/map-explorer.md docs/architecture/project-atlas.html
 ```
+
+## 2026-10-09 营地标签与选中详情修订
+
+按用户页面审阅调整：常驻数值以刷新边框顶部中央为锚点，只为已开启的金币、经验、拉叠项目逐行向上排列，单项不留其他项目的空位；悬停补充行位于常驻行上方，保留其位置。选中营地的右栏复用完整详情卡，鼠标移开后仍显示收益、拉叠窗口、XYZ／高度范围、组合和数量；时间与分裂体设置继续同步。
+
+Mac共享local-review，沿用当前未提交资产接入和英雄交互基线，无数据写入。范围检查通过格式、lint、types、docs、74项单元及18项真实浏览，1项固定fixture断言按原规则跳过，无flaky。收据`.medota2/checks/1791488596272-1d160be9/run.json`。Canvas验证各单项及金币＋经验组合的实际坐标；真实浏览比较悬停和选中移开后的完整卡片内容，选中截图已目视核对。用户人工审阅仍待，未提交或发布。

@@ -6,6 +6,7 @@ import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readVisionScene } from "./vision";
 import { readVisionPresets } from "./vision-presets";
+import { mapPackageIcons } from "./package-icons";
 import { readRoutingData } from "./navigation";
 import { loadLocalEnv } from "@/config/env";
 import { parseOverview } from "@/importers/dota-map/adapter";
@@ -94,6 +95,10 @@ export async function getMapPageData(id?: string, catalogId?: string | null) {
         catalogPatch,
         catalogClient: meta?.clientVersion ?? null,
         data: {
+          mapIcons: mapPackageIcons(
+            pkg.map.provenance.client_version,
+            pkg.revision,
+          ),
           visionPresets: meta ? await readVisionPresets(meta) : undefined,
           visionScene: {
             scene: preparedVision.scene,
