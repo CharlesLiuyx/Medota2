@@ -221,3 +221,48 @@ it("partitions non-rectangular equal regions without dropping or overlapping val
     [null, { rowSpan: 1, colSpan: 1 }],
   ]);
 });
+
+it("splits equal values at the frozen boundary and keeps rowSpan columns aligned", async () => {
+  const groups = [{ key: "a", rows: [{ key: "a1" }, { key: "a2" }] }];
+  type Row = { key: string };
+  const columns: GroupedTableColumn<(typeof groups)[number], Row>[] = [
+    { key: "owner", header: "Owner", merged: true, render: () => "Owner A" },
+    {
+      key: "before",
+      header: "Before",
+      mergeKey: () => "same",
+      render: () => "10",
+    },
+    {
+      key: "after",
+      header: "After",
+      mergeKey: () => "same",
+      render: () => "10",
+    },
+  ];
+  const props = {
+    groups,
+    columns,
+    identity: "freeze",
+    label: "Freeze test",
+    rowKey: (row: Row) => row.key,
+  };
+  const { rerender } = render(<GroupedTable {...props} frozenCount={2} />);
+  await waitFor(() =>
+    expect(screen.getAllByRole("cell", { name: "10" })).toHaveLength(2),
+  );
+  const values = screen.getAllByRole("cell", { name: "10" });
+  await waitFor(() =>
+    expect(values[0].hasAttribute("data-table-frozen")).toBe(true),
+  );
+  expect(values[0].getAttribute("colspan")).toBe("1");
+  expect(values[1].hasAttribute("data-table-frozen")).toBe(false);
+  expect(screen.getByRole("rowheader").getAttribute("rowspan")).toBe("2");
+  rerender(<GroupedTable {...props} frozenCount={1} />);
+  await waitFor(() =>
+    expect(screen.getAllByRole("cell", { name: "10" })).toHaveLength(1),
+  );
+  expect(screen.getByRole("cell", { name: "10" }).getAttribute("colspan")).toBe(
+    "2",
+  );
+});

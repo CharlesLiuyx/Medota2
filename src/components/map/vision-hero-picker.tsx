@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
-import { memo, useEffect, useRef, useState } from "react";
+import { CompactFilterMenu } from "../ui/compact-filter-menu";
+import { memo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "@/i18n/provider";
 import type { VisionPreset } from "@/domain/map/vision-sources";
 import loader from "@/components/valve-asset-image-loader";
@@ -49,40 +50,21 @@ export function VisionHeroPicker({
   const t = useTranslations(),
     locale = useLocale();
   const [query, setQuery] = useState(""),
-    [limit, setLimit] = useState(24),
-    [open, setOpen] = useState(false);
+    [limit, setLimit] = useState(24);
   const root = useRef<HTMLDivElement>(null),
-    input = useRef<HTMLInputElement>(null),
-    trigger = useRef<HTMLButtonElement>(null);
+    input = useRef<HTMLInputElement>(null);
   const selected = heroes.find((h) => h.key === value);
   const name = (h: VisionPreset) => (locale === "en" ? h.enName : h.zhName);
-  const filtered = (open ? heroes : []).filter((h) =>
+  const filtered = heroes.filter((h) =>
     `${h.zhName} ${h.enName} ${h.key}`
       .toLocaleLowerCase()
       .includes(query.trim().toLocaleLowerCase()),
   );
-  useEffect(() => {
-    if (open) input.current?.focus();
-  }, [open]);
-  useEffect(() => {
-    const outside = (e: PointerEvent) => {
-      if (e.target instanceof Node && !root.current?.contains(e.target))
-        setOpen(false);
-    };
-    document.addEventListener("pointerdown", outside);
-    return () => document.removeEventListener("pointerdown", outside);
-  }, []);
   return (
     <div
       ref={root}
       className="relative"
       onKeyDown={(e) => {
-        if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopPropagation();
-          setOpen(false);
-          trigger.current?.focus();
-        }
         if (e.key === "ArrowDown" || e.key === "ArrowUp") {
           e.preventDefault();
           const options = [
@@ -99,27 +81,21 @@ export function VisionHeroPicker({
           ]?.focus();
         }
       }}
-      onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false);
-      }}
     >
-      <button
-        ref={trigger}
-        type="button"
-        aria-label={t("选择英雄")}
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        className="flex w-full items-center gap-1 rounded bg-white/5 px-1 py-1 text-left"
-        onClick={() => setOpen(!open)}
+      <CompactFilterMenu
+        title={t("选择英雄")}
+        count={0}
+        onOpen={() => input.current?.focus({ preventScroll: true })}
+        trigger={
+          <>
+            <VisionSourceIcon preset={selected} />
+            <span className="min-w-0 flex-1 truncate">
+              {selected ? name(selected) : t("选择英雄")}
+            </span>
+          </>
+        }
       >
-        <VisionSourceIcon preset={selected} />
-        <span className="min-w-0 flex-1 truncate">
-          {selected ? name(selected) : t("选择英雄")}
-        </span>
-        <span aria-hidden="true">▾</span>
-      </button>
-      {open && (
-        <div className="absolute inset-x-0 top-full z-50 mt-1 rounded border border-white/20 bg-[#172129] p-1 shadow-xl">
+        <div className="w-[min(260px,calc(100vw-32px))]">
           <input
             ref={input}
             aria-label={t("搜索英雄")}
@@ -148,11 +124,14 @@ export function VisionHeroPicker({
                 role="option"
                 aria-label={name(h)}
                 aria-selected={h.key === value}
-                className="flex w-full items-center gap-1 rounded p-1 text-left hover:bg-white/10 focus:bg-white/10"
+                className="compact-menu-option w-full text-left"
                 onClick={() => {
                   onChange(h.key);
-                  setOpen(false);
-                  trigger.current?.focus();
+                  const menu = root.current?.querySelector("details");
+                  if (menu) menu.open = false;
+                  menu
+                    ?.querySelector("summary")
+                    ?.focus({ preventScroll: true });
                 }}
               >
                 <VisionSourceIcon preset={h} />
@@ -162,7 +141,7 @@ export function VisionHeroPicker({
             {!filtered.length && <p className="p-2">{t("没有匹配的英雄")}</p>}
           </div>
         </div>
-      )}
+      </CompactFilterMenu>
     </div>
   );
 }

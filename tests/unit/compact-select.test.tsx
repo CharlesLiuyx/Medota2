@@ -101,3 +101,36 @@ it("retains an uncontrolled choice in normal form submission", async () => {
   expect(submitted.mock.calls[0][0].get("entity")).toBe("map_object");
   expect(submitted.mock.calls[0][0].get("release")).toBe("c:current");
 });
+
+it("opens synchronously, switches menus and closes only the nested layer on Escape", async () => {
+  const { CompactFilterMenu } =
+    await import("@/components/ui/compact-filter-menu");
+  render(
+    <div>
+      <CompactFilterMenu title="筛选" count={0}>
+        <input aria-label="筛选项" type="checkbox" />
+      </CompactFilterMenu>
+      <CompactSelect label="精度" value="auto">
+        <option value="auto">自动</option>
+        <option value="2">2</option>
+      </CompactSelect>
+    </div>,
+  );
+  const filter = screen.getByText("筛选").closest("summary")!;
+  fireEvent.click(filter);
+  expect(filter.closest("details")!.open).toBe(true);
+  const select = screen.getByRole("combobox", { name: "精度" });
+  fireEvent.click(select);
+  expect(select.getAttribute("aria-expanded")).toBe("true");
+  expect(filter.closest("details")!.open).toBe(false);
+  fireEvent.scroll(document);
+  expect(select.closest("details")!.open).toBe(true);
+  const parentEscape = vi.fn();
+  document.addEventListener("keydown", parentEscape);
+  fireEvent.keyDown(screen.getByRole("option", { name: "自动" }), {
+    key: "Escape",
+  });
+  expect(select.closest("details")!.open).toBe(false);
+  expect(parentEscape).not.toHaveBeenCalled();
+  document.removeEventListener("keydown", parentEscape);
+});

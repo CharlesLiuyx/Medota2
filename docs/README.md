@@ -124,6 +124,9 @@
 | [属性参数命名审阅](history/2026-10-08-attribute-parameter-labels.md)        | historical | 两版逐项VPK查询、名称补充、未确认清单与验证        |
 | [属性参数上下文命名](history/2026-10-08-attribute-context-names.md)         | historical | GPT-6-Luna逐项推定剩余双语名称与依据               |
 | [属性原变量中文命名](history/2026-10-08-attribute-field-chinese-names.md)   | historical | GPT-6-Luna并行复核全部原变量中文标签与验证         |
+| [四类图鉴表格视图](history/2026-10-10-catalog-table-views.md)               | historical | 属性列、全量排序、URL恢复与本机浏览验收            |
+| [表格与菜单交互迭代](history/2026-10-10-table-interactions.md)              | historical | 全站冻结、列宽换行、共用菜单与按压反馈验收         |
+| [Fixture失败与架构修复](history/2026-10-10-fixture-repair.md)               | historical | 嵌套悬浮卡、视觉门禁、参数及验证收据               |
 | [变化表格与影响排序](history/2026-10-08-changes-table.md)                   | historical | 紧凑分类、实体简述卡、语义方向与连续虚拟滚动验收   |
 | [图鉴统计与即时搜索](history/2026-10-08-tab-search-tooltips.md)             | historical | 属性数量、变化实时搜索、页头说明提示与本机验证     |
 | [属性完整术语匹配](history/2026-10-08-attribute-term-matching.md)           | historical | 两版中英全篇匹配、复合术语、枚举定位与验证         |

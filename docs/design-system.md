@@ -37,21 +37,23 @@ Token 定义在 `src/app/globals.css`，组件只消费语义变量：
 
 ## 组件
 
-| 组件                           | 职责                                                 |
-| ------------------------------ | ---------------------------------------------------- |
-| `AppShell`                     | 全局 header、实体导航、语言／版本入口、内容和 footer |
-| `EntityTabs`                   | 英雄／技能／单位／物品／地图／变化入口与当前状态     |
-| `PageHeader`                   | eyebrow、标题、摘要和右侧版本/统计区域               |
-| `CompactSelect`                | 全站单选下拉；受控回调与普通表单共用状态、键盘及浮层 |
-| `DatasetBadge`                 | 可读版本信息与健康状态                               |
-| `Badge`                        | 属性、关系、状态和普通标签                           |
-| `Panel`                        | 标准surface与间距容器                                |
-| `SectionHeading`               | 属性分组和详情 section 标题                          |
-| `HeroCard`                     | 高密度 Hero 入口与资产 fallback                      |
-| `AbilityCard`                  | Ability 状态、关系、cost 与 owner 摘要               |
-| `HeroCrest` / `AbilityIcon`    | Valve 本地资产及可访问 fallback                      |
-| `StatGroup`                    | 紧凑 key/value 数值组                                |
-| `EmptyState` / `FailureBanner` | 空、失败和待处理状态                                 |
+| 组件                                   | 职责                                                           |
+| -------------------------------------- | -------------------------------------------------------------- |
+| `AppShell`                             | 全局 header、实体导航、语言／版本入口、内容和 footer           |
+| `EntityTabs`                           | 英雄／技能／单位／物品／地图／变化入口与当前状态               |
+| `PageHeader`                           | eyebrow、标题、摘要和右侧版本/统计区域                         |
+| `CompactSelect`                        | 全站单选下拉；受控回调与普通表单共用状态、键盘及浮层           |
+| `CompactFilterMenu` / `useCompactMenu` | 多选筛选与单选共用即时开合、顶层定位及关闭生命周期             |
+| `DataTable` / `GroupedTable`           | 全站冻结首列、冻结至指定列；合并与虚拟滚动、内容列宽及多行表头 |
+| `DatasetBadge`                         | 可读版本信息与健康状态                                         |
+| `Badge`                                | 属性、关系、状态和普通标签                                     |
+| `Panel`                                | 标准surface与间距容器                                          |
+| `SectionHeading`                       | 属性分组和详情 section 标题                                    |
+| `HeroCard`                             | 高密度 Hero 入口与资产 fallback                                |
+| `AbilityCard`                          | Ability 状态、关系、cost 与 owner 摘要                         |
+| `HeroCrest` / `AbilityIcon`            | Valve 本地资产及可访问 fallback                                |
+| `StatGroup`                            | 紧凑 key/value 数值组                                          |
+| `EmptyState` / `FailureBanner`         | 空、失败和待处理状态                                           |
 
 开发画廊位于 `/design-system`，用于视觉回归和状态审阅。
 
@@ -64,7 +66,7 @@ Token 定义在 `src/app/globals.css`，组件只消费语义变量：
 - 所有交互有 `focus-visible`，触摸控件使用统一 control height。
 - 不移除原生表单、`details`、heading 和 list 语义。
 - `prefers-reduced-motion` 下关闭非必要动画和位移。
-- Playwright 在 Desktop Chrome 与 Pixel 7 视口固定 Heroes 目录和 Ability 详情视觉基线；宽表在移动端只在自身容器滚动，不扩大页面画布。
+- Playwright 在 Desktop Chrome 与 Pixel 7 视口固定 Heroes 目录和 Ability 详情视觉基线；页面共同布局、品牌图片及已登记展示依赖变化自动执行两端视觉检查，图片按实际平台审阅更新、保持原像素阈值；宽表在移动端只在自身容器滚动，不扩大页面画布。
 
 ## 全局语言与布局
 

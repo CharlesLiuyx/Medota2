@@ -25,6 +25,10 @@ const data =
 const ui = /^src\/(?:app|components)\//;
 const sharedUi =
   /(?:layout\.tsx|globals\.css|app-shell|infinite-list|components\/ui\/)/;
+// The two visual contracts cover the hero catalog and ability detail, including
+// their shared chrome. Keep unrelated map/unit changes on their own journeys.
+const visualScope =
+  /^(?:public\/brand\/|src\/app\/(?:layout\.tsx|globals\.css|heroes\/page\.tsx|abilities\/\[[^/]+\]\/page\.tsx)$|src\/components\/(?:ui\/|(?:app-shell|release-navigation|language-switcher|hero-card|hero-crest|hero-filter-form|infinite-hero-catalog|live-catalog|use-live-catalog|catalog-header|catalog-view-switch|infinite-list|ability-tooltip|ability-icon|attribute-link|entity-reference|owner-attribute-list|version-link)(?:[./]|$)))/;
 // Reviewed leaf components/resources have existing tests and no navigation or
 // product-service responsibility. Missing sources/tests fall back to broad rules.
 const focusedUnitScopes = new Map([
@@ -105,6 +109,7 @@ const settings = [
 ];
 const allRuntime = [
   "src",
+  "public",
   "tests/helpers",
   "tests/fixtures",
   "drizzle",
@@ -236,7 +241,7 @@ export function createPlan(inputPaths) {
   const runtimePaths = paths.filter(
     (path) =>
       !path.startsWith("scripts/documentation/") &&
-      /^(src\/|tests\/|scripts\/|drizzle\/|docker|.*config\.|package\.json|pnpm-(?:lock|workspace)\.yaml|\.github\/)/.test(
+      /^(src\/|public\/brand\/|tests\/|scripts\/|drizzle\/|docker|.*config\.|package\.json|pnpm-(?:lock|workspace)\.yaml|\.github\/)/.test(
         path,
       ),
   );
@@ -366,7 +371,7 @@ export function createPlan(inputPaths) {
       unitFiles.add("tests/unit/hover-tooltip.test.tsx");
     if (
       paths.some((path) =>
-        /(?:data-table|grouped-table|table-sticky-cells|table-cell-spans)/.test(
+        /(?:data-table|grouped-table|table-sticky-cells|table-frozen-columns|table-cell-spans)/.test(
           path,
         ),
       )
@@ -375,6 +380,8 @@ export function createPlan(inputPaths) {
       unitFiles.add("tests/unit/detail-infinite-lists.test.tsx");
       unitFiles.add("tests/unit/infinite-list.test.tsx");
     }
+    if (paths.some((path) => /compact-(?:select|filter-menu|menu)/.test(path)))
+      unitFiles.add("tests/unit/compact-select.test.tsx");
     if (paths.some((path) => /infinite/.test(path)))
       ["infinite-list", "infinite-catalog", "detail-infinite-lists"].forEach(
         (name) => unitFiles.add(`tests/unit/${name}.test.tsx`),
@@ -411,6 +418,16 @@ export function createPlan(inputPaths) {
       );
   }
   const journeys = new Set();
+  if (
+    flowPaths.some((path) =>
+      /(?:catalog-view|catalog-table|attribute-summary-details|attribute-value-effects|api\/attributes\/preview)/.test(
+        path,
+      ),
+    )
+  )
+    ["heroes", "abilities", "units", "items"].forEach((scope) =>
+      journeys.add(scope),
+    );
   if (
     wide ||
     flowPaths.some((path) =>
@@ -524,6 +541,23 @@ export function createPlan(inputPaths) {
     path.startsWith("tests/integration/"),
   );
   const e2eChanged = paths.some((path) => path.startsWith("tests/e2e/"));
+  const e2eSpecs = new Set(
+    existing.filter((path) => /^tests\/e2e\/.*\.spec\.[jt]sx?$/.test(path)),
+  );
+  for (const path of paths) {
+    const owner = path.match(
+      /^(tests\/e2e\/.*\.spec\.[jt]sx?)-snapshots\//,
+    )?.[1];
+    if (owner && existsSync(owner)) e2eSpecs.add(owner);
+  }
+  // Deleting a spec must exercise remaining tests rather than dropping coverage.
+  if (
+    paths.some(
+      (path) =>
+        /^tests\/e2e\/.*\.spec\.[jt]sx?$/.test(path) && !existsSync(path),
+    )
+  )
+    e2eSpecs.clear();
   if (e2eChanged)
     add(
       "e2e",
@@ -531,9 +565,9 @@ export function createPlan(inputPaths) {
       [
         "test:e2e",
         "--retries=1",
-        ...existing.filter((path) =>
-          /^tests\/e2e\/.*\.spec\.[jt]sx?$/.test(path),
-        ),
+        "--project=desktop-chromium",
+        "--project=mobile-chromium",
+        ...e2eSpecs,
       ],
       [
         ...allRuntime,
@@ -541,6 +575,26 @@ export function createPlan(inputPaths) {
         "playwright.config.ts",
         "playwright.shared.config.ts",
       ],
+      "browser",
+    );
+  const visualSpec = "tests/e2e/visual.spec.ts";
+  const visualCovered =
+    e2eChanged && (!e2eSpecs.size || e2eSpecs.has(visualSpec));
+  if (
+    !visualCovered &&
+    (wide || localeRuntime || flowPaths.some((path) => visualScope.test(path)))
+  )
+    add(
+      "visual",
+      "英雄目录／技能详情或共同布局与品牌资源变化：核对桌面和移动视觉合同",
+      [
+        "test:e2e",
+        visualSpec,
+        "--project=desktop-chromium",
+        "--project=mobile-chromium",
+        "--retries=1",
+      ],
+      [...allRuntime, "tests/e2e", "playwright.config.ts"],
       "browser",
     );
   if ((hasData || integrationChanged) && !dbContract)
@@ -578,10 +632,12 @@ export function createPlan(inputPaths) {
       [...allRuntime, "tests/fixtures/vpk"],
       "benchmark",
     );
-  if (wide)
+  // Development and production use different CSS compilers. Local style edits
+  // must pass the production compiler too, including deleted module imports.
+  if (wide || flowPaths.some((path) => /^src\/.*\.css$/.test(path)))
     add(
       "build",
-      "运行代码或构建依赖变化；检查当前单一 Web 发布单元",
+      "工具链或样式变化；核对正式编译与当前单一 Web 发布单元",
       ["release", "--build-only"],
       [...allRuntime, "public"],
       "build",

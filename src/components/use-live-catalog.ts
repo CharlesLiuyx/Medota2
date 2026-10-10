@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  withCatalogPresentation,
+  CATALOG_PRESENTATION_KEYS,
+} from "@/presentation/catalog-view";
 import { gameLocale } from "@/i18n/config";
 
 import {
@@ -34,7 +38,12 @@ export function readFilterParams(
 ): SearchParams {
   const params: SearchParams = {};
   for (const [key, value] of entries) {
-    if (typeof value !== "string" || key === "release") continue;
+    if (
+      typeof value !== "string" ||
+      key === "release" ||
+      CATALOG_PRESENTATION_KEYS.some((field) => field === key)
+    )
+      continue;
     const previous = params[key];
     params[key] =
       previous === undefined
@@ -348,7 +357,10 @@ export function useLiveCatalog<
         null,
         "",
         withLocale(
-          withRelease(query ? `${path}?${query}` : path, release),
+          withCatalogPresentation(
+            withRelease(query ? `${path}?${query}` : path, release),
+            Object.fromEntries(new URLSearchParams(window.location.search)),
+          ),
           locale,
           true,
         ),
@@ -368,7 +380,10 @@ export function useLiveCatalog<
     window.history.replaceState(
       null,
       "",
-      withLocale(withRelease(path, release), locale),
+      withCatalogPresentation(
+        withLocale(withRelease(path, release), locale),
+        Object.fromEntries(new URLSearchParams(window.location.search)),
+      ),
     );
     request(next, 0);
   }, [parse, path, request, release, locale]);
@@ -390,9 +405,15 @@ export function useLiveCatalog<
         setValidationErrors(parsed.errors);
         return;
       }
-      if (canonical(parsed.filters) === pending.current.query) return;
+      // Replica restoration may have already requested this URL while the
+      // remounted filter form still holds the original server query.
       setValidationErrors([]);
-      setFilters(parsed.filters);
+      setFilters((current) =>
+        canonical(current) === canonical(parsed.filters)
+          ? current
+          : parsed.filters,
+      );
+      if (canonical(parsed.filters) === pending.current.query) return;
       request(parsed.filters, 0);
     };
     // Next can restore the original server payload after returning from a

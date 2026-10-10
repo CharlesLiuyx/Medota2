@@ -2,12 +2,21 @@
 import { SourceText } from "@/i18n/provider";
 import { gameLocale } from "@/i18n/config";
 
-import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { withRelease } from "@/domain/releases";
 import { useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { ITEM_CATEGORIES, type ItemDefinition } from "@/domain/items";
 import { useLocale, useTranslations } from "@/i18n/provider";
+import { CatalogViewSwitch, useCatalogView } from "./catalog-view-switch";
+import { EntityCatalogTable } from "./entity-catalog-table";
+import { itemTableEntry } from "./catalog-table-projections";
 import { CatalogHeader } from "./catalog-header";
 import { CompactSelect } from "./ui/compact-select";
 import { HoverTooltip } from "./ui/hover-tooltip";
@@ -37,6 +46,7 @@ export function ItemCatalog({
     }
   >;
 }) {
+  const view = useCatalogView();
   const params = useSearchParams();
   const t = useTranslations();
   const ready = useSyncExternalStore(
@@ -57,6 +67,10 @@ export function ItemCatalog({
   const update = (values: { q?: string; category?: string; lang?: string }) => {
     const next = { q, category, lang, ...values };
     const search = new URLSearchParams();
+    for (const key of ["view", "sort", "order"]) {
+      const value = params.get(key);
+      if (value) search.set(key, value);
+    }
     if (next.q.trim()) search.set("q", next.q.trim());
     if (next.category !== "all") search.set("category", next.category);
     search.set("lang", next.lang);
@@ -77,13 +91,18 @@ export function ItemCatalog({
         words.every((word) => item.searchText.includes(word)),
     );
   }, [items, q, category]);
+  const project = useCallback(
+    (item: (typeof items)[number]) =>
+      itemTableEntry(item, imageVersion, gameLocale(lang) === "en", t),
+    [imageVersion, lang, t],
+  );
   const select = (data: FormData) =>
     update({
       category: String(data.get("category")),
     });
   return (
     <>
-      <CatalogHeader header={header}>
+      <CatalogHeader header={header} viewSwitch={<CatalogViewSwitch />}>
         <form
           className="flex flex-wrap items-center gap-1.5"
           autoComplete="off"
@@ -154,106 +173,123 @@ export function ItemCatalog({
         </form>
       </CatalogHeader>
 
-      <InfiniteList
-        source={{
-          kind: "local",
-          items: filtered,
-          chunkSize: 48,
-          identity: `${version}:${q}:${category}:${lang}`,
-        }}
-        getKey={(item) => item.internalName}
-        ariaLabel={t("物品结果")}
-        className="space-y-1"
-        chunkClassName="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8"
-        messages={{
-          loaded: (shown, total) =>
-            t("已显示 {value0} / {value1} 个物品", {
-              value0: shown,
-              value1: total ?? shown,
-            }),
-          loadingAfter: t("加载更多物品…"),
-          loadingBefore: t("加载前面的物品…"),
-          complete: t("已显示全部物品"),
-          loadFailed: t("物品加载失败。"),
-          retryBefore: t("重试加载前面的物品"),
-          retryAfter: t("重试加载更多物品"),
-        }}
-        renderChunk={(chunk) =>
-          chunk.map((item) => {
-            const name = gameLocale(lang) === "en" ? item.enName : item.zhName;
-            return (
-              <div
-                role="listitem"
-                key={item.internalName}
-                data-infinite-list-key={item.internalName}
-                className="min-w-0"
-              >
-                <HoverTooltip
-                  href={`/items/${item.internalName}`}
-
-                  className="flex min-h-[76px] items-center gap-2 bg-[#182127]/65 p-2 hover:bg-[#25313a]"
-                  content={
-                    <>
-                      <div className="mb-3 flex items-center gap-3">
-                        <ItemIcon
-                          itemKey={item.internalName}
-                          version={imageVersion}
-                          large
-                        />
-                        <p className="text-sm font-semibold">
-                          <SourceText
-                            sourceLocale={
-                              item.nameLocales?.[
-                                gameLocale(lang) === "en" ? "en" : "zh"
-                              ]
-                            }
-                          >
-                            {name}
-                          </SourceText>
-                        </p>
-                      </div>
-                      <ItemSummary
-                        item={item}
-                        en={gameLocale(lang) === "en"}
-                        compact
-                      />
-                    </>
-                  }
+      {view === "table" ? (
+        <EntityCatalogTable
+          kind="item"
+          columnItems={items}
+          source={{
+            kind: "local",
+            items: filtered,
+            chunkSize: 8,
+            identity: `${version}:${params.get("release")}:${q}:${category}:${lang}`,
+          }}
+          getKey={(item) => item.internalName}
+          project={project}
+          label={t("物品结果")}
+        />
+      ) : (
+        <InfiniteList
+          source={{
+            kind: "local",
+            items: filtered,
+            chunkSize: 48,
+            identity: `${version}:${q}:${category}:${lang}`,
+          }}
+          getKey={(item) => item.internalName}
+          ariaLabel={t("物品结果")}
+          className="space-y-1"
+          chunkClassName="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8"
+          messages={{
+            loaded: (shown, total) =>
+              t("已显示 {value0} / {value1} 个物品", {
+                value0: shown,
+                value1: total ?? shown,
+              }),
+            loadingAfter: t("加载更多物品…"),
+            loadingBefore: t("加载前面的物品…"),
+            complete: t("已显示全部物品"),
+            loadFailed: t("物品加载失败。"),
+            retryBefore: t("重试加载前面的物品"),
+            retryAfter: t("重试加载更多物品"),
+          }}
+          renderChunk={(chunk) =>
+            chunk.map((item) => {
+              const name =
+                gameLocale(lang) === "en" ? item.enName : item.zhName;
+              return (
+                <div
+                  role="listitem"
+                  key={item.internalName}
+                  data-infinite-list-key={item.internalName}
+                  className="min-w-0"
                 >
-                  <ItemIcon
-                    itemKey={item.internalName}
-                    version={imageVersion}
-                  />
-                  <div className="min-w-0 space-y-1">
-                    <h2 className="text-xs font-medium">
-                      <SourceText
-                        sourceLocale={
-                          item.nameLocales?.[
-                            gameLocale(lang) === "en" ? "en" : "zh"
-                          ]
-                        }
-                      >
-                        {name}
-                      </SourceText>
-                    </h2>
-                    <p className="text-[10px] text-[var(--text-muted)]">
-                      {t(ITEM_CATEGORIES[item.category])}
-                    </p>
-                    <p className="text-[11px] text-[#c4a16a]">
-                      {item.cost === null
-                        ? t("价格未提供")
-                        : t("{value0} 金币", {
-                            value0: item.cost,
-                          })}
-                    </p>
-                  </div>
-                </HoverTooltip>
-              </div>
-            );
-          })
-        }
-      />
-      {!filtered.length && (
+                  <HoverTooltip
+                    href={`/items/${item.internalName}`}
+
+                    className="flex min-h-[76px] items-center gap-2 bg-[#182127]/65 p-2 hover:bg-[#25313a]"
+                    content={
+                      <>
+                        <div className="mb-3 flex items-center gap-3">
+                          <ItemIcon
+                            itemKey={item.internalName}
+                            version={imageVersion}
+                            large
+                          />
+                          <p className="text-sm font-semibold">
+                            <SourceText
+                              sourceLocale={
+                                item.nameLocales?.[
+                                  gameLocale(lang) === "en" ? "en" : "zh"
+                                ]
+                              }
+                            >
+                              {name}
+                            </SourceText>
+                          </p>
+                        </div>
+                        <ItemSummary
+                          item={item}
+                          en={gameLocale(lang) === "en"}
+                          compact
+                        />
+                      </>
+                    }
+                  >
+                    <ItemIcon
+                      itemKey={item.internalName}
+                      version={imageVersion}
+                    />
+                    <div className="min-w-0 space-y-1">
+                      <h2 className="text-xs font-medium">
+                        <SourceText
+                          sourceLocale={
+                            item.nameLocales?.[
+                              gameLocale(lang) === "en" ? "en" : "zh"
+                            ]
+                          }
+                        >
+                          {name}
+                        </SourceText>
+                      </h2>
+                      <p className="text-[10px] text-[var(--text-muted)]">
+                        {t(ITEM_CATEGORIES[item.category])}
+                      </p>
+                      <p className="text-[11px] text-[#c4a16a]">
+                        {item.cost === null
+                          ? t("价格未提供")
+                          : t("{value0} 金币", {
+                              value0: item.cost,
+                            })}
+                      </p>
+                    </div>
+                  </HoverTooltip>
+                </div>
+              );
+            })
+          }
+        />
+      )}
+      {view === "grid" && !filtered.length && (
         <div className="py-16 text-center text-sm text-[var(--text-muted)]">
           {t("没有符合条件的物品，请调整关键词或分类。")}
         </div>

@@ -26,6 +26,8 @@ import { HoverTooltip } from "@/components/ui/hover-tooltip";
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   renders.clear();
 });
 
@@ -122,6 +124,67 @@ it("keeps the parent card mounted while navigating a nested attribute card and c
   expect(screen.getAllByRole("tooltip")).toHaveLength(2);
   fireEvent.keyDown(document, { key: "Escape" });
   expect(screen.getAllByRole("tooltip")).toEqual([parent]);
+  expect(document.activeElement).toBe(
+    screen.getByRole("button", { name: "Cooldown" }),
+  );
   fireEvent.keyDown(document, { key: "Escape" });
   expect(screen.queryByRole("tooltip")).toBeNull();
+  expect(document.activeElement).toBe(
+    screen.getByRole("button", { name: "Ability" }),
+  );
+});
+
+it("repositions a growing asynchronous card within the viewport and disconnects on close", () => {
+  vi.useFakeTimers();
+  let resize: () => void = () => {};
+  const disconnect = vi.fn();
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      constructor(callback: () => void) {
+        resize = callback;
+      }
+      observe = vi.fn();
+      disconnect = disconnect;
+    },
+  );
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) =>
+    setTimeout(() => callback(0), 16),
+  );
+  vi.stubGlobal("cancelAnimationFrame", clearTimeout);
+  let width = 240;
+  let height = 100;
+  vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockImplementation(
+    () => width,
+  );
+  vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(
+    () => height,
+  );
+  render(<HoverTooltip content="Asynchronous details">Details</HoverTooltip>);
+  const anchor = screen.getByRole("button", { name: "Details" });
+  vi.spyOn(anchor, "getBoundingClientRect").mockReturnValue({
+    left: 800,
+    right: 860,
+    top: 600,
+    bottom: 620,
+    width: 60,
+    height: 20,
+    x: 800,
+    y: 600,
+    toJSON: () => ({}),
+  });
+  fireEvent.focus(anchor);
+  const panel = screen.getByRole("tooltip");
+  expect(panel.style.left).toBe("776px");
+  expect(panel.style.top).toBe("626px");
+  width = 500;
+  height = 400;
+  act(() => {
+    resize();
+    vi.advanceTimersByTime(20);
+  });
+  expect(panel.style.left).toBe("516px");
+  expect(panel.style.top).toBe("194px");
+  fireEvent.keyDown(document, { key: "Escape" });
+  expect(disconnect).toHaveBeenCalledOnce();
 });

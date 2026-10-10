@@ -1,12 +1,17 @@
 import { getWorkbenchOrigin } from "@/config/data-sync-state";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
-import { withTestEnvironment } from "@/development/test-environment";
+import {
+  TestInputsChangedError,
+  withTestEnvironment,
+} from "@/development/test-environment";
 import { run, fingerprint, writeJson } from "@/development/runtime";
 import { automaticStorageCleanup } from "@/development/storage";
+import { normalizeTestRunnerArgs } from "@/development/test-runner-args";
 
 async function main(): Promise<void> {
-  const [suite, ...args] = process.argv.slice(2);
+  const [suite, ...rawArgs] = process.argv.slice(2);
+  const args = normalizeTestRunnerArgs(rawArgs);
   if (!["integration", "e2e", "journeys", "clean"].includes(suite))
     throw new Error(
       "Usage: run-shared-tests <integration|e2e|journeys|clean> [test file / runner options]",
@@ -19,15 +24,17 @@ async function main(): Promise<void> {
   const forwarded = args.filter(
     (arg) => arg !== "--fixture" && !arg.startsWith("--warm-scopes="),
   );
-  const before = await fingerprint([
+  const inputs = [
     "src",
+    "public",
     "tests",
     "drizzle",
     "package.json",
     "pnpm-lock.yaml",
     "playwright.config.ts",
     "playwright.shared.config.ts",
-  ]);
+  ];
+  const before = await fingerprint(inputs);
   if (shared) {
     await run("pnpm", ["dev"]);
     const evidenceRoot = resolve(
@@ -63,15 +70,7 @@ async function main(): Promise<void> {
         },
         resolve(evidenceRoot, "runner.log"),
       );
-      const after = await fingerprint([
-        "src",
-        "tests",
-        "drizzle",
-        "package.json",
-        "pnpm-lock.yaml",
-        "playwright.config.ts",
-        "playwright.shared.config.ts",
-      ]);
+      const after = await fingerprint(inputs);
       result =
         before === after && databaseBefore === (await dataVersion())
           ? "passed"
@@ -135,24 +134,15 @@ async function main(): Promise<void> {
           resolve(env.MEDOTA2_ARTIFACT_ROOT!, "runner.log"),
         );
     },
-    { seed: suite === "e2e" || suite === "journeys", clean: suite === "clean" },
+    {
+      seed: suite === "e2e" || suite === "journeys",
+      clean: suite === "clean",
+      verify: async () => {
+        if (before !== (await fingerprint(inputs)))
+          throw new TestInputsChangedError();
+      },
+    },
   );
-  if (
-    suite !== "clean" &&
-    before !==
-      (await fingerprint([
-        "src",
-        "tests",
-        "drizzle",
-        "package.json",
-        "pnpm-lock.yaml",
-        "playwright.config.ts",
-        "playwright.shared.config.ts",
-      ]))
-  )
-    throw new Error(
-      "Related inputs changed during verification; this result is stale.",
-    );
 }
 async function dataVersion(): Promise<string> {
   const response = await fetch(`${getWorkbenchOrigin()}/api/catalog/head`, {

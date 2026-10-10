@@ -1,3 +1,4 @@
+import { withCatalogPresentation } from "@/presentation/catalog-view";
 import { gameLocale } from "@/i18n/config";
 import { getTranslations } from "@/i18n/server";
 import { getRequestLocale } from "@/i18n/server";
@@ -35,6 +36,9 @@ export default async function AbilitiesPage({
     return <MissingReleaseCoverage kind={t("技能")} />;
   const filterParams = { ...raw };
   delete filterParams.release;
+  delete filterParams.view;
+  delete filterParams.sort;
+  delete filterParams.order;
   filterParams.lang = gameLocale(locale);
   // The default locale may be explicit in a shared global-navigation URL.
   if (filterParams.lang === "zh-CN") delete filterParams.lang;
@@ -47,7 +51,10 @@ export default async function AbilitiesPage({
     redirect(
       withLocale(
         withRelease(
-          query ? `/abilities?${query}` : "/abilities",
+          withCatalogPresentation(
+            query ? `/abilities?${query}` : "/abilities",
+            raw,
+          ),
           selected?.id ?? null,
         ),
         locale,

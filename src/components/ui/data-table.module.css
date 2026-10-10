@@ -13,9 +13,59 @@
 }
 
 .header {
-  padding: 7px 8px;
+  padding: 3px 8px;
   background: var(--surface-elevated);
 }
 .header[data-table-pinned] {
+  height: var(--table-cell-height);
+  box-sizing: border-box;
+  align-content: center;
   z-index: 3;
+}
+
+.table thead th {
+  position: relative;
+  white-space: normal;
+}
+.table [data-table-frozen] {
+  position: sticky;
+  left: var(--table-frozen-left, 0px);
+  z-index: 2;
+  background-color: var(--surface-panel, #10151b);
+  background-clip: padding-box;
+}
+.table thead [data-table-frozen] {
+  z-index: 5;
+  background-color: var(--surface-elevated, #171e25);
+}
+.table [data-table-frozen-edge] {
+  box-shadow:
+    1px 0 var(--border-subtle),
+    5px 0 8px -6px #000a;
+}
+.freeze {
+  position: absolute;
+  right: 1px;
+  top: 2px;
+  padding: 3px;
+  opacity: 0;
+  background: var(--surface-elevated);
+  border-radius: 3px;
+}
+.table th:hover .freeze,
+.freeze:focus-visible {
+  opacity: 1;
+}
+@media (hover: none) {
+  .freeze {
+    opacity: 1;
+  }
+}
+
+.table tbody :is(th, td)[data-table-frozen] {
+  background-color: color-mix(
+    in srgb,
+    var(--direction-tone, var(--surface-panel)) 4%,
+    var(--surface-panel)
+  );
 }

@@ -1,7 +1,10 @@
 "use client";
 import type { Translator } from "@/i18n/messages";
 import { useTranslations } from "@/i18n/provider";
-import { memo } from "react";
+import { EntityCatalogTable } from "./entity-catalog-table";
+import { heroTableEntry } from "./catalog-table-projections";
+import { useLocale } from "@/i18n/provider";
+import { memo, useCallback } from "react";
 import type { HeroCardRow } from "@/server/repositories/heroes";
 import type { PrimaryAttribute } from "@/domain/heroes";
 import type { VersionedListSlice } from "@/domain/infinite-list";
@@ -16,6 +19,7 @@ export interface InfiniteHeroCatalogProps {
   endpoint: string;
   local?: boolean;
   paused?: boolean;
+  view?: "grid" | "table";
   lang: "en" | "zh-CN";
 }
 const ATTRIBUTE_NAMES: Record<
@@ -36,8 +40,41 @@ export const InfiniteHeroCatalog = memo(function InfiniteHeroCatalog({
   local = false,
   paused = false,
   lang,
+  view = "grid",
 }: InfiniteHeroCatalogProps) {
   const t = useTranslations();
+  const locale = useLocale();
+  const project = useCallback(
+    (item: HeroCardRow) =>
+      heroTableEntry(
+        item,
+        initialSlice.assetDatasetVersionId,
+        locale,
+        lang === "en",
+        t,
+      ),
+    [initialSlice.assetDatasetVersionId, locale, lang, t],
+  );
+  if (view === "table")
+    return (
+      <EntityCatalogTable
+        kind="hero"
+        source={
+          local
+            ? {
+                kind: "local",
+                items: initialSlice.items,
+                chunkSize: 8,
+                identity: `${endpoint}:table:local`,
+              }
+            : { kind: "remote", endpoint, initialSlice }
+        }
+        getKey={heroKey}
+        project={project}
+        paused={paused}
+        label={t("英雄结果")}
+      />
+    );
   return (
     <InfiniteList
       paused={paused}

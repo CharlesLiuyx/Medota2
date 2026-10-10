@@ -1,7 +1,10 @@
 "use client";
 import type { Translator } from "@/i18n/messages";
 import { useTranslations } from "@/i18n/provider";
-import { memo } from "react";
+import { EntityCatalogTable } from "./entity-catalog-table";
+import { abilityTableEntry } from "./catalog-table-projections";
+import { useLocale } from "@/i18n/provider";
+import { memo, useCallback } from "react";
 import type { AbilityCardRow } from "@/server/repositories/abilities";
 import type { VersionedListSlice } from "@/domain/infinite-list";
 import { AbilityCard } from "./ability-card";
@@ -11,6 +14,7 @@ export interface InfiniteAbilityCatalogProps {
   endpoint: string;
   local?: boolean;
   paused?: boolean;
+  view?: "grid" | "table";
   lang: "en" | "zh-CN";
 }
 export const InfiniteAbilityCatalog = memo(function InfiniteAbilityCatalog({
@@ -19,8 +23,35 @@ export const InfiniteAbilityCatalog = memo(function InfiniteAbilityCatalog({
   local = false,
   paused = false,
   lang,
+  view = "grid",
 }: InfiniteAbilityCatalogProps) {
   const t = useTranslations();
+  const locale = useLocale();
+  const project = useCallback(
+    (item: AbilityCardRow) =>
+      abilityTableEntry(item, initialSlice.assetDatasetVersionId, locale, t),
+    [initialSlice.assetDatasetVersionId, locale, t],
+  );
+  if (view === "table")
+    return (
+      <EntityCatalogTable
+        kind="ability"
+        source={
+          local
+            ? {
+                kind: "local",
+                items: initialSlice.items,
+                chunkSize: 8,
+                identity: `${endpoint}:table:local`,
+              }
+            : { kind: "remote", endpoint, initialSlice }
+        }
+        getKey={abilityKey}
+        project={project}
+        paused={paused}
+        label={t("技能结果")}
+      />
+    );
   const messages = abilityMessages(t);
   return (
     <InfiniteList

@@ -1,0 +1,115 @@
+.header {
+  position: relative;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-align: left;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+.sort:active {
+  cursor: grabbing;
+}
+.sort:disabled {
+  opacity: 0.5;
+}
+.more {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #171e25;
+  pointer-events: none;
+  opacity: 0;
+  padding: 2px;
+  border-radius: 3px;
+}
+.header:hover .more,
+.header:focus-within .more,
+.more[aria-expanded="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+.more:hover {
+  background: #ffffff18;
+}
+.menu {
+  position: fixed;
+  z-index: 110;
+  width: 220px;
+  padding: 6px;
+  border: 1px solid #ffffff20;
+  border-radius: 7px;
+  background: #171e25;
+  box-shadow: 0 12px 40px #0008;
+  font-size: 12px;
+}
+.menu button {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  text-align: left;
+  border-radius: 3px;
+}
+.menu button:hover,
+.menu button:focus-visible {
+  background: #ffffff10;
+  outline: none;
+}
+.menu button:disabled {
+  opacity: 0.35;
+}
+.ghost {
+  position: fixed;
+  z-index: 150;
+  pointer-events: none;
+  padding: 9px 14px;
+  border: 1px solid #8ecbd9;
+  border-radius: 5px;
+  background: #24323e;
+  color: #eef8fc;
+  box-shadow: 0 8px 24px #0008;
+  font-size: 12px;
+}
+.column[data-column-drop="before"] :global([data-table-header-content]) {
+  box-shadow: inset 3px 0 #8ecbd9;
+}
+.column[data-column-drop="after"] :global([data-table-header-content]) {
+  box-shadow: inset -3px 0 #8ecbd9;
+}
+@media (hover: none) {
+  .more {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.sort {
+  min-width: 0;
+  width: 100%;
+}
+.sort > span {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.header[data-pressing] {
+  background: #8ecbd92b;
+  box-shadow: 0 0 0 4px #8ecbd92b;
+  border-radius: 2px;
+}
+.header[data-dragging] {
+  background: #8ecbd944;
+  opacity: 0.72;
+}
+.menu {
+  max-height: calc(100dvh - 16px);
+  overflow-y: auto;
+}

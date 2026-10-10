@@ -1014,6 +1014,34 @@ async function loadSlice<T>(
   return body as ListSlice<T>;
 }
 
+/** Materialize a pinned result for whole-result operations such as table sorting. */
+export async function loadCompleteList<T>(
+  source: RemoteCursorListSource<T>,
+  getKey: (item: T) => string | number,
+  signal: AbortSignal,
+): Promise<T[]> {
+  const items = new Map(
+    source.initialSlice.items.map((item) => [getKey(item), item]),
+  );
+  const seen = new Set<string>();
+  let cursor = source.initialSlice.nextCursor;
+  while (cursor !== null) {
+    if (seen.has(cursor))
+      throw new Error("The server repeated a catalog cursor.");
+    seen.add(cursor);
+    const slice = await loadSlice(source, "after", cursor, signal);
+    validatePinnedIdentity(source, slice);
+    for (const item of slice.items) items.set(getKey(item), item);
+    cursor = slice.nextCursor;
+  }
+  if (
+    source.initialSlice.total !== undefined &&
+    items.size !== source.initialSlice.total
+  )
+    throw new Error("The catalog result is incomplete.");
+  return [...items.values()];
+}
+
 function validatePinnedIdentity<T>(
   source: InfiniteListSource<T>,
   slice: ListSlice<T>,

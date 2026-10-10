@@ -160,7 +160,12 @@ test("compact hero previews open immediately and filters stay keyboard accessibl
     const hero = page.locator('a[href^="/heroes/antimage?"]').last();
     await expect(hero).toBeVisible();
     await hero.hover();
-    const tooltip = page.getByRole("tooltip");
+    // A card owns its portal through aria-describedby; nested attribute cards
+    // have the same role and must not replace this identity in the assertion.
+    await expect(hero).toHaveAttribute("aria-describedby", /\S+/u);
+    const tooltip = page.locator(
+      `[id=${JSON.stringify(await hero.getAttribute("aria-describedby"))}]`,
+    );
     await expect(tooltip).toBeVisible({ timeout: 500 });
     await expect(tooltip).toContainText("移动速度 310");
     await expect(tooltip).toContainText("复杂程度");
@@ -168,13 +173,36 @@ test("compact hero previews open immediately and filters stay keyboard accessibl
     const bounds = await tooltip.boundingBox();
     expect(bounds!.x).toBeGreaterThanOrEqual(8);
     expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width - 8);
-    await tooltip.hover();
+    await tooltip.hover({ position: { x: 8, y: 8 } });
+    await expect(tooltip).toBeVisible();
+    const attribute = tooltip
+      .getByRole("link", { name: "敏捷", exact: true })
+      .first();
+    await attribute.focus();
+    await expect(attribute).toHaveAttribute("aria-describedby", /\S+/u);
+    const child = page.locator(
+      `[id=${JSON.stringify(await attribute.getAttribute("aria-describedby"))}]`,
+    );
+    await expect(child).toBeVisible();
+    await expect(tooltip).toBeVisible();
+    // Escape closes only the deepest card and preserves its trigger's focus.
+    await page.keyboard.press("Escape");
+    await expect(child).toHaveCount(0);
+    await expect(attribute).toBeFocused();
     await expect(tooltip).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(tooltip).toHaveCount(0);
+    await expect(hero).toBeFocused();
+    await hero.blur();
     await hero.focus();
     await expect(tooltip).toBeVisible();
-    await page.keyboard.press("Escape");
+    await tooltip
+      .getByRole("link", { name: "敏捷", exact: true })
+      .first()
+      .focus();
+    await expect(page.getByRole("tooltip")).toHaveCount(2);
+    await page.getByRole("heading", { name: "英雄图鉴", exact: true }).click();
+    await expect(page.getByRole("tooltip")).toHaveCount(0);
     await page.locator("summary").filter({ hasText: "主属性" }).click();
     await page.getByRole("checkbox", { name: "敏捷", exact: true }).check();
     await page.keyboard.press("Escape");

@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import { Box, Gem, Shield, Sparkles, Swords, UserRound } from "lucide-react";
 import { useTranslations } from "@/i18n/provider";
 import type { EntityPreview } from "@/presentation/entity-preview";
+import { AttributeSummaryDetails } from "./attribute-summary-details";
 import { HoverTooltip } from "./ui/hover-tooltip";
 import valveAssetImageLoader from "./valve-asset-image-loader";
 
@@ -45,9 +46,14 @@ export function EntitySummaryCard({ entity }: { entity: EntityPreview }) {
         <EntityGlyph entity={entity} />
         <strong>{entity.name}</strong>
       </div>
-      <p className="mt-2 text-[var(--text-secondary)]">
-        {entity.description || t("简述待补充")}
-      </p>
+      {(entity.description || entity.kind !== "attribute") && (
+        <p className="mt-2 text-[var(--text-secondary)]">
+          {entity.description || t("简述待补充")}
+        </p>
+      )}
+      {entity.kind === "attribute" && (
+        <AttributeSummaryDetails entity={entity} />
+      )}
       {!!entity.facts?.length && (
         <dl className="mt-2">
           {entity.facts.map((fact, index) => (

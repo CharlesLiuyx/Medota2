@@ -116,9 +116,10 @@ graph LR
 | Heroes／Abilities目录            | 同一InfiniteList；首批SSR／在线cursor，验证完整快照后使用local adapter；上7×／下10×分块挂载                      |
 | 玩家详情的技能、天赋、命石、属性 | 按[语义UI](semantic-game-ui.md)直接展开有限语义内容；该决定取代旧详情全量接入adapter的要求                       |
 | 原始定义／provenance审计列表     | 已从玩家页面移除；数据层保留，不为本合同重新添加UI                                                               |
+| 对象图鉴表格                     | 四类对象每行一个对象、属性横向成列，GroupedTable按24个完整对象分块；排序针对完整过滤结果，在线回退补齐后启用     |
 | 变化表格                         | 同一useInfiniteList本地适配器；对象组作为原生tbody分块、序号连续、合并单元格不跨chunk；上7×／下10×预取及等高回收 |
 | 物品目录                         | InfiniteList本地数组适配器，48条分块；身份包含版本／查询／分类／语言                                             |
-| 单位目录                         | 当前浏览器内筛选并直接渲染有界数组，尚未接入分块adapter；作为已知实现缺口保留，后续单独确定验收范围              |
+| 单位目录                         | 网格仍直接渲染有界数组；表格已接入GroupedTable本地分块，默认24个完整对象一块、上7屏／下10屏预取                  |
 | 地图点位面板                     | 按[地图Spec](map-explorer.md)显示搜索后前80项的工具面板；不冒充全量目录流                                        |
 | 开发数据库查看页                 | 按[同步Spec](development-data-sync.md)的受限分页读取，属于开发工具接口                                           |
 | Design System列表样例            | 保留local／table adapter状态展示与测试                                                                           |

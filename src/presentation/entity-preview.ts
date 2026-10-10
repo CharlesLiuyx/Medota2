@@ -15,6 +15,8 @@ export interface EntityPreview {
   href?: string;
   icon?: string;
   description?: string;
+  attributeValue?: string;
+  attributeField?: string;
   facts?: Array<{ label: string; value: string; entity?: EntityPreview }>;
 }
 

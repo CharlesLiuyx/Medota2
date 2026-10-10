@@ -75,6 +75,8 @@ pnpm test:journeys           # 在共享开发页面执行短流程，不重置�
 pnpm test:journeys --fixture # 在可复用测试库核对已知数据与页面
 pnpm test:integration --testNamePattern 'enforces canonical'
 pnpm test:e2e tests/e2e/heroes.spec.ts --grep 'overview'
+pnpm test:e2e --project=desktop-chromium --project=mobile-chromium # 完整fixture
+pnpm test:e2e tests/e2e/visual.spec.ts --project=desktop-chromium --project=mobile-chromium # 两端视觉
 pnpm bench --iterations 5   # 真实解析器的小样例耗时与内存
 pnpm bench --input <vpk-directory> --iterations 3
 pnpm release                # 构建并启动检查 Web 产物，相同输入复用
@@ -85,7 +87,7 @@ pnpm test:clean             # 清理本工具持有的可复用测试栈
 
 `check` 选中的浏览流程自动附带 `--retries=1`：首轮通过的用例保持结果，只重试失败项一次，HTML报告与日志保留flaky。直接执行 `pnpm test:journeys` 时仍默认不重试；可显式传 `--retries=1`。持续失败先看具体断言与trace；修复后重新规划受影响文件，避免无输入变化就反复整组重跑。产品检查通过后若只补文档，使用文档文件范围运行check。纯静态任务可直接运行，不排队等待其他任务的浏览检查；类型增量缓存仍由types锁保护。
 
-`check` 按文件与功能选择少量 E2E、已有针对性单测、静态检查和必要构建。纯文档运行格式与 `pnpm docs:check`，不启动产品数据库或浏览器；普通页面改动不跑全量构建。类型检查使用独立的 `tsconfig.check.json` 和 TypeScript 增量缓存，避免开发服务重新生成 `.next` 类型时相互干扰；框架生成的路由约束由正式构建检查。工具链变化会扩大范围，完整验证仍可显式运行：
+`check` 按文件与功能选择少量 E2E、已有针对性单测、静态检查和必要构建。纯文档运行格式与 `pnpm docs:check`，不启动产品数据库或浏览器；普通页面逻辑改动不跑全量构建；源CSS新增、修改或删除会执行正式构建，核对开发Turbopack与生产webpack的编译差异。类型检查使用独立的 `tsconfig.check.json` 和 TypeScript 增量缓存，避免开发服务重新生成 `.next` 类型时相互干扰；框架生成的路由约束由正式构建检查。工具链变化会扩大范围，完整验证仍可显式运行：
 
 ```bash
 pnpm typecheck
@@ -94,6 +96,8 @@ pnpm test:integration:isolated  # 每次全新数据库，适合身份/权限合
 pnpm test:e2e:isolated          # 完整 Desktop + Mobile 与视觉回归
 pnpm verify                     # 显式全量诊断，包含覆盖率
 ```
+
+测试脚本支持最前一个可选`--`，例如`pnpm test:e2e -- tests/e2e/heroes.spec.ts --project=mobile-chromium`；中间或重复的独立`--`会报错。`test:e2e`直接调用默认只跑桌面，完整fixture须显式指定两个项目；范围规划器会为选中的fixture与视觉合同传入桌面和移动项目。更新快照前先逐张核对差异，更新运行不能当作验收，随后不带`--update-snapshots`复验。Mac与Linux基线分别在对应环境渲染；远端CI需单独确认。
 
 日常固定数据测试复用一套 PostgreSQL，相关写入排队；浏览器状态和报告每次独立。测试 API 固定数据版本，相关代码或数据变化时结果作废。`check` 的证据位于 `.medota2/checks/`，测试报告位于 `.medota2/shared-tests/runs/`；独立验证仍在 `.medota2/test-runs/`。
 

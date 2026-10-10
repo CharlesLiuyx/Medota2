@@ -171,6 +171,10 @@ export function HoverTooltip({
       if (event.key === "Escape" && activePath.at(-1) === id) {
         hoverSuppressed = true;
         event.stopImmediatePropagation();
+        // A portal can own the keyboard focus. Return it before unmounting the
+        // panel; closing afterwards also prevents onFocus from reopening it.
+        if (panel.current?.contains(document.activeElement))
+          anchor.current?.focus({ preventScroll: true });
         close(id);
       }
     };
@@ -185,6 +189,14 @@ export function HoverTooltip({
         });
     };
     position();
+    // Attribute formulas, images and localized content can arrive after open.
+    // Keep the same edge constraints when the card or its anchor changes size.
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(schedulePosition);
+    if (panel.current) observer?.observe(panel.current);
+    if (anchor.current) observer?.observe(anchor.current);
     window.addEventListener("resize", schedulePosition);
     window.addEventListener("scroll", schedulePosition, {
       capture: true,
@@ -193,6 +205,7 @@ export function HoverTooltip({
     document.addEventListener("keydown", key);
     document.addEventListener("pointerdown", dismiss);
     return () => {
+      observer?.disconnect();
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", schedulePosition);
       window.removeEventListener("scroll", schedulePosition, true);

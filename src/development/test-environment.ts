@@ -23,10 +23,21 @@ interface SharedEnvironment {
   dockerStartedAt: string;
 }
 
+export class TestInputsChangedError extends Error {
+  constructor() {
+    super("Related inputs changed during verification; this result is stale.");
+    this.name = "TestInputsChangedError";
+  }
+}
+
 /** The lease remains test-only; every writer holds this lock for the whole task. */
 export async function withTestEnvironment<T>(
   work: (environment: NodeJS.ProcessEnv, context: TestRunContext) => Promise<T>,
-  options: { seed?: boolean; clean?: boolean } = {},
+  options: {
+    seed?: boolean;
+    clean?: boolean;
+    verify?: () => Promise<void>;
+  } = {},
 ): Promise<T | undefined> {
   const release = await acquireLock("test-database");
   try {
@@ -169,13 +180,18 @@ export async function withTestEnvironment<T>(
     };
     await writeJson(resolve(runRoot, "run.json"), evidence);
     try {
-      return await work(env, context);
+      const result = await work(env, context);
+      // Validate before publishing the receipt, while the fixture lease is held.
+      // A passing runner with changed inputs is not a passing verification.
+      await options.verify?.();
+      return result;
     } catch (error) {
-      evidence.status = "failed";
+      evidence.status =
+        error instanceof TestInputsChangedError ? "stale" : "failed";
       throw error;
     } finally {
       // Destructive checks can change fixture content, including on failure.
-      if (!options.seed || evidence.status === "failed") {
+      if (!options.seed || evidence.status !== "running") {
         delete saved.seededInput;
         await writeJson(path, saved);
       }

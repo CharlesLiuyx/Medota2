@@ -86,6 +86,8 @@ jobs:
             .medota2/shared-tests/runs/*/run.json
             .medota2/shared-tests/runs/*/report
             .medota2/shared-tests/runs/*/test-results
+            .medota2/shared-tests/runs/*/playwright/report
+            .medota2/shared-tests/runs/*/playwright/test-results
             .medota2/benchmarks/runs
             .medota2/releases/*/manifest.json
             .medota2/test-runs/*/run.json

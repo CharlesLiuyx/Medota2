@@ -17,6 +17,7 @@ import {
   parseAbilityFilters,
   type AbilityFilters,
 } from "@/server/services/ability-filters";
+import { CatalogViewSwitch, useCatalogView } from "./catalog-view-switch";
 import { CatalogHeader } from "./catalog-header";
 import { HeroFilterForm } from "./hero-filter-form";
 import { AbilityFilterForm } from "./ability-filter-form";
@@ -39,6 +40,7 @@ export function LiveHeroCatalog({
   header: ReactNode;
   notice?: ReactNode;
 }) {
+  const view = useCatalogView();
   const t = useTranslations();
   const locale = useLocale();
   const live = useLiveCatalog({
@@ -55,7 +57,7 @@ export function LiveHeroCatalog({
       {live.validationErrors.length > 0 && (
         <ValidationErrorList errors={live.validationErrors} surface />
       )}
-      <CatalogHeader header={header}>
+      <CatalogHeader header={header} viewSwitch={<CatalogViewSwitch />}>
         <HeroFilterForm
           status={
             <CatalogStatus
@@ -87,6 +89,7 @@ export function LiveHeroCatalog({
         }
       >
         <InfiniteHeroCatalog
+          view={view}
           initialSlice={live.result.slice}
           endpoint={live.endpoint}
           local={live.result.local}
@@ -116,6 +119,7 @@ export function LiveAbilityCatalog({
     enName: string;
   }>;
 }) {
+  const view = useCatalogView();
   const t = useTranslations();
   const locale = useLocale();
   const live = useLiveCatalog({
@@ -132,7 +136,7 @@ export function LiveAbilityCatalog({
       {live.validationErrors.length > 0 && (
         <ValidationErrorList errors={live.validationErrors} surface />
       )}
-      <CatalogHeader header={header}>
+      <CatalogHeader header={header} viewSwitch={<CatalogViewSwitch />}>
         <AbilityFilterForm
           status={
             <CatalogStatus
@@ -164,6 +168,7 @@ export function LiveAbilityCatalog({
         }
       >
         <InfiniteAbilityCatalog
+          view={view}
           initialSlice={live.result.slice}
           endpoint={live.endpoint}
           local={live.result.local}

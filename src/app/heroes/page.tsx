@@ -1,3 +1,4 @@
+import { withCatalogPresentation } from "@/presentation/catalog-view";
 import { gameLocale } from "@/i18n/config";
 import { getTranslations } from "@/i18n/server";
 import { getRequestLocale } from "@/i18n/server";
@@ -34,6 +35,9 @@ export default async function HeroesPage({
     return <MissingReleaseCoverage kind={t("英雄")} />;
   const filterParams = { ...rawSearchParams };
   delete filterParams.release;
+  delete filterParams.view;
+  delete filterParams.sort;
+  delete filterParams.order;
   filterParams.lang = gameLocale(locale);
   // The default locale may be explicit in a shared global-navigation URL.
   if (filterParams.lang === "zh-CN") delete filterParams.lang;
@@ -46,7 +50,10 @@ export default async function HeroesPage({
     redirect(
       withLocale(
         withRelease(
-          query ? `/heroes?${query}` : "/heroes",
+          withCatalogPresentation(
+            query ? `/heroes?${query}` : "/heroes",
+            rawSearchParams,
+          ),
           selected?.id ?? null,
         ),
         locale,

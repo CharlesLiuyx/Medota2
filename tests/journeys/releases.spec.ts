@@ -540,6 +540,37 @@ test("heroes changes: compact entity tables keep ranking, tooltips and continuou
     );
   });
   expect(aligned).toBeCloseTo(8, 0);
+  await heroes
+    .getByRole("button", { name: "冻结至第2列", exact: true })
+    .press("Enter");
+  await expect(heroes).toHaveAttribute("data-frozen-count", "2");
+  await expect
+    .poll(() =>
+      merged.evaluate((content) =>
+        Math.round(
+          content.getBoundingClientRect().left -
+            content.closest("th,td")!.getBoundingClientRect().left,
+        ),
+      ),
+    )
+    .toBe(8);
+  await expect
+    .poll(() =>
+      heroes.evaluate((table) => {
+        const headers = [
+          ...table.querySelectorAll<HTMLElement>("thead th[data-table-frozen]"),
+        ];
+        return (
+          headers.length === 2 &&
+          Math.abs(
+            headers[0].getBoundingClientRect().left -
+              table.parentElement!.getBoundingClientRect().left,
+          ) < 2
+        );
+      }),
+    )
+    .toBe(true);
+
   await heroes.evaluate((table) => {
     table.parentElement!.style.maxHeight = "";
     table.parentElement!.scrollLeft = 0;
@@ -603,6 +634,9 @@ test("heroes changes: compact entity tables keep ranking, tooltips and continuou
           padding: getComputedStyle(el.querySelector("td")!).paddingTop,
           border: getComputedStyle(el.querySelector("td")!).borderTopWidth,
           shadow: getComputedStyle(el.querySelector("td")!).boxShadow,
+          frozenEdge: el
+            .querySelector("td")!
+            .hasAttribute("data-table-frozen-edge"),
         };
       });
     });
@@ -616,7 +650,8 @@ test("heroes changes: compact entity tables keep ranking, tooltips and continuou
       );
     if (segment.starts) expect(segment.padding).toBe("9px");
     expect(segment.border).toBe("0px");
-    expect(segment.shadow).toBe("none");
+    if (segment.frozenEdge) expect(segment.shadow).not.toBe("none");
+    else expect(segment.shadow).toBe("none");
   }
   const heroSection = page.getByRole("region", { name: "英雄", exact: true });
   await expect(

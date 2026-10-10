@@ -3,13 +3,14 @@ import { ChevronDown } from "lucide-react";
 import {
   Children,
   isValidElement,
-  useEffect,
   useId,
   useRef,
   useState,
   type ReactNode,
   type KeyboardEvent,
 } from "react";
+
+import { useCompactMenu } from "./use-compact-menu";
 
 /** Shares the filter-menu surface with multi-select filters; no OS select popup. */
 export function CompactSelect({
@@ -57,7 +58,6 @@ export function CompactSelect({
   const id = useId();
   const details = useRef<HTMLDetailsElement>(null);
   const input = useRef<HTMLInputElement>(null);
-  const [open, setOpen] = useState(false);
   const typeahead = useRef({ text: "", time: 0 });
   const selected = Math.max(
     0,
@@ -84,18 +84,13 @@ export function CompactSelect({
     }
     close(true);
   };
-  useEffect(() => {
-    const outside = (event: PointerEvent) => {
-      if (
-        event.target instanceof Node &&
-        !details.current?.contains(event.target)
-      ) {
-        if (details.current) details.current.open = false;
-      }
-    };
-    document.addEventListener("pointerdown", outside);
-    return () => document.removeEventListener("pointerdown", outside);
-  }, []);
+  useCompactMenu(details, () =>
+    focusOption(
+      options[selected]?.disabled
+        ? options.findIndex((o) => !o.disabled)
+        : selected,
+    ),
+  );
   const keys = (event: KeyboardEvent, index: number) => {
     if (disabled) {
       event.preventDefault();
@@ -156,28 +151,6 @@ export function CompactSelect({
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) close();
       }}
-      onToggle={(event) => {
-        const current = event.currentTarget;
-        setOpen(current.open);
-        if (current.open) {
-          document
-            .querySelectorAll<HTMLDetailsElement>(
-              "details[data-filter-menu][open]",
-            )
-            .forEach((other) => {
-              if (other !== current) other.open = false;
-            });
-          const popup = current.querySelector<HTMLElement>("[role=listbox]")!;
-          popup.style.translate = "0px";
-          const bounds = popup.getBoundingClientRect();
-          popup.style.translate = `${Math.min(0, window.innerWidth - 8 - bounds.right)}px`;
-          focusOption(
-            options[selected]?.disabled
-              ? options.findIndex((o) => !o.disabled)
-              : selected,
-          );
-        }
-      }}
     >
       <input ref={input} type="hidden" name={name} value={currentValue} />
       <summary
@@ -188,7 +161,7 @@ export function CompactSelect({
           if (disabled) e.preventDefault();
         }}
         aria-label={label}
-        aria-expanded={open}
+        aria-expanded={false}
         aria-controls={id}
         aria-haspopup="listbox"
         className="compact-menu-trigger"

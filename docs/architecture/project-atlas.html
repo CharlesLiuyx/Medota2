@@ -1394,7 +1394,7 @@
                 <h3>正在补齐的边界</h3>
                 <p>
                   单位定义与部分文本仍依赖匹配的 Git
-                  来源；单位缺图、目录分块和持久缓存待补。地图导航、碰撞、湍流与经济语义仍待同版本引擎抽样。
+                  来源；单位缺图、网格目录分块和持久缓存待补；表格已接入分块。地图导航、碰撞、湍流与经济语义仍待同版本引擎抽样。
                 </p>
               </div>
               <div>
@@ -2395,8 +2395,8 @@
                     data-name="4 · 按改动范围检查"
                     data-definition="按任务文件规划，专项检查与有效结果增量复用。"
                     data-why="用相关检查验证结果；输入变动会使旧结果过期。"
-                    data-detail="局部任务用相同的--files集合规划和执行。登记的展示组件／翻译资源走已有专项，未知／删除／新增职责保守扩大；浏览按目录、版本、变化、语言等明确流程选择。纯静态任务不等待全局检查锁，类型缓存仍单独加锁。同轮只重试失败用例一次并保留flaky，持续失败阻塞；代码、数据或完整计划变化使结果过期。组合交付检查完整范围。"
-                    data-files='["scripts/development/check-plan.mjs", "src/workers/run-check.ts", "tests/unit/development-check-plan.test.ts", "docs/specs/development-workbench.md"]'
+                    data-detail="局部任务用相同的--files集合规划和执行。登记的展示组件／翻译资源走已有专项，未知／删除／新增职责保守扩大；浏览按目录、版本、变化、语言等明确流程选择；英雄目录／技能详情的展示依赖及品牌图片触发桌面与移动视觉合同，快照映射到所属spec并去重。源CSS变更额外执行正式构建，覆盖开发与生产编译器差异；fixture最终输入校验先于成功收据与租约释放，变化记录stale；两测试入口统一解析可选前置分隔符，CI收集两类浏览附件。纯静态任务不等待全局检查锁，类型缓存仍单独加锁。同轮只重试失败用例一次并保留flaky，持续失败阻塞；代码、数据或完整计划变化使结果过期。组合交付检查完整范围。"
+                    data-files='["scripts/development/check-plan.mjs", "src/workers/run-check.ts", "src/workers/run-shared-tests.ts", "src/development/test-environment.ts", "src/development/test-runner-args.ts", "tests/unit/development-check-plan.test.ts", "tests/unit/shared-test-evidence.test.ts", "docs/specs/development-workbench.md"]'
                     data-node-id="work-graph-check"
                     aria-pressed="false"
                   >
@@ -3293,8 +3293,8 @@
                     data-name="英雄／技能／单位／物品"
                     data-definition="保留基础值、成长、技能参数与条件。"
                     data-why="数值与枚举标签可进入对应属性，完整引用补足未在摘要展示的字段。"
-                    data-detail="来源值不自动求和；对象专属参数按类型、对象、字段隔离。"
-                    data-files='["src/components/attribute-link.tsx", "src/server/repositories/attributes.ts"]'
+                    data-detail="来源值不自动求和；对象专属参数按类型、对象、字段隔离。四类目录标题右侧可切换网格／表格；表格每对象一行、属性成列，全部列按完整筛选结果升降序，数值按实际值、多级值逐级比较、缺失末尾。view/sort/order随URL恢复且不进入数据查询；共用GroupedTable吸顶表头、24对象分块与横向滚动，单位网格仍保留原有数组呈现。英雄／技能优先完整浏览器副本，在线回退补齐固定版本cursor后启用排序。标题首行可配置同版全部属性字段，列选择／顺序／精度按类型持久化且可重置；英雄默认19列按分类升序，三围与成长相邻、角色在末尾；列宽以内容为主、长表头换行，表头上下3px，吸顶按整行高度对齐并完整覆盖背景；首列默认冻结，列菜单在同一项切换冻结与取消，冻结至任意列并持久化，合并不跨冻结边界；悬停菜单覆盖列头不占宽，按下立即反馈、180ms长按拖动调整顺序。数值默认自动去尾零，也可逐列指定小数位；属性悬浮卡读取同版公式、范围与当前数值的基础贡献。"
+                    data-files='["src/components/attribute-link.tsx", "src/components/catalog-view-switch.tsx", "src/components/entity-catalog-table.tsx", "src/components/catalog-table-projections.tsx", "src/components/catalog-table-column-settings.tsx", "src/components/catalog-table-header.tsx", "src/components/attribute-summary-details.tsx", "src/app/api/catalog/table-attributes/route.ts", "src/app/api/attributes/preview/route.ts", "src/presentation/catalog-table.ts", "src/presentation/catalog-table-columns.ts", "src/server/repositories/attributes.ts"]'
                     data-node-id="entity-graph-attribute-owners"
                     aria-pressed="false"
                   >
@@ -3441,8 +3441,8 @@
                     data-name="版本变化页"
                     data-definition="按机制、英雄、物品、其他显示紧凑变化表格、实体卡与影响排序。"
                     data-why="合并对象列并连续虚拟滚动；来源和影响依据通过图标提示查看。"
-                    data-detail="标题行搜索／筛选在同一比较端点内使用已加载数据本地更新、原生history同步URL；标题行同时提供起始与终点版本菜单，默认上一版到最新默认Release；切换任一端点重新读取比较，保留筛选、语言和URL恢复；机制、英雄、物品、其他独立表格，英雄rowSpan合并并在组内吸顶，全页连续序号。DataTable/TableCell统一所有表格的合并内容定位，布局变化时缓存尺寸、吸顶区间固定原内容并保留等高占位；GroupedTable按完整内容身份合并横纵相邻单元格，跨组矩形共同纳入虚拟块；TableHeaderCell固定原表头内容并保留原列宽，合并内容避让表头；复用未变化块与稳定观察器；变化页只负责业务内容；方向、幅度和实际差值优先同行；差值为有效终点减起点，逐等级、相同差值收紧、百分比属性用百分点，零基线可显示，未知数值保留—；表内图标随字号缩放、英雄头像至1.25em且不超行高；对象和改动项通过GroupedTable的widthSample按完整筛选结果测量真实字体与图标宽度；EntityReferenceWidthSample只提供无交互外观，去重并限定长名称宽度；列宽写入CSS变量，虚拟块增减不重新测量，腾出的空间全部给详情；前后值继续分配稳定宽度。EntityReference共用图标和简述卡，EntityText行内图标随字号缩放且不超行高；卡内属性经attributeId绑定同版实体，AttributeLink复用行内图标、简述及详情链接，HoverTooltip支持保留父卡的嵌套属性卡与逐层Escape；所有悬浮卡按内容自然收紧，无固定最小宽度，纯说明最大520px、属性面板最大720px；属性各列名称与数值分别对齐，说明随实际宽度换行；窄屏单列，避免固定卡宽留下右侧空白。来源及原始资料使用HoverTooltip。变化方向按字段语义判断，幅度按可比端点计算，排序结合控制／冷却／资源作用、比较尺度、天赋条件与整件价格；组间最大影响；对象内先按改动项稳定实体身份聚合，改动项按最大影响排序、同项跨方向连续以复用rowSpan；项内再按削弱／增强／持平分段、段内影响降序，筛选后重算两层优先级，以红绿灰浅底色与段间留白区分，不加外框，标题显示各类数量，未知明确待判断。共享useInfiniteList按tbody分组、上7屏下10屏预取及等高回收。官方说明和资产仍绑定固定版本，主表只展示当前语言；未知脚本机制及地图身份保留待核验。"
-                    data-files='["src/app/changes/page.tsx", "src/components/changes-filters.tsx", "src/components/changes-results.tsx", "src/components/changes-table.tsx", "src/components/ui/data-table.tsx", "src/components/ui/grouped-table.tsx", "src/components/ui/table-sticky-cells.ts", "src/components/ui/table-cell-spans.ts", "src/components/entity-reference.tsx", "src/presentation/entity-preview.ts", "src/components/attribute-link.tsx", "src/components/ui/hover-tooltip.tsx", "src/components/catalog-header.tsx", "src/presentation/change-impact.ts", "src/presentation/entity-changes.ts", "src/server/services/release-changes.ts", "src/data/patch-notes/7.41f.json", "src/app/api/releases/diff/route.ts", "tests/unit/entity-changes.test.ts", "tests/journeys/releases.spec.ts"]'
+                    data-detail="标题行搜索／筛选在同一比较端点内使用已加载数据本地更新、原生history同步URL；标题行同时提供起始与终点版本菜单，默认上一版到最新默认Release；切换任一端点重新读取比较，保留筛选、语言和URL恢复；机制、英雄、物品、其他独立表格，英雄rowSpan合并并在组内吸顶，全页连续序号。DataTable/TableCell统一所有表格的首列冻结、图钉配置连续冻结范围和合并内容定位，横向冻结与纵向吸顶同步，布局变化时缓存尺寸、吸顶区间固定原内容并保留等高占位；GroupedTable按完整内容身份合并横纵相邻单元格，跨组矩形共同纳入虚拟块；TableHeaderCell固定原表头内容并保留原列宽，合并内容避让表头；复用未变化块与稳定观察器；变化页只负责业务内容；方向、幅度和实际差值优先同行；差值为有效终点减起点，逐等级、相同差值收紧、百分比属性用百分点，零基线可显示，未知数值保留—；表内图标随字号缩放、英雄头像至1.25em且不超行高；对象和改动项通过GroupedTable的widthSample按完整筛选结果测量真实字体与图标宽度；EntityReferenceWidthSample只提供无交互外观，去重并限定长名称宽度；列宽写入CSS变量，虚拟块增减不重新测量，腾出的空间全部给详情；前后值继续分配稳定宽度。EntityReference共用图标和简述卡，EntityText行内图标随字号缩放且不超行高；卡内属性经attributeId绑定同版实体，AttributeLink复用行内图标、简述及详情链接，HoverTooltip支持保留父卡的嵌套属性卡与逐层Escape，关闭卡内焦点恢复对应触发器；异步内容或锚点尺寸变化重新定位，关闭释放观察器；所有悬浮卡按内容自然收紧，无固定最小宽度，纯说明最大520px、属性面板最大720px；属性各列名称与数值分别对齐，说明随实际宽度换行；窄屏单列，避免固定卡宽留下右侧空白。来源及原始资料使用HoverTooltip。变化方向按字段语义判断，幅度按可比端点计算，排序结合控制／冷却／资源作用、比较尺度、天赋条件与整件价格；组间最大影响；对象内先按改动项稳定实体身份聚合，改动项按最大影响排序、同项跨方向连续以复用rowSpan；项内再按削弱／增强／持平分段、段内影响降序，筛选后重算两层优先级，以红绿灰浅底色与段间留白区分，不加外框，标题显示各类数量，未知明确待判断。共享useInfiniteList按tbody分组、上7屏下10屏预取及等高回收。官方说明和资产仍绑定固定版本，主表只展示当前语言；未知脚本机制及地图身份保留待核验。"
+                    data-files='["src/app/changes/page.tsx", "src/components/changes-filters.tsx", "src/components/changes-results.tsx", "src/components/changes-table.tsx", "src/components/ui/data-table.tsx", "src/components/ui/grouped-table.tsx", "src/components/ui/table-sticky-cells.ts", "src/components/ui/table-frozen-columns.ts", "src/components/ui/table-cell-spans.ts", "src/components/entity-reference.tsx", "src/presentation/entity-preview.ts", "src/components/attribute-link.tsx", "src/components/ui/hover-tooltip.tsx", "src/components/catalog-header.tsx", "src/presentation/change-impact.ts", "src/presentation/entity-changes.ts", "src/server/services/release-changes.ts", "src/data/patch-notes/7.41f.json", "src/app/api/releases/diff/route.ts", "tests/unit/entity-changes.test.ts", "tests/journeys/releases.spec.ts"]'
                     data-node-id="versions-graph-diffview"
                     aria-pressed="false"
                   >
@@ -3865,8 +3865,8 @@
                   data-name="页面与浏览器交互 · app／components"
                   data-definition="处理页面路由、展示、筛选和地图交互。"
                   data-why="将领域资料转成用户能够理解和操作的界面。"
-                  data-detail="顶栏语言与Release共用所有页面。src/i18n统一注册语种、消息、Intl格式化和来源映射；应用游戏术语由official-terms.json绑定官方VPK token及精确版本/文件哈希，按所选Catalog读取的资料优先；proxy与Provider按URL→cookie→默认解析。应用语言独立于资料locale，Canvas与DOM同步，寻路计算保持语言无关。单选下拉复用CompactSelect，目录副本仍按Catalog、asset和资料locale隔离。"
-                  data-files='["src/app/heroes/page.tsx", "src/components/live-catalog.tsx", "src/i18n/config.ts", "src/i18n/provider.tsx", "src/i18n/messages.ts", "src/i18n/official-terms.json", "src/i18n/zh-CN.json", "src/proxy.ts", "docs/specs/global-i18n.md", "src/components/ui/compact-select.tsx", "src/app/changes/page.tsx", "src/browser/catalog-replica.ts", "src/components/map/route-client.ts"]'
+                  data-detail="顶栏语言与Release共用所有页面。src/i18n统一注册语种、消息、Intl格式化和来源映射；应用游戏术语由official-terms.json绑定官方VPK token及精确版本/文件哈希，按所选Catalog读取的资料优先；proxy与Provider按URL→cookie→默认解析。应用语言独立于资料locale，Canvas与DOM同步，寻路计算保持语言无关。单选下拉复用CompactSelect，多选共用CompactFilterMenu，两者共享useCompactMenu的同步开合、顶层浮层与仅打开时监听事件，目录副本仍按Catalog、asset和资料locale隔离。"
+                  data-files='["src/app/heroes/page.tsx", "src/components/live-catalog.tsx", "src/i18n/config.ts", "src/i18n/provider.tsx", "src/i18n/messages.ts", "src/i18n/official-terms.json", "src/i18n/zh-CN.json", "src/proxy.ts", "docs/specs/global-i18n.md", "src/components/ui/compact-select.tsx", "src/components/ui/compact-filter-menu.tsx", "src/components/ui/use-compact-menu.ts", "src/components/map/vision-hero-picker.tsx", "src/app/changes/page.tsx", "src/browser/catalog-replica.ts", "src/components/map/route-client.ts"]'
                   data-node-id="layers-graph-web"
                   aria-pressed="false"
                 >

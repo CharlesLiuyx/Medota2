@@ -196,8 +196,60 @@ describe("development check scope", () => {
     expect(e2e.tasks.find((task) => task.id === "e2e")?.args).toEqual([
       "test:e2e",
       "--retries=1",
+      "--project=desktop-chromium",
+      "--project=mobile-chromium",
       "tests/e2e/heroes.spec.ts",
     ]);
+  });
+  it("checks both visual projects for page dependencies and brand assets, including deletions", () => {
+    for (const path of [
+      "src/app/globals.css",
+      "src/components/catalog-header.tsx",
+      "src/components/ability-tooltip.tsx",
+      "public/brand/medota2-flowing-m.png",
+      "public/brand/deleted-logo.png",
+    ]) {
+      const task = createPlan([path]).tasks.find(
+        (task) => task.id === "visual",
+      );
+      expect(task?.args, path).toEqual([
+        "test:e2e",
+        "tests/e2e/visual.spec.ts",
+        "--project=desktop-chromium",
+        "--project=mobile-chromium",
+        "--retries=1",
+      ]);
+      expect(task?.inputs).toContain("public");
+    }
+    for (const path of [
+      "src/components/map/map-viewer.tsx",
+      "src/components/unit-catalog.tsx",
+      "src/server/repositories/items.ts",
+      "docs/current.md",
+    ]) {
+      expect(
+        createPlan([path]).tasks.some((task) => task.id === "visual"),
+        path,
+      ).toBe(false);
+    }
+  });
+  it("routes snapshot changes to their owning spec and avoids duplicate visual runs", () => {
+    const snapshot =
+      "tests/e2e/visual.spec.ts-snapshots/heroes-catalog-desktop-chromium-darwin.png";
+    const plan = createPlan(["src/components/catalog-header.tsx", snapshot]);
+    expect(plan.tasks.some((task) => task.id === "visual")).toBe(false);
+    expect(plan.tasks.find((task) => task.id === "e2e")?.args).toContain(
+      "tests/e2e/visual.spec.ts",
+    );
+    expect(plan.tasks.find((task) => task.id === "e2e")?.args).not.toContain(
+      snapshot,
+    );
+    expect(
+      createPlan([
+        "src/components/catalog-header.tsx",
+        "tests/e2e/heroes.spec.ts",
+      ]).tasks.some((task) => task.id === "visual"),
+    ).toBe(true);
   });
   it("checks map algorithms without Catalog work and maps interactive UI to its browser flow", () => {
     for (const file of [
@@ -378,6 +430,22 @@ describe("development check scope", () => {
       ),
     ).toBe(true);
   });
+});
+
+it("checks production CSS compilation without widening ordinary component edits", () => {
+  for (const path of [
+    "src/components/catalog-table-header.module.css",
+    "src/app/globals.css",
+    "src/components/deleted.module.css",
+  ])
+    expect(createPlan([path]).tasks.some((task) => task.id === "build")).toBe(
+      true,
+    );
+  expect(
+    createPlan(["src/components/catalog-table-header.tsx"]).tasks.some(
+      (task) => task.id === "build",
+    ),
+  ).toBe(false);
 });
 
 it("selects the attributes journey for attribute routes and item value mapping", () => {

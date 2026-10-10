@@ -25,7 +25,7 @@ test("map: default overlays and complete camp hover previews", async ({
   const table = page.getByRole("table", {
     name: "Gold and experience by camp",
   });
-  await table.getByRole("button").first().click();
+  await table.locator("tbody").getByRole("button").first().click();
   await page.getByRole("button", { name: "Close point details" }).click();
   const canvas = page.locator("canvas").first();
   await canvas.scrollIntoViewIfNeeded();

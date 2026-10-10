@@ -6,6 +6,7 @@ import {
   useMemo,
   useLayoutEffect,
   useRef,
+  useState,
   type ComponentProps,
   type CSSProperties,
   type ReactNode,
@@ -22,6 +23,9 @@ export interface TableGroup<Row> {
 export interface GroupedTableColumn<Group, Row> {
   key: string;
   header: ReactNode;
+  /** Optional inert header measurement, avoiding duplicate interactive components. */
+  headerWidthSample?: ReactNode;
+  headerProps?: ComponentProps<"th"> & DataAttributes;
   /** A merged column describes the whole item, independent of its property rows. */
   merged?: boolean;
   /** Equal keys merge in both directions, including across adjacent groups. */
@@ -58,6 +62,8 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
   rowProps,
   groupProps,
   minWidth = 640,
+  fitWidth = false,
+  frozenCount: controlledFrozenCount,
   empty,
 }: {
   groups: Group[];
@@ -73,18 +79,26 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
   /** Props for the first row of an original group, even inside a larger merged block. */
   groupProps?: (group: Group) => ComponentProps<"tr"> & DataAttributes;
   minWidth?: number;
+  /** Use the measured column total instead of stretching to the parent width. */
+  fitWidth?: boolean;
+  frozenCount?: number;
   empty?: ReactNode;
 }) {
+  const [localFrozenCount, setLocalFrozenCount] = useState(1);
+  const frozenCount = controlledFrozenCount ?? localFrozenCount;
   const items = useMemo(() => {
     const rows = groups.flatMap((group) =>
       group.rows.map((row, index) => ({ row, group, index })),
     );
     const keys = rows.map(({ row, group, index }) =>
-      columns.map(
-        (column) =>
+      columns.map((column, columnIndex) => {
+        const key =
           column.mergeKey?.(row, group, index) ??
-          (column.merged ? `group:${group.key}:${column.key}` : undefined),
-      ),
+          (column.merged ? `group:${group.key}:${column.key}` : undefined);
+        return key === undefined
+          ? undefined
+          : `${columnIndex < frozenCount ? "frozen" : "flow"}:${key}`;
+      }),
     );
     const spans = tableCellSpans(
       keys,
@@ -109,7 +123,7 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
       start = end;
     }
     return blocks;
-  }, [groups, columns]);
+  }, [groups, columns, frozenCount]);
   const {
     rootRef,
     topSentinelRef,
@@ -118,7 +132,12 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
     chunks,
     isBusy,
   } = useInfiniteList({
-    source: { kind: "local", items, chunkSize: 1, identity },
+    source: {
+      kind: "local",
+      items,
+      chunkSize: 1,
+      identity: `${identity}:frozen=${frozenCount}`,
+    },
     getKey: (group) => group.key,
   });
   const tableRef = useRef<HTMLTableElement>(null);
@@ -137,6 +156,19 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
       }));
       for (const { index, width } of widths)
         table.style.setProperty(`--table-column-${index}-width`, `${width}px`);
+      if (fitWidth) {
+        const measured = new Map(
+          widths.map(({ index, width }) => [Number(index), width]),
+        );
+        const total = columns.reduce(
+          (sum, column, index) =>
+            sum +
+            (measured.get(index) ??
+              (typeof column.width === "number" ? column.width : 120)),
+          0,
+        );
+        table.style.setProperty("--table-content-width", `${total}px`);
+      }
     };
     measure();
     const observer =
@@ -147,7 +179,7 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
       disposed = true;
       observer?.disconnect();
     };
-  }, [columns, items.length]);
+  }, [columns, items.length, fitWidth]);
   if (!items.length) return empty ?? null;
   return (
     <div
@@ -170,7 +202,9 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
                 data-column={index}
                 className={styles.measureColumn}
               >
-                <div className={styles.measureHeader}>{column.header}</div>
+                <div className={styles.measureHeader}>
+                  {column.headerWidthSample ?? column.header}
+                </div>
                 <div
                   className={styles.measureBody}
                   data-merged={column.merged || undefined}
@@ -184,8 +218,16 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
       </div>
       <DataTable
         ref={tableRef}
+        frozenCount={frozenCount}
+        onFrozenCountChange={setLocalFrozenCount}
+        freezeControls={controlledFrozenCount === undefined}
         className={styles.table}
-        style={{ minWidth }}
+        style={{
+          minWidth: fitWidth ? 0 : minWidth,
+          width: fitWidth
+            ? "var(--table-content-width, max-content)"
+            : undefined,
+        }}
         aria-label={label}
       >
         <colgroup>
@@ -204,7 +246,11 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
         <thead>
           <tr>
             {columns.map((column) => (
-              <TableHeaderCell key={column.key} scope="col">
+              <TableHeaderCell
+                key={column.key}
+                scope="col"
+                {...column.headerProps}
+              >
                 {column.header}
               </TableHeaderCell>
             ))}

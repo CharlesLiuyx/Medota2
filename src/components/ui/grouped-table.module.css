@@ -76,7 +76,9 @@
 }
 .measureHeader {
   width: max-content;
-  white-space: nowrap;
+  max-width: 48px;
+  white-space: normal;
+  overflow-wrap: anywhere;
   font-size: 10px;
   font-weight: 500;
 }

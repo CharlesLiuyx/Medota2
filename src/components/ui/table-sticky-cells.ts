@@ -7,7 +7,9 @@ type MergedCell = {
   left: number;
   width: number;
   height: number;
+  slotHeight: number;
   header: boolean;
+  frozenLeft: number | null;
 };
 
 /** Keep the original content fixed while pinned; only layout changes measure cells. */
@@ -65,11 +67,13 @@ export function attachTableStickyCells(table: HTMLTableElement) {
         cell,
         slot,
         content,
+        frozenLeft: null,
         top: 0,
         bottom: 0,
         left: 0,
         width: 0,
         height: 0,
+        slotHeight: 0,
         header: content.hasAttribute("data-table-header-content"),
       });
       resize?.observe(cell);
@@ -112,6 +116,14 @@ export function attachTableStickyCells(table: HTMLTableElement) {
     frame = 0;
     if (refreshNeeded) refresh();
     if (!cells.size) return;
+    // Restore natural header geometry before measuring after width/font changes.
+    if (dirty) {
+      for (const entry of cells.values()) {
+        if (!entry.header) continue;
+        entry.content.removeAttribute("data-table-pinned");
+        entry.slot.style.removeProperty("height");
+      }
+    }
     const tableRect = table.getBoundingClientRect();
     if (dirty) {
       paddingTop =
@@ -125,15 +137,26 @@ export function attachTableStickyCells(table: HTMLTableElement) {
         const bounds = entry.cell.getBoundingClientRect();
         const slot = entry.slot.getBoundingClientRect();
         const css = getComputedStyle(entry.cell);
-        entry.top = slot.top - tableRect.top;
+        entry.top = (entry.header ? bounds.top : slot.top) - tableRect.top;
         entry.bottom =
           bounds.bottom -
           (parseFloat(css.borderBottomWidth) || 0) -
           (parseFloat(css.paddingBottom) || 0) -
           tableRect.top;
-        entry.left = slot.left - tableRect.left;
+        entry.frozenLeft = entry.cell.hasAttribute("data-table-frozen")
+          ? parseFloat(
+              entry.cell.style.getPropertyValue("--table-frozen-left"),
+            ) || 0
+          : null;
+        entry.left =
+          entry.frozenLeft !== null
+            ? entry.frozenLeft + slot.left - bounds.left
+            : slot.left - tableRect.left;
         entry.width = slot.width;
-        entry.height = entry.content.getBoundingClientRect().height;
+        entry.height = entry.header
+          ? bounds.height
+          : entry.content.getBoundingClientRect().height;
+        entry.slotHeight = entry.header ? slot.height : entry.height;
       }
       if (hasHeaders) {
         const headers = [...cells.values()].filter((entry) => entry.header);
@@ -184,11 +207,15 @@ export function attachTableStickyCells(table: HTMLTableElement) {
       const pinned =
         offset > 0 && (entry.header || offset < limit) && target < bottom;
       if (pinned) {
-        const x = tableRect.left + entry.left;
-        set(slot, "height", `${height}px`);
+        const x =
+          entry.frozenLeft !== null
+            ? Math.max(tableRect.left, left) + entry.left
+            : tableRect.left + entry.left;
+        set(slot, "height", `${entry.slotHeight}px`);
         set(content, "--table-cell-top", `${target}px`);
         set(content, "--table-cell-left", `${x}px`);
         set(content, "--table-cell-width", `${entry.width}px`);
+        if (entry.header) set(content, "--table-cell-height", `${height}px`);
         set(
           content,
           "--table-cell-clip",
@@ -213,7 +240,12 @@ export function attachTableStickyCells(table: HTMLTableElement) {
     )
       invalidate();
   });
-  mutation.observe(table, { childList: true, subtree: true });
+  mutation.observe(table, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["data-table-frozen", "data-frozen-count"],
+  });
   refresh();
   if (cells.size) schedule();
   return () => {
@@ -224,7 +256,7 @@ export function attachTableStickyCells(table: HTMLTableElement) {
     cancelAnimationFrame(frame);
     for (const { content, slot } of cells.values()) {
       content.removeAttribute("data-table-pinned");
-      for (const name of ["offset", "top", "left", "width", "clip"])
+      for (const name of ["offset", "top", "left", "width", "height", "clip"])
         content.style.removeProperty(`--table-cell-${name}`);
       slot.style.removeProperty("height");
     }

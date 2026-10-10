@@ -3,12 +3,21 @@ import { SourceText } from "@/i18n/provider";
 import { gameLocale } from "@/i18n/config";
 import { unitVariant } from "@/presentation/map-labels";
 
-import { useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { withRelease } from "@/domain/releases";
 import { useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
 import { UNIT_CATEGORIES, type UnitDefinition } from "@/domain/units";
 import { useLocale, useTranslations } from "@/i18n/provider";
+import { CatalogViewSwitch, useCatalogView } from "./catalog-view-switch";
+import { EntityCatalogTable } from "./entity-catalog-table";
+import { unitTableEntry } from "./catalog-table-projections";
 import { CatalogHeader } from "./catalog-header";
 import { CompactSelect } from "./ui/compact-select";
 import { HoverTooltip } from "./ui/hover-tooltip";
@@ -34,6 +43,7 @@ export function UnitCatalog({
     }
   >;
 }) {
+  const view = useCatalogView();
   const params = useSearchParams();
   const t = useTranslations();
   const ready = useSyncExternalStore(
@@ -54,6 +64,10 @@ export function UnitCatalog({
   const update = (values: { q?: string; category?: string; lang?: string }) => {
     const next = { q, category, lang, ...values };
     const search = new URLSearchParams();
+    for (const key of ["view", "sort", "order"]) {
+      const value = params.get(key);
+      if (value) search.set(key, value);
+    }
     if (next.q.trim()) search.set("q", next.q.trim());
     if (next.category !== "all") search.set("category", next.category);
     search.set("lang", next.lang);
@@ -74,13 +88,18 @@ export function UnitCatalog({
         words.every((word) => unit.searchText.includes(word)),
     );
   }, [units, q, category]);
+  const project = useCallback(
+    (item: (typeof units)[number]) =>
+      unitTableEntry(item, lang, gameLocale(lang) === "en", t),
+    [lang, t],
+  );
   const select = (data: FormData) =>
     update({
       category: String(data.get("category")),
     });
   return (
     <>
-      <CatalogHeader header={header}>
+      <CatalogHeader header={header} viewSwitch={<CatalogViewSwitch />}>
         <form
           className="flex flex-wrap items-center gap-1.5"
           autoComplete="off"
@@ -151,82 +170,99 @@ export function UnitCatalog({
         </form>
       </CatalogHeader>
 
-      <ul
-        aria-label={t("单位结果")}
-        className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8"
-      >
-        {filtered.map((unit) => {
-          const name = gameLocale(lang) === "en" ? unit.enName : unit.zhName;
-          return (
-            <li key={unit.internalName} className="min-w-0">
-              <HoverTooltip
-                href={`/units/${unit.internalName}`}
-                className="flex h-[70px] items-center gap-2 overflow-hidden bg-[#182127]/65 p-2 hover:bg-[#25313a]"
-                content={
-                  <>
-                    <div className="flex items-center gap-2">
-                      <UnitPortrait
-                        name={name}
-                        unitKey={unit.internalName}
-                        portrait={unit.portrait}
-                        large
-                      />
-                      <p className="text-sm font-semibold">
-                        <SourceText
-                          sourceLocale={
-                            unit.nameLocales?.[
-                              gameLocale(lang) === "en" ? "en" : "zh"
-                            ]
-                          }
-                        >
-                          {name}
-                        </SourceText>
+      {view === "table" ? (
+        <EntityCatalogTable
+          kind="unit"
+          columnItems={units}
+          source={{
+            kind: "local",
+            items: filtered,
+            chunkSize: 8,
+            identity: `${params.get("release")}:${q}:${category}:${lang}`,
+          }}
+          getKey={(item) => item.internalName}
+          project={project}
+          label={t("单位结果")}
+        />
+      ) : (
+        <ul
+          aria-label={t("单位结果")}
+          className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8"
+        >
+          {filtered.map((unit) => {
+            const name = gameLocale(lang) === "en" ? unit.enName : unit.zhName;
+            return (
+              <li key={unit.internalName} className="min-w-0">
+                <HoverTooltip
+                  href={`/units/${unit.internalName}`}
+                  className="flex h-[70px] items-center gap-2 overflow-hidden bg-[#182127]/65 p-2 hover:bg-[#25313a]"
+                  content={
+                    <>
+                      <div className="flex items-center gap-2">
+                        <UnitPortrait
+                          name={name}
+                          unitKey={unit.internalName}
+                          portrait={unit.portrait}
+                          large
+                        />
+                        <p className="text-sm font-semibold">
+                          <SourceText
+                            sourceLocale={
+                              unit.nameLocales?.[
+                                gameLocale(lang) === "en" ? "en" : "zh"
+                              ]
+                            }
+                          >
+                            {name}
+                          </SourceText>
+                        </p>
+                      </div>
+                      <p className="my-2 text-[11px] text-[#c4a16a]">
+                        {t(UNIT_CATEGORIES[unit.category])} · {t(unit.team)} ·{" "}
+                        {t(unit.attack)}
+                        {unit.variant &&
+                          ` · ${unitVariant(unit.variant, lang)}`}
                       </p>
-                    </div>
-                    <p className="my-2 text-[11px] text-[#c4a16a]">
-                      {t(UNIT_CATEGORIES[unit.category])} · {t(unit.team)} ·{" "}
-                      {t(unit.attack)}
-                      {unit.variant && ` · ${unitVariant(unit.variant, lang)}`}
+                      <UnitStats unit={unit} compact />
+                      <p className="mt-3 text-[10px] text-[var(--text-muted)]">
+                        {t("基础定义值 · 点击查看属性与技能")}
+                      </p>
+                    </>
+                  }
+                >
+                  <UnitPortrait
+                    name={name}
+                    unitKey={unit.internalName}
+                    portrait={unit.portrait}
+                  />
+                  <div className="min-w-0">
+                    <h2 className="truncate text-xs font-medium">
+                      <SourceText
+                        sourceLocale={
+                          unit.nameLocales?.[
+                            gameLocale(lang) === "en" ? "en" : "zh"
+                          ]
+                        }
+                      >
+                        {name}
+                      </SourceText>
+                    </h2>
+                    <p className="mt-1 truncate text-[10px] text-[var(--text-muted)]">
+                      {t(UNIT_CATEGORIES[unit.category])} · {t(unit.team)}
                     </p>
-                    <UnitStats unit={unit} compact />
-                    <p className="mt-3 text-[10px] text-[var(--text-muted)]">
-                      {t("基础定义值 · 点击查看属性与技能")}
-                    </p>
-                  </>
-                }
-              >
-                <UnitPortrait
-                  name={name}
-                  unitKey={unit.internalName}
-                  portrait={unit.portrait}
-                />
-                <div className="min-w-0">
-                  <h2 className="truncate text-xs font-medium">
-                    <SourceText
-                      sourceLocale={
-                        unit.nameLocales?.[
-                          gameLocale(lang) === "en" ? "en" : "zh"
-                        ]
-                      }
-                    >
-                      {name}
-                    </SourceText>
-                  </h2>
-                  <p className="mt-1 truncate text-[10px] text-[var(--text-muted)]">
-                    {t(UNIT_CATEGORIES[unit.category])} · {t(unit.team)}
-                  </p>
-                  {unit.variant && (
-                    <p className="truncate text-[10px] text-[#a8b4be]">
-                      {unitVariant(unit.variant, lang)}
-                    </p>
-                  )}
-                </div>
-              </HoverTooltip>
-            </li>
-          );
-        })}
-      </ul>
-      {!filtered.length && (
+                    {unit.variant && (
+                      <p className="truncate text-[10px] text-[#a8b4be]">
+                        {unitVariant(unit.variant, lang)}
+                      </p>
+                    )}
+                  </div>
+                </HoverTooltip>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {view === "grid" && !filtered.length && (
         <div className="py-16 text-center text-sm text-[var(--text-muted)]">
           {t("没有符合条件的单位，请调整关键词或分类。")}
         </div>

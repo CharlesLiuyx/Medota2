@@ -1,6 +1,6 @@
 # 开发环境与能力登记册
 
-更新：2026-10-09（Windows增加Node22浏览、数据库与构建／启动复验）。本页是机器能力与平台限制的唯一登记位置；运行时状态以本机报告为准。完整旧证据见[环境历史](history/2026-10-06-development-environments.md)。
+更新：2026-10-10（Mac追加本机Linux容器视觉核验；Windows既有复验保留）。本页是机器能力与平台限制的唯一登记位置；运行时状态以本机报告为准。完整旧证据见[环境历史](history/2026-10-06-development-environments.md)。
 
 ## 环境总览
 
@@ -11,6 +11,8 @@
 | 云端                 | 计划；尚无登记实例                                                                                                | 按实际能力承担 Linux／计算任务     | 不承诺已有 Docker、GPU、私有数据权限或游戏资源           |
 
 环境标签是能力登记 ID，不是远程连接地址、workspace UUID 或数据库身份。推荐环境不自动授权远程执行、安装、发送任务或资源发布。
+
+Mac另有本机Linux arm64浏览容器`menv-browser-base:local`：2026-10-10以项目锁定Playwright1.62.1／Chromium151.0.7922.34（revision1234）核对英雄目录、技能详情的桌面／移动视觉与语义，共6项通过。浏览器通过容器loopback代理访问Mac固定fixture；不代表云端部署能力或Ubuntu x64 CI已通过。此前既有Chromium154也通过相同6项，最终以锁定151证据为准，详见[Fixture根因修复](history/2026-10-10-fixture-repair.md)。浏览器下载仅在本机忽略缓存，无项目依赖变化。
 
 ## Mac 元数据与应用开发
 
