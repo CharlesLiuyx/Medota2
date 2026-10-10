@@ -42,7 +42,9 @@ for (const [entity, realQuery] of [
   }) => {
     const fixture = await usesCatalogFixture(request);
     const query = fixture && entity === "heroes" ? "antimage" : realQuery;
-    await page.goto(`/${entity}?lang=zh-CN`);
+    await page.goto(
+      `/${entity}?lang=zh-CN${fixture && entity === "heroes" ? "&q=fixture_scroll_00" : ""}`,
+    );
     if (fixture && (entity === "units" || entity === "items")) {
       await expectMissingFixtureSource(page, entity);
       return;
@@ -74,6 +76,22 @@ for (const [entity, realQuery] of [
     await page.reload();
     await expect(page.getByRole("table")).toBeVisible();
     await expect(search).toHaveValue(query);
+  });
+  test(`${entity}: empty search, clear and language preserve table view`, async ({
+    page,
+    request,
+  }) => {
+    const fixture = await usesCatalogFixture(request);
+    const query = fixture && entity === "heroes" ? "antimage" : realQuery;
+    await page.goto(`/${entity}?lang=zh-CN&view=table&q=${query}`);
+    if (fixture && (entity === "units" || entity === "items")) {
+      await expectMissingFixtureSource(page, entity);
+      return;
+    }
+    const grid = page.getByRole("button", { name: "网格视图", exact: true });
+    const table = page.getByRole("button", { name: "表格视图", exact: true });
+    const search = page.locator('input[name="q"]');
+    await expect(page.getByRole("table")).toBeVisible();
     await page
       .getByRole("button", { name: /^清除(?:筛选|全部| \d+)$/ })
       .click();
@@ -110,7 +128,18 @@ for (const [entity, realQuery] of [
     request,
   }) => {
     const fixture = await usesCatalogFixture(request);
-    await page.goto(`/${entity}?lang=zh-CN&view=table`);
+    const fixtureHeroes = fixture && entity === "heroes";
+    await page.goto(
+      `/${entity}?lang=zh-CN&view=table${fixtureHeroes ? "&q=fixture_scroll_00" : ""}`,
+    );
+    if (fixtureHeroes) {
+      // Nine known rows still cover complete-result ordering. A shorter viewport
+      // lets this compact fixture exercise vertical pinning without filler rows.
+      await page.setViewportSize({ width: 1280, height: 320 });
+      await expect(
+        page.getByRole("status").filter({ hasText: "9 / 194" }),
+      ).toBeVisible();
+    }
     if (fixture && (entity === "units" || entity === "items")) {
       await expectMissingFixtureSource(page, entity);
       return;
@@ -294,7 +323,10 @@ for (const [entity, realQuery] of [
         path: "output/playwright/entity-table-heroes.png",
       });
     }
-    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setViewportSize({
+      width: 390,
+      height: fixtureHeroes ? 320 : 844,
+    });
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -369,7 +401,9 @@ for (const [entity, kind, field, realQuery] of [
     const fixture = await usesCatalogFixture(request);
     const query = fixture && entity === "heroes" ? "antimage" : realQuery;
     if (fixture && (entity === "units" || entity === "items")) {
-      await page.goto(`/${entity}?lang=zh-CN&view=table`);
+      await page.goto(
+        `/${entity}?lang=zh-CN&view=table${fixture && entity === "heroes" ? "&q=antimage" : ""}`,
+      );
       await expectMissingFixtureSource(page, entity);
       return;
     }
@@ -378,7 +412,9 @@ for (const [entity, kind, field, realQuery] of [
         response.url().includes(`/api/catalog/table-attributes?`) &&
         response.url().includes(`kind=${kind}`),
     );
-    await page.goto(`/${entity}?lang=zh-CN&view=table`);
+    await page.goto(
+      `/${entity}?lang=zh-CN&view=table${fixture && entity === "heroes" ? "&q=antimage" : ""}`,
+    );
     const data = await (await response).json();
     const extra = data.columns.find(
       (column: { field: string }) => column.field === field,
@@ -500,7 +536,9 @@ test("heroes: column menus, float precision, attribute effects and long-press or
       response.url().includes("/api/catalog/table-attributes?") &&
       response.url().includes("kind=hero"),
   );
-  await page.goto("/heroes?lang=zh-CN&view=table");
+  await page.goto(
+    `/heroes?lang=zh-CN&view=table${fixture ? "&q=antimage" : ""}`,
+  );
   const data = await (await response).json();
   const growth = data.columns.find(
     (column: { field: string }) => column.field === "strength_gain",
@@ -655,8 +693,12 @@ test("heroes: column menus, float precision, attribute effects and long-press or
 
 test("heroes: shared dropdown opens synchronously without rebuilding table rows", async ({
   page,
+  request,
 }) => {
-  await page.goto("/heroes?lang=zh-CN&view=table");
+  const fixture = await usesCatalogFixture(request);
+  await page.goto(
+    `/heroes?lang=zh-CN&view=table${fixture ? "&q=antimage" : ""}`,
+  );
   await expect(
     page.getByRole("button", { name: "按力量升序排序", exact: true }),
   ).toBeEnabled();
