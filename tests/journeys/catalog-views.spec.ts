@@ -1,7 +1,36 @@
 import { mkdir } from "node:fs/promises";
+import type { APIRequestContext, Page } from "@playwright/test";
+import type { ReleaseIndex } from "@/domain/releases";
 import { expect, test } from "../e2e/test-fixture";
 
-for (const [entity, query] of [
+async function usesCatalogFixture(request: APIRequestContext) {
+  const response = await request.get("/api/releases");
+  expect(response.ok()).toBe(true);
+  const index = (await response.json()) as ReleaseIndex;
+  const selected = index.releases.find((r) => r.id === index.defaultRelease);
+  expect(selected).toBeTruthy();
+  return selected!.catalogClient?.startsWith("fixture-") ?? false;
+}
+
+async function expectMissingFixtureSource(page: Page, entity: string) {
+  const label = entity === "units" ? "单位" : "物品";
+  await expect(
+    page.getByRole("heading", { name: `${label}图鉴`, exact: true }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: `该版本的${label}资料尚未接入` }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "网格视图", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "表格视图", exact: true }),
+  ).toHaveCount(0);
+}
+
+for (const [entity, realQuery] of [
   ["heroes", "axe"],
   ["abilities", "blink"],
   ["units", "roshan"],
@@ -9,8 +38,15 @@ for (const [entity, query] of [
 ] as const) {
   test(`${entity}: grid and table preserve filters, navigation and mobile layout`, async ({
     page,
+    request,
   }) => {
+    const fixture = await usesCatalogFixture(request);
+    const query = fixture && entity === "heroes" ? "antimage" : realQuery;
     await page.goto(`/${entity}?lang=zh-CN`);
+    if (fixture && (entity === "units" || entity === "items")) {
+      await expectMissingFixtureSource(page, entity);
+      return;
+    }
     const grid = page.getByRole("button", { name: "网格视图", exact: true });
     const table = page.getByRole("button", { name: "表格视图", exact: true });
     await expect(grid).toHaveAttribute("aria-pressed", "true");
@@ -302,7 +338,7 @@ for (const [entity, query] of [
   });
 }
 
-for (const [entity, kind, field, query] of [
+for (const [entity, kind, field, realQuery] of [
   ["heroes", "hero", "base_mana_regen", "axe"],
   ["abilities", "ability", "AbilityCastRange", "blink"],
   ["units", "unit", "MovementTurnRate", "roshan"],
@@ -310,7 +346,15 @@ for (const [entity, kind, field, query] of [
 ] as const) {
   test(`${entity}: column choices include complete attributes, persist and reset in the title row`, async ({
     page,
+    request,
   }) => {
+    const fixture = await usesCatalogFixture(request);
+    const query = fixture && entity === "heroes" ? "antimage" : realQuery;
+    if (fixture && (entity === "units" || entity === "items")) {
+      await page.goto(`/${entity}?lang=zh-CN&view=table`);
+      await expectMissingFixtureSource(page, entity);
+      return;
+    }
     const response = page.waitForResponse(
       (response) =>
         response.url().includes(`/api/catalog/table-attributes?`) &&
@@ -429,7 +473,10 @@ for (const [entity, kind, field, query] of [
 
 test("heroes: column menus, float precision, attribute effects and long-press order persist", async ({
   page,
+  request,
 }) => {
+  const fixture = await usesCatalogFixture(request);
+  const growthValue = fixture ? 2 : 3;
   const response = page.waitForResponse(
     (response) =>
       response.url().includes("/api/catalog/table-attributes?") &&
@@ -453,7 +500,9 @@ test("heroes: column menus, float precision, attribute effects and long-press or
   const owner = Object.entries(
     data.values as Record<string, Record<string, string[]>>,
   ).find(([, fields]) =>
-    fields[growth.key]?.some((value) => /^3\.0+$/u.test(value)),
+    fields[growth.key]?.some((value) =>
+      new RegExp(`^${growthValue}\\.0+$`, "u").test(value),
+    ),
   )?.[0];
   expect(owner).toBeTruthy();
   await page
@@ -462,7 +511,7 @@ test("heroes: column menus, float precision, attribute effects and long-press or
   const row = table.locator(`tr[data-catalog-entity=${JSON.stringify(owner)}]`);
   const cell = async (key: string) =>
     row.locator(`td[data-table-column=${JSON.stringify(key)}]`);
-  await expect(await cell(growth.key)).toHaveText("3");
+  await expect(await cell(growth.key)).toHaveText(String(growthValue));
   expect(
     await header(growth.key).evaluate(
       (node) => node.getBoundingClientRect().width,
@@ -488,10 +537,10 @@ test("heroes: column menus, float precision, attribute effects and long-press or
   );
   await menu.getByRole("combobox", { name: "小数位数" }).click();
   await menu.getByRole("option", { name: "3", exact: true }).click();
-  await expect(await cell(growth.key)).toHaveText("3.000");
+  await expect(await cell(growth.key)).toHaveText(`${growthValue}.000`);
   await page.keyboard.press("Escape");
   await page.reload();
-  await expect(await cell(growth.key)).toHaveText("3.000");
+  await expect(await cell(growth.key)).toHaveText(`${growthValue}.000`);
   await header(growth.key).hover();
   await header(growth.key)
     .getByRole("button", { name: `配置${growth.zh}列`, exact: true })
@@ -500,7 +549,7 @@ test("heroes: column menus, float precision, attribute effects and long-press or
     "3",
   );
   await menu.getByRole("button", { name: "恢复默认小数位数" }).click();
-  await expect(await cell(growth.key)).toHaveText("3");
+  await expect(await cell(growth.key)).toHaveText(String(growthValue));
   await expect(menu.getByRole("combobox", { name: "小数位数" })).toContainText(
     "自动",
   );
