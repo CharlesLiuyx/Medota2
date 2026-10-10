@@ -642,6 +642,30 @@ test("heroes: shared dropdown opens synchronously without rebuilding table rows"
   await expect(
     page.getByRole("button", { name: "按力量升序排序", exact: true }),
   ).toBeEnabled();
+  // Initial virtual chunks are appended after sorting becomes available. Start
+  // measuring menu work only after that independent rendering has settled.
+  await page.locator("[data-entity-catalog-table] table").evaluate(
+    (table) =>
+      new Promise<void>((resolve, reject) => {
+        let quiet: ReturnType<typeof setTimeout>;
+        const observer = new MutationObserver(() => {
+          clearTimeout(quiet);
+          quiet = setTimeout(finish, 100);
+        });
+        const deadline = setTimeout(() => {
+          observer.disconnect();
+          clearTimeout(quiet);
+          reject(new Error("Initial table rendering did not settle"));
+        }, 5000);
+        function finish() {
+          observer.disconnect();
+          clearTimeout(deadline);
+          resolve();
+        }
+        observer.observe(table, { childList: true, subtree: true });
+        quiet = setTimeout(finish, 100);
+      }),
+  );
   const client = await page.context().newCDPSession(page);
   await client.send("Emulation.setCPUThrottlingRate", { rate: 4 });
   const metrics = await page
@@ -669,14 +693,23 @@ test("heroes: shared dropdown opens synchronously without rebuilding table rows"
         await new Promise((resolve) => requestAnimationFrame(resolve));
       }
       observer.disconnect();
-      return { cpu: "4x", samples, rowMutations: mutations.length };
+      return {
+        cpu: "4x",
+        samples,
+        rowMutations: mutations.length,
+        changes: mutations.map((record) => ({
+          target: (record.target as Element).outerHTML?.slice(0, 300),
+          added: [...record.addedNodes].map((node) => node.nodeName),
+          removed: [...record.removedNodes].map((node) => node.nodeName),
+        })),
+      };
     });
   await client.send("Emulation.setCPUThrottlingRate", { rate: 1 });
-  expect(metrics.samples.every((sample) => sample.visible)).toBe(true);
-  expect(metrics.rowMutations).toBe(0);
+  console.log("dropdown-performance", JSON.stringify(metrics));
   await test.info().attach("dropdown-performance", {
     body: JSON.stringify(metrics, null, 2),
     contentType: "application/json",
   });
-  console.log("dropdown-performance", JSON.stringify(metrics));
+  expect(metrics.samples.every((sample) => sample.visible)).toBe(true);
+  expect(metrics.rowMutations).toBe(0);
 });
