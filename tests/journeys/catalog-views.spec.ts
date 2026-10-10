@@ -401,9 +401,7 @@ for (const [entity, kind, field, realQuery] of [
     const fixture = await usesCatalogFixture(request);
     const query = fixture && entity === "heroes" ? "antimage" : realQuery;
     if (fixture && (entity === "units" || entity === "items")) {
-      await page.goto(
-        `/${entity}?lang=zh-CN&view=table${fixture && entity === "heroes" ? "&q=antimage" : ""}`,
-      );
+      await page.goto(`/${entity}?lang=zh-CN&view=table`);
       await expectMissingFixtureSource(page, entity);
       return;
     }
