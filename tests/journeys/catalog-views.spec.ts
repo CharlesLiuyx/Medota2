@@ -36,7 +36,7 @@ for (const [entity, realQuery] of [
   ["units", "roshan"],
   ["items", "blink"],
 ] as const) {
-  test(`${entity}: grid and table preserve filters, navigation and mobile layout`, async ({
+  test(`${entity}: grid and table preserve search, navigation and language`, async ({
     page,
     request,
   }) => {
@@ -53,6 +53,69 @@ for (const [entity, realQuery] of [
     await table.click();
     await expect(page.getByRole("table")).toBeVisible();
     await expect(page).toHaveURL(/view=table/);
+    const search = page.locator('input[name="q"]');
+    await search.fill(query);
+    await expect(page).toHaveURL(new RegExp(`q=${query}`));
+    await expect(table).toHaveAttribute("aria-pressed", "true");
+    const first = page
+      .locator(`[data-entity-catalog-table] table a[href^="/${entity}/"]`)
+      .first();
+    await expect(first).toBeVisible();
+    const href = await first.getAttribute("href");
+    await first.hover();
+    await expect(page.getByRole("tooltip").first()).toBeVisible();
+    await page.keyboard.press("Escape");
+    await first.click();
+    await expect(page).toHaveURL(new RegExp(`/${entity}/`));
+    expect(href).toContain(`/${entity}/`);
+    await page.goBack();
+    await expect(table).toHaveAttribute("aria-pressed", "true");
+    await expect(search).toHaveValue(query);
+    await page.reload();
+    await expect(page.getByRole("table")).toBeVisible();
+    await expect(search).toHaveValue(query);
+    await page
+      .getByRole("button", { name: /^清除(?:筛选|全部| \d+)$/ })
+      .click();
+    await expect(search).toHaveValue("");
+    await expect(table).toHaveAttribute("aria-pressed", "true");
+    await search.fill("zzzznotanentity");
+    await expect(
+      page.getByText("没有符合条件的结果。", { exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: /^清除(?:筛选|全部| \d+)$/ })
+      .click();
+    await expect(page.getByRole("table")).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(table).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await grid.click();
+    await expect(page.getByRole("table")).toHaveCount(0);
+    await expect(grid).toHaveAttribute("aria-pressed", "true");
+    await page.goto(`/${entity}?lang=en&view=table&q=${query}`);
+    await expect(
+      page.getByRole("button", { name: "Table view", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      page.getByRole("columnheader", { name: /Entity/ }),
+    ).toBeVisible();
+  });
+  test(`${entity}: sorting and frozen headers stay aligned on mobile`, async ({
+    page,
+    request,
+  }) => {
+    const fixture = await usesCatalogFixture(request);
+    await page.goto(`/${entity}?lang=zh-CN&view=table`);
+    if (fixture && (entity === "units" || entity === "items")) {
+      await expectMissingFixtureSource(page, entity);
+      return;
+    }
+    await expect(page.getByRole("table")).toBeVisible();
     const sortLabel =
       entity === "heroes"
         ? "移动速度"
@@ -231,42 +294,7 @@ for (const [entity, realQuery] of [
         path: "output/playwright/entity-table-heroes.png",
       });
     }
-    const search = page.locator('input[name="q"]');
-    await search.fill(query);
-    await expect(page).toHaveURL(new RegExp(`q=${query}`));
-    await expect(table).toHaveAttribute("aria-pressed", "true");
-    const first = page
-      .locator(`[data-entity-catalog-table] table a[href^="/${entity}/"]`)
-      .first();
-    await expect(first).toBeVisible();
-    const href = await first.getAttribute("href");
-    await first.hover();
-    await expect(page.getByRole("tooltip").first()).toBeVisible();
-    await page.keyboard.press("Escape");
-    await first.click();
-    await expect(page).toHaveURL(new RegExp(`/${entity}/`));
-    expect(href).toContain(`/${entity}/`);
-    await page.goBack();
-    await expect(table).toHaveAttribute("aria-pressed", "true");
-    await expect(search).toHaveValue(query);
-    await page.reload();
-    await expect(page.getByRole("table")).toBeVisible();
-    await expect(search).toHaveValue(query);
-    await page
-      .getByRole("button", { name: /^清除(?:筛选|全部| \d+)$/ })
-      .click();
-    await expect(search).toHaveValue("");
-    await expect(table).toHaveAttribute("aria-pressed", "true");
-    await search.fill("zzzznotanentity");
-    await expect(
-      page.getByText("没有符合条件的结果。", { exact: true }),
-    ).toBeVisible();
-    await page
-      .getByRole("button", { name: /^清除(?:筛选|全部| \d+)$/ })
-      .click();
-    await expect(page.getByRole("table")).toBeVisible();
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(table).toBeVisible();
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -325,16 +353,6 @@ for (const [entity, realQuery] of [
       )
       .toBe(true);
     await page.evaluate(() => window.scrollTo(0, 0));
-    await grid.click();
-    await expect(page.getByRole("table")).toHaveCount(0);
-    await expect(grid).toHaveAttribute("aria-pressed", "true");
-    await page.goto(`/${entity}?lang=en&view=table&q=${query}`);
-    await expect(
-      page.getByRole("button", { name: "Table view", exact: true }),
-    ).toHaveAttribute("aria-pressed", "true");
-    await expect(
-      page.getByRole("columnheader", { name: /Entity/ }),
-    ).toBeVisible();
   });
 }
 
