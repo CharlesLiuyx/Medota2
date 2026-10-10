@@ -92,6 +92,8 @@ for (const [entity, realQuery] of [
     const table = page.getByRole("button", { name: "表格视图", exact: true });
     const search = page.locator('input[name="q"]');
     await expect(page.getByRole("table")).toBeVisible();
+    // SSR table markup precedes hydration; the view switch exposes readiness.
+    await expect(table).toBeEnabled();
     await page
       .getByRole("button", { name: /^清除(?:筛选|全部| \d+)$/ })
       .click();
