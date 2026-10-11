@@ -4,20 +4,18 @@
 
 ## 基线与接手
 
-- 最新功能基线：`main / 6473f31`，包含发布预检、定向复验、协同取消与CI独立分片，沿用Tab缓存、角色列等既有功能；完整业务快照`bee227bd`、数据提交`12bcfdff`。已合入远端main，[最终CI](https://github.com/CharlesLiuyx/Medota2/actions/runs/38131556852)成功；完整发布4分48.6秒，见[本轮验收](history/2026-10-11-publish-retry.md)。收尾文档沿用同一功能和数据基线。
+- 最新功能基线：`main / 8bea4c5`，包含CI共用准备、合并core与固定6个浏览分片、构建身份修复及首次交互就绪信号；完整业务快照`bee227bd`、数据提交`12bcfdff`。[最终CI](https://github.com/CharlesLiuyx/Medota2/actions/runs/38147001674)成功，完整增量发布4分56.2秒，广范围仍为5分14.8秒，见[CI精简验收](history/2026-10-11-ci-simplification.md)。收尾文档沿用同一功能和数据基线。
 - 目标由[dev-data.lock.json](../dev-data.lock.json)选择。其他机器运行`pnpm sync`；实际应用、数据库身份及摘要用`pnpm data:status`核对。任务启动与共享协作按[AGENTS](../AGENTS.md)执行。
 
 ## 当前交接
 
-发布流程优化已合入main：最终Mac及Linux浏览无flaky，528单元、41真实／33fixture旅程、6视觉、4所选数据库合同与正式构建／独立启动通过；所选范围、既有跳过及此前缓存E2E证据分别见[验收记录](history/2026-10-11-publish-retry.md)。完整快照8238对象核验，最终in-sync；另一机器用pnpm sync接手。页面人工审阅与Windows原生取消复验保留。
+CI精简已合入main，保留原检查标准及main直接推送兜底；最后Mac41真实旅程／6视觉与Linux33fixture／6视觉、96相关单元通过，Linux有1项资源请求flaky。广范围533单元、4数据库合同及构建证据、两种计时条件见[验收记录](history/2026-10-11-ci-simplification.md)。完整8238对象已交接；另一机器用pnpm sync接手。页面人工审阅与Windows原生取消复验保留。
 
 活动任务：
 
-- **CI精简实施中**：合并core，固定6个浏览分片，同片复用fixture／Web服务／预热；保留检查标准和main直接推送兜底。基线1d0ce41，正在验证并实测完整发布，目标仍为300秒以内。
+- **CI精简已实施，广范围5分钟目标待达成**：作业14→9，第六轮总执行秒1708→1327；最后增量发布296.194秒，含全量单元／数据库／CI构建的广范围314.757秒。下一步定位资源请求flaky并按相同广范围复测；具体范围、失败记录和边界见[验收](history/2026-10-11-ci-simplification.md)与[交接](work/publication-retry-performance.md)。
 
-- **发布流程5分钟目标本轮已达成，Windows取消待复验**：6473f31完整发布288.562秒，本机与Linux浏览无重试，完整快照及精确SHA门禁通过。日常恢复入口与剩余环境边界见[交接](work/publication-retry-performance.md)，三轮实测见[验收](history/2026-10-11-publish-retry.md)。
-
-- **推送合入提速已实施并实测**：`f30897a`已合入main；常规增量4分38.4秒，含32发布专项、18真实旅程、三分片候选CI与最终确认。完整基础设施上线5分46.5秒，首轮Linux跨架构视觉问题已修复。保留必要门禁、完整快照与既有人工验收边界，见[实测与恢复记录](history/2026-10-11-publication-performance.md)。
+- **Windows取消待复验**：发布协调与清理已通过Mac及Linux检查，Windows原生进程树取消仍待按[交接](work/publication-retry-performance.md)复验。
 
 - **Tab响应与版本缓存已实施，性能部分达标，待人工审阅**：阶段0–3和对应回归、正式构建／独立启动通过；常速开发与生产660次热切换反馈均低于120ms，最大73ms。生产4倍CPU有1次反馈227.8ms，开发降速及内容就绪仍有超标。实现已随`b0515e6`合入main，1320次采样、边界和后续范围见[实施交接](work/tab-cache-performance.md)与[性能验收](history/2026-10-11-tab-cache-performance.md)。
 
