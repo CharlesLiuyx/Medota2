@@ -13,7 +13,7 @@ CI精简已合入main，保留原检查标准及main直接推送兜底；最后M
 
 活动任务：
 
-- **CI精简已实施，广范围5分钟目标待达成**：作业14→9，第六轮总执行秒1708→1327；最后增量发布296.194秒，含全量单元／数据库／CI构建的广范围314.757秒。正在修复资源请求flaky：补齐表格API只读准备，原测试8次零重试通过；继续按全量单元／数据库／Linux构建的相同广范围实测；具体范围、失败记录和边界见[验收](history/2026-10-11-ci-simplification.md)与[交接](work/publication-retry-performance.md)。
+- **CI精简已实施，广范围5分钟目标待达成**：作业14→9，第六轮总执行秒1708→1327；最后增量发布296.194秒，含全量单元／数据库／CI构建的广范围314.757秒。资源请求flaky已修复，f33aaf5完整Mac/Linux浏览无重试，但303.723秒仍超标；正在将已有static/runtime通道在独立主机并行（完整10作业），继续按全量单元／数据库／Linux构建范围实测；具体范围、失败记录和边界见[验收](history/2026-10-11-ci-simplification.md)与[交接](work/publication-retry-performance.md)。
 
 - **Windows取消待复验**：发布协调与清理已通过Mac及Linux检查，Windows原生进程树取消仍待按[交接](work/publication-retry-performance.md)复验。
 

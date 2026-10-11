@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   candidateBase,
+  coreLanesForPlan,
   reusableCandidate,
 } from "../../scripts/development/ci-plan.mjs";
+import {
+  createPlan,
+  executionPlan,
+} from "../../scripts/development/check-plan.mjs";
 const base = "a".repeat(40);
 const target = {
   sha: "target",
@@ -20,6 +25,28 @@ const success = {
   head_branch: `codex/publish/${base}/123-deadbeef`,
 };
 describe("CI promotion evidence", () => {
+  it("runs each selected core task once across independent static and runtime hosts", () => {
+    const plan = createPlan(["src/development/warm-browser.ts"]);
+    const lanes = coreLanesForPlan(plan);
+    expect(lanes).toEqual(["static", "runtime"]);
+    const tasks = lanes.flatMap((lane) => executionPlan(plan, { lane }).tasks);
+    expect(tasks.map((task) => task.id).sort()).toEqual(
+      executionPlan(plan, { lane: "core" })
+        .tasks.map((task) => task.id)
+        .sort(),
+    );
+    expect(executionPlan(plan, { lane: "static" }).database).toBe(false);
+    expect(
+      executionPlan(plan, { lane: "runtime" }).tasks.map((task) => task.id),
+    ).toEqual(["database", "build"]);
+  });
+  it("keeps documentation on a single static host and omits empty core work", () => {
+    expect(coreLanesForPlan(createPlan(["docs/current.md"]))).toEqual([
+      "static",
+    ]);
+    const plan = createPlan(["docs/current.md"]);
+    expect(coreLanesForPlan({ ...plan, tasks: [] })).toEqual([]);
+  });
   it("binds candidate base, SHA, repository and workflow", () => {
     expect(reusableCandidate(success, target)).toBe(true);
     expect(candidateBase(success.head_branch)).toBe(base);

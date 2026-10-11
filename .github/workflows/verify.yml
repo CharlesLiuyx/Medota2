@@ -22,6 +22,7 @@ jobs:
       base: ${{ steps.plan.outputs.base }}
       promoted: ${{ steps.plan.outputs.promoted }}
       core: ${{ steps.plan.outputs.core }}
+      coreLanes: ${{ steps.plan.outputs.coreLanes }}
       browser: ${{ steps.plan.outputs.browser }}
       coreDatabase: ${{ steps.plan.outputs.coreDatabase }}
     steps:
@@ -44,8 +45,13 @@ jobs:
   core:
     needs: plan
     if: needs.plan.outputs.core == 'true'
+    name: core (${{ matrix.lane }})
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: true
+      matrix:
+        lane: ${{ fromJSON(needs.plan.outputs.coreLanes) }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -64,6 +70,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Restore verified check results
+        if: matrix.lane == 'static'
         uses: actions/cache@v4
         with:
           path: .medota2/check-cache
@@ -71,18 +78,19 @@ jobs:
           restore-keys: |
             checks-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('pnpm-lock.yaml', 'scripts/development/**') }}-
 
-      - name: Run core checks
+      - name: Run selected core lane
         env:
           CHECK_BASE: ${{ needs.plan.outputs.base }}
-        run: pnpm check --base "$CHECK_BASE" --lane core
+          CHECK_LANE: ${{ matrix.lane }}
+        run: pnpm check --base "$CHECK_BASE" --lane "$CHECK_LANE"
       - name: Release this job's reusable test database
-        if: always() && needs.plan.outputs.coreDatabase == 'true'
+        if: always() && matrix.lane == 'runtime' && needs.plan.outputs.coreDatabase == 'true'
         run: pnpm test:clean
       - name: Upload check evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: medota2-verification-${{ github.run_id }}-core
+          name: medota2-verification-${{ github.run_id }}-core-${{ matrix.lane }}
           path: |
             .medota2/check-plan.json
             .medota2/checks/*/run.json

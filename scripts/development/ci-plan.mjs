@@ -7,6 +7,13 @@ export function candidateBase(branch) {
   return /^codex\/publish\/([a-f0-9]{40})\/\d+-[a-f0-9]{8}$/.exec(branch)?.[1];
 }
 
+/** Preserve the core task union while giving the fixture build its own host. */
+export function coreLanesForPlan(plan) {
+  return ["static", "runtime"].filter(
+    (lane) => executionPlan(plan, { lane }).tasks.length > 0,
+  );
+}
+
 export function reusableCandidate(run, { sha, base, workflowId, repository }) {
   return (
     run.head_sha === sha &&
@@ -73,6 +80,7 @@ function main() {
     base,
     promoted,
     core: !promoted && core.tasks.length > 0,
+    coreLanes: JSON.stringify(promoted ? [] : coreLanesForPlan(plan)),
     browser: !promoted && browser.browser,
     coreDatabase: core.database,
   };

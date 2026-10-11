@@ -1,3 +1,5 @@
+import type { CheckPlan } from "./check-plan.mjs";
+export function coreLanesForPlan(plan: CheckPlan): Array<"static" | "runtime">;
 export function candidateBase(branch: string): string | undefined;
 export function reusableCandidate(
   run: {
