@@ -192,7 +192,7 @@ export function createPlan(inputPaths) {
       id,
       reason,
       command: "pnpm",
-      args,
+      args: kind === "browser" ? [...args, "--max-failures=1"] : args,
       inputs: [...new Set([...inputs, ...settings])],
       kind,
     });

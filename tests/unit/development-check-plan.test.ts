@@ -199,6 +199,7 @@ describe("development check scope", () => {
       "--project=desktop-chromium",
       "--project=mobile-chromium",
       "tests/e2e/heroes.spec.ts",
+      "--max-failures=1",
     ]);
   });
   it("checks both visual projects for page dependencies and brand assets, including deletions", () => {
@@ -218,6 +219,7 @@ describe("development check scope", () => {
         "--project=desktop-chromium",
         "--project=mobile-chromium",
         "--retries=1",
+        "--max-failures=1",
       ]);
       expect(task?.inputs).toContain("public");
     }
@@ -593,6 +595,7 @@ describe("bounded journey and distributed execution", () => {
       expect(task.args).toContain("--shard=2/3");
       expect(task.args).toContain("--fully-parallel");
       expect(task.args).toContain("--retries=1");
+      expect(task.args).toContain("--max-failures=1");
     }
     for (const options of [
       { lane: "unknown" },

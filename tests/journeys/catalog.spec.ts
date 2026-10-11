@@ -24,9 +24,9 @@ for (const entity of ["heroes", "abilities"] as const) {
     const index = (await releases.json()) as ReleaseIndex;
     const selected = index.releases.find((r) => r.id === index.defaultRelease);
     expect(selected).toBeTruthy();
-    const fixture = selected!.catalogClient?.startsWith("fixture-") ?? false;
-    // Full-list scrolling has its own journey; navigation uses a known fixture.
-    await page.goto(`/${entity}${fixture ? "?q=antimage" : ""}`);
+    // Full-list scrolling has its own journey; navigation uses a known entity
+    // on both the fixture and the current Catalog.
+    await page.goto(`/${entity}?q=antimage`);
     await expect(
       page.getByRole("button", { name: "网格视图", exact: true }),
     ).toBeEnabled();

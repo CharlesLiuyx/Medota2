@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { loadLocalEnv } from "@/config/env";
 import { createHash } from "node:crypto";
 import { access, cp, mkdir, readdir, rm } from "node:fs/promises";
 import { createServer } from "node:net";
@@ -18,6 +19,9 @@ import { assertStandaloneBoundary } from "../../scripts/development/build-output
 const retainedArtifacts: string[] = [];
 
 async function main(): Promise<void> {
+  // Match push/check preparation before hashing the environment. The build and
+  // smoke still receive the same isolated fixture overrides below.
+  loadLocalEnv();
   if (process.argv.slice(2).some((arg) => arg !== "--build-only"))
     throw new Error(
       "Usage: pnpm release [--build-only]. Remote deployment is not configured; this command prepares and checks the Web artifact.",

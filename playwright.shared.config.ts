@@ -18,7 +18,7 @@ export default defineConfig({
   fullyParallel: shared && process.platform !== "win32",
   workers:
     shared && process.platform !== "win32"
-      ? Math.min(3, availableParallelism())
+      ? Math.min(2, availableParallelism())
       : 1,
   retries: 0,
   outputDir: `${artifacts}/test-results`,

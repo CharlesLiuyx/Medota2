@@ -164,7 +164,9 @@ jobs:
 
   verify:
     needs: [plan, core, browser]
-    if: always()
+    # Same-SHA promotion was fully checked in plan; no empty second job on main.
+    # Failed planning and direct pushes still require the aggregate gate.
+    if: always() && needs.plan.outputs.promoted != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:

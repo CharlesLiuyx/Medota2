@@ -493,7 +493,9 @@ for (const [entity, kind, field, realQuery] of [
         response.url().includes(`kind=${kind}`),
     );
     await page.goto(
-      `/${entity}?lang=zh-CN&view=table${fixture ? `&q=${encodeURIComponent(query)}` : ""}`,
+      // Full-list rendering is covered separately. Begin this preference flow
+      // with a prefix, then narrow it to the full query below.
+      `/${entity}?lang=zh-CN&view=table&q=${encodeURIComponent(query.slice(0, 2))}`,
     );
     const data = await (await response).json();
     const extra = data.columns.find(
