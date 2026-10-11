@@ -1,19 +1,17 @@
 # 当前工作
 
-更新：2026-10-11。只维护活动状态；概念见[CONTEXT](../CONTEXT.md)，阅读入口见[文档导航](README.md)。
+更新：2026-10-12。只维护活动状态；概念见[CONTEXT](../CONTEXT.md)，阅读入口见[文档导航](README.md)。
 
 ## 基线与接手
 
-- 最新功能基线：`main / e067a7a`，资源请求预热修复与static/runtime并行已发布；完整业务快照`bee227bd`、数据提交`12bcfdff`。537全量单元／4所选数据库合同／Linux构建在内的完整发布267.620秒，原POST用例两轮Linux首次通过；最新CI另有1项表头菜单flaky，见[完整发布验收](history/2026-10-11-publication-full-gates.md)。收尾文档沿用同一功能和数据基线。
+- 最新功能基线：`main / 4714c66`，表头菜单整列悬停／焦点及零重试门禁已发布；完整业务快照`bee227bd`、数据提交`12bcfdff`。539全量单元／4所选数据库合同／Linux重新构建在内的完整发布255.318秒，Mac41真实／Linux33fixture及各6视觉均首次通过。表头与资源POST两项flaky均已修复，见[零重试完整发布验收](history/2026-10-12-header-menu.md)。收尾文档沿用同一功能和数据基线。
 - 目标由[dev-data.lock.json](../dev-data.lock.json)选择。其他机器运行`pnpm sync`；实际应用、数据库身份及摘要用`pnpm data:status`核对。任务启动与共享协作按[AGENTS](../AGENTS.md)执行。
 
 ## 当前交接
 
-CI共用准备、固定6浏览分片与两条core通道已合入main，保留原检查标准及main直接推送兜底。完整发布4分27.6秒，Mac41真实旅程／6视觉无重试，Linux33fixture／6视觉、537全量单元、4所选数据库合同与构建通过。原资源POST超时已修复；新表头菜单重试与计时条件见[验收记录](history/2026-10-11-publication-full-gates.md)。完整8238对象已交接；另一机器用pnpm sync接手。页面人工审阅与Windows原生取消复验保留。
+完整发布4分15.3秒，全部浏览无重试；保留原断言、超时、网络隔离、数据与精确SHA门禁，新增flaky即阻断发布。完整8238对象已交接，另一机器用pnpm sync接手。表头缺陷与原资源POST问题已关闭，验证范围见[验收记录](history/2026-10-12-header-menu.md)。页面人工审阅、Windows原生取消复验及冷环境耗时边界保留。
 
 活动任务：
-
-- **完整发布5分钟目标已达成，表头点击flaky待定位**：固定6片、10作业，完整537单元／4所选数据库／Linux构建发布267.620秒，1199 runner秒。原资源POST用例8次本机零重试、两轮Linux首次通过；最后Linux英雄排序／冻结流程点击分类菜单时被冻结列遮挡，1项重试通过。后续定位横向滚动与表头布局；首次安装／本机冷构建／新快照下的300秒上界仍未验证，见[验收](history/2026-10-11-publication-full-gates.md)与[交接](work/publication-retry-performance.md)。
 
 - **Windows取消待复验**：发布协调与清理已通过Mac及Linux检查，Windows原生进程树取消仍待按[交接](work/publication-retry-performance.md)复验。
 
