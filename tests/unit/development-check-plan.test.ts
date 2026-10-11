@@ -478,6 +478,24 @@ it("routes reusable table changes to grouped-table coverage and changes journeys
   }
 });
 
+it("covers all catalog consumers and table contracts for shared column menus", () => {
+  for (const path of [
+    "src/components/catalog-table-header.tsx",
+    "src/components/catalog-table-header.module.css",
+  ]) {
+    const plan = createPlan([path]);
+    expect(plan.tasks.find((task) => task.id === "unit")?.args).toContain(
+      "tests/unit/grouped-table.test.tsx",
+    );
+    for (const kind of ["heroes", "abilities", "units", "items"])
+      expect(
+        selectedJourneys([path])(
+          `${kind}: sorting and frozen headers stay aligned on mobile`,
+        ),
+      ).toBe(true);
+  }
+});
+
 it("routes grouped role headings and frozen offsets to catalog journeys", () => {
   for (const path of [
     "src/components/ui/grouped-table.tsx",

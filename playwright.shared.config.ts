@@ -21,6 +21,8 @@ export default defineConfig({
       ? Math.min(2, availableParallelism())
       : 1,
   retries: 0,
+  // Retries collect diagnostics; a flaky outcome must still block verification.
+  failOnFlakyTests: true,
   outputDir: `${artifacts}/test-results`,
   reporter: [
     ["./tests/helpers/failure-reporter.ts"],

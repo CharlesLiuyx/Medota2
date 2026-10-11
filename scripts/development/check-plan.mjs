@@ -268,6 +268,11 @@ export function createPlan(inputPaths) {
       /hero-minimap|hero-map-assets|vision-presets|hero-icons/.test(path),
   );
   const hasUnits = flowPaths.some((path) => unitScope.test(path));
+  const catalogTableUi = flowPaths.some((path) =>
+    /^src\/components\/(?:catalog-table-header|entity-catalog-table)(?:[./]|$)/.test(
+      path,
+    ),
+  );
   const catalogData =
     wide ||
     nonMap.some(
@@ -371,7 +376,7 @@ export function createPlan(inputPaths) {
       unitFiles.add("tests/unit/hover-tooltip.test.tsx");
     if (
       paths.some((path) =>
-        /(?:data-table|grouped-table|table-sticky-cells|table-frozen-columns|table-cell-spans)/.test(
+        /(?:data-table|grouped-table|catalog-table-header|table-sticky-cells|table-frozen-columns|table-cell-spans)/.test(
           path,
         ),
       )
@@ -477,11 +482,13 @@ export function createPlan(inputPaths) {
   }
   if (journeys.has("heroes") || journeys.has("abilities"))
     journeys.add("tooltips");
-  if (wide || shared || localeRuntime || hasUnits) journeys.add("units");
+  if (wide || shared || catalogTableUi || localeRuntime || hasUnits)
+    journeys.add("units");
   if (
     wide ||
     shared ||
     localeRuntime ||
+    catalogTableUi ||
     flowPaths.some((path) => /(?:items|item-)/.test(path))
   )
     journeys.add("items");

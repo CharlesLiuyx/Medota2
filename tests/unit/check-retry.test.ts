@@ -71,31 +71,36 @@ describe("failure diagnosis planning", () => {
   });
 });
 
-it("records only persistent browser failures for portable targeted diagnosis", async () => {
-  const root = await mkdtemp(join(tmpdir(), "medota-failure-report-"));
-  try {
-    const file = join(root, "failures.json");
-    vi.stubEnv("MEDOTA2_CHECK_FAILURE_FILE", file);
-    const reporter = new FailureReporter();
-    reporter.onBegin({}, {
-      allTests: () =>
-        ["unexpected", "flaky", "expected", "skipped"].map((outcome) => ({
-          title: `case ${outcome}`,
-          location: { file: "tests/journeys/example.spec.ts" },
-          outcome: () => outcome,
-          parent: { project: () => ({ name: "desktop-chromium" }) },
-        })),
-    } as unknown as Suite);
-    reporter.onEnd();
-    expect(JSON.parse(await readFile(file, "utf8"))).toEqual([
-      {
-        title: "case unexpected",
-        file: "tests/journeys/example.spec.ts",
-        project: "desktop-chromium",
-      },
-    ]);
-  } finally {
-    vi.unstubAllEnvs();
-    await rm(root, { recursive: true, force: true });
-  }
-});
+it.each([false, true])(
+  "records blocking outcomes for targeted diagnosis (failOnFlakyTests=%s)",
+  async (failOnFlakyTests) => {
+    const root = await mkdtemp(join(tmpdir(), "medota-failure-report-"));
+    try {
+      const file = join(root, "failures.json");
+      vi.stubEnv("MEDOTA2_CHECK_FAILURE_FILE", file);
+      const reporter = new FailureReporter();
+      reporter.onBegin({ failOnFlakyTests }, {
+        allTests: () =>
+          ["unexpected", "flaky", "expected", "skipped"].map((outcome) => ({
+            title: `case ${outcome}`,
+            location: { file: "tests/journeys/example.spec.ts" },
+            outcome: () => outcome,
+            parent: { project: () => ({ name: "desktop-chromium" }) },
+          })),
+      } as unknown as Suite);
+      reporter.onEnd();
+      expect(JSON.parse(await readFile(file, "utf8"))).toEqual(
+        ["unexpected", ...(failOnFlakyTests ? ["flaky"] : [])].map(
+          (outcome) => ({
+            title: `case ${outcome}`,
+            file: "tests/journeys/example.spec.ts",
+            project: "desktop-chromium",
+          }),
+        ),
+      );
+    } finally {
+      vi.unstubAllEnvs();
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);

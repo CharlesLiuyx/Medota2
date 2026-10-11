@@ -4,7 +4,9 @@ import type { Reporter, Suite } from "@playwright/test/reporter";
 /** Small portable failure evidence, also uploaded with CI check receipts. */
 export default class FailureReporter implements Reporter {
   private suite?: Suite;
-  onBegin(_config: unknown, suite: Suite) {
+  private failOnFlakyTests = false;
+  onBegin(config: { failOnFlakyTests?: boolean }, suite: Suite) {
+    this.failOnFlakyTests = Boolean(config.failOnFlakyTests);
     this.suite = suite;
   }
   onEnd() {
@@ -13,7 +15,11 @@ export default class FailureReporter implements Reporter {
     const failed =
       this.suite
         ?.allTests()
-        .filter((test) => test.outcome() === "unexpected") ?? [];
+        .filter(
+          (test) =>
+            test.outcome() === "unexpected" ||
+            (this.failOnFlakyTests && test.outcome() === "flaky"),
+        ) ?? [];
     writeFileSync(
       path,
       JSON.stringify(

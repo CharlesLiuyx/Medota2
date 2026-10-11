@@ -166,10 +166,24 @@ for (const [entity, realQuery] of [
     const categoryHeader = page.locator(
       'thead th[data-catalog-column="category"]',
     );
-    await categoryHeader.hover();
-    await categoryHeader
-      .getByRole("button", { name: "配置分类列", exact: true })
-      .click();
+    // All selected columns can change widths while their values are loading.
+    await expect(page.locator("[data-catalog-table-ready]")).toHaveAttribute(
+      "data-catalog-table-ready",
+      "true",
+    );
+    const categoryMenu = categoryHeader.getByRole("button", {
+      name: "配置分类列",
+      exact: true,
+    });
+    // The entire cell, including its padding and a multi-row header's blank
+    // area, must expose the menu before an ordinary pointer click.
+    const headerBox = await categoryHeader.boundingBox();
+    expect(headerBox).not.toBeNull();
+    await categoryHeader.hover({
+      position: { x: headerBox!.width / 2, y: headerBox!.height - 1 },
+    });
+    await expect(categoryMenu).toHaveCSS("opacity", "1");
+    await categoryMenu.click();
     await page.getByRole("button", { name: "冻结至此列", exact: true }).click();
     await expect(page.getByRole("table")).toHaveAttribute(
       "data-frozen-count",

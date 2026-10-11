@@ -32,8 +32,8 @@
   padding: 2px;
   border-radius: 3px;
 }
-.header:hover .more,
-.header:focus-within .more,
+.column:hover .more,
+.column:focus-within .more,
 .more[aria-expanded="true"] {
   opacity: 1;
   pointer-events: auto;
