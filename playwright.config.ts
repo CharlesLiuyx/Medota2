@@ -10,6 +10,9 @@ const baseURL = `http://127.0.0.1:${webPort}`;
 export default defineConfig({
   testDir: "./tests/e2e",
   globalSetup: "./tests/helpers/warm-browser-server.ts",
+  // Linux ARM64 container fonts differ from the Ubuntu x64 CI image.
+  // Keep independently reviewed baselines rather than silently sharing them.
+  snapshotPathTemplate: `{testDir}/{testFilePath}-snapshots/{arg}-{projectName}-${process.platform}${process.platform === "linux" ? `-${process.arch}` : ""}{ext}`,
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 2 : 0,

@@ -10,7 +10,10 @@ const state = vi.hoisted(() => ({
   readJson: vi.fn(),
   input: "unchanged-input",
 }));
-vi.mock("../../scripts/development/check-plan.mjs", () => ({
+vi.mock("../../scripts/development/check-plan.mjs", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("../../scripts/development/check-plan.mjs")
+  >()),
   parseArguments: () => ({ files: ["example.ts"] }),
   createPlan: () => state.plan,
   changedFiles: () => ["example.ts"],

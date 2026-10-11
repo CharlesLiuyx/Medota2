@@ -8,6 +8,7 @@ import {
   changedFiles,
   createPlan,
   publicationPlan,
+  executionPlan,
   parseArguments,
   type CheckTask,
 } from "../../scripts/development/check-plan.mjs";
@@ -23,9 +24,10 @@ const exec = promisify(execFile);
 const options = parseArguments(process.argv.slice(2));
 function selectedPlan() {
   const plan = createPlan(options.files ?? changedFiles(options.base));
-  return options.publication
-    ? publicationPlan(plan, Boolean(process.env.CI))
-    : plan;
+  return executionPlan(
+    options.publication ? publicationPlan(plan, Boolean(process.env.CI)) : plan,
+    options,
+  );
 }
 let interrupted = false;
 process.once("SIGINT", () => {

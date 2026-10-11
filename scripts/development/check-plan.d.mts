@@ -20,8 +20,14 @@ export function publicationPlan(
   plan: CheckPlan,
   fixtureOnly?: boolean,
 ): CheckPlan;
+export function executionPlan(
+  plan: CheckPlan,
+  options?: { lane?: string; shard?: string },
+): CheckPlan;
 export function parseArguments(args: string[]): {
   base?: string;
+  lane?: string;
+  shard?: string;
   files?: string[];
   plan: boolean;
   json: boolean;

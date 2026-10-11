@@ -551,3 +551,47 @@ it("keeps map presets and minimap database assets within map journeys and their 
     ).toContain("map:");
   }
 });
+
+describe("bounded journey and distributed execution", () => {
+  it("runs the full changed spec without title filtering, but widens deletions and mixed product changes", () => {
+    const spec = "tests/journeys/catalog-views.spec.ts";
+    const args = createPlan([spec]).tasks.find(
+      (task) => task.id === "journeys",
+    )!.args;
+    expect(args).toContain(spec);
+    expect(args).not.toContain("--grep");
+    expect(
+      createPlan([spec, "src/components/hero-card.tsx"]).tasks.find(
+        (task) => task.id === "journeys",
+      )!.args,
+    ).not.toContain(spec);
+    hiddenFiles.add(spec);
+    expect(
+      createPlan([spec]).tasks.find((task) => task.id === "journeys")!.args,
+    ).not.toContain(spec);
+  });
+  it("partitions every planned task exactly once and keeps retries with single-host case sharding", async () => {
+    const { executionPlan, parseArguments } =
+      await import("../../scripts/development/check-plan.mjs");
+    const plan = createPlan(["pnpm-lock.yaml"]);
+    const core = executionPlan(plan, { lane: "core" });
+    const browser = executionPlan(plan, { lane: "browser", shard: "2/3" });
+    expect(
+      [...core.tasks, ...browser.tasks].map((task) => task.id).sort(),
+    ).toEqual(plan.tasks.map((task) => task.id).sort());
+    for (const task of browser.tasks) {
+      expect(task.args).toContain("--shard=2/3");
+      expect(task.args).toContain("--fully-parallel");
+      expect(task.args).toContain("--retries=1");
+    }
+    for (const options of [
+      { lane: "unknown" },
+      { lane: "core", shard: "1/3" },
+      { lane: "browser", shard: "4/3" },
+    ])
+      expect(() => executionPlan(plan, options)).toThrow();
+    expect(
+      parseArguments(["--lane", "browser", "--shard", "1/3"]),
+    ).toMatchObject({ lane: "browser", shard: "1/3" });
+  });
+});

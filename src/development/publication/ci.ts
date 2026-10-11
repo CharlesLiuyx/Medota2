@@ -5,6 +5,7 @@ const execute = promisify(execFile);
 export type CIRun = {
   databaseId: number;
   headSha: string;
+  headBranch?: string;
   event: string;
   status: string;
   conclusion: string | null;
@@ -30,15 +31,25 @@ export async function gh(args: string[]): Promise<string> {
     })
   ).stdout.trim();
 }
-export function selectCIRun(runs: CIRun[], sha: string): CIRun | undefined {
+export function selectCIRun(
+  runs: CIRun[],
+  sha: string,
+  branch?: string,
+): CIRun | undefined {
   return runs
-    .filter((run) => run.headSha === sha && run.event === "push")
+    .filter(
+      (run) =>
+        run.headSha === sha &&
+        run.event === "push" &&
+        (!branch || run.headBranch === branch),
+    )
     .sort((a, b) => b.databaseId - a.databaseId)[0];
 }
 export async function waitForCI(
   repository: string,
   sha: string,
   options: {
+    branch?: string;
     timeoutMs?: number;
     query?: () => Promise<CIRun[]>;
     sleep?: (ms: number) => Promise<unknown>;
@@ -65,10 +76,10 @@ export async function waitForCI(
             "--limit",
             "10",
             "--json",
-            "databaseId,headSha,event,status,conclusion,url",
+            "databaseId,headSha,headBranch,event,status,conclusion,url",
           ]),
         );
-    const run = selectCIRun(runs, sha);
+    const run = selectCIRun(runs, sha, options.branch);
     const state = run
       ? `${run.databaseId}:${run.status}:${run.conclusion}`
       : "waiting-for-run";

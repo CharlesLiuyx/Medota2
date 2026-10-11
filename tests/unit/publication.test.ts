@@ -328,3 +328,70 @@ describe("exact CI and fixture planning", () => {
     expect(parseArguments(["--publication"]).publication).toBe(true);
   });
 });
+
+describe("parallel candidate validation", () => {
+  it("starts local checks and candidate CI together, promotes only their exact successful commit", async () => {
+    const saved = receipt();
+    const work = steps();
+    let started!: () => void;
+    const checking = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    let finish!: () => void;
+    const candidate = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    work.check = vi.fn(async () => {
+      started();
+      await candidate;
+    });
+    work.candidateCI = vi.fn(async () => {
+      await checking;
+      expect(work.push).not.toHaveBeenCalled();
+      finish();
+      return "candidate-url";
+    });
+    work.finalize = vi.fn(async () => "code");
+    await publishCandidate(saved, work);
+    expect(saved.candidateCIUrl).toBe("candidate-url");
+    expect(work.push).toHaveBeenCalledWith("code");
+  });
+  it.each(["check", "candidateCI"] as const)(
+    "blocks promotion when %s fails and settles both checks",
+    async (failing) => {
+      const work = steps();
+      work.candidateCI = vi.fn(async () => "candidate-url");
+      vi.mocked(work[failing]!).mockRejectedValue(new Error("gate failed"));
+      await expect(publishCandidate(receipt(), work)).rejects.toThrow(
+        "gate failed",
+      );
+      expect(work.check).toHaveBeenCalled();
+      expect(work.candidateCI).toHaveBeenCalled();
+      expect(work.push).not.toHaveBeenCalled();
+      expect(work.publishData).not.toHaveBeenCalled();
+    },
+  );
+  it("rejects final lock commits that differ from the candidate checked by CI", async () => {
+    const work = steps();
+    work.candidateCI = async () => "candidate-url";
+    await expect(publishCandidate(receipt(), work)).rejects.toThrow(
+      "最终提交不同",
+    );
+    expect(work.push).not.toHaveBeenCalled();
+  });
+  it("does not confuse main or another candidate's CI with the requested branch", () => {
+    expect(
+      selectCIRun(
+        [
+          ci({ headBranch: "main", databaseId: 9 }),
+          ci({ headBranch: "candidate" }),
+        ],
+        "target",
+        "candidate",
+      )?.databaseId,
+    ).toBe(1);
+    expect(
+      selectCIRun([ci({ headBranch: "main" })], "target", "candidate"),
+    ).toBeUndefined();
+  });
+});

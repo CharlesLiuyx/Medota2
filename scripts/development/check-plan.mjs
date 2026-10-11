@@ -527,11 +527,26 @@ export function createPlan(inputPaths) {
   const changedJourneys = paths.some((path) =>
     path.startsWith("tests/journeys/"),
   );
+  const journeyPaths = paths.filter((path) =>
+    path.startsWith("tests/journeys/"),
+  );
+  // Direct spec edits are bounded only when no product scope is also selected.
+  // Deleted specs and helpers still widen to the remaining complete suite.
+  const directJourneySpecs =
+    !flowPaths.some((path) => !/^tests\/(?:journeys|unit)\//.test(path)) &&
+    journeyPaths.length &&
+    journeyPaths.every(
+      (path) => /\.spec\.[jt]sx?$/.test(path) && existsSync(path),
+    )
+      ? journeyPaths
+      : [];
   if (journeys.size || changedJourneys)
     add(
       "journeys",
       changedJourneys
-        ? "浏览流程测试变更，执行全部旅程以覆盖新增、改名与删除"
+        ? directJourneySpecs.length
+          ? "执行改动的完整旅程文件，覆盖新增及改名用例"
+          : "混合范围、删除或公共测试依赖变化，执行全部旅程"
         : `受影响的使用流程：${[...journeys].join("、")}；失败用例单独重试一次`,
       [
         "exec",
@@ -543,7 +558,7 @@ export function createPlan(inputPaths) {
         // rejected by run-shared-tests and run-check after the entire run.
         "--retries=1",
         ...(changedJourneys
-          ? []
+          ? directJourneySpecs
           : [
               `--warm-scopes=${[...journeys].join(",")}`,
               "--grep",
@@ -749,9 +764,44 @@ export function publicationPlan(plan, fixtureOnly = false) {
   };
 }
 
+export function executionPlan(plan, { lane, shard } = {}) {
+  if (lane && !["core", "browser"].includes(lane))
+    throw new Error("Invalid check lane.");
+  if (
+    shard &&
+    (lane !== "browser" ||
+      !/^[1-9]\d*\/[1-9]\d*$/.test(shard) ||
+      Number(shard.split("/")[0]) > Number(shard.split("/")[1]))
+  )
+    throw new Error("--shard requires browser lane and a valid index/total.");
+  const tasks = plan.tasks
+    .filter(
+      (task) => !lane || (task.kind === "browser") === (lane === "browser"),
+    )
+    .map((task) =>
+      shard
+        ? {
+            ...task,
+            args: [...task.args, `--shard=${shard}`, "--fully-parallel"],
+          }
+        : task,
+    );
+  return {
+    ...plan,
+    tasks,
+    browser: tasks.some((task) => task.kind === "browser"),
+    database: tasks.some((task) =>
+      ["browser", "database", "build"].includes(task.kind),
+    ),
+    summary: `${tasks.length} 项检查${lane ? `；执行通道 ${lane}${shard ? ` ${shard}` : ""}` : ""}`,
+  };
+}
+
 export function parseArguments(args) {
   const result = {
     base: undefined,
+    lane: undefined,
+    shard: undefined,
     files: undefined,
     plan: false,
     json: false,
@@ -764,6 +814,9 @@ export function parseArguments(args) {
     if (arg === "--base") {
       result.base = args[++index];
       if (!result.base) throw new Error("--base requires a Git revision.");
+    } else if (arg === "--lane" || arg === "--shard") {
+      result[arg.slice(2)] = args[++index];
+      if (!result[arg.slice(2)]) throw new Error(`${arg} requires a value.`);
     } else if (arg === "--files") {
       result.files = [];
       while (args[index + 1] && !args[index + 1].startsWith("--"))

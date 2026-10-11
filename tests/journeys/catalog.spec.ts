@@ -1,3 +1,4 @@
+import type { ReleaseIndex } from "@/domain/releases";
 import { expect, test } from "../e2e/test-fixture";
 
 // Read-only journeys work against the user's current data. Fixed numerical
@@ -18,7 +19,19 @@ for (const entity of ["heroes", "abilities"] as const) {
         process.env.MEDOTA2_EXPECTED_DATA_VERSION,
       );
     }
-    await page.goto(`/${entity}`);
+    const releases = await request.get("/api/releases");
+    expect(releases.ok()).toBe(true);
+    const index = (await releases.json()) as ReleaseIndex;
+    const selected = index.releases.find((r) => r.id === index.defaultRelease);
+    expect(selected).toBeTruthy();
+    const fixture = selected!.catalogClient?.startsWith("fixture-") ?? false;
+    // Full-list scrolling has its own journey; navigation uses a known fixture.
+    await page.goto(
+      `/${entity}${fixture && entity === "heroes" ? "?q=antimage" : ""}`,
+    );
+    await expect(
+      page.getByRole("button", { name: "网格视图", exact: true }),
+    ).toBeEnabled();
     const link = page.locator(`a[href^="/${entity}/"]`).first();
     await expect(link).toBeVisible();
     const icon = link.locator("img").first();
