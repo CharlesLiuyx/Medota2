@@ -46,6 +46,8 @@ Node 26.8.1 的本机验证记录与 CI 的 Node 配置分开解释；实际工�
 
 2026-10-11发布提速：独立Mac工作区Node26.8.1／pnpm11.7.0，完整500单元、36真实旅程、6视觉／语义、4数据库与构建通过；Ubuntu24.04 x64 CI为Node22.16.0，三分片30fixture及6视觉／语义、core通过。Linux基线分arm64/x64维护，旧容器证据保留；常规增量端到端4分38.4秒。详细基线、计时和首次失败见[提速验收](history/2026-10-11-publication-performance.md)。本轮不扩大Windows验收结论。
 
+2026-10-11 Tab与角色列发布基线`b0515e6`：Mac通过513单元、41真实旅程、8缓存E2E、6视觉、4所选数据库合同及正式构建／独立启动，本机浏览无flaky。Linux候选33fixture旅程、8缓存E2E及6视觉通过，前两类各1项单次重试通过；main确认CI成功。完整快照`bee227bd`的8238对象重新核验。范围与失败修复见[发布验收](history/2026-10-11-main-publication.md)，Windows结论保持原验收边界。
+
 ## Windows 客户端与平台验证
 
 - 已有工具记录：Windows 11 26200、Node 24.19.0、pnpm 11.7.0、Git 2.36.0／LFS 3.1.4、Docker Desktop 4.94.0／CLI 29.8.2／Compose 5.5.1。WSL2只作为该机器Docker后端；代码与命令运行在原生Windows。Docker VMM的vsock故障未解决。

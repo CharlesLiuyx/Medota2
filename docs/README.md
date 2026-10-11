@@ -145,6 +145,7 @@
 | [地图英雄显示与悬停](history/2026-10-09-map-hero-interactions.md)           | reference  | 英雄占格、选择、悬停放大、同版视野／移速及验证     |
 | [2026-10-08全部本地变更发布](history/2026-10-08-main-publication.md)        | historical | 本轮组合检查、完整快照、精确提交CI及接手边界       |
 | [2026-10-09全部本地变更发布](history/2026-10-09-main-publication.md)        | reference  | 地图组合检查、v3资产快照、精确提交CI及接手边界     |
+| [2026-10-11全部本地变更发布](history/2026-10-11-main-publication.md)        | reference  | Tab缓存与角色列整合、初始化修复、CI与完整数据交接  |
 | [2026-10-10全部本地变更发布](history/2026-10-10-main-publication.md)        | reference  | 图鉴表格、全站交互、Fixture发布修复与数据交接      |
 | [地图Web与品牌发布](history/2026-10-08-map-web-publication.md)              | historical | 近似视野、营地、英雄图标、快照与语言旅程CI修复     |
 | [推送合入提速实测](history/2026-10-11-publication-performance.md)           | reference  | 候选并行、CI分片、跨架构视觉与端到端耗时           |
