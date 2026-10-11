@@ -189,7 +189,15 @@ test("map: delayed vision preserves keyboard intent and cancellation", async ({
 
 test("heroes changes: raw audit is requested only when opened and reused", async ({
   page,
+  request,
 }) => {
+  const responseIndex = await request.get("/api/releases");
+  expect(responseIndex.ok()).toBe(true);
+  const index = (await responseIndex.json()) as ReleaseIndex;
+  const latestIndex = index.releases.findIndex(
+    (release) => release.id === index.defaultRelease,
+  );
+  const sameVersion = !index.releases[latestIndex + 1];
   let requests = 0;
   page.on("request", (request) => {
     if (request.url().includes("/api/releases/change-resource")) requests++;
@@ -197,13 +205,17 @@ test("heroes changes: raw audit is requested only when opened and reused", async
   await page.goto("/changes?lang=zh-CN");
   const search = page.getByRole("searchbox", { name: "搜索变化" });
   await search.fill("zzzz-resource-test");
-  await expect(page.locator("main [role=status]").first()).toContainText(
-    "0 个对象",
+  await expect(page).toHaveURL(/q=zzzz-resource-test/);
+  const status = page.locator("main [role=status]").first();
+  await expect(status).toContainText(
+    sameVersion ? "起始与目标为同一版本。" : "0 个对象",
   );
   await search.fill("");
-  await expect(page.locator("main [role=status]").first()).not.toContainText(
-    "0 个对象",
-  );
+  await expect
+    .poll(() => new URL(page.url()).searchParams.has("q"))
+    .toBe(false);
+  if (sameVersion) await expect(status).toHaveText("起始与目标为同一版本。");
+  else await expect(status).not.toContainText("0 个对象");
   await page
     .getByRole("button", { name: "比较范围与来源", exact: true })
     .click();
