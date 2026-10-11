@@ -27,6 +27,10 @@ async function main(): Promise<void> {
     throw new Error(
       "Usage: pnpm release [--build-only]. Remote deployment is not configured; this command prepares and checks the Web artifact.",
     );
+  const coldSetting = process.env.MEDOTA2_RELEASE_COLD;
+  if (coldSetting !== undefined && !["0", "1"].includes(coldSetting))
+    throw new Error("MEDOTA2_RELEASE_COLD must be 0 or 1.");
+  const cold = coldSetting === "1";
   const release = await acquireLock("release");
   let pendingManifest: string | undefined;
   let artifactKey: string | undefined;
@@ -56,7 +60,11 @@ async function main(): Promise<void> {
           platform: process.platform,
           arch: process.arch,
           environment: Object.entries(process.env)
-            .filter(([name]) => /^(CI$|NODE_|NEXT_|MEDOTA2_)/.test(name))
+            .filter(
+              ([name]) =>
+                name !== "MEDOTA2_RELEASE_COLD" &&
+                /^(CI$|NODE_|NEXT_|MEDOTA2_)/.test(name),
+            )
             .map(([name, value]) => [
               name,
               name === "NODE_PATH" ? normalizeNodePath(value) : value,
@@ -72,6 +80,7 @@ async function main(): Promise<void> {
     const manifestPath = resolve(root, "manifest.json");
     const previous = await readJson<{ status: string }>(manifestPath);
     if (
+      !cold &&
       previous?.status === "passed" &&
       (await access(resolve(artifact, ".next-release/BUILD_ID"))
         .then(() => true)
@@ -80,11 +89,20 @@ async function main(): Promise<void> {
       console.log(`Reusing checked Web artifact: ${root}`);
       return;
     }
+    if (cold) {
+      // The release lock protects this fixed production directory from other
+      // builders. Removing it also discards Next's incremental compiler cache.
+      await rm(dist, { recursive: true, force: true });
+      console.log(
+        "Cold Web build: artifact reuse disabled; .next-release cleared.",
+      );
+    }
     pendingManifest = manifestPath;
     artifactKey = key;
     await writeJson(manifestPath, {
       schemaVersion: 1,
       status: "running",
+      cold,
       unit: "web",
       key,
       pid: process.pid,
@@ -252,6 +270,7 @@ async function main(): Promise<void> {
         await writeJson(manifestPath, {
           schemaVersion: 1,
           status: "passed",
+          cold,
           pid: process.pid,
           unit: "web",
           key,

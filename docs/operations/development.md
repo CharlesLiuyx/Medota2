@@ -82,8 +82,11 @@ pnpm test:e2e tests/e2e/visual.spec.ts --project=desktop-chromium --project=mobi
 pnpm bench --iterations 5   # 真实解析器的小样例耗时与内存
 pnpm bench --input <vpk-directory> --iterations 3
 pnpm release                # 构建并启动检查 Web 产物，相同输入复用
+MEDOTA2_RELEASE_COLD=1 pnpm release  # 清空生产编译缓存，不复用成品，重新验收
 pnpm test:clean             # 清理本工具持有的可复用测试栈
 ```
+
+冷构建测量可在既有完整发布计划前加`MEDOTA2_RELEASE_COLD=1`，例如`MEDOTA2_RELEASE_COLD=1 pnpm push -m "chore: validate cold publication"`。开关只控制计划中实际选中的构建，不扩大检查范围；测量前用`pnpm check --plan`核对包含build与全部所需门禁。生产目录`.next-release`在release锁内清空，开发工作台、依赖和业务数据保留。计时应从push启动至main确认，包含本机重新构建，日志须出现Cold Web build且无Reusing checked Web artifact。Windows PowerShell先设置`$env:MEDOTA2_RELEASE_COLD="1"`，完成后用`Remove-Item Env:MEDOTA2_RELEASE_COLD`恢复。
 
 小任务先列全本任务改动文件（含测试和负责规则的文档），规划与执行使用同一组 `--files`；新增依赖加入集合。翻译资源与已登记的展示组件选现有专项，无需启动产品数据库或浏览器。普通英雄卡片只选英雄浏览及共用悬停，版本／语言等流程按各自职责选取。规划器映射维护在 `scripts/development/check-plan.mjs`，新增职责时同步更新映射及边界测试。
 
