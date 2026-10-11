@@ -4,16 +4,16 @@
 
 ## 基线与接手
 
-- 最新功能基线：`main / 8bea4c5`，包含CI共用准备、合并core与固定6个浏览分片、构建身份修复及首次交互就绪信号；完整业务快照`bee227bd`、数据提交`12bcfdff`。[最终CI](https://github.com/CharlesLiuyx/Medota2/actions/runs/38147001674)成功，完整增量发布4分56.2秒，广范围仍为5分14.8秒，见[CI精简验收](history/2026-10-11-ci-simplification.md)。收尾文档沿用同一功能和数据基线。
+- 最新功能基线：`main / e067a7a`，资源请求预热修复与static/runtime并行已发布；完整业务快照`bee227bd`、数据提交`12bcfdff`。537全量单元／4所选数据库合同／Linux构建在内的完整发布267.620秒，原POST用例两轮Linux首次通过；最新CI另有1项表头菜单flaky，见[完整发布验收](history/2026-10-11-publication-full-gates.md)。收尾文档沿用同一功能和数据基线。
 - 目标由[dev-data.lock.json](../dev-data.lock.json)选择。其他机器运行`pnpm sync`；实际应用、数据库身份及摘要用`pnpm data:status`核对。任务启动与共享协作按[AGENTS](../AGENTS.md)执行。
 
 ## 当前交接
 
-CI精简已合入main，保留原检查标准及main直接推送兜底；最后Mac41真实旅程／6视觉与Linux33fixture／6视觉、96相关单元通过，Linux有1项资源请求flaky。广范围533单元、4数据库合同及构建证据、两种计时条件见[验收记录](history/2026-10-11-ci-simplification.md)。完整8238对象已交接；另一机器用pnpm sync接手。页面人工审阅与Windows原生取消复验保留。
+CI共用准备、固定6浏览分片与两条core通道已合入main，保留原检查标准及main直接推送兜底。完整发布4分27.6秒，Mac41真实旅程／6视觉无重试，Linux33fixture／6视觉、537全量单元、4所选数据库合同与构建通过。原资源POST超时已修复；新表头菜单重试与计时条件见[验收记录](history/2026-10-11-publication-full-gates.md)。完整8238对象已交接；另一机器用pnpm sync接手。页面人工审阅与Windows原生取消复验保留。
 
 活动任务：
 
-- **CI精简已实施，广范围5分钟目标待达成**：作业14→9，第六轮总执行秒1708→1327；最后增量发布296.194秒，含全量单元／数据库／CI构建的广范围314.757秒。资源请求flaky已修复，f33aaf5完整Mac/Linux浏览无重试，但303.723秒仍超标；正在将已有static/runtime通道在独立主机并行（完整10作业），继续按全量单元／数据库／Linux构建范围实测；具体范围、失败记录和边界见[验收](history/2026-10-11-ci-simplification.md)与[交接](work/publication-retry-performance.md)。
+- **完整发布5分钟目标已达成，表头点击flaky待定位**：固定6片、10作业，完整537单元／4所选数据库／Linux构建发布267.620秒，1199 runner秒。原资源POST用例8次本机零重试、两轮Linux首次通过；最后Linux英雄排序／冻结流程点击分类菜单时被冻结列遮挡，1项重试通过。后续定位横向滚动与表头布局；首次安装／本机冷构建／新快照下的300秒上界仍未验证，见[验收](history/2026-10-11-publication-full-gates.md)与[交接](work/publication-retry-performance.md)。
 
 - **Windows取消待复验**：发布协调与清理已通过Mac及Linux检查，Windows原生进程树取消仍待按[交接](work/publication-retry-performance.md)复验。
 
