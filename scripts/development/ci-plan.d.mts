@@ -1,4 +1,3 @@
-import type { CheckTask } from "./check-plan.mjs";
 export function candidateBase(branch: string): string | undefined;
 export function reusableCandidate(
   run: {
@@ -12,7 +11,3 @@ export function reusableCandidate(
   },
   target: { sha: string; base: string; workflowId: number; repository: string },
 ): boolean;
-
-export function browserMatrix(plan: {
-  tasks: Array<Pick<CheckTask, "id" | "kind">>;
-}): { include: Array<{ task: string; shard: string; index: number }> };

@@ -4,6 +4,7 @@ import { dirname, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
 import { checkBatches } from "@/development/check-scheduling";
+import { withBrowserBatch } from "@/development/browser-batch";
 import { nativeCommand } from "@/development/command";
 import {
   changedFiles,
@@ -132,7 +133,11 @@ async function check(): Promise<boolean> {
     }
     if (JSON.stringify(plan) !== JSON.stringify(selectedPlan())) stale = true;
   };
-  const executeTask = async (task: CheckTask, signal: AbortSignal) => {
+  const executeTask = async (
+    task: CheckTask,
+    signal: AbortSignal,
+    environment = process.env,
+  ) => {
     signal.throwIfAborted();
     const key = await taskKey(task);
     const cachePath = resolve(".medota2/check-cache", `${key}.json`);
@@ -165,7 +170,15 @@ async function check(): Promise<boolean> {
           task.args,
           task.kind === "browser"
             ? {
-                ...process.env,
+                ...environment,
+                ...(environment.MEDOTA2_FIXTURE_BROWSER_BATCH === "1"
+                  ? {
+                      MEDOTA2_ARTIFACT_ROOT: resolve(
+                        environment.MEDOTA2_ARTIFACT_ROOT!,
+                        task.id,
+                      ),
+                    }
+                  : {}),
                 MEDOTA2_CHECK_FAILURE_FILE: resolve(
                   dirname(evidence),
                   `${task.id}.failures.json`,
@@ -216,36 +229,51 @@ async function check(): Promise<boolean> {
   try {
     console.log(plan.summary);
     await writeJson(evidence, manifest);
-    const batches = checkBatches(
-      plan.tasks,
-      !process.env.CI && !options.publication && !retryReceipt,
-    );
-    for (const batch of batches) {
-      cancellation.signal.throwIfAborted();
-      await validateCompleted();
-      if (stale)
-        throw new Error(
-          "Check inputs changed; stop and replan before further checks.",
-        );
-      const group = new AbortController();
-      const signal = AbortSignal.any([cancellation.signal, group.signal]);
-      let failure: unknown;
-      const outcomes = await Promise.allSettled(
-        batch.map(async (task) => {
-          try {
-            await executeTask(task, signal);
-          } catch (error) {
-            if (!group.signal.aborted) {
-              failure = error;
-              group.abort(error);
-            }
-            throw error;
-          }
-        }),
+    if (options.lane === "browser" && plan.tasks.length) {
+      await withBrowserBatch(async (env, signal) => {
+        for (const task of plan.tasks) {
+          await validateCompleted();
+          if (stale)
+            throw new Error("Check inputs changed during browser batch.");
+          await executeTask(task, signal, env);
+        }
+        // Validate while the fixture lease is held, before its passing receipt.
+        await validateCompleted();
+        if (stale)
+          throw new Error("Check inputs changed during browser batch.");
+      }, cancellation.signal);
+    } else {
+      const batches = checkBatches(
+        plan.tasks,
+        !process.env.CI && !options.publication && !retryReceipt,
       );
-      if (group.signal.aborted) throw failure;
-      for (const outcome of outcomes)
-        if (outcome.status === "rejected") throw outcome.reason;
+      for (const batch of batches) {
+        cancellation.signal.throwIfAborted();
+        await validateCompleted();
+        if (stale)
+          throw new Error(
+            "Check inputs changed; stop and replan before further checks.",
+          );
+        const group = new AbortController();
+        const signal = AbortSignal.any([cancellation.signal, group.signal]);
+        let failure: unknown;
+        const outcomes = await Promise.allSettled(
+          batch.map(async (task) => {
+            try {
+              await executeTask(task, signal);
+            } catch (error) {
+              if (!group.signal.aborted) {
+                failure = error;
+                group.abort(error);
+              }
+              throw error;
+            }
+          }),
+        );
+        if (group.signal.aborted) throw failure;
+        for (const outcome of outcomes)
+          if (outcome.status === "rejected") throw outcome.reason;
+      }
     }
     await validateCompleted();
     manifest.status = stale ? "stale" : "passed";

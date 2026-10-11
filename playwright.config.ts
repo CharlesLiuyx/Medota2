@@ -30,24 +30,29 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
   },
-  webServer: {
-    command: `pnpm exec next dev --turbopack -H 127.0.0.1 -p ${webPort}`,
-    url: `${baseURL}/heroes`,
-    reuseExistingServer: false,
-    timeout: 120_000,
-    env: {
-      MEDOTA2_PROCESS_ROLE: "web",
-      MEDOTA2_ENVIRONMENT: "test",
-      MEDOTA2_DATA_CLASS: "synthetic-fixture",
-      MEDOTA2_RUN_ID: runId,
-      MEDOTA2_STATE_DIRECTORY: requiredEnvironment("MEDOTA2_STATE_DIRECTORY"),
-      MEDOTA2_NETWORK_POLICY: "loopback-only",
-      MEDOTA2_ARTIFACT_ROOT: artifactRoot,
-      MEDOTA2_TEST_WEB_PORT: String(webPort),
-      MEDOTA2_NEXT_TSCONFIG: nextTsconfigPath,
-      NEXT_DIST_DIR: nextDistDirectory,
-    },
-  },
+  webServer:
+    process.env.MEDOTA2_FIXTURE_BROWSER_BATCH === "1"
+      ? undefined
+      : {
+          command: `pnpm exec next dev --turbopack -H 127.0.0.1 -p ${webPort}`,
+          url: `${baseURL}/heroes`,
+          reuseExistingServer: false,
+          timeout: 120_000,
+          env: {
+            MEDOTA2_PROCESS_ROLE: "web",
+            MEDOTA2_ENVIRONMENT: "test",
+            MEDOTA2_DATA_CLASS: "synthetic-fixture",
+            MEDOTA2_RUN_ID: runId,
+            MEDOTA2_STATE_DIRECTORY: requiredEnvironment(
+              "MEDOTA2_STATE_DIRECTORY",
+            ),
+            MEDOTA2_NETWORK_POLICY: "loopback-only",
+            MEDOTA2_ARTIFACT_ROOT: artifactRoot,
+            MEDOTA2_TEST_WEB_PORT: String(webPort),
+            MEDOTA2_NEXT_TSCONFIG: nextTsconfigPath,
+            NEXT_DIST_DIR: nextDistDirectory,
+          },
+        },
   projects: [
     { name: "desktop-chromium", use: { ...devices["Desktop Chrome"] } },
     { name: "mobile-chromium", use: { ...devices["Pixel 7"] } },

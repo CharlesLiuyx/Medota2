@@ -37,9 +37,10 @@ export async function withTestEnvironment<T>(
     seed?: boolean;
     clean?: boolean;
     verify?: () => Promise<void>;
+    signal?: AbortSignal;
   } = {},
 ): Promise<T | undefined> {
-  const release = await acquireLock("test-database");
+  const release = await acquireLock("test-database", undefined, options.signal);
   try {
     let saved = await readJson<SharedEnvironment>(path);
     if (saved && saved.context.workspaceRoot !== process.cwd())
@@ -141,10 +142,16 @@ export async function withTestEnvironment<T>(
       ],
       exclude: [`${fromRun}/node_modules`],
     });
-    await run("pnpm", ["exec", "tsx", "src/workers/migrate-test.ts"], {
-      ...env,
-      MEDOTA2_PROCESS_ROLE: "migration",
-    });
+    await run(
+      "pnpm",
+      ["exec", "tsx", "src/workers/migrate-test.ts"],
+      {
+        ...env,
+        MEDOTA2_PROCESS_ROLE: "migration",
+      },
+      undefined,
+      options.signal,
+    );
     const seedInput = await fingerprint([
       "drizzle",
       "src/importers",
@@ -166,6 +173,8 @@ export async function withTestEnvironment<T>(
           "--include-large-list",
         ],
         { ...env, MEDOTA2_PROCESS_ROLE: "migration" },
+        undefined,
+        options.signal,
       );
       saved.seededInput = seedInput;
       await writeJson(path, saved);

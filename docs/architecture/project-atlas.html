@@ -2494,7 +2494,7 @@
                     data-name="4 · 按改动范围检查"
                     data-definition="按任务文件规划，专项检查与有效结果增量复用。"
                     data-why="用相关检查验证结果；输入变动会使旧结果过期。"
-                    data-detail="局部任务用相同的--files集合规划和执行。登记的展示组件／翻译资源走已有专项，未知／删除／新增职责保守扩大；只改旅程文件时执行完整选定文件，删除及混合产品范围保守扩大；CI浏览分6台主机，每台1个worker；本机真实旅程最多3个worker并可与fixture构建重叠。浏览按目录、版本、变化、语言等明确流程选择；英雄目录／技能详情的展示依赖及品牌图片触发桌面与移动视觉合同，快照映射到所属spec并去重。源CSS变更额外执行正式构建，覆盖开发与生产编译器差异；fixture最终输入校验先于成功收据与租约释放，变化记录stale；两测试入口统一解析可选前置分隔符，CI收集两类浏览附件。纯静态任务不等待全局检查锁，类型缓存仍单独加锁。同轮只重试失败用例一次并保留flaky，持续失败阻塞；代码、数据或完整计划变化使结果过期。组合交付检查完整范围。"
+                    data-detail="局部任务用相同的--files集合规划和执行。登记的展示组件／翻译资源走已有专项，未知／删除／新增职责保守扩大；只改旅程文件时执行完整选定文件，删除及混合产品范围保守扩大；CI固定3个浏览分片，每台1个worker，共用一次fixture准备、Web服务与完整预热；本机真实旅程最多3个worker并可与fixture构建重叠。浏览按目录、版本、变化、语言等明确流程选择；英雄目录／技能详情的展示依赖及品牌图片触发桌面与移动视觉合同，快照映射到所属spec并去重。源CSS变更额外执行正式构建，覆盖开发与生产编译器差异；fixture最终输入校验先于成功收据与租约释放，变化记录stale；两测试入口统一解析可选前置分隔符，CI收集两类浏览附件。纯静态任务不等待全局检查锁，类型缓存仍单独加锁。同轮只重试失败用例一次并保留flaky，持续失败阻塞；代码、数据或完整计划变化使结果过期。组合交付检查完整范围。"
                     data-files='["scripts/development/check-plan.mjs", "src/workers/run-check.ts", "src/workers/run-shared-tests.ts", "src/development/test-environment.ts", "src/development/test-runner-args.ts", "tests/unit/development-check-plan.test.ts", "tests/unit/shared-test-evidence.test.ts", "docs/specs/development-workbench.md"]'
                     data-node-id="work-graph-check"
                     aria-pressed="false"
@@ -2903,7 +2903,7 @@
                     data-name="3 · 推送并确认CI"
                     data-definition="检查数据lock，快进main，再核对同一提交的CI证据。"
                     data-why="让代码明确指向已核验、可获取的数据快照。"
-                    data-detail="CI按所选任务独立分片（旅程8片、E2E及视觉各2片），每台1个worker，static与runtime各有独立主机，数据库与构建串行；main只复用同SHA、同基线的成功候选。提交与导出前执行静态预检；失败收据提供定向复验入口，旅程在本机覆盖fixture与真实数据。一侧失败取消另一侧并等待清理，CI仅取消本轮精确候选。阶段收据记录并行耗时和失败；推送结果不确定先回读远端，push --resume只续接CI。取消、跳过、失败或缺失均不算完成。"
+                    data-detail="CI为一个core与固定3个浏览分片，每台1个worker；core含静态、数据库、基准和构建，浏览同片共用fixture租约与Web服务；main只复用同SHA、同基线的成功候选，直接推送或证据缺失补跑全部所选门禁，保留轻量入口与汇总。提交与导出前执行静态预检；失败收据提供定向复验入口，旅程在本机覆盖fixture与真实数据。一侧失败取消另一侧并等待清理，CI仅取消本轮精确候选。阶段收据记录并行耗时和失败；推送结果不确定先回读远端，push --resume只续接CI。取消、跳过、失败或缺失均不算完成。"
                     data-files='["src/workers/push.ts", "src/development/publication/workflow.ts", "dev-data.lock.json"]'
                     data-node-id="sync-graph-lockpush"
                     aria-pressed="false"

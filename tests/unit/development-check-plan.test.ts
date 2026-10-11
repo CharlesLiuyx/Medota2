@@ -570,67 +570,6 @@ describe("bounded journey and distributed execution", () => {
       createPlan([spec]).tasks.find((task) => task.id === "journeys")!.args,
     ).not.toContain(spec);
   });
-  it("assigns every browser gate to complete independent CI shards without relaxing retries", async () => {
-    const { browserMatrix } =
-      await import("../../scripts/development/ci-plan.mjs");
-    const { executionPlan, parseArguments } =
-      await import("../../scripts/development/check-plan.mjs");
-    const plan = createPlan([
-      "pnpm-lock.yaml",
-      "tests/e2e/local-catalog.spec.ts",
-    ]);
-    const { include } = browserMatrix(plan);
-    expect(new Set(include.map((entry) => entry.task))).toEqual(
-      new Set(
-        plan.tasks
-          .filter((task) => task.kind === "browser")
-          .map((task) => task.id),
-      ),
-    );
-    for (const id of new Set(include.map((entry) => entry.task))) {
-      const shards = include.filter((entry) => entry.task === id);
-      expect(shards.map((entry) => entry.shard)).toEqual(
-        Array.from(
-          { length: shards.length },
-          (_, index) => `${index + 1}/${shards.length}`,
-        ),
-      );
-      for (const entry of shards) {
-        const options = parseArguments([
-          "--lane",
-          "browser",
-          "--browser-task",
-          entry.task,
-          "--shard",
-          entry.shard,
-        ]);
-        const selected = executionPlan(plan, options);
-        expect(selected.tasks.map((task) => task.id)).toEqual([id]);
-        expect(selected.tasks[0].args).toContain("--retries=1");
-      }
-    }
-    expect(browserMatrix(createPlan(["README.md"])).include).toEqual([]);
-    expect(() =>
-      browserMatrix({
-        ...plan,
-        tasks: [{ id: "new-browser-gate", kind: "browser" }],
-      }),
-    ).toThrow("Missing CI partition");
-    expect(() =>
-      executionPlan(plan, { lane: "core", browserTask: "journeys" }),
-    ).toThrow();
-    expect(() =>
-      executionPlan(plan, { lane: "browser", browserTask: "missing" }),
-    ).toThrow();
-    expect(() =>
-      parseArguments([
-        "--retry-failed",
-        "run.json",
-        "--browser-task",
-        "journeys",
-      ]),
-    ).toThrow();
-  });
   it("partitions every planned task exactly once and keeps retries with single-host case sharding", async () => {
     const { executionPlan, parseArguments } =
       await import("../../scripts/development/check-plan.mjs");

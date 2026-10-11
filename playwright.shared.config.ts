@@ -28,15 +28,16 @@ export default defineConfig({
     ["html", { open: "never", outputFolder: `${artifacts}/report` }],
   ],
   use: { baseURL, trace: "retain-on-failure", screenshot: "only-on-failure" },
-  webServer: shared
-    ? undefined
-    : {
-        command: `pnpm exec next dev --turbopack -H 127.0.0.1 -p ${port}`,
-        url: `${baseURL}/heroes`,
-        reuseExistingServer: false,
-        timeout: 120_000,
-        env: { MEDOTA2_PROCESS_ROLE: "web" },
-      },
+  webServer:
+    shared || process.env.MEDOTA2_FIXTURE_BROWSER_BATCH === "1"
+      ? undefined
+      : {
+          command: `pnpm exec next dev --turbopack -H 127.0.0.1 -p ${port}`,
+          url: `${baseURL}/heroes`,
+          reuseExistingServer: false,
+          timeout: 120_000,
+          env: { MEDOTA2_PROCESS_ROLE: "web" },
+        },
   projects: [
     { name: "desktop-chromium", use: { ...devices["Desktop Chrome"] } },
   ],

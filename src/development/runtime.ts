@@ -126,6 +126,8 @@ export async function acquireLock(
   }
 }
 
+export class CommandAbortedError extends Error {}
+
 export async function run(
   command: string,
   args: readonly string[],
@@ -205,7 +207,7 @@ export async function run(
         code === 0 && !stopping
           ? accept()
           : reject(
-              new Error(
+              new (stopping ? CommandAbortedError : Error)(
                 `${command} ${args.join(" ")} failed (${signal ?? code}).`,
               ),
             ),

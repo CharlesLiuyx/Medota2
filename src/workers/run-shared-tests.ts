@@ -17,7 +17,10 @@ async function main(): Promise<void> {
       "Usage: run-shared-tests <integration|e2e|journeys|clean> [test file / runner options]",
     );
   const shared =
-    suite === "journeys" && !process.env.CI && !args.includes("--fixture");
+    suite === "journeys" &&
+    !process.env.CI &&
+    !args.includes("--fixture") &&
+    process.env.MEDOTA2_FIXTURE_BROWSER_BATCH !== "1";
   const warmScopes = args
     .find((arg) => arg.startsWith("--warm-scopes="))
     ?.slice("--warm-scopes=".length);
@@ -93,56 +96,69 @@ async function main(): Promise<void> {
     }
     return;
   }
-  await withTestEnvironment(
-    async (env) => {
-      if (suite === "integration")
-        await run(
-          "pnpm",
-          [
-            "exec",
-            "vitest",
-            "run",
-            "--config",
-            "vitest.integration.config.ts",
-            ...forwarded,
-          ],
-          env,
-          resolve(env.MEDOTA2_ARTIFACT_ROOT!, "runner.log"),
-        );
-      else
-        await run(
-          "pnpm",
-          [
-            "exec",
-            "playwright",
-            "test",
-            "--config",
-            suite === "journeys"
-              ? "playwright.shared.config.ts"
-              : "playwright.config.ts",
-            ...forwarded,
-            // Playwright's --project accepts multiple values: place the default
-            // after positional test paths so they cannot be parsed as projects.
-            ...(suite === "e2e" &&
-            !forwarded.some(
-              (arg) => arg === "--project" || arg.startsWith("--project="),
-            )
-              ? ["--project", "desktop-chromium"]
-              : []),
-          ],
-          { ...env, MEDOTA2_BROWSER_WARM_SCOPES: warmScopes },
-          resolve(env.MEDOTA2_ARTIFACT_ROOT!, "runner.log"),
-        );
-    },
-    {
-      seed: suite === "e2e" || suite === "journeys",
-      clean: suite === "clean",
-      verify: async () => {
-        if (before !== (await fingerprint(inputs)))
-          throw new TestInputsChangedError();
-      },
-    },
-  );
+  const executeFixture = async (env: NodeJS.ProcessEnv) => {
+    if (suite === "integration")
+      await run(
+        "pnpm",
+        [
+          "exec",
+          "vitest",
+          "run",
+          "--config",
+          "vitest.integration.config.ts",
+          ...forwarded,
+        ],
+        env,
+        resolve(env.MEDOTA2_ARTIFACT_ROOT!, "runner.log"),
+      );
+    else
+      await run(
+        "pnpm",
+        [
+          "exec",
+          "playwright",
+          "test",
+          "--config",
+          suite === "journeys"
+            ? "playwright.shared.config.ts"
+            : "playwright.config.ts",
+          ...forwarded,
+          // Playwright's --project accepts multiple values: place the default
+          // after positional test paths so they cannot be parsed as projects.
+          ...(suite === "e2e" &&
+          !forwarded.some(
+            (arg) => arg === "--project" || arg.startsWith("--project="),
+          )
+            ? ["--project", "desktop-chromium"]
+            : []),
+        ],
+        { ...env, MEDOTA2_BROWSER_WARM_SCOPES: warmScopes },
+        resolve(env.MEDOTA2_ARTIFACT_ROOT!, "runner.log"),
+      );
+  };
+  const verify = async () => {
+    if (before !== (await fingerprint(inputs)))
+      throw new TestInputsChangedError();
+  };
+  if (process.env.MEDOTA2_FIXTURE_BROWSER_BATCH === "1") {
+    if (
+      !["e2e", "journeys"].includes(suite) ||
+      process.env.MEDOTA2_ENVIRONMENT !== "test" ||
+      process.env.MEDOTA2_DATA_CLASS !== "synthetic-fixture" ||
+      !process.env.MEDOTA2_RUN_ID
+    )
+      throw new Error(
+        "Browser batch requires its owned synthetic fixture environment.",
+      );
+    await executeFixture(process.env);
+    await verify();
+    return;
+  }
+  await withTestEnvironment(executeFixture, {
+    seed: suite === "e2e" || suite === "journeys",
+    clean: suite === "clean",
+    verify,
+  });
 }
 async function dataVersion(): Promise<string> {
   const response = await fetch(`${getWorkbenchOrigin()}/api/catalog/head`, {

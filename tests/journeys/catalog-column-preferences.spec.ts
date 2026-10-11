@@ -196,6 +196,12 @@ test("heroes: shared dropdown opens synchronously without rebuilding table rows"
   await expect(
     page.getByRole("button", { name: "按力量升序排序", exact: true }),
   ).toBeEnabled();
+  // Base-column sorting can be ready before the initial attribute schema arrives.
+  // That schema changes tbody identity independently of opening a dropdown.
+  await expect(page.locator("[data-entity-catalog-table]")).toHaveAttribute(
+    "data-catalog-table-ready",
+    "true",
+  );
   // Initial virtual chunks are appended after sorting becomes available. Start
   // measuring menu work only after that independent rendering has settled.
   await page.locator("[data-entity-catalog-table] table").evaluate(

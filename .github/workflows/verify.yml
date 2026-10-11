@@ -22,10 +22,8 @@ jobs:
       base: ${{ steps.plan.outputs.base }}
       promoted: ${{ steps.plan.outputs.promoted }}
       core: ${{ steps.plan.outputs.core }}
-      static: ${{ steps.plan.outputs.static }}
       browser: ${{ steps.plan.outputs.browser }}
       coreDatabase: ${{ steps.plan.outputs.coreDatabase }}
-      browserMatrix: ${{ steps.plan.outputs.browserMatrix }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,64 +39,6 @@ jobs:
         with:
           name: medota2-plan-${{ github.run_id }}
           path: .medota2/check-plan.json
-          retention-days: 14
-
-  static:
-    needs: plan
-    if: needs.plan.outputs.static == 'true'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.7.0
-          run_install: false
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22.16.0
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Restore verified check results
-        uses: actions/cache@v4
-        with:
-          path: .medota2/check-cache
-          key: checks-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('pnpm-lock.yaml', 'scripts/development/**') }}-${{ github.sha }}
-          restore-keys: |
-            checks-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('pnpm-lock.yaml', 'scripts/development/**') }}-
-
-      - name: Run static checks
-        env:
-          CHECK_BASE: ${{ needs.plan.outputs.base }}
-        run: pnpm check --base "$CHECK_BASE" --lane static
-      - name: Upload check evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: medota2-verification-${{ github.run_id }}-static
-          path: |
-            .medota2/check-plan.json
-            .medota2/checks/*/run.json
-            .medota2/checks/*/*.log
-            .medota2/shared-tests/runs/*/*.log
-            .medota2/shared-tests/runs/*/run.json
-            .medota2/shared-tests/runs/*/report
-            .medota2/shared-tests/runs/*/test-results
-            .medota2/shared-tests/runs/*/playwright/report
-            .medota2/shared-tests/runs/*/playwright/test-results
-            .medota2/benchmarks/runs
-            .medota2/releases/*/manifest.json
-            .medota2/test-runs/*/run.json
-            .medota2/test-runs/*/index.md
-            .medota2/test-runs/*/logs
-            .medota2/test-runs/*/artifacts
-          if-no-files-found: warn
           retention-days: 14
 
   core:
@@ -131,10 +71,10 @@ jobs:
           restore-keys: |
             checks-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('pnpm-lock.yaml', 'scripts/development/**') }}-
 
-      - name: Run database and build checks
+      - name: Run core checks
         env:
           CHECK_BASE: ${{ needs.plan.outputs.base }}
-        run: pnpm check --base "$CHECK_BASE" --lane runtime
+        run: pnpm check --base "$CHECK_BASE" --lane core
       - name: Release this job's reusable test database
         if: always() && needs.plan.outputs.coreDatabase == 'true'
         run: pnpm test:clean
@@ -147,12 +87,12 @@ jobs:
             .medota2/check-plan.json
             .medota2/checks/*/run.json
             .medota2/checks/*/*.log
-            .medota2/shared-tests/runs/*/*.log
-            .medota2/shared-tests/runs/*/run.json
-            .medota2/shared-tests/runs/*/report
-            .medota2/shared-tests/runs/*/test-results
-            .medota2/shared-tests/runs/*/playwright/report
-            .medota2/shared-tests/runs/*/playwright/test-results
+            .medota2/shared-tests/runs/**/*.log
+            .medota2/shared-tests/runs/**/run.json
+            .medota2/shared-tests/runs/**/report
+            .medota2/shared-tests/runs/**/test-results
+            .medota2/shared-tests/runs/**/playwright/report
+            .medota2/shared-tests/runs/**/playwright/test-results
             .medota2/benchmarks/runs
             .medota2/releases/*/manifest.json
             .medota2/test-runs/*/run.json
@@ -169,7 +109,8 @@ jobs:
     timeout-minutes: 20
     strategy:
       fail-fast: true
-      matrix: ${{ fromJSON(needs.plan.outputs.browserMatrix) }}
+      matrix:
+        shard: [1, 2, 3]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -187,22 +128,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Restore verified check results
-        uses: actions/cache@v4
-        with:
-          path: .medota2/check-cache
-          key: checks-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('pnpm-lock.yaml', 'scripts/development/**') }}-browser-${{ matrix.task }}-${{ matrix.index }}-${{ github.sha }}
-          restore-keys: |
-            checks-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('pnpm-lock.yaml', 'scripts/development/**') }}-
-
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
       - name: Run browser shard with one worker on its own host and database
         env:
           CHECK_BASE: ${{ needs.plan.outputs.base }}
-          CHECK_SHARD: ${{ matrix.shard }}
-          CHECK_BROWSER_TASK: ${{ matrix.task }}
-        run: pnpm check --base "$CHECK_BASE" --lane browser --browser-task "$CHECK_BROWSER_TASK" --shard "$CHECK_SHARD"
+          CHECK_SHARD: ${{ matrix.shard }}/3
+        run: pnpm check --base "$CHECK_BASE" --lane browser --shard "$CHECK_SHARD"
       - name: Release this job's reusable test database
         if: always()
         run: pnpm test:clean
@@ -210,17 +142,17 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: medota2-verification-${{ github.run_id }}-browser-${{ matrix.task }}-${{ matrix.index }}
+          name: medota2-verification-${{ github.run_id }}-browser-${{ matrix.shard }}
           path: |
             .medota2/check-plan.json
             .medota2/checks/*/run.json
             .medota2/checks/*/*.log
-            .medota2/shared-tests/runs/*/*.log
-            .medota2/shared-tests/runs/*/run.json
-            .medota2/shared-tests/runs/*/report
-            .medota2/shared-tests/runs/*/test-results
-            .medota2/shared-tests/runs/*/playwright/report
-            .medota2/shared-tests/runs/*/playwright/test-results
+            .medota2/shared-tests/runs/**/*.log
+            .medota2/shared-tests/runs/**/run.json
+            .medota2/shared-tests/runs/**/report
+            .medota2/shared-tests/runs/**/test-results
+            .medota2/shared-tests/runs/**/playwright/report
+            .medota2/shared-tests/runs/**/playwright/test-results
             .medota2/benchmarks/runs
             .medota2/releases/*/manifest.json
             .medota2/test-runs/*/run.json
@@ -231,7 +163,7 @@ jobs:
           retention-days: 14
 
   verify:
-    needs: [plan, static, core, browser]
+    needs: [plan, core, browser]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 2
@@ -240,13 +172,10 @@ jobs:
         env:
           PLAN_RESULT: ${{ needs.plan.result }}
           CORE_REQUIRED: ${{ needs.plan.outputs.core }}
-          STATIC_REQUIRED: ${{ needs.plan.outputs.static }}
           BROWSER_REQUIRED: ${{ needs.plan.outputs.browser }}
           CORE_RESULT: ${{ needs.core.result }}
-          STATIC_RESULT: ${{ needs.static.result }}
           BROWSER_RESULT: ${{ needs.browser.result }}
         run: |
           test "$PLAN_RESULT" = success
-          if [ "$STATIC_REQUIRED" = true ]; then test "$STATIC_RESULT" = success; else test "$STATIC_RESULT" = skipped; fi
           if [ "$CORE_REQUIRED" = true ]; then test "$CORE_RESULT" = success; else test "$CORE_RESULT" = skipped; fi
           if [ "$BROWSER_REQUIRED" = true ]; then test "$BROWSER_RESULT" = success; else test "$BROWSER_RESULT" = skipped; fi
