@@ -6,6 +6,18 @@ import {
 } from "@playwright/test";
 
 const test = playwrightTest.extend({
+  request: async ({ playwright, extraHTTPHeaders }, runFixture) => {
+    // Playwright shares a keep-alive agent across request contexts. A socket
+    // left by another test can race Next's idle close; keep API probes isolated.
+    const request = await playwright.request.newContext({
+      extraHTTPHeaders: { ...extraHTTPHeaders, Connection: "close" },
+    });
+    try {
+      await runFixture(request);
+    } finally {
+      await request.dispose();
+    }
+  },
   page: async ({ page }, runFixture) => {
     await installLoopbackOnlyRoute(page);
     await runFixture(page);
