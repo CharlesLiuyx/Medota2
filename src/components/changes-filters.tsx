@@ -4,6 +4,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   useTransition,
   type ReactNode,
 } from "react";
@@ -31,6 +32,10 @@ const signature = (filters: Filters) =>
     filters.q.trim(),
   ]);
 
+const subscribeToHydration = () => () => {};
+const hydrated = () => true;
+const notHydrated = () => false;
+
 export function ChangesFilters({
   defaultRelease,
   header,
@@ -48,6 +53,11 @@ export function ChangesFilters({
   entities: Option[];
   categories: Option[];
 }) {
+  const ready = useSyncExternalStore(
+    subscribeToHydration,
+    hydrated,
+    notHydrated,
+  );
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
@@ -149,6 +159,7 @@ export function ChangesFilters({
         ).map(([name, label, options]) => (
           <CompactSelect
             key={name}
+            disabled={!ready}
             label={label}
             name={name}
             value={filters[name]}
@@ -169,6 +180,7 @@ export function ChangesFilters({
           <span className="sr-only">{t("搜索变化")}</span>
           <input
             type="search"
+            disabled={!ready}
             name="q"
             value={filters.q}
             onChange={events.onFieldChange}

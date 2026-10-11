@@ -26,9 +26,7 @@ for (const entity of ["heroes", "abilities"] as const) {
     expect(selected).toBeTruthy();
     const fixture = selected!.catalogClient?.startsWith("fixture-") ?? false;
     // Full-list scrolling has its own journey; navigation uses a known fixture.
-    await page.goto(
-      `/${entity}${fixture && entity === "heroes" ? "?q=antimage" : ""}`,
-    );
+    await page.goto(`/${entity}${fixture ? "?q=antimage" : ""}`);
     await expect(
       page.getByRole("button", { name: "网格视图", exact: true }),
     ).toBeEnabled();

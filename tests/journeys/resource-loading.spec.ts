@@ -203,14 +203,8 @@ test("heroes changes: raw audit is requested only when opened and reused", async
     if (request.url().includes("/api/releases/change-resource")) requests++;
   });
   await page.goto("/changes?lang=zh-CN");
-  // Native details can open before hydration; aria-expanded is set by the menu
-  // lifecycle, so wait for that before entering text into a controlled input.
-  const entity = page.getByRole("combobox", { name: "对象", exact: true });
-  await entity.click();
-  await expect(entity).toHaveAttribute("aria-expanded", "true");
-  await page.getByRole("option", { name: "全部", exact: true }).click();
-  await expect(page).toHaveURL(/entity=all/);
   const search = page.getByRole("searchbox", { name: "搜索变化" });
+  await expect(search).toBeEnabled();
   await search.fill("zzzz-resource-test");
   await expect(page).toHaveURL(/q=zzzz-resource-test/);
   const status = page.locator("main [role=status]").first();
