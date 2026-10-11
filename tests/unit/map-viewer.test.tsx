@@ -201,7 +201,7 @@ it("coalesces dense-map pointer input, reuses the scene, and keeps the canvas in
   expect(frames.size).toBe(0);
 });
 
-it("shows and hits trees at 100%, draws the hover label above markers, and obeys the layer switch", async () => {
+function renderMapInteractionFixture() {
   // Tooltip positioning and map paints can queue independent animation frames.
   const frames = new Map<number, FrameRequestCallback>();
   let nextFrame = 0;
@@ -389,6 +389,11 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
   );
   const canvas = screen.getByLabelText(/交互地图/);
   flush(0);
+  return { canvas, paint, flush };
+}
+
+it("shows and hits trees at 100%, draws camp rewards and selected labels, and obeys layer switches", () => {
+  const { canvas, paint, flush } = renderMapInteractionFixture();
   expect(screen.getByLabelText("缩放比例").textContent).toBe("100%");
   for (const [option, count] of [
     ["近战兵营被毁", 1],
@@ -635,6 +640,13 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
   expect(paint).not.toContain("set:lineWidth:5");
   expect(paint.some((s) => s.startsWith("fillText:经验 50,"))).toBe(false);
   expect(paint.some((s) => s.includes("Z 轴范围"))).toBe(false);
+});
+
+it("updates lane rewards and previews camps from the list and layer controls", () => {
+  const { canvas, paint, flush } = renderMapInteractionFixture();
+  // Match the original flow: the large fixture tree no longer masks the lane.
+  fireEvent.click(screen.getByRole("checkbox", { name: /树/ }));
+  flush(4);
   fireEvent(
     canvas,
     new MouseEvent("pointermove", {
@@ -681,6 +693,10 @@ it("shows and hits trees at 100%, draws the hover label above markers, and obeys
   flush(7);
   expect(paint).toContain("set:lineWidth:5");
   fireEvent.pointerLeave(campLayer);
+});
+
+it("creates and selects routes, recalculates travel time, and protects editing from delete shortcuts", async () => {
+  const { canvas, flush } = renderMapInteractionFixture();
   fireEvent.click(screen.getByRole("button", { name: "寻路" }));
 
   (canvas as HTMLCanvasElement).setPointerCapture = vi.fn();
