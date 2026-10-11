@@ -13,6 +13,7 @@ import {
   githubRepository,
   selectCIRun,
   waitForCI,
+  retryCIRead,
   type CIRun,
 } from "@/development/publication/ci";
 import {
@@ -260,6 +261,31 @@ const ci = (changes: Partial<CIRun> = {}): CIRun => ({
   ...changes,
 });
 describe("exact CI and fixture planning", () => {
+  it("retries bounded read transport failures but never accepts missing or failed CI evidence", async () => {
+    const read = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new Error("tls: failed to verify certificate: x509: wrong host"),
+      )
+      .mockResolvedValue([ci()]);
+    const sleep = vi.fn(async () => {});
+    await expect(
+      waitForCI("owner/repo", "target", { query: read, sleep }),
+    ).resolves.toMatchObject({ conclusion: "success" });
+    expect(read).toHaveBeenCalledTimes(2);
+    const unavailable = vi.fn(async () => {
+      throw new Error("tls: invalid certificate");
+    });
+    await expect(retryCIRead(unavailable, { sleep })).rejects.toThrow(
+      "certificate",
+    );
+    expect(unavailable).toHaveBeenCalledTimes(3);
+    const forbidden = vi.fn(async () => {
+      throw new Error("HTTP 403");
+    });
+    await expect(retryCIRead(forbidden, { sleep })).rejects.toThrow("403");
+    expect(forbidden).toHaveBeenCalledTimes(1);
+  });
   it("warms selected journey modules and retains full warmup for unknown or cross-module scopes", () => {
     expect(warmRoutesForScopes(["heroes", "tooltips"])).toContain(
       "heroes/antimage",

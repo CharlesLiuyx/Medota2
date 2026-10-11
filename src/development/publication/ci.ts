@@ -31,6 +31,40 @@ export async function gh(args: string[]): Promise<string> {
     })
   ).stdout.trim();
 }
+
+/** Retry transport failures for read-only evidence queries. TLS verification and
+ * exact candidate checks remain mandatory; writes and CI failures never enter here. */
+export async function retryCIRead<T>(
+  read: () => Promise<T>,
+  options: {
+    signal?: AbortSignal;
+    sleep?: (ms: number) => Promise<unknown>;
+  } = {},
+): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    options.signal?.throwIfAborted();
+    try {
+      return await read();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (
+        attempt >= 2 ||
+        !/tls:|x509:|ECONNRESET|ETIMEDOUT|connection reset|connection refused|network is unreachable|i\/o timeout|HTTP 50[234]/i.test(
+          message,
+        )
+      )
+        throw error;
+      console.error(
+        `[push] CI只读查询连接失败，${attempt + 1}/2次重试；保持原证书及候选校验。`,
+      );
+      if (options.sleep) await options.sleep(1000 * (attempt + 1));
+      else
+        await delay(1000 * (attempt + 1), undefined, {
+          signal: options.signal,
+        });
+    }
+  }
+}
 export function selectCIRun(
   runs: CIRun[],
   sha: string,
@@ -63,26 +97,30 @@ export async function waitForCI(
   let last = "";
   do {
     options.signal?.throwIfAborted();
-    const runs: CIRun[] = options.query
-      ? await options.query()
-      : JSON.parse(
-          await gh([
-            "run",
-            "list",
-            "--repo",
-            repository,
-            "--workflow",
-            "verify.yml",
-            "--commit",
-            sha,
-            "--event",
-            "push",
-            "--limit",
-            "10",
-            "--json",
-            "databaseId,headSha,headBranch,event,status,conclusion,url",
-          ]),
-        );
+    const runs: CIRun[] = await retryCIRead(
+      async () =>
+        options.query
+          ? await options.query()
+          : JSON.parse(
+              await gh([
+                "run",
+                "list",
+                "--repo",
+                repository,
+                "--workflow",
+                "verify.yml",
+                "--commit",
+                sha,
+                "--event",
+                "push",
+                "--limit",
+                "10",
+                "--json",
+                "databaseId,headSha,headBranch,event,status,conclusion,url",
+              ]),
+            ),
+      options,
+    );
     const run = selectCIRun(runs, sha, options.branch);
     const state = run
       ? `${run.databaseId}:${run.status}:${run.conclusion}`
@@ -100,16 +138,20 @@ export async function waitForCI(
       return run;
     }
     if (run && options.failFast) {
-      const failures: string[] = options.failedJobs
-        ? await options.failedJobs(run)
-        : JSON.parse(
-            await gh([
-              "api",
-              `repos/${repository}/actions/runs/${run.databaseId}/jobs`,
-              "--jq",
-              '[.jobs[] | select(.conclusion == "failure" or .conclusion == "timed_out" or .conclusion == "cancelled") | .name]',
-            ]),
-          );
+      const failures: string[] = await retryCIRead(
+        async () =>
+          options.failedJobs
+            ? await options.failedJobs(run)
+            : JSON.parse(
+                await gh([
+                  "api",
+                  `repos/${repository}/actions/runs/${run.databaseId}/jobs`,
+                  "--jq",
+                  '[.jobs[] | select(.conclusion == "failure" or .conclusion == "timed_out" or .conclusion == "cancelled") | .name]',
+                ]),
+              ),
+        options,
+      );
       if (failures.length)
         throw new Error(`CI检查失败：${failures.join(", ")}；${run.url}`);
     }
@@ -141,26 +183,30 @@ export async function cancelCandidateCI(
   const deadline = Date.now() + (options.timeoutMs ?? 60_000);
   let requested: number | undefined;
   do {
-    const runs: CIRun[] = options.query
-      ? await options.query()
-      : JSON.parse(
-          await gh([
-            "run",
-            "list",
-            "--repo",
-            repository,
-            "--workflow",
-            "verify.yml",
-            "--commit",
-            sha,
-            "--event",
-            "push",
-            "--limit",
-            "10",
-            "--json",
-            "databaseId,headSha,headBranch,event,status,conclusion,url",
-          ]),
-        );
+    const runs: CIRun[] = await retryCIRead(
+      async () =>
+        options.query
+          ? await options.query()
+          : JSON.parse(
+              await gh([
+                "run",
+                "list",
+                "--repo",
+                repository,
+                "--workflow",
+                "verify.yml",
+                "--commit",
+                sha,
+                "--event",
+                "push",
+                "--limit",
+                "10",
+                "--json",
+                "databaseId,headSha,headBranch,event,status,conclusion,url",
+              ]),
+            ),
+      options,
+    );
     const run = selectCIRun(runs, sha, branch);
     if (run?.status === "completed") return;
     if (run && requested !== run.databaseId) {
