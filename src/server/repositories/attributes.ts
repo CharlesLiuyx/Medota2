@@ -10,6 +10,10 @@ import {
   unresolvedAttributeParameter,
 } from "@/domain/attribute-parameter-labels";
 import "server-only";
+import { sourceFileRecord } from "@/server/services/source-file-records";
+import { ResourceCache } from "@/lib/resource-cache";
+import { verifiedResourceScope } from "@/server/services/resource-scope";
+import { pinnedVpkRoots } from "@/importers/dota-vpk/source-roots";
 import { cache } from "react";
 import { getWebDatabase } from "@/server/db/client";
 import { getCatalogMeta, type ActiveDatasetMeta } from "./heroes";
@@ -38,27 +42,28 @@ import {
   resolvedUnitAttributeFields,
 } from "@/domain/attribute-fields";
 
-const snapshots = new Map<
-  string,
-  Promise<Awaited<ReturnType<typeof buildSnapshot>>>
->();
+const snapshots = new ResourceCache<Awaited<ReturnType<typeof buildSnapshot>>>({
+  entries: 2,
+  // The reviewed complete 7.41f projection is ~70 MiB when serialized (shared
+  // descriptions appear in many relations). Keep both reviewed versions in budget.
+  bytes: 160 * 1024 * 1024,
+});
 export const getAttributeOverview = cache(async (dataset?: string) => {
   const meta = await getCatalogMeta(dataset);
   if (!meta) return { meta: null, snapshot: null };
-  const key = `${meta.datasetVersionId}:${meta.sourceCommit}`;
-  let pending = snapshots.get(key);
-  if (!pending) {
-    pending = buildSnapshot(meta);
-    if (snapshots.size >= 2) snapshots.delete(snapshots.keys().next().value!);
-    snapshots.set(key, pending);
-    void pending.then(
-      (value) => {
-        if (value.missing.length) snapshots.delete(key);
-      },
-      () => snapshots.delete(key),
-    );
-  }
-  return { meta, snapshot: await pending };
+  const key = JSON.stringify([
+    await verifiedResourceScope(),
+    meta.datasetVersionId,
+    meta.sourceCommit,
+    await sourceFileRecord(meta.datasetVersionId, "steam.inf"),
+    meta.importerVersion,
+    meta.schemaVersion,
+    pinnedVpkRoots(meta.sourceCommit),
+    "attributes/2",
+  ]);
+  const snapshot = await snapshots.get(key, () => buildSnapshot(meta));
+  if (snapshot.missing.length) snapshots.delete(key);
+  return { meta, snapshot };
 });
 async function buildSnapshot(meta: ActiveDatasetMeta) {
   const db = await getWebDatabase();

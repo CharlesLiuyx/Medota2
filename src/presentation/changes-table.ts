@@ -23,6 +23,7 @@ export interface ChangeTableRow {
   after?: string;
   notes: PatchNote[];
   evidence: ReadableChange["evidence"];
+  evidenceRef?: { url: string; count: number; kinds: string[] };
   impact: ChangeImpact;
   category: string;
   sourceLocale?: "zh-CN" | "en";

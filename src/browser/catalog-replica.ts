@@ -1,4 +1,11 @@
 import {
+  browserScope,
+  canPrefetch,
+  loadBrowserResource,
+  verifyResourceResponse,
+} from "./resources";
+import type { ResourcePriority } from "@/lib/resource-cache";
+import {
   REPLICA_SCHEMA,
   REPLICA_BUCKETS,
   type CatalogReplica,
@@ -10,21 +17,11 @@ interface StoredReplica {
   family: string;
   savedAt: number;
   replica: CatalogReplica;
+  bytes: number;
 }
-const memory = new Map<string, Promise<CatalogReplica>>();
 let database: Promise<IDBDatabase | null> | undefined;
-function scope(): string {
-  const root = document.documentElement;
-  if (root.dataset.environmentVerification !== "verified")
-    throw new Error("资料连接尚未验证。");
-  return [
-    root.dataset.environment,
-    root.dataset.dataClass,
-    root.dataset.environmentRun,
-  ].join(":");
-}
 function family(id: ReplicaIdentity) {
-  return `${scope()}:${REPLICA_SCHEMA}:${id.entity}:${id.locale}`;
+  return `${browserScope()}:${REPLICA_SCHEMA}:${id.entity}:${id.locale}`;
 }
 function key(id: ReplicaIdentity) {
   return `${family(id)}:${id.datasetVersionId}:${id.assetDatasetVersionId}`;
@@ -36,9 +33,27 @@ function openDatabase(): Promise<IDBDatabase | null> {
         resolve(null);
         return;
       }
-      const request = indexedDB.open("medota2-catalog", 1);
-      request.onupgradeneeded = () =>
-        request.result.createObjectStore("snapshots", { keyPath: "key" });
+      const request = indexedDB.open("medota2-catalog", 2);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        const snapshots = db.objectStoreNames.contains("snapshots")
+          ? request.transaction!.objectStore("snapshots")
+          : db.createObjectStore("snapshots", { keyPath: "key" });
+        if (!snapshots.indexNames.contains("family"))
+          snapshots.createIndex("family", "family");
+        const metadata = db.createObjectStore("metadata", { keyPath: "key" });
+        const cursor = snapshots.openCursor();
+        cursor.onsuccess = () => {
+          const entry = cursor.result;
+          if (!entry) return;
+          const { replica, ...meta } = entry.value as StoredReplica;
+          metadata.put({
+            ...meta,
+            bytes: new TextEncoder().encode(JSON.stringify(replica)).byteLength,
+          });
+          entry.continue();
+        };
+      };
       request.onsuccess = () => {
         request.result.onversionchange = () => {
           request.result.close();
@@ -54,16 +69,22 @@ function openDatabase(): Promise<IDBDatabase | null> {
   });
   return database;
 }
-async function stored(): Promise<StoredReplica[]> {
+async function stored(
+  id: ReplicaIdentity,
+  exact: boolean,
+): Promise<StoredReplica[]> {
   const db = await openDatabase();
   if (!db) return [];
   return new Promise((resolve) => {
     try {
-      const request = db
-        .transaction("snapshots")
-        .objectStore("snapshots")
-        .getAll();
-      request.onsuccess = () => resolve(request.result);
+      const store = db.transaction("snapshots").objectStore("snapshots");
+      const request = exact
+        ? store.get(key(id))
+        : store.index("family").getAll(family(id), 2);
+      request.onsuccess = () =>
+        resolve(
+          exact ? (request.result ? [request.result] : []) : request.result,
+        );
       request.onerror = () => resolve([]);
     } catch {
       resolve([]);
@@ -75,10 +96,17 @@ async function persist(record: StoredReplica): Promise<void> {
   if (!db) return;
   await new Promise<void>((resolve) => {
     try {
-      const tx = db.transaction("snapshots", "readwrite"),
+      const tx = db.transaction(["snapshots", "metadata"], "readwrite"),
         store = tx.objectStore("snapshots");
       store.put(record);
-      const all = store.getAll();
+      const metadata = tx.objectStore("metadata");
+      metadata.put({
+        key: record.key,
+        family: record.family,
+        savedAt: record.savedAt,
+        bytes: record.bytes,
+      });
+      const all = metadata.getAll();
       all.onsuccess = () => {
         // Two versions per entity/language, eight snapshots total; all changes
         // commit atomically so interrupted writes never publish a partial replica.
@@ -86,10 +114,15 @@ async function persist(record: StoredReplica): Promise<void> {
           (a, b) => b.savedAt - a.savedAt,
         );
         const counts = new Map<string, number>();
+        let bytes = 0;
         records.forEach((entry, index) => {
+          bytes += entry.bytes;
           const n = (counts.get(entry.family) ?? 0) + 1;
           counts.set(entry.family, n);
-          if (n > 2 || index >= 8) store.delete(entry.key);
+          if (n > 2 || index >= 8 || bytes > 48 * 1024 * 1024) {
+            store.delete(entry.key);
+            metadata.delete(entry.key);
+          }
         });
       };
       tx.oncomplete = () => resolve();
@@ -134,38 +167,16 @@ async function valid(
     return false;
   }
 }
-function verifyResponse(response: Response) {
-  const root = document.documentElement;
-  if (
-    response.headers.get("x-medota2-environment-verification") !== "verified" ||
-    response.headers.get("x-medota2-environment") !==
-      root.dataset.environment ||
-    response.headers.get("x-medota2-data-class") !== root.dataset.dataClass ||
-    (response.headers.get("x-medota2-run-id") ?? "none") !==
-      root.dataset.environmentRun
-  )
-    throw new Error("资料连接身份不匹配。");
-}
 export function getBrowserReplica(
   id: ReplicaIdentity,
+  priority: ResourcePriority = "foreground",
 ): Promise<CatalogReplica> {
-  const cacheKey = key(id);
-  let pending = memory.get(cacheKey);
-  if (!pending) {
-    pending = load(id);
-    memory.set(cacheKey, pending);
-    if (memory.size > 8) memory.delete(memory.keys().next().value!);
-    void pending.catch(() => {
-      if (memory.get(cacheKey) === pending) memory.delete(cacheKey);
-    });
-  }
-  return pending;
+  return loadBrowserResource(key(id), () => load(id), priority);
 }
 async function load(id: ReplicaIdentity): Promise<CatalogReplica> {
-  const snapshots = await stored();
-  const exact = snapshots.find((item) => item.key === key(id));
+  const exact = (await stored(id, true))[0];
   if (exact && (await valid(exact.replica, id))) return exact.replica;
-  const previous = snapshots
+  const previous = (await stored(id, false))
     .filter((item) => item.family === family(id))
     .sort((a, b) => b.savedAt - a.savedAt)[0];
   const reusable =
@@ -182,7 +193,7 @@ async function load(id: ReplicaIdentity): Promise<CatalogReplica> {
       signal: controller.signal,
     });
     if (!response.ok) throw new Error("本机资料准备失败，继续使用在线查询。");
-    verifyResponse(response);
+    verifyResourceResponse(response);
     const delta = (await response.json()) as CatalogReplica;
     const blocks = Object.fromEntries(
       delta.manifest.hashes.map((hash) => [
@@ -197,6 +208,7 @@ async function load(id: ReplicaIdentity): Promise<CatalogReplica> {
       family: family(id),
       savedAt: Date.now(),
       replica,
+      bytes: new TextEncoder().encode(JSON.stringify(replica)).byteLength,
     });
     return replica;
   } finally {
@@ -204,19 +216,13 @@ async function load(id: ReplicaIdentity): Promise<CatalogReplica> {
   }
 }
 export function prefetchSibling(id: ReplicaIdentity) {
-  if (!navigator.onLine) return;
-  const connection = (
-    navigator as Navigator & {
-      connection?: { saveData?: boolean; effectiveType?: string };
-    }
-  ).connection;
-  if (connection?.saveData || connection?.effectiveType?.includes("2g")) return;
+  if (!canPrefetch()) return;
   const other = {
     ...id,
     entity:
       id.entity === "heroes" ? ("abilities" as const) : ("heroes" as const),
   };
-  void getBrowserReplica(other).catch(() => {});
+  void getBrowserReplica(other, "background").catch(() => {});
 }
 let lastHeadCheck = 0;
 let checking:
@@ -237,7 +243,7 @@ export async function checkCatalogHead(id: ReplicaIdentity) {
       },
       signal: AbortSignal.timeout(5000),
     });
-    verifyResponse(response);
+    verifyResourceResponse(response);
     if (response.status === 304) return undefined;
     if (!response.ok) throw new Error("版本检查失败。");
     return (await response.json()) as Pick<

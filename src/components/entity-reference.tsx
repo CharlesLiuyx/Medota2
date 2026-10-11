@@ -1,4 +1,5 @@
 "use client";
+import { TextWidthSample } from "./ui/text-width-sample";
 import Image from "next/image";
 import styles from "./entity-reference.module.css";
 import { useState, type ReactNode } from "react";
@@ -76,13 +77,15 @@ export function EntitySummaryCard({ entity }: { entity: EntityPreview }) {
 /** Lightweight, non-interactive width sample using the same inline icon geometry. */
 export function EntityReferenceWidthSample({
   entity,
+  names,
 }: {
   entity: EntityPreview;
+  names?: readonly string[];
 }) {
   return (
     <span className={`${styles.reference} ${styles.inline}`}>
       <span className={`${styles.icon} ${styles[entity.kind] ?? ""}`} />
-      <span>{entity.name}</span>
+      {names ? <TextWidthSample texts={names} /> : <span>{entity.name}</span>}
     </span>
   );
 }

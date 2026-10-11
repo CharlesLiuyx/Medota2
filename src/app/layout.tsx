@@ -88,6 +88,7 @@ export default async function RootLayout({
         environment.verified ? "verified" : "unverified"
       }
       data-environment-run={environment.runId ?? "none"}
+      data-environment-fingerprint={environment.safeFingerprint ?? "none"}
     >
       <body>
         <LocaleProvider initialLocale={locale}>

@@ -7,7 +7,7 @@ import { resolve } from "node:path";
 import { loadLocalEnv } from "@/config/env";
 import { unitTokens } from "@/importers/dota-vpk/unit-adapter";
 import { supplementEntityNames } from "@/domain/entity-names";
-import { getWebDatabase } from "@/server/db/client";
+import { sourceFileRecord } from "./source-file-records";
 
 // The supplemental tooltip labels must belong to the SAME immutable snapshot.
 // Never read an unverified neighbouring checkout or fetch a newer game version.
@@ -19,18 +19,12 @@ export const getGameLocalization = requestCache(
   ): Promise<Record<string, string>> {
     loadLocalEnv();
     const path = `resource/localization/abilities_${locale === "en" ? "english" : "schinese"}.txt`;
-    const db = await getWebDatabase();
-    const result = await db.query<{
-      raw_sha256: string;
-      source_commit: string;
-    }>(
-      `SELECT f.raw_sha256, s.source_commit FROM source_snapshot_files f JOIN source_snapshots s ON s.id = f.source_snapshot_id JOIN hero_catalog_dataset_versions v ON v.source_snapshot_id = f.source_snapshot_id WHERE v.id = $1 AND f.source_path = $2`,
-      [dataset, path],
-    );
-    const hash = result.rows[0]?.raw_sha256;
-    const sourceCommit = result.rows[0]?.source_commit;
+    const record = await sourceFileRecord(dataset, path);
+    const hash = record?.raw_sha256;
+    const sourceCommit = record?.source_commit;
     if (
       !hash ||
+      !sourceCommit ||
       !/^[a-f0-9]{40}$/u.test(sourceCommit ?? "") ||
       (commit && commit !== sourceCommit)
     )

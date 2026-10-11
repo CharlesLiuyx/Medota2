@@ -22,7 +22,8 @@
 }
 .more {
   position: absolute;
-  right: 0;
+  /* Use the cell padding so narrow labels remain clickable at their center. */
+  right: -4px;
   top: 50%;
   transform: translateY(-50%);
   background: #171e25;

@@ -4,7 +4,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { readVisionScene } from "./vision";
+import { VISION_SCENE_FORMAT } from "@/domain/map/vision";
 import { readVisionPresets } from "./vision-presets";
 import { mapPackageIcons } from "./package-icons";
 import { readRoutingData } from "./navigation";
@@ -56,9 +56,6 @@ export async function getMapPageData(id?: string, catalogId?: string | null) {
   try {
     const pkg = await readMapPackage(id);
     if (pkg) {
-      const preparedVision = await readVisionScene(pkg.root);
-      if (preparedVision.identity.datasetRevision !== pkg.revision)
-        throw new Error("Vision dataset revision mismatch");
       const { watcherRules, visions, ...routing } = await readRoutingData(
         pkg.root,
         pkg.map,
@@ -100,8 +97,8 @@ export async function getMapPageData(id?: string, catalogId?: string | null) {
             pkg.revision,
           ),
           visionPresets: meta ? await readVisionPresets(meta) : undefined,
-          visionScene: {
-            scene: preparedVision.scene,
+          visionResource: {
+            url: `/api/map/vision?${new URLSearchParams({ version: pkg.id ?? "", revision: pkg.revision, format: VISION_SCENE_FORMAT })}`,
             datasetRevision: pkg.revision,
           },
           unitNames,

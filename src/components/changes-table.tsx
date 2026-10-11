@@ -1,4 +1,5 @@
 "use client";
+import { DeferredResource } from "./deferred-resource";
 import {
   Info,
   ArrowDown,
@@ -172,36 +173,18 @@ function Sources({
               )}
             </div>
           )}
-          {!row.evidence.length && (
+          {!(row.evidenceRef?.count ?? row.evidence.length) && (
             <p>{t("此项未展示对应数值差异，需进一步核对；保留官方说明。")}</p>
           )}
-          {row.evidence.map((e, i) => (
-            <div key={i} className="break-words text-[11px]">
-              <p>{e.path}</p>
-              {[
-                [t("起始版本"), e.beforeSources],
-                [t("所选版本"), e.afterSources],
-              ].map(([name, sources]) => (
-                <div key={String(name)}>
-                  <strong>{String(name)}</strong>
-                  {(sources as typeof e.beforeSources).map((s, j) => (
-                    <p key={j} className="text-[var(--text-muted)]">
-                      {s.repository} · {s.path}
-                      {s.line ? `:${s.line}` : ""}
-                      <br />
-                      {s.commit ?? s.sha256 ?? "—"}
-                    </p>
-                  ))}
-                </div>
-              ))}
-              <details>
-                <summary>{t("查看原始字段与来源")}</summary>
-                <pre className="whitespace-pre-wrap break-all">
-                  {JSON.stringify(e, null, 2)}
-                </pre>
-              </details>
-            </div>
-          ))}
+          {row.evidenceRef ? (
+            <DeferredResource<ChangeTableRow["evidence"]>
+              url={row.evidenceRef.url}
+            >
+              {(evidence) => <Evidence evidence={evidence} />}
+            </DeferredResource>
+          ) : (
+            <Evidence evidence={row.evidence} />
+          )}
         </div>
       }
     >
@@ -250,15 +233,17 @@ function Table({
     ]),
   );
   const widthSamples = (entities: EntityPreview[]) =>
-    [
-      ...new Map(
-        entities.map((entity) => [`${entity.kind}:${entity.name}`, entity]),
-      ).values(),
-    ].map((entity) => (
-      <div key={`${entity.kind}:${entity.name}`}>
-        <EntityReferenceWidthSample entity={entity} />
-      </div>
-    ));
+    [...new Set(entities.map((entity) => entity.kind))].map((kind) => {
+      const matches = entities.filter((entity) => entity.kind === kind);
+      return (
+        <div key={kind}>
+          <EntityReferenceWidthSample
+            entity={matches[0]}
+            names={matches.map((entity) => entity.name)}
+          />
+        </div>
+      );
+    });
   const columns: GroupedTableColumn<ChangeTableGroup, ChangeTableRow>[] = [
     {
       key: "number",
@@ -442,5 +427,41 @@ export function ChangesTable({
         />
       ))}
     </div>
+  );
+}
+
+function Evidence({ evidence }: { evidence: ChangeTableRow["evidence"] }) {
+  const t = useTranslations();
+  return (
+    <>
+      {" "}
+      {evidence.map((e, i) => (
+        <div key={i} className="break-words text-[11px]">
+          <p>{e.path}</p>
+          {[
+            [t("起始版本"), e.beforeSources],
+            [t("所选版本"), e.afterSources],
+          ].map(([name, sources]) => (
+            <div key={String(name)}>
+              <strong>{String(name)}</strong>
+              {(sources as typeof e.beforeSources).map((s, j) => (
+                <p key={j} className="text-[var(--text-muted)]">
+                  {s.repository} · {s.path}
+                  {s.line ? `:${s.line}` : ""}
+                  <br />
+                  {s.commit ?? s.sha256 ?? "—"}
+                </p>
+              ))}
+            </div>
+          ))}
+          <details>
+            <summary>{t("查看原始字段与来源")}</summary>
+            <pre className="whitespace-pre-wrap break-all">
+              {JSON.stringify(e, null, 2)}
+            </pre>
+          </details>
+        </div>
+      ))}
+    </>
   );
 }

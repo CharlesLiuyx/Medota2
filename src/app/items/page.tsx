@@ -1,10 +1,10 @@
+import { itemCatalogRows } from "@/server/services/catalog-projections";
 import { PageInfoTooltip } from "@/components/ui/page-info-tooltip";
 import { getTranslations } from "@/i18n/server";
 import { LocalizedText } from "@/i18n/provider";
 import { resolvePageRelease } from "@/server/services/releases";
 import { MissingReleaseCoverage } from "@/components/release-navigation";
 import type { Metadata } from "next";
-import { pinyin } from "pinyin-pro";
 import { ItemCatalog } from "@/components/item-catalog";
 import { getItemOverview } from "@/server/repositories/items";
 export async function generateMetadata(): Promise<Metadata> {
@@ -24,27 +24,7 @@ export default async function ItemsPage({
   const { meta, snapshot, imageVersion } = await getItemOverview(
     selected?.catalogId ?? undefined,
   );
-  const items = snapshot?.items.map((item) => {
-    const syllables = pinyin(item.zhName, {
-      toneType: "none",
-      type: "array",
-      v: true,
-    });
-    return {
-      ...item,
-      searchText: [
-        item.internalName,
-        item.zhName,
-        item.enName,
-        syllables.join(""),
-        syllables.map((s) => s[0]).join(""),
-      ]
-        .join("|")
-        .normalize("NFKC")
-        .toLowerCase()
-        .replace(/[\s_'’\-]+/gu, ""),
-    };
-  });
+  const items = snapshot ? itemCatalogRows(snapshot.items) : undefined;
   return (
     <main className="mx-auto min-h-[70vh] max-w-[var(--content-max)] px-4 py-4 sm:px-6">
       {items ? (

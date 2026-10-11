@@ -39,6 +39,7 @@ export function ChangesResults({
             (row) =>
               (kind === "all" ||
                 primary ||
+                row.evidenceRef?.kinds.includes(kind) ||
                 row.evidence.some((e) => e.entityType === kind) ||
                 (kind === "ability" && row.entity.kind === "ability")) &&
               (category === "all" ||

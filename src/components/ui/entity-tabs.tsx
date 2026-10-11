@@ -1,5 +1,6 @@
 "use client";
 
+import { useLinkStatus } from "next/link";
 import Link from "@/components/version-link";
 import { useTranslations } from "@/i18n/provider";
 import { usePathname } from "next/navigation";
@@ -32,10 +33,25 @@ export function EntityTabs() {
             aria-current={active ? "page" : undefined}
             className={`relative flex shrink-0 min-h-7 items-center px-1.5 text-xs font-semibold uppercase tracking-[0.14em] sm:px-3 ${active ? "bg-white/5 text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
           >
-            {t(entity.label)}
+            <TabLabel label={t(entity.label)} />
           </Link>
         );
       })}
     </nav>
+  );
+}
+
+function TabLabel({ label }: { label: string }) {
+  const { pending } = useLinkStatus();
+  return (
+    <span aria-busy={pending} data-tab-pending={pending || undefined}>
+      {label}
+      {pending && (
+        <span
+          aria-hidden
+          className="absolute inset-x-1.5 bottom-0 h-0.5 bg-[var(--text-primary)]"
+        />
+      )}
+    </span>
   );
 }

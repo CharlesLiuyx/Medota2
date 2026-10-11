@@ -35,7 +35,10 @@ export function useCatalogColumns(kind: AttributeOwnerKind) {
     }
   }, [kind]);
   const raw = useSyncExternalStore(subscribe, read, serverSnapshot);
-  const preference = useMemo(() => parseCatalogTablePreferences(raw), [raw]);
+  const preference = useMemo(
+    () => parseCatalogTablePreferences(raw, kind),
+    [raw, kind],
+  );
   const selected = preference.columns;
   const [saveFailed, setSaveFailed] = useState(false);
   const persist = (settings: typeof preference | null) => {

@@ -1,4 +1,5 @@
 "use client";
+import { preparedRoutingGrid } from "./prepared-routing";
 import { diagnosticText } from "@/i18n/diagnostics";
 import { useLocale } from "@/i18n/provider";
 import { mapPointLabel } from "@/presentation/map-labels";
@@ -15,7 +16,6 @@ import {
   routeColor,
   cellAt,
   routePosition,
-  withTrees,
   type Position,
   type RoutingResult,
   type RoutingProgress,
@@ -51,11 +51,7 @@ export function useRoutePlanner(data: MapViewData) {
   const grid = useMemo(
     () =>
       data.routing?.grid
-        ? withTrees(
-            data.routing.grid,
-            data.points.filter((p) => p.kind === "tree"),
-            data.routing.obstacles,
-          )
+        ? preparedRoutingGrid(data.routing, data.points)
         : null,
     [data.routing, data.points],
   );

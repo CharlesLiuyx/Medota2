@@ -69,6 +69,30 @@ describe("catalog column configuration", () => {
       "entity",
     ]);
   });
+  it("expands legacy hero roles in place while preserving hidden roles and frozen boundaries", async () => {
+    const { parseCatalogTablePreferences, HERO_ROLE_TABLE_COLUMNS } =
+      await import("@/presentation/catalog-table-columns");
+    const raw = JSON.stringify({
+      version: 1,
+      columns: ["entity", "roles", "category"],
+      frozenThrough: "roles",
+    });
+    expect(parseCatalogTablePreferences(raw, "hero")).toMatchObject({
+      columns: ["entity", ...HERO_ROLE_TABLE_COLUMNS, "category"],
+      frozenThrough: "role:initiator",
+    });
+    expect(parseCatalogTablePreferences(raw, "unit").columns).toEqual([
+      "entity",
+      "roles",
+      "category",
+    ]);
+    expect(
+      parseCatalogTablePreferences(
+        JSON.stringify({ version: 1, columns: ["entity", "category"] }),
+        "hero",
+      ).columns,
+    ).toEqual(["entity", "category"]);
+  });
   it("retains every owner value, raw field and owner-specific parameter without merging meanings", async () => {
     const { buildCatalogAttributeMatrix } =
       await import("@/presentation/catalog-table-columns");
@@ -128,6 +152,23 @@ describe("catalog column configuration", () => {
     )!;
     expect(matrix.values.axe[scoped.key]).toEqual(["1", "2"]);
     expect(matrix.values.sven[scoped.key]).toBeUndefined();
+    const entries = buildAttributeEntries([
+      relation,
+      { ...relation, owner: "sven", value: "24" },
+      { ...relation, field: "strength_gain", value: "2.8" },
+    ]);
+    const manifest = buildCatalogAttributeMatrix(entries, "hero", new Set());
+    expect(manifest.columns).toHaveLength(2);
+    expect(manifest.values).toEqual({});
+    const values = buildCatalogAttributeMatrix(
+      entries,
+      "hero",
+      new Set([base.key]),
+    );
+    expect(values.values).toEqual({
+      axe: { [base.key]: ["25"] },
+      sven: { [base.key]: ["24"] },
+    });
   });
 });
 

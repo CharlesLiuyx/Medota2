@@ -6,11 +6,20 @@ export function attachTableFrozenColumns(
   let frame = 0;
   const update = () => {
     frame = 0;
-    const headers = [...(table.tHead?.rows[0]?.cells ?? [])];
+    // Colgroup widths describe leaf columns even with multi-row grouped headers.
+    const columns = [
+      ...table.querySelectorAll<HTMLTableColElement>(":scope > colgroup > col"),
+    ];
+    const headers = columns.length
+      ? columns
+      : [...(table.tHead?.rows[0]?.cells ?? [])];
     const offsets: number[] = [];
     let width = 0;
     for (const header of headers) {
-      for (let i = 0; i < header.colSpan; i++) offsets.push(width);
+      const span =
+        header instanceof HTMLTableColElement ? header.span : header.colSpan;
+      const columnWidth = header.getBoundingClientRect().width / span;
+      for (let i = 0; i < span; i++) offsets.push(width + i * columnWidth);
       width += header.getBoundingClientRect().width;
     }
     table.style.setProperty(

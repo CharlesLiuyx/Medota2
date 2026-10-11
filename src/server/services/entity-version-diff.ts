@@ -3,6 +3,8 @@ import "server-only";
 import { cache } from "react";
 import {
   compareEntityVersions,
+  ENTITY_DIFF_VERSION,
+  type EntityVersionDiff,
   type EntityCoverage,
   type EntityKind,
   type EntityVersionSnapshot,
@@ -15,6 +17,9 @@ import { readUnitSnapshot } from "@/server/repositories/units";
 import { readMapPackage } from "@/server/map/store";
 import { getReleaseIndex } from "./releases";
 import { canonicalJsonSha256 } from "@/lib/hash";
+import { ResourceCache } from "@/lib/resource-cache";
+import { verifiedResourceScope } from "./resource-scope";
+import type { ActiveDatasetMeta } from "@/server/repositories/heroes";
 import { UNIT_ADAPTER_VERSION } from "@/importers/dota-vpk/unit-adapter";
 
 type Row = Record<string, unknown>;
@@ -33,19 +38,71 @@ const group = (
   reason,
 });
 
+const endpoints = new ResourceCache<EntityVersionSnapshot>({
+  entries: 6,
+  bytes: 96 * 1024 * 1024,
+});
+const comparisons = new ResourceCache<EntityVersionDiff>({
+  entries: 6,
+  bytes: 48 * 1024 * 1024,
+});
+const identities = new WeakMap<EntityVersionSnapshot, string>();
+const transient = new WeakSet<EntityVersionSnapshot>();
+const diffIdentities = new WeakMap<EntityVersionDiff, string>();
+export const entityDiffResourceId = (diff: EntityVersionDiff) =>
+  diffIdentities.get(diff)!;
+
 export const readEntityVersion = cache(async function readEntityVersion(
   id: string,
 ): Promise<EntityVersionSnapshot> {
+  // Mutable release admission and asset heads are resolved before the content cache.
   const release = (await getReleaseIndex()).releases.find((r) => r.id === id);
   if (!release) throw new Error("版本未收录或未获准浏览。");
+  const meta = release.catalogId
+    ? await getCatalogMeta(release.catalogId)
+    : null;
+  if (release.catalogId && !meta) throw new Error("版本未收录或未获准浏览。");
+  const [scope, units, pkg] = await Promise.all([
+    meta ? verifiedResourceScope() : Promise.resolve("map-only"),
+    meta ? readUnitSnapshot(meta) : Promise.resolve(null),
+    release.mapId ? readMapPackage(release.mapId) : Promise.resolve(null),
+  ]);
+  if (release.mapId && !pkg) throw new Error("所选地图包不可用。");
+  const key = JSON.stringify([
+    scope,
+    id,
+    meta?.datasetVersionId,
+    meta?.assetDatasetVersionId,
+    meta?.sourceCommit,
+    meta?.importerVersion,
+    meta?.schemaVersion,
+    pkg?.root,
+    pkg?.revision,
+    "entity-projection-v3",
+    UNIT_ADAPTER_VERSION,
+    units ? (units.provenance as { files: unknown }).files : null,
+  ]);
+  const snapshot = await endpoints.get(key, () =>
+    buildEntityVersion(id, meta, units, pkg),
+  );
+  identities.set(snapshot, key);
+  if (meta && !units) {
+    endpoints.delete(key);
+    transient.add(snapshot);
+  }
+  return snapshot;
+});
+async function buildEntityVersion(
+  id: string,
+  meta: ActiveDatasetMeta | null,
+  units: Awaited<ReturnType<typeof readUnitSnapshot>>,
+  pkg: Awaited<ReturnType<typeof readMapPackage>>,
+): Promise<EntityVersionSnapshot> {
   const snapshot: EntityVersionSnapshot = {
     version: id,
     implementation: { projection: "entity-projection-v3" },
     groups: {},
   };
-  const meta = release.catalogId
-    ? await getCatalogMeta(release.catalogId)
-    : null;
   if (meta) {
     const db = await getWebDatabase();
     snapshot.implementation.catalogImporter = meta.importerVersion;
@@ -287,7 +344,6 @@ export const readEntityVersion = cache(async function readEntityVersion(
       })),
       "图片绑定为独立资料变化；原始图片版本不代表游戏构建。",
     );
-    const units = await readUnitSnapshot(meta);
     if (units) {
       snapshot.implementation.unitAdapter = UNIT_ADAPTER_VERSION;
       const p = units.provenance as {
@@ -322,9 +378,7 @@ export const readEntityVersion = cache(async function readEntityVersion(
         entities: [],
       };
   }
-  if (release.mapId) {
-    const pkg = await readMapPackage(release.mapId);
-    if (!pkg) throw new Error("所选地图包不可用。");
+  if (pkg) {
     const p = pkg.map.provenance;
     snapshot.implementation.mapImporter = p.importer_version;
     snapshot.implementation.mapSchema = p.schema_version;
@@ -418,11 +472,21 @@ export const readEntityVersion = cache(async function readEntityVersion(
       "原始结构范围随Catalog／地图覆盖变化；缺少一侧来源不能判作删除。";
   }
   return snapshot;
-});
+}
 export async function getEntityVersionDiff(from: string, to: string) {
   const snapshots = await Promise.all([
     readEntityVersion(from),
     readEntityVersion(to),
   ]);
-  return compareEntityVersions(snapshots[0], snapshots[1]);
+  const resourceId = canonicalJsonSha256([
+    ENTITY_DIFF_VERSION,
+    identities.get(snapshots[0]),
+    identities.get(snapshots[1]),
+  ]);
+  const load = async () => compareEntityVersions(snapshots[0], snapshots[1]);
+  const diff = snapshots.some((snapshot) => transient.has(snapshot))
+    ? await load()
+    : await comparisons.get(resourceId, load);
+  diffIdentities.set(diff, resourceId);
+  return diff;
 }

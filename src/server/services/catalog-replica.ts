@@ -1,4 +1,6 @@
 import "server-only";
+import { ResourceCache } from "@/lib/resource-cache";
+import { verifiedResourceScope } from "./resource-scope";
 import { createHash } from "node:crypto";
 import {
   REPLICA_SCHEMA,
@@ -17,7 +19,10 @@ import { parseAbilityFilters } from "./ability-filters";
 import { getHeroSearchIndex, getAbilitySearchIndex } from "./catalog-search";
 import { getWebDatabase } from "@/server/db/client";
 
-const replicas = new Map<string, Promise<CatalogReplica>>();
+const replicas = new ResourceCache<CatalogReplica>({
+  entries: 8,
+  bytes: 48 * 1024 * 1024,
+});
 export async function getCatalogReplica(
   identity: ReplicaIdentity,
 ): Promise<CatalogReplica> {
@@ -25,18 +30,14 @@ export async function getCatalogReplica(
     identity.datasetVersionId,
     identity.assetDatasetVersionId,
   );
-  const key = JSON.stringify(identity);
-  let pending = replicas.get(key);
-  if (!pending) {
-    pending = build(identity);
-    replicas.set(key, pending);
-    if (replicas.size > 8) replicas.delete(replicas.keys().next().value!);
-    void pending.catch(() => {
-      if (replicas.get(key) === pending) replicas.delete(key);
-    });
-  }
-  return pending;
+  const key = JSON.stringify([
+    await verifiedResourceScope(),
+    REPLICA_SCHEMA,
+    identity,
+  ]);
+  return replicas.get(key, () => build(identity));
 }
+
 async function build(identity: ReplicaIdentity): Promise<CatalogReplica> {
   const request = {
     catalogDatasetVersionId: identity.datasetVersionId,

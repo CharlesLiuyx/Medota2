@@ -1,8 +1,14 @@
+import { ResourceCache } from "@/lib/resource-cache";
 import { readFile } from "node:fs/promises";
 import { mapPackageSchema } from "@/domain/map/schema";
 import { VISION_SCENE_FORMAT, type VisionScene } from "@/domain/map/vision";
 import { checkedFile, insideFile, sha256 } from "@/importers/dota-map/files";
 import { parseHeightGrid, parseGridNav } from "@/importers/dota-map/terrain";
+
+const prepared = new ResourceCache<ReturnType<typeof prepareScene>>({
+  entries: 2,
+  bytes: 48 * 1024 * 1024,
+});
 
 /** Prepare an explicitly selected package for offline or Web use; no database or package write. */
 export async function readVisionScene(root: string) {
@@ -12,13 +18,39 @@ export async function readVisionScene(root: string) {
   const navigationEntry = map.provenance.files.find(
     (f) => f.path === navigationPath,
   );
-  const navigation = navigationEntry
-    ? parseGridNav(
-        await checkedFile(root, `source/${navigationPath}`, [
+  const path = "raw/maps/dota.vhcg";
+  const entry = map.provenance.files.find((f) => f.path === path);
+  const [navigationBytes, terrainBytes] = await Promise.all([
+    navigationEntry
+      ? checkedFile(root, `source/${navigationPath}`, [
           { path: `source/${navigationPath}`, sha256: navigationEntry.sha256 },
-        ]),
-      )
-    : null;
+        ])
+      : null,
+    entry
+      ? checkedFile(root, `source/${path}`, [
+          { path: `source/${path}`, sha256: entry.sha256 },
+        ])
+      : null,
+  ]);
+  // Source validation is repeated before looking up a pure prepared result.
+  return prepared.get(
+    `${root}:${sha256(bytes)}:${VISION_SCENE_FORMAT}`,
+    async () => prepareScene(bytes, map, navigationBytes, terrainBytes),
+  );
+}
+function prepareScene(
+  bytes: Buffer,
+  map: import("@/domain/map/schema").MapPackage,
+  navigationBytes: Buffer | null,
+  terrainBytes: Buffer | null,
+) {
+  const navigationPath = "raw/maps/dota.gnv";
+  const navigationEntry = map.provenance.files.find(
+    (f) => f.path === navigationPath,
+  );
+  const path = "raw/maps/dota.vhcg";
+  const entry = map.provenance.files.find((f) => f.path === path);
+  const navigation = navigationBytes ? parseGridNav(navigationBytes) : null;
   // Coverage, placement and collision cells use the native navigation lattice.
   const bounds = navigation
     ? {
@@ -36,15 +68,7 @@ export async function readVisionScene(root: string) {
           Math.ceil((map.bounds.maxY - navigation.bounds.minY) / 64) * 64,
       }
     : map.bounds;
-  const path = "raw/maps/dota.vhcg";
-  const entry = map.provenance.files.find((f) => f.path === path);
-  const terrain = entry
-    ? parseHeightGrid(
-        await checkedFile(root, `source/${path}`, [
-          { path: `source/${path}`, sha256: entry.sha256 },
-        ]),
-      )
-    : null;
+  const terrain = terrainBytes ? parseHeightGrid(terrainBytes) : null;
   // Native detail samples define nearest-neighbour Voronoi cells. Preserve that
   // lattice, including its half-step boundary, instead of shifting it to image bounds.
   const cell = terrain ? terrain.cell / (terrain.samples - 1) : 64;

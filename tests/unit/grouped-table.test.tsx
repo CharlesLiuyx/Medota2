@@ -1,5 +1,11 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import {
   GroupedTable,
@@ -36,6 +42,57 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+
+it("windows wide catalog columns while preserving frozen cells and clipped horizontal merges", async () => {
+  type Row = { key: string };
+  type Group = { key: string; rows: Row[] };
+  const columns: GroupedTableColumn<Group, Row>[] = Array.from(
+    { length: 100 },
+    (_, index) => ({
+      key: `c${index}`,
+      header: `Column ${index}`,
+      width: 100,
+      mergeKey: () => (index > 0 && index < 99 ? "empty" : undefined),
+      render: () =>
+        index === 0 ? "Frozen object" : index === 99 ? "Last value" : "—",
+    }),
+  );
+  const { container } = render(
+    <GroupedTable
+      groups={[{ key: "one", rows: [{ key: "one" }] }]}
+      columns={columns}
+      identity="wide"
+      label="Wide catalog"
+      rowKey={(row) => row.key}
+      frozenCount={1}
+      windowColumns
+    />,
+  );
+  const table = screen.getByRole("table");
+  expect(table.getAttribute("aria-colcount")).toBe("100");
+  expect(screen.queryByRole("columnheader", { name: "Column 99" })).toBeNull();
+  expect(screen.getByText("Frozen object")).toBeTruthy();
+  const scroll = container.querySelector<HTMLElement>("[data-column-window]")!;
+  scroll.scrollLeft = 9800;
+  fireEvent.scroll(scroll);
+  await waitFor(() =>
+    expect(
+      screen.getByRole("columnheader", { name: "Column 99" }),
+    ).toBeTruthy(),
+  );
+  expect(screen.getByText("Last value")).toBeTruthy();
+  expect(screen.getByText("Frozen object")).toBeTruthy();
+  expect(screen.getAllByRole("columnheader").length).toBeLessThan(20);
+  const row = table.querySelector<HTMLTableRowElement>(
+    "tr[data-infinite-list-item]",
+  )!;
+  expect([...row.cells].reduce((sum, cell) => sum + cell.colSpan, 0)).toBe(100);
+  const clipped = row.querySelector<HTMLTableCellElement>(
+    '[data-table-column="c1"]',
+  )!;
+  expect(Number(clipped.getAttribute("aria-colindex"))).toBeGreaterThan(90);
+  expect(clipped.textContent).toBe("—");
 });
 
 it("renders multiple arbitrary items and property rows, then rebuilds merged cells after filtering", async () => {

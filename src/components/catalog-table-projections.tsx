@@ -1,5 +1,6 @@
 "use client";
 
+import { HERO_ROLES } from "@/domain/heroes";
 import type { ReactNode } from "react";
 import { attributeId } from "@/domain/attributes";
 import { catalogAttributeColumnKey } from "@/presentation/catalog-table-columns";
@@ -15,7 +16,7 @@ import {
   UNIT_STATS,
   type UnitDefinition,
 } from "@/domain/units";
-import { ITEM_CATEGORIES, type ItemDefinition } from "@/domain/items";
+import { ITEM_CATEGORIES, type ItemCatalogRow } from "@/domain/items";
 import {
   labels,
   numbers,
@@ -71,25 +72,7 @@ function stat(
       attributeId(kind, owner, key, labelToken),
       key,
     ),
-    ...row(
-      key,
-      label,
-      value === null ? (
-        "—"
-      ) : (
-        <AttributeLink
-          kind={kind}
-          owner={owner}
-          field={key}
-          labelToken={labelToken}
-          label={label}
-          icon={false}
-        >
-          {value ?? "—"}
-        </AttributeLink>
-      ),
-      catalogNumericValue(value),
-    ),
+    ...row(key, label, value ?? "—", catalogNumericValue(value)),
   };
 }
 const asset = (kind: string, key: string, version: string) =>
@@ -105,12 +88,12 @@ export function heroTableEntry(
   const category = t(labels[hero.primaryAttribute]);
   const rows = [
     row("attack", t("攻击类型"), t(labels[hero.attackType])),
-    row(
-      "roles",
-      t("角色"),
-      hero.roles
-        .map(({ role, level }) => `${t(labels[role] ?? role)} ${level}`)
-        .join(" · ") || "—",
+    ...HERO_ROLES.map((role) =>
+      row(
+        `role:${role}`,
+        t(labels[role]),
+        hero.roles.find((value) => value.role === role)?.level ?? 0,
+      ),
     ),
     stat(
       "hero",
@@ -323,7 +306,7 @@ export function unitTableEntry(
 }
 
 export function itemTableEntry(
-  item: ItemDefinition,
+  item: ItemCatalogRow,
   version: string | null,
   en: boolean,
   t: Translator,

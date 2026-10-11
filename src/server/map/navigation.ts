@@ -1,3 +1,4 @@
+import { ResourceCache } from "@/lib/resource-cache";
 import hullRules from "@/importers/dota-map/hulls-6944.json";
 import { parseCurrents } from "@/importers/dota-map/currents";
 import { readFile } from "node:fs/promises";
@@ -7,6 +8,15 @@ import { parseKeyValues } from "@/importers/keyvalues/parser";
 import type { MapPackage, MapViewData } from "@/domain/map/schema";
 import type { KeyValuesObject } from "@/importers/keyvalues/parser";
 import type { RoutingData } from "@/domain/map/routing";
+
+type PreparedRouting = RoutingData & {
+  watcherRules?: MapViewData["watcherRules"];
+  visions?: MapViewData["visions"];
+};
+const prepared = new ResourceCache<PreparedRouting>({
+  entries: 2,
+  bytes: 16 * 1024 * 1024,
+});
 
 /** Derive only from checksum-bound sources in the selected immutable dataset. */
 export async function readRoutingData(
@@ -26,6 +36,26 @@ export async function readRoutingData(
       throw new Error(`Navigation source checksum mismatch: ${path}`);
     return bytes;
   };
+  const paths = [
+    "raw/maps/dota.gnv",
+    "economy/scripts/npc/npc_abilities.txt",
+    "economy/scripts/npc/npc_units.txt",
+    "entities/maps/dota/entities/default_ents.vents",
+  ];
+  const checked = new Map(
+    await Promise.all(
+      paths.map(async (path) => [path, await source(path)] as const),
+    ),
+  );
+  const key = `${root}:routing/2:${sha256(Buffer.from(JSON.stringify(map)))}`;
+  return prepared.get(key, () =>
+    prepareRouting(map, async (path) => checked.get(path) ?? null),
+  );
+}
+async function prepareRouting(
+  map: MapPackage,
+  source: (path: string) => Promise<Buffer | null>,
+): Promise<PreparedRouting> {
   const raw = await source("raw/maps/dota.gnv");
   const nav = raw ? parseGridNav(raw) : null;
   const abilities = await source("economy/scripts/npc/npc_abilities.txt");

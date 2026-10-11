@@ -36,7 +36,7 @@ for (const [entity, realQuery] of [
   ["units", "roshan"],
   ["items", "blink"],
 ] as const) {
-  test(`${entity}: grid and table preserve filters, navigation and mobile layout`, async ({
+  test(`${entity}: grid and table preserve search, navigation and language`, async ({
     page,
     request,
   }) => {
@@ -53,6 +53,69 @@ for (const [entity, realQuery] of [
     await table.click();
     await expect(page.getByRole("table")).toBeVisible();
     await expect(page).toHaveURL(/view=table/);
+    const search = page.locator('input[name="q"]');
+    await search.fill(query);
+    await expect(page).toHaveURL(new RegExp(`q=${query}`));
+    await expect(table).toHaveAttribute("aria-pressed", "true");
+    const first = page
+      .locator(`[data-entity-catalog-table] table a[href^="/${entity}/"]`)
+      .first();
+    await expect(first).toBeVisible();
+    const href = await first.getAttribute("href");
+    await first.hover();
+    await expect(page.getByRole("tooltip").first()).toBeVisible();
+    await page.keyboard.press("Escape");
+    await first.click();
+    await expect(page).toHaveURL(new RegExp(`/${entity}/`));
+    expect(href).toContain(`/${entity}/`);
+    await page.goBack();
+    await expect(table).toHaveAttribute("aria-pressed", "true");
+    await expect(search).toHaveValue(query);
+    await page.reload();
+    await expect(page.getByRole("table")).toBeVisible();
+    await expect(search).toHaveValue(query);
+    await page
+      .getByRole("button", { name: /^清除(?:筛选|全部| \d+)$/ })
+      .click();
+    await expect(search).toHaveValue("");
+    await expect(table).toHaveAttribute("aria-pressed", "true");
+    await search.fill("zzzznotanentity");
+    await expect(
+      page.getByText("没有符合条件的结果。", { exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("button", { name: /^清除(?:筛选|全部| \d+)$/ })
+      .click();
+    await expect(page.getByRole("table")).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(table).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth,
+      ),
+    ).toBe(true);
+    await grid.click();
+    await expect(page.getByRole("table")).toHaveCount(0);
+    await expect(grid).toHaveAttribute("aria-pressed", "true");
+    await page.goto(`/${entity}?lang=en&view=table&q=${query}`);
+    await expect(
+      page.getByRole("button", { name: "Table view", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      page.getByRole("columnheader", { name: /Entity/ }),
+    ).toBeVisible();
+  });
+  test(`${entity}: sorting and frozen headers stay aligned on mobile`, async ({
+    page,
+    request,
+  }) => {
+    const fixture = await usesCatalogFixture(request);
+    await page.goto(`/${entity}?lang=zh-CN&view=table`);
+    if (fixture && (entity === "units" || entity === "items")) {
+      await expectMissingFixtureSource(page, entity);
+      return;
+    }
+    await expect(page.getByRole("table")).toBeVisible();
     const sortLabel =
       entity === "heroes"
         ? "移动速度"
@@ -85,9 +148,9 @@ for (const [entity, realQuery] of [
     if (entity === "heroes") {
       await expect(
         page.locator("[data-entity-catalog-table] thead th"),
-      ).toHaveCount(19);
+      ).toHaveCount(27);
       const defaultFields = await page
-        .locator("[data-entity-catalog-table] thead th")
+        .locator("[data-entity-catalog-table] thead th[data-catalog-column]")
         .evaluateAll((headers) =>
           headers.map((header) => {
             const key = header.getAttribute("data-catalog-column")!;
@@ -115,7 +178,14 @@ for (const [entity, realQuery] of [
         "base_attack_speed",
         "attack_rate",
         "attack_range",
-        "roles",
+        "role:carry",
+        "role:support",
+        "role:nuker",
+        "role:disabler",
+        "role:durable",
+        "role:escape",
+        "role:pusher",
+        "role:initiator",
       ]);
       await categoryHeader.hover();
       await categoryHeader
@@ -143,16 +213,52 @@ for (const [entity, realQuery] of [
       const pinned = page.locator(
         "[data-entity-catalog-table] [data-table-header-content][data-table-pinned]",
       );
-      await expect(pinned).toHaveCount(19);
+      await expect(pinned).toHaveCount(27);
       await expect
         .poll(async () =>
           pinned.evaluateAll((headers) => {
-            const bounds = headers.map((header) =>
-              header.getBoundingClientRect(),
-            );
+            const bounds = headers
+              .filter(
+                (header) =>
+                  !header
+                    .closest("th")
+                    ?.hasAttribute("data-table-header-group"),
+              )
+              .map((header) => header.getBoundingClientRect());
+            const topBounds = headers
+              .filter(
+                (header) =>
+                  !header
+                    .closest("th")
+                    ?.getAttribute("data-catalog-column")
+                    ?.startsWith("role:"),
+              )
+              .map((header) => header.getBoundingClientRect());
+            const parents = headers
+              .filter((header) =>
+                header.closest("th")?.hasAttribute("data-table-header-group"),
+              )
+              .map((header) => header.getBoundingClientRect());
+            const children = headers
+              .filter((header) =>
+                header
+                  .closest("th")
+                  ?.getAttribute("data-catalog-column")
+                  ?.startsWith("role:"),
+              )
+              .map((header) => header.getBoundingClientRect());
+            if (
+              parents.length &&
+              !parents.every((parent) =>
+                children.every(
+                  (child) => Math.abs(parent.bottom - child.top) < 1,
+                ),
+              )
+            )
+              return false;
             return (
-              Math.max(...bounds.map((b) => b.top)) -
-                Math.min(...bounds.map((b) => b.top)) <
+              Math.max(...topBounds.map((b) => b.top)) -
+                Math.min(...topBounds.map((b) => b.top)) <
                 1 &&
               Math.max(...bounds.map((b) => b.bottom)) -
                 Math.min(...bounds.map((b) => b.bottom)) <
@@ -174,9 +280,9 @@ for (const [entity, realQuery] of [
     );
     const readValues = () =>
       page.locator("[data-entity-catalog-table] table").evaluate((table) => {
-        const index = [...table.querySelectorAll("thead th")].findIndex(
-          (cell) => cell.getAttribute("aria-sort") !== "none",
-        );
+        const index = [
+          ...table.querySelectorAll("thead th[data-catalog-column]"),
+        ].findIndex((cell) => cell.getAttribute("aria-sort") !== "none");
         return [...table.querySelectorAll("tr[data-catalog-entity]")]
           .map(
             (row) =>
@@ -231,42 +337,7 @@ for (const [entity, realQuery] of [
         path: "output/playwright/entity-table-heroes.png",
       });
     }
-    const search = page.locator('input[name="q"]');
-    await search.fill(query);
-    await expect(page).toHaveURL(new RegExp(`q=${query}`));
-    await expect(table).toHaveAttribute("aria-pressed", "true");
-    const first = page
-      .locator(`[data-entity-catalog-table] table a[href^="/${entity}/"]`)
-      .first();
-    await expect(first).toBeVisible();
-    const href = await first.getAttribute("href");
-    await first.hover();
-    await expect(page.getByRole("tooltip").first()).toBeVisible();
-    await page.keyboard.press("Escape");
-    await first.click();
-    await expect(page).toHaveURL(new RegExp(`/${entity}/`));
-    expect(href).toContain(`/${entity}/`);
-    await page.goBack();
-    await expect(table).toHaveAttribute("aria-pressed", "true");
-    await expect(search).toHaveValue(query);
-    await page.reload();
-    await expect(page.getByRole("table")).toBeVisible();
-    await expect(search).toHaveValue(query);
-    await page
-      .getByRole("button", { name: /^清除(?:筛选|全部| \d+)$/ })
-      .click();
-    await expect(search).toHaveValue("");
-    await expect(table).toHaveAttribute("aria-pressed", "true");
-    await search.fill("zzzznotanentity");
-    await expect(
-      page.getByText("没有符合条件的结果。", { exact: true }),
-    ).toBeVisible();
-    await page
-      .getByRole("button", { name: /^清除(?:筛选|全部| \d+)$/ })
-      .click();
-    await expect(page.getByRole("table")).toBeVisible();
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect(table).toBeVisible();
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -307,15 +378,51 @@ for (const [entity, realQuery] of [
         page
           .locator("[data-entity-catalog-table] [data-table-header-content]")
           .evaluateAll((headers) => {
-            const bounds = headers.map((header) =>
-              header.getBoundingClientRect(),
-            );
+            const bounds = headers
+              .filter(
+                (header) =>
+                  !header
+                    .closest("th")
+                    ?.hasAttribute("data-table-header-group"),
+              )
+              .map((header) => header.getBoundingClientRect());
+            const topBounds = headers
+              .filter(
+                (header) =>
+                  !header
+                    .closest("th")
+                    ?.getAttribute("data-catalog-column")
+                    ?.startsWith("role:"),
+              )
+              .map((header) => header.getBoundingClientRect());
+            const parents = headers
+              .filter((header) =>
+                header.closest("th")?.hasAttribute("data-table-header-group"),
+              )
+              .map((header) => header.getBoundingClientRect());
+            const children = headers
+              .filter((header) =>
+                header
+                  .closest("th")
+                  ?.getAttribute("data-catalog-column")
+                  ?.startsWith("role:"),
+              )
+              .map((header) => header.getBoundingClientRect());
+            if (
+              parents.length &&
+              !parents.every((parent) =>
+                children.every(
+                  (child) => Math.abs(parent.bottom - child.top) < 1,
+                ),
+              )
+            )
+              return false;
             return (
               headers.every((header) =>
                 header.hasAttribute("data-table-pinned"),
               ) &&
-              Math.max(...bounds.map((b) => b.top)) -
-                Math.min(...bounds.map((b) => b.top)) <
+              Math.max(...topBounds.map((b) => b.top)) -
+                Math.min(...topBounds.map((b) => b.top)) <
                 1 &&
               Math.max(...bounds.map((b) => b.bottom)) -
                 Math.min(...bounds.map((b) => b.bottom)) <
@@ -325,16 +432,6 @@ for (const [entity, realQuery] of [
       )
       .toBe(true);
     await page.evaluate(() => window.scrollTo(0, 0));
-    await grid.click();
-    await expect(page.getByRole("table")).toHaveCount(0);
-    await expect(grid).toHaveAttribute("aria-pressed", "true");
-    await page.goto(`/${entity}?lang=en&view=table&q=${query}`);
-    await expect(
-      page.getByRole("button", { name: "Table view", exact: true }),
-    ).toHaveAttribute("aria-pressed", "true");
-    await expect(
-      page.getByRole("columnheader", { name: /Entity/ }),
-    ).toBeVisible();
   });
 }
 
@@ -357,6 +454,7 @@ for (const [entity, kind, field, realQuery] of [
     }
     const response = page.waitForResponse(
       (response) =>
+        response.request().method() === "GET" &&
         response.url().includes(`/api/catalog/table-attributes?`) &&
         response.url().includes(`kind=${kind}`),
     );
@@ -378,7 +476,7 @@ for (const [entity, kind, field, realQuery] of [
         position!.y + position!.height / 2 - heading!.y - heading!.height / 2,
       ),
     ).toBeLessThan(5);
-    const originalCount = await table.locator("thead th").count();
+    const originalCount = await table.locator("colgroup col").count();
     await chooser.click();
     await page.getByRole("checkbox", { name: "分类", exact: true }).uncheck();
     await page
@@ -390,7 +488,7 @@ for (const [entity, kind, field, realQuery] of [
     await expect(option).toBeVisible();
     await option.check();
     await page.keyboard.press("Escape");
-    await expect(table.locator("thead th")).toHaveCount(originalCount);
+    await expect(table.locator("colgroup col")).toHaveCount(originalCount);
     const extraSort = page.getByRole("button", {
       name: `按${extra.zh}升序排序`,
       exact: true,
@@ -407,7 +505,7 @@ for (const [entity, kind, field, realQuery] of [
     ).toHaveCount(0);
     await page.locator('input[name="q"]').fill(query);
     await expect(page).toHaveURL(new RegExp(`q=${query}`));
-    await expect(table.locator("thead th")).toHaveCount(originalCount);
+    await expect(table.locator("colgroup col")).toHaveCount(originalCount);
     await chooser.click();
     await page
       .getByRole("searchbox", { name: "搜索列", exact: true })
@@ -454,7 +552,7 @@ for (const [entity, kind, field, realQuery] of [
       }),
     ).toHaveCount(0);
     await page.reload();
-    await expect(table.locator("thead th")).toHaveCount(originalCount);
+    await expect(table.locator("colgroup col")).toHaveCount(originalCount);
     expect(
       await page.evaluate(
         (kind) => localStorage.getItem(`medota2:catalog-columns:v1:${kind}`),
@@ -479,6 +577,13 @@ test("heroes: column menus, float precision, attribute effects and long-press or
   const growthValue = fixture ? 2 : 3;
   const response = page.waitForResponse(
     (response) =>
+      response.request().method() === "GET" &&
+      response.url().includes("/api/catalog/table-attributes?") &&
+      response.url().includes("kind=hero"),
+  );
+  const valuesResponse = page.waitForResponse(
+    (response) =>
+      response.request().method() === "POST" &&
       response.url().includes("/api/catalog/table-attributes?") &&
       response.url().includes("kind=hero"),
   );
@@ -497,8 +602,9 @@ test("heroes: column menus, float precision, attribute effects and long-press or
     .fill("strength_gain");
   await page.locator(`[data-column-key=${JSON.stringify(growth.key)}]`).check();
   await page.keyboard.press("Escape");
+  const valueData = await (await valuesResponse).json();
   const owner = Object.entries(
-    data.values as Record<string, Record<string, string[]>>,
+    valueData.values as Record<string, Record<string, string[]>>,
   ).find(([, fields]) =>
     fields[growth.key]?.some((value) =>
       new RegExp(`^${growthValue}\\.0+$`, "u").test(value),
@@ -712,4 +818,110 @@ test("heroes: shared dropdown opens synchronously without rebuilding table rows"
   });
   expect(metrics.samples.every((sample) => sample.visible)).toBe(true);
   expect(metrics.rowMutations).toBe(0);
+});
+
+test("heroes: role subcolumns expand saved preferences, fill zeros and sort numerically", async ({
+  page,
+  request,
+}) => {
+  const fixture = await usesCatalogFixture(request);
+  await page.goto("/heroes?lang=zh-CN&view=table");
+  await page.evaluate(() =>
+    localStorage.setItem(
+      "medota2:catalog-columns:v1:hero",
+      JSON.stringify({
+        version: 1,
+        columns: ["entity", "roles"],
+        frozenThrough: "role:support",
+      }),
+    ),
+  );
+  await page.reload();
+  const table = page.locator("[data-entity-catalog-table] table");
+  await expect(table.locator("thead tr")).toHaveCount(2);
+  await expect(table.locator('[data-table-header-group="roles"]')).toHaveCount(
+    2,
+  );
+  await expect(
+    table.locator('[data-table-header-group="roles"]').first(),
+  ).toHaveAttribute("colspan", "2");
+  await expect(
+    table.locator('th[data-catalog-column="entity"]'),
+  ).toHaveAttribute("rowspan", "2");
+  await page
+    .locator('input[name="q"]')
+    .fill(fixture ? "antimage" : "terrorblade");
+  const row = table.locator(
+    `[data-catalog-entity="npc_dota_hero_${fixture ? "antimage" : "terrorblade"}"]`,
+  );
+  await expect(row).toBeVisible();
+  await expect(row.locator('[data-table-column^="role:"]')).toHaveText(
+    fixture
+      ? ["3", "0", "1", "0", "0", "3", "0", "0"]
+      : ["3", "0", "1", "0", "0", "0", "2", "0"],
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await table.locator("..").evaluate((node) => {
+    node.scrollLeft = node.scrollWidth;
+  });
+  await expect
+    .poll(async () => {
+      const headers = await table
+        .locator("th[data-catalog-column][data-table-frozen]")
+        .evaluateAll((cells) =>
+          cells.map((cell) => Math.round(cell.getBoundingClientRect().left)),
+        );
+      const body = await row
+        .locator("[data-table-frozen]")
+        .evaluateAll((cells) =>
+          cells.map((cell) => Math.round(cell.getBoundingClientRect().left)),
+        );
+      return (
+        JSON.stringify(headers) === JSON.stringify(body) &&
+        new Set(headers).size === 3
+      );
+    })
+    .toBe(true);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.locator('input[name="q"]').fill("");
+  await page
+    .getByRole("button", { name: "按核心升序排序", exact: true })
+    .click();
+  const values = () =>
+    table
+      .locator("tr[data-catalog-entity]")
+      .evaluateAll((rows) =>
+        rows.map((row) =>
+          Number(
+            row.querySelector('[data-table-column="role:carry"]')?.textContent,
+          ),
+        ),
+      );
+  await expect
+    .poll(async () => {
+      const levels = await values();
+      return (
+        levels.length > 1 && levels.every((v, i) => !i || v >= levels[i - 1])
+      );
+    })
+    .toBe(true);
+  await page
+    .getByRole("button", { name: "按核心降序排序", exact: true })
+    .click();
+  await expect
+    .poll(async () => {
+      const levels = await values();
+      return (
+        levels.length > 1 && levels.every((v, i) => !i || v <= levels[i - 1])
+      );
+    })
+    .toBe(true);
+  await page.screenshot({ path: "output/playwright/hero-role-subcolumns.png" });
+  await page.goto("/heroes?lang=en&view=table");
+  await expect(
+    table.locator('[data-table-header-group="roles"]').first(),
+  ).toHaveText("Role");
+  await expect(
+    table.locator('th[data-catalog-column="role:carry"]'),
+  ).toContainText("Carry");
 });

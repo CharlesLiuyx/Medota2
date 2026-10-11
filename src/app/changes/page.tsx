@@ -8,7 +8,7 @@ import { getRequestLocale } from "@/i18n/server";
 import { canonicalReleaseId } from "@/domain/releases";
 import { ChangesAudit } from "@/components/changes-audit";
 import { ChangesResults } from "@/components/changes-results";
-import { changeTableGroups } from "@/presentation/changes-table";
+import { prepareChangeResources } from "@/server/services/change-resources";
 import { ChangesFilters } from "@/components/changes-filters";
 import { PageInfoTooltip } from "@/components/ui/page-info-tooltip";
 import type { Metadata } from "next";
@@ -103,7 +103,7 @@ async function renderChangesPage(searchParams: Promise<SearchParams>) {
     diff.changes,
     locale,
   );
-  const tableGroups = changeTableGroups(view.groups, locale);
+  const resources = prepareChangeResources(diff, view, locale);
   const beforeLabel = from.patch ?? t("起始版本"),
     afterLabel = selected.patch ?? t("所选版本");
   return (
@@ -154,7 +154,7 @@ async function renderChangesPage(searchParams: Promise<SearchParams>) {
         ]}
       />
       <ChangesResults
-        groups={tableGroups}
+        groups={resources.groups}
         references={view.references}
         identity={`${from.id}:${selected.id}:${locale}`}
         before={beforeLabel}
@@ -205,8 +205,8 @@ async function renderChangesPage(searchParams: Promise<SearchParams>) {
               </details>
             )}
             <ChangesAudit
-              technical={view.technical}
-              unresolved={diff.unresolved}
+              resource={resources.auditUrl}
+              count={view.technical.length + diff.unresolved.length}
             />
           </PageInfoTooltip>
         }

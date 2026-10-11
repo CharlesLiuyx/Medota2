@@ -58,6 +58,7 @@
 
 | 文档                                                                        | 状态       | 负责内容                                           |
 | --------------------------------------------------------------------------- | ---------- | -------------------------------------------------- |
+| [Tab与缓存实施](work/tab-cache-performance.md)                              | active     | 导航响应、版本资源复用与性能验收                   |
 | [当前工作](current.md)                                                      | active     | 活动状态与接手                                     |
 | [环境登记](development-environments.md)                                     | active     | 机器能力、限制与推荐                               |
 | [同步运行手册](development-data-sync-runbook.md)                            | active     | 获取、发布、恢复操作                               |
@@ -126,6 +127,8 @@
 | [属性原变量中文命名](history/2026-10-08-attribute-field-chinese-names.md)   | historical | GPT-6-Luna并行复核全部原变量中文标签与验证         |
 | [四类图鉴表格视图](history/2026-10-10-catalog-table-views.md)               | historical | 属性列、全量排序、URL恢复与本机浏览验收            |
 | [表格与菜单交互迭代](history/2026-10-10-table-interactions.md)              | historical | 全站冻结、列宽换行、共用菜单与按压反馈验收         |
+| [英雄角色二级列](history/2026-10-10-hero-role-columns.md)                   | reference  | 八类角色补0、偏好兼容、分层表头与本机验收          |
+| [Tab加载与缓存优化验收](history/2026-10-11-tab-cache-performance.md)        | reference  | 阶段0–3、版本缓存边界、1320次采样与剩余性能目标    |
 | [Fixture失败与架构修复](history/2026-10-10-fixture-repair.md)               | historical | 嵌套悬浮卡、视觉门禁、参数及验证收据               |
 | [变化表格与影响排序](history/2026-10-08-changes-table.md)                   | historical | 紧凑分类、实体简述卡、语义方向与连续虚拟滚动验收   |
 | [图鉴统计与即时搜索](history/2026-10-08-tab-search-tooltips.md)             | historical | 属性数量、变化实时搜索、页头说明提示与本机验证     |
@@ -142,6 +145,7 @@
 | [地图英雄显示与悬停](history/2026-10-09-map-hero-interactions.md)           | reference  | 英雄占格、选择、悬停放大、同版视野／移速及验证     |
 | [2026-10-08全部本地变更发布](history/2026-10-08-main-publication.md)        | historical | 本轮组合检查、完整快照、精确提交CI及接手边界       |
 | [2026-10-09全部本地变更发布](history/2026-10-09-main-publication.md)        | reference  | 地图组合检查、v3资产快照、精确提交CI及接手边界     |
+| [2026-10-10全部本地变更发布](history/2026-10-10-main-publication.md)        | reference  | 图鉴表格、全站交互、Fixture发布修复与数据交接      |
 | [地图Web与品牌发布](history/2026-10-08-map-web-publication.md)              | historical | 近似视野、营地、英雄图标、快照与语言旅程CI修复     |
 | [发布流程优化](history/2026-10-07-publication-optimization.md)              | reference  | 候选门禁、fixture前置、阶段收据、CI续接与验证边界  |
 | [数据库读取稳定性](history/2026-10-08-database-read-resilience.md)          | reference  | 变化页池等待超时、端点快照、连接恢复及本机测量     |

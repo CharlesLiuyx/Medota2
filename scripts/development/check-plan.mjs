@@ -417,10 +417,11 @@ export function createPlan(inputPaths) {
         [...allRuntime, ...unitFiles, "vitest.config.ts"],
       );
   }
+  // Grouped role headings also require catalog scrolling and column interactions.
   const journeys = new Set();
   if (
     flowPaths.some((path) =>
-      /(?:catalog-view|catalog-table|attribute-summary-details|attribute-value-effects|api\/attributes\/preview)/.test(
+      /(?:catalog-view|catalog-table|grouped-table|table-frozen-columns|attribute-summary-details|attribute-value-effects|api\/attributes\/preview)/.test(
         path,
       ),
     )
@@ -440,11 +441,26 @@ export function createPlan(inputPaths) {
     )
   )
     journeys.add("map");
-  const shared = flowPaths.some((path) => sharedUi.test(path));
+  const sharedResources = flowPaths.some((path) =>
+    /^src\/(?:browser\/(?:resources|persistent-resources|catalog-replica)\.ts|lib\/resource-cache\.ts|server\/services\/resource-scope\.ts)$/.test(
+      path,
+    ),
+  );
+  const shared =
+    flowPaths.some((path) => sharedUi.test(path)) || sharedResources;
+  if (
+    sharedResources ||
+    flowPaths.some((path) => /^src\/app\/api\/map\//.test(path))
+  )
+    journeys.add("map");
   const localeRuntime = flowPaths.some((path) =>
     /^src\/(?:i18n\/|proxy\.ts$)/.test(path),
   );
-  if (catalogData || (hasUi && (wide || shared || localeRuntime))) {
+  if (
+    catalogData ||
+    sharedResources ||
+    (hasUi && (wide || shared || localeRuntime))
+  ) {
     journeys.add("heroes");
     journeys.add("abilities");
   } else if (hasUi) {
@@ -540,10 +556,19 @@ export function createPlan(inputPaths) {
   const integrationChanged = paths.some((path) =>
     path.startsWith("tests/integration/"),
   );
-  const e2eChanged = paths.some((path) => path.startsWith("tests/e2e/"));
+  const replicaChanged =
+    sharedResources ||
+    flowPaths.some((path) =>
+      /src\/(?:browser\/catalog-replica|server\/services\/catalog-replica|domain\/catalog-replica)\.ts$/.test(
+        path,
+      ),
+    );
+  const e2eChanged =
+    replicaChanged || paths.some((path) => path.startsWith("tests/e2e/"));
   const e2eSpecs = new Set(
     existing.filter((path) => /^tests\/e2e\/.*\.spec\.[jt]sx?$/.test(path)),
   );
+  if (replicaChanged) e2eSpecs.add("tests/e2e/local-catalog.spec.ts");
   for (const path of paths) {
     const owner = path.match(
       /^(tests\/e2e\/.*\.spec\.[jt]sx?)-snapshots\//,

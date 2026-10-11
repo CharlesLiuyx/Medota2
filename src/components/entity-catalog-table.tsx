@@ -1,7 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { TextWidthSample } from "./ui/text-width-sample";
 import { ArrowUpDown } from "lucide-react";
+import { HERO_ROLES } from "@/domain/heroes";
+import { labels } from "@/presentation/dota";
 import { HERO_DEFAULT_TABLE_COLUMNS } from "@/presentation/catalog-table-columns";
 import { CatalogTableHeader } from "./catalog-table-header";
 import headerStyles from "./catalog-table-header.module.css";
@@ -15,7 +24,10 @@ import {
 } from "@/presentation/catalog-table";
 import type { AttributeOwnerKind } from "@/domain/attributes";
 import { formatAttributeEnum } from "@/domain/attribute-enums";
-import { useCatalogTableAttributes } from "./use-catalog-table-attributes";
+import {
+  useCatalogTableAttributes,
+  useCatalogAttributeValues,
+} from "./use-catalog-table-attributes";
 import {
   CatalogTableColumnSettings,
   useCatalogColumns,
@@ -179,16 +191,20 @@ function CatalogRows<T>({
   const sortKey = params.get("sort") ?? (kind === "hero" ? "category" : "");
   const direction = params.get("order") === "desc" ? "desc" : "asc";
   const preferences = useCatalogColumns(kind);
+  const projectedItems = useMemo(
+    () => new Map((columnItems ?? items).map((item) => [item, project(item)])),
+    [columnItems, items, project],
+  );
   const basicEntries = useMemo(
     () =>
       items.map((item) => {
-        const entry = project(item);
+        const entry = projectedItems.get(item) ?? project(item);
         return {
           ...entry,
           fieldsByKey: new Map(entry.fields.map((field) => [field.key, field])),
         };
       }),
-    [items, project],
+    [items, project, projectedItems],
   );
   const baseFields = useMemo(() => {
     const all = new Map<string, string>();
@@ -196,7 +212,9 @@ function CatalogRows<T>({
       kind === "hero"
         ? {
             attack: "攻击类型",
-            roles: "角色",
+            ...Object.fromEntries(
+              HERO_ROLES.map((role) => [`role:${role}`, labels[role]]),
+            ),
             base_strength: "力量",
             base_agility: "敏捷",
             base_intelligence: "智力",
@@ -215,7 +233,7 @@ function CatalogRows<T>({
           : {};
     for (const [key, name] of Object.entries(fixed)) all.set(key, t(name));
     const attributeKeys = new Set<string>();
-    for (const entry of columnItems ? columnItems.map(project) : basicEntries)
+    for (const entry of projectedItems.values())
       for (const field of entry.fields) {
         if (!all.has(field.key)) all.set(field.key, field.label);
         if (field.attributeKey) attributeKeys.add(field.attributeKey);
@@ -224,7 +242,7 @@ function CatalogRows<T>({
       fields: [...all].map(([key, name]) => ({ key, name })),
       attributeKeys,
     };
-  }, [kind, columnItems, project, basicEntries, t]);
+  }, [kind, projectedItems, t]);
   const extraFields = useMemo(
     () =>
       (attributes.data?.columns ?? []).filter(
@@ -270,12 +288,24 @@ function CatalogRows<T>({
     () => extraFields.filter((field) => visible.has(field.key)),
     [extraFields, visible],
   );
+  const attributeValues = useCatalogAttributeValues(
+    attributes.data,
+    selectedExtraFields.map((field) => field.key),
+  );
+  const columnReady = useCallback(
+    (key: string) =>
+      ready &&
+      (!selectedExtraFields.some((field) => field.key === key) ||
+        Boolean(attributeValues.loaded?.has(key))),
+    [ready, selectedExtraFields, attributeValues.loaded],
+  );
   const entries = useMemo(
     () =>
       basicEntries.map((entry) => {
         const fieldsByKey = new Map(entry.fieldsByKey);
         for (const field of selectedExtraFields) {
-          const values = attributes.data?.values[entry.entity.key]?.[field.key];
+          const values =
+            attributeValues.values?.[field.key]?.[entry.entity.key];
           if (!values?.length) continue;
           const name = locale === "en" ? field.en : field.zh;
           fieldsByKey.set(field.key, {
@@ -310,7 +340,7 @@ function CatalogRows<T>({
         }
         return { ...entry, fieldsByKey };
       }),
-    [basicEntries, selectedExtraFields, attributes.data, locale, t],
+    [basicEntries, selectedExtraFields, attributeValues.values, locale, t],
   );
   const resetSort = () => {
     const url = new URL(window.location.href);
@@ -323,7 +353,7 @@ function CatalogRows<T>({
     );
   };
   const activeSort =
-    ready &&
+    columnReady(sortKey) &&
     visible.has(sortKey) &&
     (sortKey === "entity" ||
       sortKey === "category" ||
@@ -385,7 +415,7 @@ function CatalogRows<T>({
           name={name}
           active={active}
           direction={direction}
-          ready={ready}
+          ready={columnReady(key)}
           frozen={
             selected.indexOf(key) <=
             (preferences.frozenThrough === null
@@ -443,11 +473,12 @@ function CatalogRows<T>({
               : "none",
         },
         width: 180,
-        widthSample: entries.map((entry) => (
-          <div key={entry.entity.key}>
-            <EntityReferenceWidthSample entity={entry.entity} />
-          </div>
-        )),
+        widthSample: entries[0] && (
+          <EntityReferenceWidthSample
+            entity={entries[0].entity}
+            names={entries.map((entry) => entry.entity.name)}
+          />
+        ),
         fitContent: true,
         maxContentWidth: 220,
         render: (entry) => <EntityReference entity={entry.entity} inline />,
@@ -467,8 +498,10 @@ function CatalogRows<T>({
               : "none",
         },
         width: 120,
-        widthSample: [...new Set(entries.map((entry) => entry.category))].map(
-          (value) => <div key={value}>{value}</div>,
+        widthSample: (
+          <TextWidthSample
+            texts={[...new Set(entries.map((entry) => entry.category))]}
+          />
         ),
         fitContent: true,
         render: (entry) => entry.category,
@@ -476,6 +509,10 @@ function CatalogRows<T>({
       ...fields.map(({ key, name }) => ({
         key,
         header: header(key, name),
+        headerGroup:
+          kind === "hero" && key.startsWith("role:")
+            ? { key: "roles", label: t("角色") }
+            : undefined,
         headerWidthSample: headerSample(name),
         headerProps: {
           className: headerStyles.column,
@@ -490,32 +527,35 @@ function CatalogRows<T>({
         mergeKey: (entry: TableRow) =>
           entry.fieldsByKey.has(key)
             ? undefined
-            : `missing:${entry.entity.key}`,
-        widthSample: [
-          ...new Set(
-            entries.map((entry) => {
-              const field = entry.fieldsByKey.get(key);
-              if (!field) return "—";
-              if (
-                typeof field.value === "string" ||
-                typeof field.value === "number"
-              )
-                return formatCatalogNumberText(
-                  String(field.value),
-                  preferences.decimals[key],
-                );
-              const value = field.sortValue;
-              return formatCatalogNumberText(
-                Array.isArray(value) ? value.join(" / ") : String(value ?? "—"),
-                preferences.decimals[key],
-              );
-            }),
-          ),
-        ].map((value) => (
-          <div key={value} className="tabular-nums">
-            {value}
-          </div>
-        )),
+            : `${columnReady(key) ? "missing" : "pending"}:${entry.entity.key}`,
+        widthSample: (
+          <TextWidthSample
+            tabular
+            texts={[
+              ...new Set(
+                entries.map((entry) => {
+                  const field = entry.fieldsByKey.get(key);
+                  if (!field) return "—";
+                  if (
+                    typeof field.value === "string" ||
+                    typeof field.value === "number"
+                  )
+                    return formatCatalogNumberText(
+                      String(field.value),
+                      preferences.decimals[key],
+                    );
+                  const value = field.sortValue;
+                  return formatCatalogNumberText(
+                    Array.isArray(value)
+                      ? value.join(" / ")
+                      : String(value ?? "—"),
+                    preferences.decimals[key],
+                  );
+                }),
+              ),
+            ]}
+          />
+        ),
         fitContent: true,
         maxContentWidth:
           key === "description"
@@ -540,7 +580,7 @@ function CatalogRows<T>({
                       String(field.value),
                       preferences.decimals[key],
                     )
-                  : (field?.value ?? "—"))}
+                  : (field?.value ?? (columnReady(key) ? "—" : "…")))}
             </span>
           );
         },
@@ -554,28 +594,45 @@ function CatalogRows<T>({
   }, [
     entries,
     fields,
+    kind,
     activeSort,
     direction,
-    ready,
     t,
     selected,
     preferences,
     sortKey,
+    columnReady,
   ]);
   return (
-    <div data-entity-catalog-table="">
+    <div
+      data-entity-catalog-table=""
+      data-catalog-table-ready={
+        ready &&
+        Boolean(attributes.data) &&
+        selectedExtraFields.every((field) =>
+          attributeValues.loaded?.has(field.key),
+        )
+      }
+    >
       <CatalogTableColumnSettings
         kind={kind}
         options={[
           { key: "entity", name: t("对象") },
           { key: "category", name: t("分类") },
-          ...baseFields.fields,
+          ...baseFields.fields.map((field) => ({
+            ...field,
+            detail: field.key.startsWith("role:") ? t("角色") : undefined,
+          })),
           ...extraNames,
         ]}
         selected={selected}
         loading={attributes.loading}
-        failed={attributes.failed}
-        retry={attributes.retry}
+        failed={attributes.failed || attributeValues.failed}
+        retry={
+          attributes.failed || attributeValues.stale
+            ? attributes.retry
+            : attributeValues.retry
+        }
         saveFailed={preferences.saveFailed}
         onChange={(next) => {
           preferences.save(next);
@@ -589,11 +646,13 @@ function CatalogRows<T>({
       <GroupedTable
         groups={groups}
         columns={columns}
-        identity={`${identity}:${activeSort}:${direction}:${selected.join("|")}:${attributes.data?.datasetVersionId ?? "attributes-loading"}`}
+        identity={`${identity}:${activeSort}:${direction}:${selected.join("|")}:${attributes.data?.resourceId ?? "attributes-loading"}:${[...(attributeValues.loaded ?? [])].join("|")}`}
         label={label}
         rowKey={(entry) => entry.entity.key}
         rowProps={(entry) => ({ "data-catalog-entity": entry.entity.key })}
         fitWidth
+        windowColumns
+        focusedColumn={activeSort}
         frozenCount={
           preferences.frozenThrough === null
             ? 0

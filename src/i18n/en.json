@@ -1563,5 +1563,10 @@
   "仅调整数字显示，排序使用原始数值。": "Only number display changes; sorting uses original values.",
   "冻结至此列": "Freeze through this column",
   "取消冻结": "Unfreeze columns",
-  "冻结至第{count}列": "Freeze through column {count}"
+  "冻结至第{count}列": "Freeze through column {count}",
+  "视野资料加载失败。": "Vision data could not be loaded.",
+  "资料加载失败。": "Data could not be loaded.",
+  "正在加载资料…": "Loading data…",
+  "资料版本已更新，请刷新页面。": "The data version has changed. Refresh this page.",
+  "刷新页面": "Refresh page"
 }

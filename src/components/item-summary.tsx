@@ -1,13 +1,13 @@
 "use client";
 import { SourceText, useTranslations } from "@/i18n/provider";
 import { AttributeLink } from "./attribute-link";
-import { ITEM_CATEGORIES, type ItemDefinition } from "@/domain/items";
+import { ITEM_CATEGORIES, type ItemCatalogRow } from "@/domain/items";
 export function ItemSummary({
   item,
   en = false,
   compact = false,
 }: {
-  item: ItemDefinition;
+  item: ItemCatalogRow;
   en?: boolean;
   compact?: boolean;
 }) {

@@ -4,7 +4,7 @@ import { LocalizedText } from "@/i18n/provider";
 import { resolvePageRelease } from "@/server/services/releases";
 import { MissingReleaseCoverage } from "@/components/release-navigation";
 import type { Metadata } from "next";
-import { pinyin } from "pinyin-pro";
+import { unitCatalogRows } from "@/server/services/catalog-projections";
 import { UnitCatalog } from "@/components/unit-catalog";
 import { getUnitOverview, getUnitPortraits } from "@/server/repositories/units";
 export async function generateMetadata(): Promise<Metadata> {
@@ -25,28 +25,12 @@ export default async function UnitsPage({
     selected?.catalogId ?? undefined,
   );
   const portraits = meta ? await getUnitPortraits(meta.datasetVersionId) : {};
-  const units = snapshot?.units.map((unit) => {
-    const syllables = pinyin(unit.zhName, {
-      toneType: "none",
-      type: "array",
-      v: true,
-    });
-    return {
-      ...unit,
-      portrait: portraits[unit.internalName],
-      searchText: [
-        unit.internalName,
-        unit.zhName,
-        unit.enName,
-        syllables.join(""),
-        syllables.map((s) => s[0]).join(""),
-      ]
-        .join("|")
-        .normalize("NFKC")
-        .toLowerCase()
-        .replace(/[\s_'’\-]+/gu, ""),
-    };
-  });
+  const units = snapshot
+    ? unitCatalogRows(snapshot.units).map((unit) => ({
+        ...unit,
+        portrait: portraits[unit.internalName],
+      }))
+    : undefined;
   return (
     <main className="mx-auto min-h-[70vh] max-w-[var(--content-max)] px-4 py-4 sm:px-6">
       {units ? (

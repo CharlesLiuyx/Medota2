@@ -1,10 +1,16 @@
 import { resolveRelease } from "@/server/services/releases";
 import { getAttributeOverview } from "@/server/repositories/attributes";
 import { buildCatalogAttributeMatrix } from "@/presentation/catalog-table-columns";
-import type { AttributeOwnerKind } from "@/domain/attributes";
+import type { AttributeEntry, AttributeOwnerKind } from "@/domain/attributes";
+import { sha256 } from "@/lib/hash";
+import { getWebDatabase } from "@/server/db/client";
+import { toPublicEnvironmentIdentity } from "@/server/environment/contract";
+import { catalogJsonResponse } from "../request";
 
 export const dynamic = "force-dynamic";
-export async function GET(request: Request) {
+// The weak key has the same lifetime as the validated immutable source snapshot.
+const revisions = new WeakMap<readonly AttributeEntry[], string>();
+async function read(request: Request) {
   const params = new URL(request.url).searchParams;
   const release = params.get("release");
   const kind = params.get("kind") as AttributeOwnerKind;
@@ -19,6 +25,8 @@ export async function GET(request: Request) {
       { status: 400 },
     );
   try {
+    const db = await getWebDatabase();
+    const identity = toPublicEnvironmentIdentity(await db.verifyIdentity());
     const selected = await resolveRelease(release);
     if (!selected?.catalogId)
       return Response.json({ message: "Catalog unavailable" }, { status: 404 });
@@ -33,18 +41,66 @@ export async function GET(request: Request) {
         { message: "Attribute source unavailable" },
         { status: 503 },
       );
-    return Response.json(
+    let revision = revisions.get(snapshot.entries);
+    if (!revision) {
+      revision = sha256(JSON.stringify(snapshot.entries));
+      revisions.set(snapshot.entries, revision);
+    }
+    const resourceId = `table-attributes/2:${identity.safeFingerprint}:${meta.datasetVersionId}:${revision}:${kind}`;
+    let columns = new Set<string>();
+    if (request.method === "POST") {
+      const text = await request.text();
+      if (text.length > 1_000_000)
+        return Response.json({ message: "Query too large" }, { status: 400 });
+      const body = JSON.parse(text);
+      if (body.resourceId !== resourceId)
+        return Response.json(
+          { message: "Attribute source changed; reload the column manifest" },
+          { status: 409 },
+        );
+      if (
+        !Array.isArray(body.columns) ||
+        body.columns.length > 2000 ||
+        !body.columns.every(
+          (key: unknown) => typeof key === "string" && key.length <= 2048,
+        )
+      )
+        return Response.json({ message: "Invalid columns" }, { status: 400 });
+      columns = new Set(body.columns);
+    }
+    const matrix = buildCatalogAttributeMatrix(snapshot.entries, kind, columns);
+    if (request.method === "POST") {
+      const known = new Set(matrix.columns.map((column) => column.key));
+      if ([...columns].some((key) => !known.has(key)))
+        return Response.json(
+          { message: "Unknown attribute column" },
+          { status: 400 },
+        );
+      return catalogJsonResponse(
+        {
+          version: 2,
+          resourceId,
+          loadedColumns: [...columns],
+          values: matrix.values,
+        },
+        identity,
+      );
+    }
+    return catalogJsonResponse(
       {
-        version: 1,
+        version: 2,
         release,
         kind,
         datasetVersionId: meta.datasetVersionId,
-        ...buildCatalogAttributeMatrix(snapshot.entries, kind),
+        resourceId,
+        columns: matrix.columns,
       },
-      { headers: { "Cache-Control": "private, no-store" } },
+      identity,
     );
   } catch (error) {
     if (error instanceof Error && "digest" in error) throw error;
+    if (error instanceof SyntaxError)
+      return Response.json({ message: "Invalid JSON" }, { status: 400 });
     console.error("Catalog table attributes read failed", error);
     return Response.json(
       { message: "Attribute query failed" },
@@ -52,3 +108,5 @@ export async function GET(request: Request) {
     );
   }
 }
+export const GET = read;
+export const POST = read;

@@ -476,6 +476,47 @@ it("routes reusable table changes to grouped-table coverage and changes journeys
   }
 });
 
+it("routes grouped role headings and frozen offsets to catalog journeys", () => {
+  for (const path of [
+    "src/components/ui/grouped-table.tsx",
+    "src/components/ui/table-frozen-columns.ts",
+  ])
+    expect(
+      selectedJourneys([path])(
+        "heroes: role subcolumns expand saved preferences, fill zeros and sort numerically",
+      ),
+    ).toBe(true);
+});
+
+it("covers every resource consumer when changing shared cache or scheduling", () => {
+  for (const path of [
+    "src/browser/resources.ts",
+    "src/browser/persistent-resources.ts",
+    "src/lib/resource-cache.ts",
+    "src/server/services/resource-scope.ts",
+  ])
+    for (const title of [
+      "heroes: columns",
+      "abilities: views",
+      "units: views",
+      "items: views",
+      "attributes: query",
+      "map: deferred scene",
+      "heroes changes: evidence",
+    ])
+      expect(selectedJourneys([path])(title)).toBe(true);
+  expect(
+    selectedJourneys(["src/app/api/map/vision/route.ts"])(
+      "map: deferred scene",
+    ),
+  ).toBe(true);
+  expect(
+    createPlan(["src/browser/resources.ts"]).tasks.find(
+      (task) => task.id === "e2e",
+    )?.args,
+  ).toContain("tests/e2e/local-catalog.spec.ts");
+});
+
 it("includes vision lifecycle checks and the map browser flow for Web vision inputs", () => {
   for (const path of [
     "src/components/map/vision-panel.tsx",

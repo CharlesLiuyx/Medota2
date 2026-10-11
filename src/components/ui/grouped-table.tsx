@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import { useInfiniteList, type InfiniteListChunk } from "../infinite-list";
+import { prepareTextWidthSamples } from "./text-width-sample";
 import { DataTable, TableCell, TableHeaderCell } from "./data-table";
 import { tableCellSpans, type CellSpan } from "./table-cell-spans";
 import styles from "./grouped-table.module.css";
@@ -23,6 +24,8 @@ export interface TableGroup<Row> {
 export interface GroupedTableColumn<Group, Row> {
   key: string;
   header: ReactNode;
+  /** Adjacent columns share a parent heading, split at the frozen boundary. */
+  headerGroup?: { key: string; label: ReactNode };
   /** Optional inert header measurement, avoiding duplicate interactive components. */
   headerWidthSample?: ReactNode;
   headerProps?: ComponentProps<"th"> & DataAttributes;
@@ -48,9 +51,10 @@ type PlannedRow<Row, Group> = {
   row: Row;
   group: Group;
   index: number;
-  spans: (CellSpan | null)[];
+  spans?: (CellSpan | null)[];
 };
 type TableBlock<Row, Group> = { key: string; rows: PlannedRow<Row, Group>[] };
+type ColumnRange = { start: number; end: number; hidden: boolean };
 
 /** Every virtual block includes complete groups and complete merged rectangles. */
 export function GroupedTable<Row, Group extends TableGroup<Row>>({
@@ -64,6 +68,8 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
   minWidth = 640,
   fitWidth = false,
   frozenCount: controlledFrozenCount,
+  windowColumns = false,
+  focusedColumn,
   empty,
 }: {
   groups: Group[];
@@ -82,11 +88,74 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
   /** Use the measured column total instead of stretching to the parent width. */
   fitWidth?: boolean;
   frozenCount?: number;
+  /** Catalog rows merge only horizontally; mount a window for very wide tables. */
+  windowColumns?: boolean;
+  focusedColumn?: string;
   empty?: ReactNode;
 }) {
   const [localFrozenCount, setLocalFrozenCount] = useState(1);
   const frozenCount = controlledFrozenCount ?? localFrozenCount;
+  const rowHeights = useMemo(
+    () => ({ identity, frozenCount, values: new Map<string, number>() }),
+    [identity, frozenCount],
+  ).values;
+  const hasHeaderGroups = columns.some((column) => column.headerGroup);
+  const useColumnWindow =
+    windowColumns &&
+    columns.length > 64 &&
+    !hasHeaderGroups &&
+    !columns.some((column) => column.merged);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const [viewport, setViewport] = useState({ left: 0, width: 1280 });
+  const [measuredWidths, setMeasuredWidths] = useState<number[]>([]);
+  const previousColumns = useRef<string[]>([]);
+  const previousFocus = useRef<string | undefined>(undefined);
+  const focusTarget = useRef<string | undefined>(focusedColumn);
+  const columnRanges = useMemo(() => {
+    if (!useColumnWindow)
+      return [{ start: 0, end: columns.length, hidden: false }];
+    const widths = columns.map(
+      (column, index) =>
+        measuredWidths[index] ??
+        (typeof column.width === "number" ? column.width : 120),
+    );
+    const frozenWidth = widths
+      .slice(0, frozenCount)
+      .reduce((sum, width) => sum + width, 0);
+    const ranges: ColumnRange[] = [];
+    let left = 0;
+    for (let index = 0; index < columns.length; index++) {
+      const right = left + widths[index];
+      const hidden =
+        index >= frozenCount &&
+        (right < viewport.left + frozenWidth - 480 ||
+          left > viewport.left + viewport.width + 480);
+      const previous = ranges.at(-1);
+      if (previous?.hidden === hidden) previous.end = index + 1;
+      else ranges.push({ start: index, end: index + 1, hidden });
+      left = right;
+    }
+    return ranges;
+  }, [columns, measuredWidths, frozenCount, viewport, useColumnWindow]);
+  const headerGroups: { column: (typeof columns)[number]; span: number }[] = [];
+  columns.forEach((column, index) => {
+    const previous = headerGroups.at(-1);
+    if (
+      column.headerGroup &&
+      previous?.column.headerGroup?.key === column.headerGroup.key &&
+      index !== frozenCount
+    )
+      previous.span++;
+    else headerGroups.push({ column, span: 1 });
+  });
   const items = useMemo(() => {
+    // Catalog objects never merge vertically. Plan their horizontal spans only
+    // for mounted row chunks, avoiding an all-objects × all-columns matrix.
+    if (useColumnWindow)
+      return groups.map((group) => ({
+        key: group.key,
+        rows: group.rows.map((row, index) => ({ row, group, index })),
+      })) as TableBlock<Row, Group>[];
     const rows = groups.flatMap((group) =>
       group.rows.map((row, index) => ({ row, group, index })),
     );
@@ -123,7 +192,7 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
       start = end;
     }
     return blocks;
-  }, [groups, columns, frozenCount]);
+  }, [groups, columns, frozenCount, useColumnWindow]);
   const {
     rootRef,
     topSentinelRef,
@@ -142,20 +211,137 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
   });
   const tableRef = useRef<HTMLTableElement>(null);
   const measurementsRef = useRef<HTMLDivElement>(null);
+  const preserveRowHeights = useCallback(() => {
+    const table = tableRef.current;
+    if (!table) return;
+    // Removing an offscreen description must not collapse its row and move the
+    // vertical scroll position. New content may still grow a row naturally.
+    const rows = [
+      ...table.querySelectorAll<HTMLElement>(
+        "thead, tr[data-infinite-list-item]",
+      ),
+    ];
+    const heights = rows.map((row) =>
+      Math.ceil(row.getBoundingClientRect().height),
+    );
+    rows.forEach((row, index) => {
+      row.style.height = `${heights[index]}px`;
+      if (row.dataset.heightKey)
+        rowHeights.set(row.dataset.heightKey, heights[index]);
+    });
+  }, [rowHeights]);
+  useLayoutEffect(() => {
+    if (!useColumnWindow) return;
+    const keys = columns.map((column) => column.key);
+    const added = previousColumns.current.length
+      ? keys.find((key) => !previousColumns.current.includes(key))
+      : undefined;
+    if (added) focusTarget.current = added;
+    else if (previousFocus.current !== focusedColumn)
+      focusTarget.current = focusedColumn;
+    previousColumns.current = keys;
+    previousFocus.current = focusedColumn;
+    const node = viewportRef.current;
+    const index = keys.indexOf(focusTarget.current ?? "");
+    if (
+      !node ||
+      index < frozenCount ||
+      measuredWidths.length !== columns.length
+    )
+      return;
+    const left = measuredWidths
+      .slice(0, index)
+      .reduce((sum, width) => sum + width, 0);
+    const frozenWidth = measuredWidths
+      .slice(0, frozenCount)
+      .reduce((sum, width) => sum + width, 0);
+    if (
+      left < node.scrollLeft + frozenWidth ||
+      left + measuredWidths[index] > node.scrollLeft + node.clientWidth
+    ) {
+      preserveRowHeights();
+      node.scrollLeft = Math.max(0, left - frozenWidth);
+    }
+    setViewport({ left: node.scrollLeft, width: node.clientWidth });
+    focusTarget.current = undefined;
+  }, [
+    columns,
+    measuredWidths,
+    frozenCount,
+    focusedColumn,
+    useColumnWindow,
+    preserveRowHeights,
+  ]);
+  const setRoot = useCallback(
+    (node: HTMLDivElement | null) => {
+      viewportRef.current = node;
+      rootRef(node);
+    },
+    [rootRef],
+  );
+  useLayoutEffect(() => {
+    const node = viewportRef.current;
+    if (!node || !useColumnWindow) return;
+    let frame = 0;
+    let previousLeft = node.scrollLeft;
+    const update = () => {
+      frame = 0;
+      const next = { left: node.scrollLeft, width: node.clientWidth };
+      if (next.left !== previousLeft) preserveRowHeights();
+      previousLeft = next.left;
+      setViewport((previous) =>
+        previous.left === next.left && previous.width === next.width
+          ? previous
+          : next,
+      );
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    update();
+    node.addEventListener("scroll", schedule, { passive: true });
+    const observer =
+      typeof ResizeObserver === "function"
+        ? new ResizeObserver(schedule)
+        : null;
+    observer?.observe(node);
+    return () => {
+      node.removeEventListener("scroll", schedule);
+      observer?.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [useColumnWindow, preserveRowHeights]);
   useLayoutEffect(() => {
     const table = tableRef.current;
     const measurements = measurementsRef.current;
     if (!table || !measurements) return;
     let disposed = false;
     const samples = [...measurements.children] as HTMLElement[];
-    const measure = () => {
+    const measure = (fontsChanged = false) => {
       if (disposed) return;
+      prepareTextWidthSamples(measurements, fontsChanged);
       const widths = samples.map((sample) => ({
         index: sample.dataset.column,
         width: Math.ceil(sample.getBoundingClientRect().width) + 16,
       }));
       for (const { index, width } of widths)
         table.style.setProperty(`--table-column-${index}-width`, `${width}px`);
+      if (useColumnWindow) {
+        const measured = new Map(
+          widths.map(({ index, width }) => [Number(index), width]),
+        );
+        const next = columns.map(
+          (column, index) =>
+            measured.get(index) ??
+            (typeof column.width === "number" ? column.width : 120),
+        );
+        setMeasuredWidths((previous) =>
+          previous.length === next.length &&
+          previous.every((width, index) => width === next[index])
+            ? previous
+            : next,
+        );
+      }
       if (fitWidth) {
         const measured = new Map(
           widths.map(({ index, width }) => [Number(index), width]),
@@ -172,19 +358,24 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
     };
     measure();
     const observer =
-      typeof ResizeObserver === "function" ? new ResizeObserver(measure) : null;
+      typeof ResizeObserver === "function"
+        ? new ResizeObserver(() => measure())
+        : null;
     samples.forEach((sample) => observer?.observe(sample));
-    void document.fonts?.ready.then(measure);
+    const fontsLoaded = () => measure(true);
+    document.fonts?.addEventListener("loadingdone", fontsLoaded);
     return () => {
       disposed = true;
       observer?.disconnect();
+      document.fonts?.removeEventListener("loadingdone", fontsLoaded);
     };
-  }, [columns, items.length, fitWidth]);
+  }, [columns, items.length, fitWidth, useColumnWindow]);
   if (!items.length) return empty ?? null;
   return (
     <div
-      ref={rootRef}
+      ref={setRoot}
       data-infinite-list=""
+      data-column-window={useColumnWindow || undefined}
       aria-busy={isBusy}
       className={styles.scroll}
     >
@@ -229,6 +420,7 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
             : undefined,
         }}
         aria-label={label}
+        aria-colcount={useColumnWindow ? columns.length : undefined}
       >
         <colgroup>
           {columns.map((column, index) => (
@@ -245,16 +437,67 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
         </colgroup>
         <thead>
           <tr>
-            {columns.map((column) => (
-              <TableHeaderCell
-                key={column.key}
-                scope="col"
-                {...column.headerProps}
-              >
-                {column.header}
-              </TableHeaderCell>
-            ))}
+            {useColumnWindow
+              ? columnRanges.map((range) =>
+                  range.hidden ? (
+                    <th
+                      key={`gap:${range.start}`}
+                      colSpan={range.end - range.start}
+                      aria-hidden="true"
+                      data-column-gap=""
+                    />
+                  ) : (
+                    columns
+                      .slice(range.start, range.end)
+                      .map((column, offset) => (
+                        <TableHeaderCell
+                          key={column.key}
+                          scope="col"
+                          {...column.headerProps}
+                          aria-colindex={range.start + offset + 1}
+                        >
+                          {column.header}
+                        </TableHeaderCell>
+                      ))
+                  ),
+                )
+              : headerGroups.map(({ column, span }) =>
+                  column.headerGroup ? (
+                    <TableHeaderCell
+                      key={column.key}
+                      scope="colgroup"
+                      colSpan={span}
+                      data-table-header-group={column.headerGroup.key}
+                    >
+                      {column.headerGroup.label}
+                    </TableHeaderCell>
+                  ) : (
+                    <TableHeaderCell
+                      key={column.key}
+                      scope="col"
+                      rowSpan={hasHeaderGroups ? 2 : undefined}
+                      {...column.headerProps}
+                    >
+                      {column.header}
+                    </TableHeaderCell>
+                  ),
+                )}
           </tr>
+          {hasHeaderGroups && (
+            <tr>
+              {columns
+                .filter((column) => column.headerGroup)
+                .map((column) => (
+                  <TableHeaderCell
+                    key={column.key}
+                    scope="col"
+                    {...column.headerProps}
+                  >
+                    {column.header}
+                  </TableHeaderCell>
+                ))}
+            </tr>
+          )}
         </thead>
         <tbody aria-hidden="true">
           <tr>
@@ -276,6 +519,9 @@ export function GroupedTable<Row, Group extends TableGroup<Row>>({
             rowKey={rowKey}
             rowProps={rowProps}
             groupProps={groupProps}
+            columnRanges={columnRanges}
+            frozenCount={frozenCount}
+            rowHeights={useColumnWindow ? rowHeights : undefined}
           />
         ))}
         <tbody aria-hidden="true">
@@ -302,12 +548,18 @@ function TableChunk<Row, Group extends TableGroup<Row>>({
   rowKey,
   rowProps,
   groupProps,
+  columnRanges,
+  frozenCount,
+  rowHeights,
 }: Pick<
   Parameters<typeof GroupedTable<Row, Group>>[0],
   "columns" | "rowKey" | "rowProps" | "groupProps"
 > & {
   chunk: InfiniteListChunk<TableBlock<Row, Group>>;
   chunkRef: (id: string, node: HTMLElement | null) => void;
+  columnRanges: ColumnRange[];
+  frozenCount: number;
+  rowHeights?: Map<string, number>;
 }) {
   const setRef = useCallback(
     (node: HTMLTableSectionElement | null) => chunkRef(chunk.id, node),
@@ -321,57 +573,105 @@ function TableChunk<Row, Group extends TableGroup<Row>>({
     >
       {chunk.rendered ? (
         chunk.items.flatMap((block) =>
-          block.rows.map(({ row, group, index, spans }) => (
-            <tr
-              {...(index === 0 ? groupProps?.(group) : {})}
-              {...rowProps?.(row, group, index)}
-              key={`${group.key}:${rowKey(row)}`}
-              data-table-group={group.key}
-              data-infinite-list-item=""
-            >
-              {columns.map((column, columnIndex) => {
-                const span = spans[columnIndex];
-                if (!span) return null;
-                // Preserve column markers when before/after cells become one cell.
-                const props = Object.assign(
-                  {},
-                  ...columns
-                    .slice(columnIndex, columnIndex + span.colSpan)
-                    .map((c) => c.cellProps?.(row)),
-                );
-                return (
-                  <TableCell
-                    {...props}
-                    key={column.key}
-                    as={column.merged ? "th" : "td"}
-                    scope={column.merged ? "row" : undefined}
-                    rowSpan={span.rowSpan}
-                    colSpan={span.colSpan}
-                    className={column.className}
-                    data-table-column={column.key}
-                  >
-                    {column.fitContent ? (
-                      <div
-                        className={styles.fitContent}
-                        style={
-                          {
-                            "--table-content-max":
-                              typeof column.maxContentWidth === "number"
-                                ? `${column.maxContentWidth}px`
-                                : column.maxContentWidth,
-                          } as CSSProperties
-                        }
+          block.rows.map(({ row, group, index, spans: preparedSpans }) => {
+            const spans =
+              preparedSpans ??
+              tableCellSpans([
+                columns.map((column, columnIndex) => {
+                  const key = column.mergeKey?.(row, group, index);
+                  return key === undefined
+                    ? undefined
+                    : `${columnIndex < frozenCount ? "frozen" : "flow"}:${key}`;
+                }),
+              ])[0];
+            return (
+              <TableBodyRow
+                {...(index === 0 ? groupProps?.(group) : {})}
+                {...rowProps?.(row, group, index)}
+                key={`${group.key}:${rowKey(row)}`}
+                heightKey={`${group.key}:${rowKey(row)}`}
+                rowHeights={rowHeights}
+                data-table-group={group.key}
+                data-infinite-list-item=""
+              >
+                {columnRanges.flatMap((range) => {
+                  if (range.hidden)
+                    return (
+                      <td
+                        key={`gap:${range.start}`}
+                        colSpan={range.end - range.start}
+                        aria-hidden="true"
+                        data-column-gap=""
+                      />
+                    );
+                  const cells: ReactNode[] = [];
+                  let columnIndex = range.start;
+                  while (columnIndex < range.end) {
+                    let origin = columnIndex;
+                    // A horizontal merge may begin outside this visible range.
+                    while (origin > 0 && !spans[origin]) origin--;
+                    const originalSpan = spans[origin];
+                    if (!originalSpan) {
+                      columnIndex++;
+                      continue;
+                    }
+                    // Ordinary tables may contain rowSpan holes, which must remain absent.
+                    if (preparedSpans && !spans[columnIndex]) {
+                      columnIndex++;
+                      continue;
+                    }
+                    const span = {
+                      ...originalSpan,
+                      colSpan:
+                        Math.min(origin + originalSpan.colSpan, range.end) -
+                        columnIndex,
+                    };
+                    const column = columns[origin];
+                    // Preserve column markers when before/after cells become one cell.
+                    const props = Object.assign(
+                      {},
+                      ...columns
+                        .slice(columnIndex, columnIndex + span.colSpan)
+                        .map((c) => c.cellProps?.(row)),
+                    );
+                    cells.push(
+                      <TableCell
+                        {...props}
+                        key={`${column.key}:${columnIndex}`}
+                        as={column.merged ? "th" : "td"}
+                        scope={column.merged ? "row" : undefined}
+                        rowSpan={span.rowSpan}
+                        colSpan={span.colSpan}
+                        className={column.className}
+                        data-table-column={column.key}
+                        aria-colindex={columnIndex + 1}
                       >
-                        {column.render(row, group, index)}
-                      </div>
-                    ) : (
-                      column.render(row, group, index)
-                    )}
-                  </TableCell>
-                );
-              })}
-            </tr>
-          )),
+                        {column.fitContent ? (
+                          <div
+                            className={styles.fitContent}
+                            style={
+                              {
+                                "--table-content-max":
+                                  typeof column.maxContentWidth === "number"
+                                    ? `${column.maxContentWidth}px`
+                                    : column.maxContentWidth,
+                              } as CSSProperties
+                            }
+                          >
+                            {column.render(row, group, index)}
+                          </div>
+                        ) : (
+                          column.render(row, group, index)
+                        )}
+                      </TableCell>,
+                    );
+                    columnIndex += span.colSpan;
+                  }
+                  return cells;
+                })}
+              </TableBodyRow>
+            );
+          }),
         )
       ) : (
         <tr aria-hidden="true">
@@ -387,3 +687,44 @@ function TableChunk<Row, Group extends TableGroup<Row>>({
   );
 }
 const GroupedTableChunk = memo(TableChunk) as typeof TableChunk;
+
+function TableBodyRow({
+  heightKey,
+  rowHeights,
+  style,
+  ...props
+}: ComponentProps<"tr"> & {
+  heightKey: string;
+  rowHeights?: Map<string, number>;
+}) {
+  const naturalHeight = style?.height;
+  const restoreHeight = useCallback(
+    (node: HTMLTableRowElement | null) => {
+      if (!node || !rowHeights) return;
+      const height = rowHeights.get(heightKey);
+      node.style.height = height
+        ? `${height}px`
+        : typeof naturalHeight === "number"
+          ? `${naturalHeight}px`
+          : (naturalHeight ?? "");
+      return () => {
+        rowHeights.set(
+          heightKey,
+          Math.max(
+            rowHeights.get(heightKey) ?? 0,
+            Math.ceil(node.getBoundingClientRect().height),
+          ),
+        );
+      };
+    },
+    [heightKey, rowHeights, naturalHeight],
+  );
+  return (
+    <tr
+      {...props}
+      style={style}
+      ref={restoreHeight}
+      data-height-key={heightKey}
+    />
+  );
+}

@@ -1,3 +1,4 @@
+import { HERO_ROLES } from "@/domain/heroes";
 import type { AttributeEntry, AttributeOwnerKind } from "@/domain/attributes";
 import type { AttributeEnumValue } from "@/domain/attribute-enums";
 
@@ -21,6 +22,20 @@ export interface CatalogAttributeResponse extends CatalogAttributeMatrix {
   kind: AttributeOwnerKind;
   datasetVersionId: string;
 }
+export interface CatalogAttributeManifest {
+  version: 2;
+  release: string;
+  kind: AttributeOwnerKind;
+  datasetVersionId: string;
+  resourceId: string;
+  columns: CatalogAttributeColumn[];
+}
+export interface CatalogAttributeValues {
+  version: 2;
+  resourceId: string;
+  loadedColumns: string[];
+  values: CatalogAttributeMatrix["values"];
+}
 export const catalogAttributeColumnKey = (id: string, field: string) =>
   `attribute:${JSON.stringify([id, field])}`;
 
@@ -28,6 +43,7 @@ export const catalogAttributeColumnKey = (id: string, field: string) =>
 export function buildCatalogAttributeMatrix(
   entries: readonly AttributeEntry[],
   kind: AttributeOwnerKind,
+  selected?: ReadonlySet<string>,
 ): CatalogAttributeMatrix {
   const columns = new Map<string, CatalogAttributeColumn>();
   const values: CatalogAttributeMatrix["values"] = Object.create(null);
@@ -52,6 +68,7 @@ export function buildCatalogAttributeMatrix(
             : {}),
           ...(entry.enumValues ? { enumValues: entry.enumValues } : {}),
         });
+      if (selected && !selected.has(key)) continue;
       const owner = (values[relation.owner] ??= Object.create(null));
       (owner[key] ??= []).push(relation.value);
     }
@@ -59,7 +76,9 @@ export function buildCatalogAttributeMatrix(
   return { columns: [...columns.values()], values };
 }
 
-/** Default hero layout follows the reviewed 19-column overview. */
+export const HERO_ROLE_TABLE_COLUMNS = HERO_ROLES.map((role) => `role:${role}`);
+
+/** Preserve the reviewed overview, with individual role levels at the end. */
 export const HERO_DEFAULT_TABLE_COLUMNS = [
   "entity",
   "category",
@@ -79,7 +98,7 @@ export const HERO_DEFAULT_TABLE_COLUMNS = [
   catalogAttributeColumnKey("attack-speed", "base_attack_speed"),
   catalogAttributeColumnKey("attack-interval", "attack_rate"),
   catalogAttributeColumnKey("attack-range", "attack_range"),
-  "roles",
+  ...HERO_ROLE_TABLE_COLUMNS,
 ];
 
 export interface CatalogTablePreferences {
@@ -89,6 +108,7 @@ export interface CatalogTablePreferences {
 }
 export function parseCatalogTablePreferences(
   raw: string | null,
+  kind?: AttributeOwnerKind,
 ): CatalogTablePreferences {
   const fallback = { columns: null, decimals: {} };
   if (raw === null) return fallback;
@@ -104,7 +124,17 @@ export function parseCatalogTablePreferences(
     )
       return fallback;
     const keys =
-      value.columns === null ? null : [...new Set<string>(value.columns)];
+      value.columns === null
+        ? null
+        : [
+            ...new Set<string>(
+              value.columns.flatMap((key: string) =>
+                kind === "hero" && key === "roles"
+                  ? HERO_ROLE_TABLE_COLUMNS
+                  : [key],
+              ),
+            ),
+          ];
     if (keys && !keys.includes("entity")) keys.unshift("entity");
     const decimals = Object.fromEntries(
       Object.entries(value.decimals ?? {}).filter(
@@ -122,7 +152,12 @@ export function parseCatalogTablePreferences(
       ...(value.frozenThrough === null ||
       (typeof value.frozenThrough === "string" &&
         value.frozenThrough.length <= 2048)
-        ? { frozenThrough: value.frozenThrough }
+        ? {
+            frozenThrough:
+              kind === "hero" && value.frozenThrough === "roles"
+                ? HERO_ROLE_TABLE_COLUMNS.at(-1)
+                : value.frozenThrough,
+          }
         : {}),
     };
   } catch {

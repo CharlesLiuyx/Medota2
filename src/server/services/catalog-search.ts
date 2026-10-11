@@ -1,4 +1,6 @@
 import "server-only";
+import { ResourceCache } from "@/lib/resource-cache";
+import { verifiedResourceScope } from "./resource-scope";
 import { createSearchIndex, type SearchEntry } from "@/domain/search";
 import { ABILITY_ALIASES, HERO_ALIASES } from "@/domain/search/aliases";
 import { getWebDatabase } from "@/server/db/client";
@@ -6,18 +8,12 @@ import { getGameLocalization } from "./game-localization";
 
 type SearchIndex = ReturnType<typeof createSearchIndex>;
 // Bounded across dataset switches; concurrent first queries share the build.
-const indexes = new Map<string, Promise<SearchIndex>>();
-function cached(key: string, build: () => Promise<SearchIndex>) {
-  let pending = indexes.get(key);
-  if (!pending) {
-    pending = build();
-    indexes.set(key, pending);
-    if (indexes.size > 8) indexes.delete(indexes.keys().next().value!);
-    void pending.catch(() => {
-      if (indexes.get(key) === pending) indexes.delete(key);
-    });
-  }
-  return pending;
+const indexes = new ResourceCache<SearchIndex>({
+  entries: 8,
+  bytes: 32 * 1024 * 1024,
+});
+async function cached(key: string, build: () => Promise<SearchIndex>) {
+  return indexes.get(`${await verifiedResourceScope()}:search/1:${key}`, build);
 }
 
 interface HeroNames {

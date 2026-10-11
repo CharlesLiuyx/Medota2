@@ -12,7 +12,7 @@ import {
 import { withRelease } from "@/domain/releases";
 import { useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
-import { ITEM_CATEGORIES, type ItemDefinition } from "@/domain/items";
+import { ITEM_CATEGORIES, type ItemCatalogRow } from "@/domain/items";
 import { useLocale, useTranslations } from "@/i18n/provider";
 import { CatalogViewSwitch, useCatalogView } from "./catalog-view-switch";
 import { EntityCatalogTable } from "./entity-catalog-table";
@@ -41,7 +41,7 @@ export function ItemCatalog({
   imageVersion: string | null;
   header: ReactNode;
   items: Array<
-    ItemDefinition & {
+    ItemCatalogRow & {
       searchText: string;
     }
   >;

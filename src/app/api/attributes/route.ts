@@ -1,5 +1,8 @@
 import { resolveRelease } from "@/server/services/releases";
 import { getAttributeOverview } from "@/server/repositories/attributes";
+import { getWebDatabase } from "@/server/db/client";
+import { toPublicEnvironmentIdentity } from "@/server/environment/contract";
+import { catalogJsonResponse } from "@/app/api/catalog/request";
 import {
   attributeSlice,
   parseAttributeQuery,
@@ -11,6 +14,9 @@ import {
 export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
+    const identity = toPublicEnvironmentIdentity(
+      await (await getWebDatabase()).verifyIdentity(),
+    );
     const params = new URL(request.url).searchParams;
     const query = parseAttributeQuery(params);
     const release = params.get("release");
@@ -33,12 +39,12 @@ export async function GET(request: Request) {
         },
         { status: 404 },
       );
-    return Response.json(
+    return catalogJsonResponse(
       attributeSlice(snapshot.summaries, meta.datasetVersionId, query, {
         after: params.get("after") ?? undefined,
         before: params.get("before") ?? undefined,
       }),
-      { headers: { "Cache-Control": "private, no-store" } },
+      identity,
     );
   } catch (error) {
     if (error instanceof ListCursorError || error instanceof ListRequestError)

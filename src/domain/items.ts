@@ -31,3 +31,36 @@ export interface ItemDefinition {
   result: string | null;
   requirements: string[][];
 }
+
+/** Directory transport: source evidence and crafting graph stay in the detail projection. */
+export type ItemCatalogRow = Omit<
+  ItemDefinition,
+  "requirements" | "result" | "stats"
+> & {
+  stats: Array<
+    Omit<ItemDefinition["stats"][number], "sourceLine" | "modifiers">
+  >;
+};
+export function itemCatalogRow(item: ItemDefinition): ItemCatalogRow {
+  return {
+    internalName: item.internalName,
+    zhName: item.zhName,
+    enName: item.enName,
+    nameLocales: item.nameLocales,
+    category: item.category,
+    cost: item.cost,
+    behavior: item.behavior,
+    descriptionLocales: item.descriptionLocales,
+    descriptions: item.descriptions,
+    stats: item.stats.map((stat) => ({
+      key: stat.key,
+      labelToken: stat.labelToken,
+      labelNote: stat.labelNote,
+      zh: stat.zh,
+      en: stat.en,
+      value: stat.value,
+      zhLocale: stat.zhLocale,
+      enLocale: stat.enLocale,
+    })),
+  };
+}

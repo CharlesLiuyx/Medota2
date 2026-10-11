@@ -215,6 +215,7 @@ export type MapViewData = {
     sourceCommit: string;
     presets: import("./vision-sources").VisionPreset[];
   };
+  visionResource?: { url: string; datasetRevision: string };
   visionScene?: {
     scene: import("./vision").VisionScene;
     datasetRevision: string;

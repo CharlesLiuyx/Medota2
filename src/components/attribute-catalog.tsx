@@ -5,6 +5,12 @@ import {
   type AttributeEnumValue,
 } from "@/domain/attribute-enums";
 import type { ListSlice } from "@/domain/infinite-list";
+import {
+  browserResources,
+  resourceKey,
+  loadBrowserResource,
+  verifyResourceResponse,
+} from "@/browser/resources";
 import { Search } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import Link from "./version-link";
@@ -55,6 +61,7 @@ export function AttributeCatalog({
     window.history.replaceState(null, "", `?${next}`);
   };
   const endpoint = `/api/attributes?${new URLSearchParams({ q, scope, release: params.get("release") ?? "" })}`;
+  const [initial] = useState({ endpoint, slice: initialSlice });
   const [loaded, setLoaded] = useState({
     endpoint,
     slice: initialSlice,
@@ -62,21 +69,45 @@ export function AttributeCatalog({
   });
   const [retry, setRetry] = useState(0);
   useEffect(() => {
-    const controller = new AbortController();
+    let disposed = false;
+    const key = resourceKey(["attribute-summary/1", version, endpoint]);
+    const initialKey = resourceKey([
+      "attribute-summary/1",
+      version,
+      initial.endpoint,
+    ]);
+    if (!browserResources.has(initialKey))
+      browserResources.set(initialKey, initial.slice, 60_000);
+    if (
+      endpoint === initial.endpoint &&
+      loaded.endpoint === initial.endpoint &&
+      retry === 0
+    )
+      return;
     const timer = setTimeout(() => {
-      void fetch(endpoint, { signal: controller.signal })
-        .then(async (response) => {
+      void loadBrowserResource(
+        key,
+        async () => {
+          const response = await fetch(endpoint, {
+            signal: AbortSignal.timeout(20_000),
+          });
           if (!response.ok) throw new Error("Attribute request failed");
-          return response.json() as Promise<
-            ListSlice<Omit<AttributeSummary, "searchText">>
+          verifyResourceResponse(response);
+          const slice = (await response.json()) as ListSlice<
+            Omit<AttributeSummary, "searchText">
           >;
-        })
+          if (slice.datasetVersionId !== version || !Array.isArray(slice.items))
+            throw new Error("Attribute version mismatch");
+          return slice;
+        },
+        "foreground",
+        60_000,
+      )
         .then((slice) => {
-          if (!controller.signal.aborted)
-            setLoaded({ endpoint, slice, error: false });
+          if (!disposed) setLoaded({ endpoint, slice, error: false });
         })
         .catch(() => {
-          if (!controller.signal.aborted)
+          if (!disposed)
             setLoaded({
               endpoint,
               slice: { items: [], nextCursor: null, previousCursor: null },
@@ -85,10 +116,10 @@ export function AttributeCatalog({
         });
     }, 80);
     return () => {
+      disposed = true;
       clearTimeout(timer);
-      controller.abort();
     };
-  }, [endpoint, retry]);
+  }, [endpoint, initial, version, retry, loaded.endpoint]);
   const renderEntry = (entry: Omit<AttributeSummary, "searchText">) => (
     <div key={entry.id} role="listitem" className="min-w-0">
       <Link

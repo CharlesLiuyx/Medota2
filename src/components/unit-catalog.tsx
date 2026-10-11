@@ -16,6 +16,7 @@ import { Search, X } from "lucide-react";
 import { UNIT_CATEGORIES, type UnitDefinition } from "@/domain/units";
 import { useLocale, useTranslations } from "@/i18n/provider";
 import { CatalogViewSwitch, useCatalogView } from "./catalog-view-switch";
+import { InfiniteList } from "./infinite-list";
 import { EntityCatalogTable } from "./entity-catalog-table";
 import { unitTableEntry } from "./catalog-table-projections";
 import { CatalogHeader } from "./catalog-header";
@@ -185,82 +186,95 @@ export function UnitCatalog({
           label={t("单位结果")}
         />
       ) : (
-        <ul
-          aria-label={t("单位结果")}
-          className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8"
-        >
-          {filtered.map((unit) => {
-            const name = gameLocale(lang) === "en" ? unit.enName : unit.zhName;
-            return (
-              <li key={unit.internalName} className="min-w-0">
-                <HoverTooltip
-                  href={`/units/${unit.internalName}`}
-                  className="flex h-[70px] items-center gap-2 overflow-hidden bg-[#182127]/65 p-2 hover:bg-[#25313a]"
-                  content={
-                    <>
-                      <div className="flex items-center gap-2">
-                        <UnitPortrait
-                          name={name}
-                          unitKey={unit.internalName}
-                          portrait={unit.portrait}
-                          large
-                        />
-                        <p className="text-sm font-semibold">
-                          <SourceText
-                            sourceLocale={
-                              unit.nameLocales?.[
-                                gameLocale(lang) === "en" ? "en" : "zh"
-                              ]
-                            }
-                          >
-                            {name}
-                          </SourceText>
-                        </p>
-                      </div>
-                      <p className="my-2 text-[11px] text-[#c4a16a]">
-                        {t(UNIT_CATEGORIES[unit.category])} · {t(unit.team)} ·{" "}
-                        {t(unit.attack)}
-                        {unit.variant &&
-                          ` · ${unitVariant(unit.variant, lang)}`}
-                      </p>
-                      <UnitStats unit={unit} compact />
-                      <p className="mt-3 text-[10px] text-[var(--text-muted)]">
-                        {t("基础定义值 · 点击查看属性与技能")}
-                      </p>
-                    </>
-                  }
+        <InfiniteList
+          source={{
+            kind: "local",
+            items: filtered,
+            chunkSize: 48,
+            identity: `${params.get("release")}:${q}:${category}:${lang}`,
+          }}
+          getKey={(unit) => unit.internalName}
+          ariaLabel={t("单位结果")}
+          chunkClassName="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8"
+          renderChunk={(chunk) =>
+            chunk.map((unit) => {
+              const name =
+                gameLocale(lang) === "en" ? unit.enName : unit.zhName;
+              return (
+                <div
+                  role="listitem"
+                  key={unit.internalName}
+                  className="min-w-0"
                 >
-                  <UnitPortrait
-                    name={name}
-                    unitKey={unit.internalName}
-                    portrait={unit.portrait}
-                  />
-                  <div className="min-w-0">
-                    <h2 className="truncate text-xs font-medium">
-                      <SourceText
-                        sourceLocale={
-                          unit.nameLocales?.[
-                            gameLocale(lang) === "en" ? "en" : "zh"
-                          ]
-                        }
-                      >
-                        {name}
-                      </SourceText>
-                    </h2>
-                    <p className="mt-1 truncate text-[10px] text-[var(--text-muted)]">
-                      {t(UNIT_CATEGORIES[unit.category])} · {t(unit.team)}
-                    </p>
-                    {unit.variant && (
-                      <p className="truncate text-[10px] text-[#a8b4be]">
-                        {unitVariant(unit.variant, lang)}
+                  <HoverTooltip
+                    href={`/units/${unit.internalName}`}
+                    className="flex h-[70px] items-center gap-2 overflow-hidden bg-[#182127]/65 p-2 hover:bg-[#25313a]"
+                    content={
+                      <>
+                        <div className="flex items-center gap-2">
+                          <UnitPortrait
+                            name={name}
+                            unitKey={unit.internalName}
+                            portrait={unit.portrait}
+                            large
+                          />
+                          <p className="text-sm font-semibold">
+                            <SourceText
+                              sourceLocale={
+                                unit.nameLocales?.[
+                                  gameLocale(lang) === "en" ? "en" : "zh"
+                                ]
+                              }
+                            >
+                              {name}
+                            </SourceText>
+                          </p>
+                        </div>
+                        <p className="my-2 text-[11px] text-[#c4a16a]">
+                          {t(UNIT_CATEGORIES[unit.category])} · {t(unit.team)} ·{" "}
+                          {t(unit.attack)}
+                          {unit.variant &&
+                            ` · ${unitVariant(unit.variant, lang)}`}
+                        </p>
+                        <UnitStats unit={unit} compact />
+                        <p className="mt-3 text-[10px] text-[var(--text-muted)]">
+                          {t("基础定义值 · 点击查看属性与技能")}
+                        </p>
+                      </>
+                    }
+                  >
+                    <UnitPortrait
+                      name={name}
+                      unitKey={unit.internalName}
+                      portrait={unit.portrait}
+                    />
+                    <div className="min-w-0">
+                      <h2 className="truncate text-xs font-medium">
+                        <SourceText
+                          sourceLocale={
+                            unit.nameLocales?.[
+                              gameLocale(lang) === "en" ? "en" : "zh"
+                            ]
+                          }
+                        >
+                          {name}
+                        </SourceText>
+                      </h2>
+                      <p className="mt-1 truncate text-[10px] text-[var(--text-muted)]">
+                        {t(UNIT_CATEGORIES[unit.category])} · {t(unit.team)}
                       </p>
-                    )}
-                  </div>
-                </HoverTooltip>
-              </li>
-            );
-          })}
-        </ul>
+                      {unit.variant && (
+                        <p className="truncate text-[10px] text-[#a8b4be]">
+                          {unitVariant(unit.variant, lang)}
+                        </p>
+                      )}
+                    </div>
+                  </HoverTooltip>
+                </div>
+              );
+            })
+          }
+        />
       )}
       {view === "grid" && !filtered.length && (
         <div className="py-16 text-center text-sm text-[var(--text-muted)]">

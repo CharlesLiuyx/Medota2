@@ -1,4 +1,7 @@
 "use client";
+import { loadMapRaster } from "./raster-cache";
+import { preparedRoutingGrid } from "./prepared-routing";
+import { useMapVisionResource } from "./use-map-vision-resource";
 import { useLocale } from "@/i18n/provider";
 import { mapPointLabel } from "@/presentation/map-labels";
 import { translate } from "@/i18n/messages";
@@ -33,10 +36,7 @@ import { CampHoverCard } from "./camp-hover-card";
 import { RoutePanel, useRoutePlanner } from "./route-planner";
 import { createPinchAcceleration, wheelPixels } from "@/domain/map/gestures";
 import { paintGrid, prepareGridPaint } from "./grid-painter";
-import {
-  HEIGHT_PALETTE_KEY,
-  recolorHeightPixels,
-} from "@/domain/map/height-palette";
+import { HEIGHT_PALETTE_KEY } from "@/domain/map/height-palette";
 import { highGroundRaster } from "@/domain/map/high-ground";
 import { currentField } from "@/domain/map/currents";
 import {
@@ -50,7 +50,6 @@ import {
   routeKey,
   routeColor,
   cellAt,
-  withTrees,
   type NavGrid,
 } from "@/domain/map/routing";
 import {
@@ -84,6 +83,7 @@ type Position = {
 };
 type HeroHover = { source: PlacedVisionSource; preset: VisionPreset };
 type MapControls = {
+  refreshPointer(): void;
   reset(): void;
   zoom(factor: number): void;
   focus(point: MapPoint): void;
@@ -138,7 +138,28 @@ export function MapViewer({
 }) {
   // The parent keys this immutable payload by map revision and Catalog. A locale
   // navigation must not rebuild routing inputs or discard the Worker cache.
-  const [data] = useState(initialData);
+  const [baseData] = useState(initialData);
+  const visionResource = useMapVisionResource(baseData);
+  const {
+    scene: visionScene,
+    status: visionStatus,
+    load: loadVision,
+  } = visionResource;
+  const sceneRef = useRef(visionScene);
+  const lastHoverPointer = useRef<PointerEvent | null>(null);
+  useLayoutEffect(() => {
+    sceneRef.current = visionScene;
+  }, [visionScene]);
+  const data = baseData;
+  const visionData = useMemo(
+    () =>
+      visionResource.scene
+        ? { ...baseData, visionScene: visionResource.scene }
+        : baseData,
+    [baseData, visionResource.scene],
+  );
+  const visionIntent = useRef(false);
+  const [visionWaiting, setVisionWaiting] = useState(false);
   const t = useTranslations();
   const locale = useLocale();
   const planner = useRoutePlanner(data);
@@ -149,6 +170,35 @@ export function MapViewer({
     sight: VisionPlanner;
     texture: VisionTexture | null;
   }>({ sight: null!, texture: null });
+  const requestVision = useCallback(
+    (ensureEnabled = false) => {
+      if (visionScene) {
+        sightFrame.current.sight.toggle();
+        routeFrame.current.stop();
+      } else if (visionIntent.current && visionStatus !== "error") {
+        if (ensureEnabled) return;
+        visionIntent.current = false;
+        setVisionWaiting(false);
+      } else {
+        visionIntent.current = true;
+        setVisionWaiting(true);
+        void loadVision("foreground");
+      }
+    },
+    [visionScene, visionStatus, loadVision],
+  );
+  const requestVisionRef = useRef(requestVision);
+  useLayoutEffect(() => {
+    requestVisionRef.current = requestVision;
+  }, [requestVision]);
+  useEffect(() => {
+    if (visionScene && visionIntent.current) {
+      visionIntent.current = false;
+      setVisionWaiting(false);
+      if (!sightFrame.current.sight.enabled) sightFrame.current.sight.toggle();
+      routeFrame.current.stop();
+    }
+  }, [visionScene]);
   const [hoveredLayer, setHoveredLayer] = useState<MapLayer | null>(null);
   const campLayerHover = hoveredLayer === "camp";
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -271,6 +321,7 @@ export function MapViewer({
       if (changed) setVisionEnabled(planner.enabled);
       if (enteringAdd) {
         controls.current?.hover(null);
+        controls.current?.refreshPointer();
         setHoveredLayer(null);
       }
       if (repaint) redraw.current();
@@ -369,11 +420,7 @@ export function MapViewer({
     () =>
       data.routing?.currents?.length && data.routing.grid
         ? currentField(
-            withTrees(
-              data.routing.grid,
-              data.points.filter((p) => p.kind === "tree"),
-              data.routing.obstacles,
-            ),
+            preparedRoutingGrid(data.routing, data.points)!,
             data.routing.currents,
           )
         : null,
@@ -524,40 +571,24 @@ export function MapViewer({
     let disposed = false;
     overlayTextures.current.clear();
     for (const layer of data.rasterLayers ?? []) {
-      const img = new Image();
-      img.onload = () => {
-        if (!disposed) {
-          let rendered: HTMLImageElement | HTMLCanvasElement = img;
-          if (layer.id === "height") {
-            const tile = document.createElement("canvas");
-            tile.width = img.naturalWidth;
-            tile.height = img.naturalHeight;
-            const context = tile.getContext("2d");
-            if (context) {
-              context.drawImage(img, 0, 0);
-              const pixels = context.getImageData(
-                0,
-                0,
-                tile.width,
-                tile.height,
-              );
-              const changed = recolorHeightPixels(pixels.data);
-              if (canvasRef.current) {
-                canvasRef.current.dataset.heightPalettePixels = String(changed);
-                canvasRef.current.dataset.heightPalette = heightPaletteKey;
-              }
-              context.putImageData(pixels, 0, 0);
-              rendered = tile;
-            }
+      void loadMapRaster(
+        layer.url,
+        layer.id === "height" ? heightPaletteKey : undefined,
+      )
+        .then((raster) => {
+          if (disposed) return;
+          if (layer.id === "height" && canvasRef.current) {
+            canvasRef.current.dataset.heightPalettePixels = String(
+              raster.changed,
+            );
+            canvasRef.current.dataset.heightPalette = heightPaletteKey;
           }
-          overlayTextures.current.set(layer.id, rendered);
+          overlayTextures.current.set(layer.id, raster.image);
           redraw.current();
-        }
-      };
-      img.onerror = () => {
-        if (!disposed) setTerrainError(true);
-      };
-      img.src = layer.url;
+        })
+        .catch(() => {
+          if (!disposed) setTerrainError(true);
+        });
     }
     return () => {
       disposed = true;
@@ -1262,7 +1293,7 @@ export function MapViewer({
         const showHighGround = sightFrame.current.sight.enabled;
         if (showHighGround && highGround === undefined) {
           const raster = highGroundRaster(
-            data.visionScene?.scene.terrain ?? null,
+            sceneRef.current?.scene.terrain ?? null,
           );
           highGround = null;
           if (raster) {
@@ -1721,6 +1752,7 @@ export function MapViewer({
       }
     };
     const move = (e: PointerEvent) => {
+      lastHoverPointer.current = e;
       const p = point(e);
       if (visionDrag && visionDrag.pointerId === e.pointerId) {
         if (visionDrag.selectionOnly) return;
@@ -2060,6 +2092,7 @@ export function MapViewer({
       }
     };
     const leave = () => {
+      lastHoverPointer.current = null;
       if (hoveredSourceRef.current) {
         hoveredSourceRef.current = null;
         canvas.dataset.hoveredVisionSource = "";
@@ -2086,6 +2119,9 @@ export function MapViewer({
       }
     };
     controls.current = {
+      refreshPointer: () => {
+        if (lastHoverPointer.current) move(lastHoverPointer.current);
+      },
       reset,
       zoom: zoomBy,
       hover: (p) => {
@@ -2116,6 +2152,11 @@ export function MapViewer({
     const exitTool = (e: KeyboardEvent | MouseEvent) => {
       const escape = e.type === "keydown";
       if (escape && (e as KeyboardEvent).key !== "Escape") return;
+      if (visionIntent.current) {
+        visionIntent.current = false;
+        setVisionWaiting(false);
+        e.preventDefault();
+      }
       if (visionDrag) {
         e.preventDefault();
         e.stopPropagation();
@@ -2193,11 +2234,11 @@ export function MapViewer({
         )
           return;
         setTerrainLayer(terrain);
-      } else if (key === "q" && data.visionScene) {
-        if (!sightFrame.current.sight.enabled)
-          sightFrame.current.sight.toggle();
-        routeFrame.current.stop();
+      } else if (key === "q" && (data.visionScene || data.visionResource)) {
+        if (!sightFrame.current.sight.enabled) requestVisionRef.current(true);
       } else if (key === "w") {
+        visionIntent.current = false;
+        setVisionWaiting(false);
         sightFrame.current.sight.stop();
         if (!routeFrame.current.enabled) routeFrame.current.toggle();
       } else return;
@@ -2708,17 +2749,21 @@ export function MapViewer({
               <div className="flex flex-col items-stretch gap-1">
                 <button
                   className={`${buttonStyle} flex h-14 items-center justify-center gap-1 !px-0.5 !py-1 !text-[14px] ${visionEnabled ? activeToolStyle : ""}`}
-                  disabled={!data.visionScene}
+                  disabled={!visionScene && !data.visionResource}
+                  aria-busy={visionWaiting && visionStatus !== "error"}
                   aria-keyshortcuts="Q"
                   title={`${t("视野")} (Q)`}
                   aria-pressed={visionEnabled}
                   onClick={() => {
-                    sightFrame.current.sight.toggle();
-                    planner.stop();
+                    requestVision();
                   }}
                 >
                   <span className="min-w-0 flex-1 leading-5">{t("视野")}</span>
-                  <ShortcutKey value="Q" />
+                  {visionWaiting && visionStatus !== "error" ? (
+                    <span aria-hidden>…</span>
+                  ) : (
+                    <ShortcutKey value="Q" />
+                  )}
                 </button>
                 <button
                   className={`${buttonStyle} flex h-14 items-center justify-center gap-1 !px-0.5 !py-1 !text-[14px] ${planner.enabled ? activeToolStyle : ""}`}
@@ -2726,6 +2771,8 @@ export function MapViewer({
                   title={`${t("寻路")} (W)`}
                   aria-pressed={planner.enabled}
                   onClick={() => {
+                    visionIntent.current = false;
+                    setVisionWaiting(false);
                     sightFrame.current.sight.stop();
                     planner.toggle();
                   }}
@@ -2736,6 +2783,14 @@ export function MapViewer({
               </div>
             </div>
           </div>
+          {visionWaiting && visionStatus === "error" && (
+            <p role="alert" className="mt-2 text-xs">
+              {t("视野资料加载失败。")}{" "}
+              <button className="underline" onClick={() => requestVision()}>
+                {t("重试")}
+              </button>
+            </p>
+          )}
           {terrainError && (
             <p role="alert" className="mt-2">
               {t("地形图层加载失败，请刷新重试。")}
@@ -2821,7 +2876,7 @@ export function MapViewer({
           <VisionController
             onFrame={updateVisionFrame}
             selected={selected}
-            data={data}
+            data={visionData}
             activate={() => {
               planner.stop();
             }}
