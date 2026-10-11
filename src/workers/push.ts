@@ -81,6 +81,12 @@ async function main() {
           remoteRef,
           base,
           remoteFresh: false,
+          candidateStrategy: {
+            condition: "本次完整快照与已有lock相同",
+            branch: "codex/publish/<base-sha>/<receipt-id>",
+            parallel: ["本机真实数据检查", "候选fixture CI"],
+            promotion: "同一SHA全部通过后快进main并核对最终工作流",
+          },
           checks: publicationPlan(
             createPlan(changedFiles(base)),
             Boolean(process.env.CI),
@@ -89,7 +95,7 @@ async function main() {
             "preflight",
             "commit-candidate",
             "prepare-data",
-            "checks",
+            "checks + candidate-ci (unchanged snapshot)",
             "publish-data",
             "finalize",
             "push-code",
@@ -125,10 +131,10 @@ async function main() {
       });
       return;
     }
-    // The workflow currently runs on main pushes. Do not upload data for a branch with no CI trigger.
+    // Candidate refs are managed by this command; the final publication target is main.
     if (remoteRef !== "refs/heads/main")
       throw new Error(
-        "当前verify工作流只监听main推送；请先准备合入main的候选。功能分支CI合入策略需单独配置。",
+        "自动发布的目标必须是main；候选分支由发布入口创建并验证。",
       );
     await assertLocalDependencies();
     await git(["fetch", "--no-tags", remote, remoteRef]);
