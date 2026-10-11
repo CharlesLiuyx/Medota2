@@ -113,7 +113,9 @@ export function useCompactMenu(
     trigger.addEventListener("click", click);
     details.addEventListener("toggle", sync);
     sync();
+    trigger.dataset.interactiveReady = "true";
     return () => {
+      delete trigger.dataset.interactiveReady;
       close();
       trigger.removeEventListener("click", click);
       details.removeEventListener("toggle", sync);

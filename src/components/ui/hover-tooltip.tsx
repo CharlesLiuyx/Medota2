@@ -114,6 +114,11 @@ export function HoverTooltip({
     return () => clearTimeout(timer);
   }, [href, open, prefetchReady]);
   const anchor = useRef<HTMLElement | null>(null);
+  const bindAnchor = useCallback((element: HTMLElement | null) => {
+    anchor.current = element;
+    // Commit-time signal: SSR visibility alone does not mean focus handlers exist.
+    if (element) element.dataset.interactiveReady = "true";
+  }, []);
   const panel = useRef<HTMLDivElement | null>(null);
   const closing = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelClose = () => {
@@ -235,11 +240,17 @@ export function HoverTooltip({
   return (
     <>
       {href ? (
-        <Link href={href} prefetch={open && prefetchReady} {...triggerProps}>
+        <Link
+          ref={bindAnchor}
+          href={href}
+          prefetch={open && prefetchReady}
+          {...triggerProps}
+        >
           {children}
         </Link>
       ) : (
         <button
+          ref={bindAnchor}
           type="button"
           {...buttonProps}
           {...triggerProps}

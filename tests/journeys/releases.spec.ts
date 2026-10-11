@@ -752,9 +752,8 @@ test("heroes global language persists through cookies, history and map navigatio
   page,
   context,
 }) => {
-  // These flows keep their own 30s budget: repeated full catalog reloads can
-  // otherwise leave less than a second for the final navigation on CI.
-  await page.goto("/heroes?lang=en");
+  // Cookie/history behavior needs one known hero; full-list flows run separately.
+  await page.goto("/heroes?lang=en&q=antimage");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
   await expect
     .poll(
@@ -763,14 +762,19 @@ test("heroes global language persists through cookies, history and map navigatio
           ?.value,
     )
     .toBe("en");
-  await page.goto("/heroes");
+  await page.goto("/heroes?q=antimage");
   await expect(
     page.getByRole("heading", { name: "Hero Catalog", exact: true }),
   ).toBeVisible();
   expect(
     (await context.cookies()).find((c) => c.name === "medota2-locale")?.value,
   ).toBe("en");
-  await page.getByRole("combobox", { name: "Language", exact: true }).click();
+  const language = page.getByRole("combobox", {
+    name: "Language",
+    exact: true,
+  });
+  await expect(language).toHaveAttribute("data-interactive-ready", "true");
+  await language.click();
   await page.getByRole("option", { name: "简体中文", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "英雄图鉴", exact: true }),
