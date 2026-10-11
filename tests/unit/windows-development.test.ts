@@ -3,16 +3,29 @@ import { once } from "node:events";
 import { setTimeout as delay } from "node:timers/promises";
 import { chmodSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { resolve } from "node:path";
+import { delimiter, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   assertPrivateRegularFile,
   protectPrivateDirectory,
 } from "@/config/private-file";
-import { nativeCommand } from "@/development/command";
+import { nativeCommand, normalizeNodePath } from "@/development/command";
 import { stopChildTree } from "@/development/process";
 
 describe("native development admission", () => {
+  it("canonicalizes repeated pnpm module paths without discarding resolution order or new paths", () => {
+    const paths = ["/first", "/second", "/third"];
+    expect(
+      normalizeNodePath([...paths, ...paths, ...paths].join(delimiter)),
+    ).toBe(paths.join(delimiter));
+    expect(normalizeNodePath([...paths].reverse().join(delimiter))).not.toBe(
+      paths.join(delimiter),
+    );
+    expect(normalizeNodePath([...paths, "/new"].join(delimiter))).not.toBe(
+      paths.join(delimiter),
+    );
+    expect(normalizeNodePath(undefined)).toBeUndefined();
+  });
   it.runIf(process.platform === "win32")(
     "stops only the owned process tree",
     async () => {

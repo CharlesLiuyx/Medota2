@@ -5,7 +5,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
 import { checkBatches } from "@/development/check-scheduling";
 import { withBrowserBatch } from "@/development/browser-batch";
-import { nativeCommand } from "@/development/command";
+import { nativeCommand, normalizeNodePath } from "@/development/command";
 import {
   changedFiles,
   createPlan,
@@ -70,6 +70,10 @@ async function taskKey(task: CheckTask): Promise<string> {
   // Only store a digest of environment values; credentials never enter manifests.
   const environment = Object.entries(process.env)
     .filter(([key]) => /^(CI$|NODE_|MEDOTA2_|NEXT_|LANG$|TZ$)/.test(key))
+    .map(([key, value]) => [
+      key,
+      key === "NODE_PATH" ? normalizeNodePath(value) : value,
+    ])
     .sort();
   return createHash("sha256")
     .update(

@@ -1,6 +1,16 @@
 import { existsSync } from "node:fs";
 import { basename, delimiter, resolve } from "node:path";
 
+/** pnpm prepends the same module paths at every nested invocation. Repeated
+ * entries do not change resolution; preserve the first occurrence and order. */
+export function normalizeNodePath(
+  value: string | undefined,
+): string | undefined {
+  return value === undefined
+    ? undefined
+    : [...new Set(value.split(delimiter))].join(delimiter);
+}
+
 /** Invoke pnpm's JavaScript entry directly on Windows, without a command shell. */
 export function nativeCommand(
   command: string,

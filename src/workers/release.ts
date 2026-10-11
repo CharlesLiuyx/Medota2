@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { loadLocalEnv } from "@/config/env";
+import { normalizeNodePath } from "@/development/command";
 import { createHash } from "node:crypto";
 import { access, cp, mkdir, readdir, rm } from "node:fs/promises";
 import { createServer } from "node:net";
@@ -56,6 +57,10 @@ async function main(): Promise<void> {
           arch: process.arch,
           environment: Object.entries(process.env)
             .filter(([name]) => /^(CI$|NODE_|NEXT_|MEDOTA2_)/.test(name))
+            .map(([name, value]) => [
+              name,
+              name === "NODE_PATH" ? normalizeNodePath(value) : value,
+            ])
             .sort(),
         }),
       )
