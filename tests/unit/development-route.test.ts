@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/config/data-sync-state", () => ({ getWorkbenchPort: () => 3000 }));
+
 const state = vi.hoisted(() => ({ readJson: vi.fn(), writeJson: vi.fn() }));
 vi.mock("@/development/runtime", () => ({
   developmentRoot: ".medota2/development",

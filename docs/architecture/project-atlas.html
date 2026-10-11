@@ -2765,7 +2765,7 @@
                     data-name="1 · 固定候选并验证"
                     data-definition="固定全部代码和数据候选，按远端基线执行检查。"
                     data-why="让通过结果对应这次发布的准确内容。"
-                    data-detail="先核对依赖归属和远端；保存候选提交后执行fixture与真实旅程。浏览预热目录／首条详情及客户端脚本块，保留原导航断言与时限。输入变化停止后续检查；并行编辑应提前使用独立工作区。"
+                    data-detail="先核对依赖归属和远端；快照不变时本机真实检查与候选分支fixture CI并行，全部通过才快进main；数据变化沿用完整路径。浏览预热目录／首条详情及客户端脚本块，保留原导航断言与时限。输入变化停止后续检查；并行编辑应提前使用独立工作区。"
                     data-files='["src/workers/push.ts", "src/development/publication/candidate.ts", "src/workers/run-check.ts", "tests/helpers/warm-browser-server.ts"]'
                     data-node-id="sync-graph-commit"
                     aria-pressed="false"
@@ -2803,9 +2803,9 @@
                     class="node"
                     data-key="task"
                     data-name="3 · 推送并确认CI"
-                    data-definition="检查数据lock，普通推送main，确认该提交CI成功。"
+                    data-definition="检查数据lock，快进main，再核对同一提交的CI证据。"
                     data-why="让代码明确指向已核验、可获取的数据快照。"
-                    data-detail="阶段收据记录耗时和失败；推送结果不确定先回读远端，push --resume只续接CI。取消、跳过、失败或缺失均不算完成。"
+                    data-detail="CI分3个浏览主机，每台1个worker，core单独执行；main只复用同SHA、同基线的成功候选。阶段收据记录并行耗时和失败；推送结果不确定先回读远端，push --resume只续接CI。取消、跳过、失败或缺失均不算完成。"
                     data-files='["src/workers/push.ts", "src/development/publication/workflow.ts", "dev-data.lock.json"]'
                     data-node-id="sync-graph-lockpush"
                     aria-pressed="false"
@@ -2813,7 +2813,7 @@
                     <span class="node-type">程序处理</span
                     ><strong>3 · 推送并确认CI</strong
                     ><span class="node-summary"
-                      >检查数据lock，普通推送main，确认该提交CI成功。</span
+                      >检查数据lock，快进main，再核对同一提交的CI证据。</span
                     ><span class="node-why"
                       ><b>作用</b>
                       让代码明确指向已核验、可获取的数据快照。</span

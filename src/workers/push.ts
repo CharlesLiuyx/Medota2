@@ -40,6 +40,7 @@ import {
 } from "../../scripts/development/check-plan.mjs";
 
 async function main() {
+  const invocationStartedAt = new Date().toISOString();
   const { values } = parseArgs({
     options: {
       message: { type: "string", short: "m" },
@@ -119,7 +120,8 @@ async function main() {
         throw new Error("没有匹配当前分支与远端的发布收据。");
       await confirmPublication(saved, {
         remoteContains,
-        confirmCI: async (sha) => (await waitForCI(repository, sha)).url,
+        confirmCI: async (sha) =>
+          (await waitForCI(repository, sha, { branch: "main" })).url,
       });
       return;
     }
@@ -161,6 +163,7 @@ async function main() {
       base,
       tree,
     });
+    receipt.startedAt = invocationStartedAt;
     const paths = changedFiles(base);
     await writeJson(
       resolve(".medota2/publications", receipt.id, "plan.json"),
@@ -174,6 +177,8 @@ async function main() {
         { ...process.env, pnpm_config_verify_deps_before_run: "error" },
         resolve(".medota2/publications", receipt.id, `${name}.log`),
       );
+    let preparedData: Awaited<ReturnType<typeof exportCurrent>> | undefined;
+    let parallelCandidate = false;
     let finalTree = tree;
     let publishedLock: Awaited<ReturnType<typeof readDataLock>> = null;
     const withDataLock = async <T>(work: () => Promise<T>): Promise<T> => {
@@ -233,6 +238,9 @@ async function main() {
       prepareData: async () =>
         withDataLock(async () => {
           const prepared = await exportCurrent();
+          preparedData = prepared;
+          parallelCandidate =
+            (await readDataLock())?.snapshotId === prepared.snapshotId;
           const problems = await taskProcess<string[]>("dependencies", [
             "--root",
             prepared.root,
@@ -244,14 +252,50 @@ async function main() {
           return prepared.snapshotId;
         }),
       check: async () => {
-        await command("checks", ["check", "--base", base, "--publication"]);
+        // Candidate CI supplies the same fixture plan while local real-data checks run.
+        await command("checks", [
+          "check",
+          "--base",
+          base,
+          ...(parallelCandidate ? [] : ["--publication"]),
+        ]);
+      },
+      candidateCI: async (sha) => {
+        if (!parallelCandidate) return undefined;
+        await guard();
+        await assertRemote();
+        const candidateBranch = `codex/publish/${base}/${receipt.id}`;
+        receipt.candidateRef = `refs/heads/${candidateBranch}`;
+        await saveReceipt(receipt);
+        try {
+          await git(["push", remote, `${sha}:${receipt.candidateRef}`]);
+        } catch (error) {
+          if (
+            (await git(["ls-remote", remote, receipt.candidateRef])).split(
+              /\s/,
+            )[0] !== sha
+          )
+            throw error;
+        }
+        return (
+          await waitForCI(repository, sha, {
+            branch: candidateBranch,
+            progress: async (ci) => {
+              receipt.candidateCIUrl = ci.url;
+              await saveReceipt(receipt);
+            },
+          })
+        ).url;
       },
       assertCandidate: () => guard(),
       publishData: async (snapshotId) => {
         const unlock = await acquireLock("data-sync");
         try {
           publishedLock = (
-            await publishData({ expectedSnapshotId: snapshotId })
+            await publishData({
+              expectedSnapshotId: snapshotId,
+              prepared: preparedData,
+            })
           ).lock;
         } finally {
           await unlock();
@@ -312,6 +356,7 @@ async function main() {
       confirmCI: async (sha) =>
         (
           await waitForCI(repository, sha, {
+            branch: "main",
             progress: async (ci) => {
               receipt.ciUrl = ci.url;
               await saveReceipt(receipt);

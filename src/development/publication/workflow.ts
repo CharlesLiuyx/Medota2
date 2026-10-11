@@ -6,6 +6,8 @@ export interface PublicationSteps {
   commit(): Promise<string>;
   prepareData(): Promise<string>;
   check(): Promise<void>;
+  // Present only for unchanged snapshots; checks the immutable code commit on a candidate branch.
+  candidateCI?(sha: string, snapshotId: string): Promise<string | undefined>;
   assertCandidate(): Promise<void>;
   publishData(snapshotId: string): Promise<void>;
   finalize(): Promise<string>;
@@ -21,13 +23,32 @@ export async function publishCandidate(
   await stage(receipt, "preflight", steps.preflight);
   receipt.codeCommit = await stage(receipt, "commit-candidate", steps.commit);
   receipt.snapshotId = await stage(receipt, "prepare-data", steps.prepareData);
-  await stage(receipt, "checks", steps.check);
+  // Settle both branches before returning so no background work can mutate a failed run.
+  const outcomes = await Promise.allSettled([
+    stage(receipt, "checks", steps.check),
+    ...(steps.candidateCI
+      ? [
+          stage(receipt, "candidate-ci", () =>
+            steps.candidateCI!(receipt.codeCommit!, receipt.snapshotId!),
+          ),
+        ]
+      : []),
+  ]);
+  for (const result of outcomes)
+    if (result.status === "rejected") throw result.reason;
+  const candidateCI = outcomes[1];
+  if (candidateCI?.status === "fulfilled")
+    receipt.candidateCIUrl = candidateCI.value as string | undefined;
   await stage(receipt, "candidate-guard", steps.assertCandidate);
   await stage(receipt, "remote-guard", steps.assertRemote);
   await stage(receipt, "publish-data", () =>
     steps.publishData(receipt.snapshotId!),
   );
   receipt.finalCommit = await stage(receipt, "finalize", steps.finalize);
+  await stage(receipt, "promotion-guard", async () => {
+    if (receipt.candidateCIUrl && receipt.finalCommit !== receipt.codeCommit)
+      throw new Error("候选CI提交与最终提交不同；重新规划发布，不能复用旧CI。");
+  });
   // Save the exact target BEFORE pushing: a killed client can recover by reading the remote.
   await saveReceipt(receipt);
   await stage(receipt, "push-code", async () => {

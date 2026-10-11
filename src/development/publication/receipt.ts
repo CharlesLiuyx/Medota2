@@ -18,6 +18,8 @@ export interface PublicationReceipt {
   snapshotId?: string;
   finalCommit?: string;
   ciUrl?: string;
+  candidateRef?: string;
+  candidateCIUrl?: string;
   stages: Array<{
     name: string;
     status: "running" | "passed" | "failed";
@@ -44,7 +46,15 @@ export function createReceipt(
     ...input,
   };
 }
+const pendingWrites = new WeakMap<PublicationReceipt, Promise<void>>();
 export async function saveReceipt(receipt: PublicationReceipt) {
+  const pending = (pendingWrites.get(receipt) ?? Promise.resolve()).then(() =>
+    persistReceipt(receipt),
+  );
+  pendingWrites.set(receipt, pending);
+  await pending;
+}
+async function persistReceipt(receipt: PublicationReceipt) {
   receipt.updatedAt = new Date().toISOString();
   await writeJson(
     resolve(".medota2/publications", receipt.id, "run.json"),

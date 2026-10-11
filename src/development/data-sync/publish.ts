@@ -104,7 +104,11 @@ export async function assertPrivateRemote(remote: string) {
 }
 
 export async function publishData(
-  options: { fullVerification?: boolean; expectedSnapshotId?: string } = {},
+  options: {
+    fullVerification?: boolean;
+    expectedSnapshotId?: string;
+    prepared?: Awaited<ReturnType<typeof exportCurrent>>;
+  } = {},
 ) {
   const dirty = await codeGit(["status", "--porcelain"]);
   if (
@@ -117,7 +121,18 @@ export async function publishData(
     );
   const remote = await configureRepository();
   await assertPrivateRemote(remote);
-  const current = await timed("export current data", () => exportCurrent());
+  const previous = await readDataLock();
+  const reuse =
+    options.prepared &&
+    options.expectedSnapshotId &&
+    options.prepared.snapshotId === options.expectedSnapshotId &&
+    previous?.snapshotId === options.expectedSnapshotId &&
+    !options.fullVerification;
+  // Reuse this invocation's export only for an already published immutable snapshot.
+  // Independent remote retrieval plus a fresh live digest remain mandatory below.
+  const current = reuse
+    ? options.prepared!
+    : await timed("export current data", () => exportCurrent());
   if (
     options.expectedSnapshotId &&
     current.snapshotId !== options.expectedSnapshotId
@@ -125,7 +140,6 @@ export async function publishData(
     throw new Error(
       "Business data changed after candidate validation; preserve the uploaded candidate and revalidate before publishing.",
     );
-  const previous = await readDataLock();
   if (
     previous?.snapshotId === current.snapshotId &&
     !options.fullVerification

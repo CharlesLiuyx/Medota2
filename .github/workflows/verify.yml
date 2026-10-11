@@ -3,42 +3,53 @@ name: verify
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, "codex/publish/**"]
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: verify-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  verify:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      base: ${{ steps.plan.outputs.base }}
+      promoted: ${{ steps.plan.outputs.promoted }}
+      core: ${{ steps.plan.outputs.core }}
+      browser: ${{ steps.plan.outputs.browser }}
+      coreDatabase: ${{ steps.plan.outputs.coreDatabase }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Plan affected checks and verify promotion evidence
+        id: plan
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE: ${{ github.event.before }}
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/development/ci-plan.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: medota2-plan-${{ github.run_id }}
+          path: .medota2/check-plan.json
+          retention-days: 14
+
+  core:
+    needs: plan
+    if: needs.plan.outputs.core == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      # Uses only Node built-ins: decide before installing browsers or preparing DBs.
-      - name: Plan affected checks
-        id: plan
-        env:
-          PR_BASE: ${{ github.event.pull_request.base.sha }}
-          PUSH_BASE: ${{ github.event.before }}
-        shell: bash
-        run: |
-          base="${PR_BASE:-$PUSH_BASE}"
-          if [[ -z "$base" || "$base" =~ ^0+$ ]]; then
-            base="$(git rev-parse HEAD^ 2>/dev/null || git hash-object -t tree /dev/null)"
-          fi
-          mkdir -p .medota2
-          node scripts/development/check-plan.mjs --base "$base" > .medota2/check-plan.json
-          echo "base=$base" >> "$GITHUB_OUTPUT"
-          node --input-type=module -e 'import fs from "node:fs"; const p=JSON.parse(fs.readFileSync(".medota2/check-plan.json","utf8")); fs.appendFileSync(process.env.GITHUB_OUTPUT,`browser=${p.browser}\ndatabase=${p.database}\n`); console.log(p.summary); for(const t of p.tasks) console.log(`${t.id}: ${t.reason}`);'
-
       - uses: pnpm/action-setup@v4
         with:
           version: 11.7.0
@@ -60,24 +71,18 @@ jobs:
           restore-keys: |
             checks-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('pnpm-lock.yaml', 'scripts/development/**') }}-
 
-      - name: Install Chromium when a browser journey is affected
-        if: steps.plan.outputs.browser == 'true'
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Run affected checks through the local interface
+      - name: Run static, database and build checks
         env:
-          CHECK_BASE: ${{ steps.plan.outputs.base }}
-        run: pnpm check --base "$CHECK_BASE"
-
+          CHECK_BASE: ${{ needs.plan.outputs.base }}
+        run: pnpm check --base "$CHECK_BASE" --lane core
       - name: Release this job's reusable test database
-        if: always() && steps.plan.outputs.database == 'true'
+        if: always() && needs.plan.outputs.coreDatabase == 'true'
         run: pnpm test:clean
-
       - name: Upload check evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: medota2-verification-${{ github.run_id }}
+          name: medota2-verification-${{ github.run_id }}-core
           path: |
             .medota2/check-plan.json
             .medota2/checks/*/run.json
@@ -96,3 +101,89 @@ jobs:
             .medota2/test-runs/*/artifacts
           if-no-files-found: warn
           retention-days: 14
+
+  browser:
+    needs: plan
+    if: needs.plan.outputs.browser == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore verified check results
+        uses: actions/cache@v4
+        with:
+          path: .medota2/check-cache
+          key: checks-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('pnpm-lock.yaml', 'scripts/development/**') }}-browser-${{ matrix.shard }}-${{ github.sha }}
+          restore-keys: |
+            checks-${{ runner.os }}-${{ runner.arch }}-node22-${{ hashFiles('pnpm-lock.yaml', 'scripts/development/**') }}-
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run browser shard with one worker on its own host and database
+        env:
+          CHECK_BASE: ${{ needs.plan.outputs.base }}
+          CHECK_SHARD: ${{ matrix.shard }}/3
+        run: pnpm check --base "$CHECK_BASE" --lane browser --shard "$CHECK_SHARD"
+      - name: Release this job's reusable test database
+        if: always()
+        run: pnpm test:clean
+      - name: Upload check evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: medota2-verification-${{ github.run_id }}-browser-${{ matrix.shard }}
+          path: |
+            .medota2/check-plan.json
+            .medota2/checks/*/run.json
+            .medota2/checks/*/*.log
+            .medota2/shared-tests/runs/*/*.log
+            .medota2/shared-tests/runs/*/run.json
+            .medota2/shared-tests/runs/*/report
+            .medota2/shared-tests/runs/*/test-results
+            .medota2/shared-tests/runs/*/playwright/report
+            .medota2/shared-tests/runs/*/playwright/test-results
+            .medota2/benchmarks/runs
+            .medota2/releases/*/manifest.json
+            .medota2/test-runs/*/run.json
+            .medota2/test-runs/*/index.md
+            .medota2/test-runs/*/logs
+            .medota2/test-runs/*/artifacts
+          if-no-files-found: warn
+          retention-days: 14
+
+  verify:
+    needs: [plan, core, browser]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every selected gate or verified same-commit promotion
+        env:
+          PLAN_RESULT: ${{ needs.plan.result }}
+          CORE_REQUIRED: ${{ needs.plan.outputs.core }}
+          BROWSER_REQUIRED: ${{ needs.plan.outputs.browser }}
+          CORE_RESULT: ${{ needs.core.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+        run: |
+          test "$PLAN_RESULT" = success
+          if [ "$CORE_REQUIRED" = true ]; then test "$CORE_RESULT" = success; else test "$CORE_RESULT" = skipped; fi
+          if [ "$BROWSER_REQUIRED" = true ]; then test "$BROWSER_RESULT" = success; else test "$BROWSER_RESULT" = skipped; fi
