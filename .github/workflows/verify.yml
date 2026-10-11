@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   plan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       base: ${{ steps.plan.outputs.base }}
@@ -44,7 +44,7 @@ jobs:
   core:
     needs: plan
     if: needs.plan.outputs.core == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -105,7 +105,7 @@ jobs:
   browser:
     needs: plan
     if: needs.plan.outputs.browser == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -173,7 +173,7 @@ jobs:
   verify:
     needs: [plan, core, browser]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:
       - name: Require every selected gate or verified same-commit promotion
