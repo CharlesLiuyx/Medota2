@@ -87,12 +87,14 @@ function main() {
     ".medota2/check-plan.json",
     JSON.stringify({ ...plan, base, promoted }, null, 2),
   );
-  const core = executionPlan(plan, { lane: "core" });
+  const core = executionPlan(plan, { lane: "runtime" });
+  const staticChecks = executionPlan(plan, { lane: "static" });
   const browser = executionPlan(plan, { lane: "browser" });
   const output = {
     base,
     promoted,
     core: !promoted && core.tasks.length > 0,
+    static: !promoted && staticChecks.tasks.length > 0,
     browser: !promoted && browser.browser,
     coreDatabase: core.database,
     browserMatrix: JSON.stringify(browserMatrix(plan)),

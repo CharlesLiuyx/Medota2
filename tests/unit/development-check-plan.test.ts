@@ -636,6 +636,16 @@ describe("bounded journey and distributed execution", () => {
       await import("../../scripts/development/check-plan.mjs");
     const plan = createPlan(["pnpm-lock.yaml"]);
     const core = executionPlan(plan, { lane: "core" });
+    const staticChecks = executionPlan(plan, { lane: "static" });
+    const runtime = executionPlan(plan, { lane: "runtime" });
+    expect(
+      [...staticChecks.tasks, ...runtime.tasks].map((task) => task.id).sort(),
+    ).toEqual(core.tasks.map((task) => task.id).sort());
+    expect(
+      runtime.tasks.every(
+        (task) => task.kind !== "static" && task.kind !== "browser",
+      ),
+    ).toBe(true);
     const browser = executionPlan(plan, { lane: "browser", shard: "2/3" });
     expect(
       [...core.tasks, ...browser.tasks].map((task) => task.id).sort(),

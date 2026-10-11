@@ -493,7 +493,7 @@ for (const [entity, kind, field, realQuery] of [
         response.url().includes(`kind=${kind}`),
     );
     await page.goto(
-      `/${entity}?lang=zh-CN&view=table${fixture && entity === "heroes" ? "&q=antimage" : ""}`,
+      `/${entity}?lang=zh-CN&view=table${fixture ? `&q=${encodeURIComponent(query)}` : ""}`,
     );
     const data = await (await response).json();
     const extra = data.columns.find(

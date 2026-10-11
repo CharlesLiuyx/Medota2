@@ -772,7 +772,7 @@ export function executionPlan(plan, { lane, shard, browserTask } = {}) {
     throw new Error(
       "--browser-task requires browser lane and journeys, e2e or visual.",
     );
-  if (lane && !["core", "browser", "static"].includes(lane))
+  if (lane && !["core", "browser", "static", "runtime"].includes(lane))
     throw new Error("Invalid check lane.");
   if (
     shard &&
@@ -787,7 +787,9 @@ export function executionPlan(plan, { lane, shard, browserTask } = {}) {
         !lane ||
         (lane === "static"
           ? task.kind === "static"
-          : (task.kind === "browser") === (lane === "browser")),
+          : lane === "runtime"
+            ? task.kind !== "static" && task.kind !== "browser"
+            : (task.kind === "browser") === (lane === "browser")),
     )
     .filter((task) => !browserTask || task.id === browserTask)
     .map((task) =>
