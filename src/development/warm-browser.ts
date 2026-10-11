@@ -81,6 +81,39 @@ export async function warmBrowserOrigin(
   if (!headResponse.ok)
     throw new Error(`Browser warmup head: ${headResponse.status}`);
   const head = await headResponse.json();
+  // A table renders its SSR shell before its column manifest is available. Warm
+  // the same read-only GET/POST route before the browser's unchanged 5s request
+  // assertion, just as we prepare replica routes above. This does not populate
+  // browser caches: the test must still request and validate its own columns.
+  const release = `c:${head.datasetVersionId}`;
+  const tableUrl = `${origin}/api/catalog/table-attributes?${new URLSearchParams({ release, kind: "hero" })}`;
+  const tableResponse = await fetch(tableUrl, {
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!tableResponse.ok)
+    throw new Error(`Browser warmup table manifest: ${tableResponse.status}`);
+  const manifest = await tableResponse.json();
+  if (
+    manifest.version !== 2 ||
+    manifest.release !== release ||
+    manifest.kind !== "hero" ||
+    manifest.datasetVersionId !== head.datasetVersionId ||
+    typeof manifest.resourceId !== "string" ||
+    typeof manifest.columns?.[0]?.key !== "string"
+  )
+    throw new Error("Browser warmup table manifest has an invalid identity.");
+  const valuesResponse = await fetch(tableUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      resourceId: manifest.resourceId,
+      columns: [manifest.columns[0].key],
+    }),
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!valuesResponse.ok)
+    throw new Error(`Browser warmup table values: ${valuesResponse.status}`);
+  await valuesResponse.arrayBuffer();
   for (const entity of ["heroes", "abilities"]) {
     const response = await fetch(`${origin}/api/catalog/replica`, {
       method: "POST",
