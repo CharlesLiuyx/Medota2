@@ -187,7 +187,9 @@ test("heroes: column menus, float precision, attribute effects and long-press or
 
 test("heroes: shared dropdown opens synchronously without rebuilding table rows", async ({
   page,
+  request,
 }) => {
+  const fixture = await usesCatalogFixture(request);
   await page.goto(
     `/heroes?lang=zh-CN&view=table${fixture ? "&q=antimage" : ""}`,
   );
