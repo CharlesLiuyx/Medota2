@@ -149,6 +149,7 @@
 | [2026-10-11全部本地变更发布](history/2026-10-11-main-publication.md)        | reference  | Tab缓存与角色列整合、初始化修复、CI与完整数据交接  |
 | [2026-10-10全部本地变更发布](history/2026-10-10-main-publication.md)        | reference  | 图鉴表格、全站交互、Fixture发布修复与数据交接      |
 | [地图Web与品牌发布](history/2026-10-08-map-web-publication.md)              | historical | 近似视野、营地、英雄图标、快照与语言旅程CI修复     |
+| [冷构建完整发布](history/2026-10-12-cold-publication.md)                    | reference  | 冷构建4分45.7秒、原断言保留及最终零重试            |
 | [表头修复与发布](history/2026-10-12-header-menu.md)                         | reference  | 留白悬停修复、flaky阻断及4分15.3秒零重试发布       |
 | [完整发布5分钟验收](history/2026-10-11-publication-full-gates.md)           | reference  | POST预热、核心并行及全量发布4分27.6秒              |
 | [CI精简与完整发布实测](history/2026-10-11-ci-simplification.md)             | reference  | 共用准备、固定6片、增量4分56.2秒与广范围边界       |
