@@ -1,3 +1,4 @@
+import { availableParallelism } from "node:os";
 import { getWorkbenchPort } from "./src/config/data-sync-state";
 import { defineConfig, devices } from "@playwright/test";
 
@@ -14,11 +15,15 @@ const baseURL = `http://127.0.0.1:${port}`;
 export default defineConfig({
   testDir: "./tests/journeys",
   globalSetup: "./tests/helpers/warm-browser-server.ts",
-  fullyParallel: false,
-  workers: 1,
+  fullyParallel: shared && process.platform !== "win32",
+  workers:
+    shared && process.platform !== "win32"
+      ? Math.min(3, availableParallelism())
+      : 1,
   retries: 0,
   outputDir: `${artifacts}/test-results`,
   reporter: [
+    ["./tests/helpers/failure-reporter.ts"],
     ["list"],
     ["html", { open: "never", outputFolder: `${artifacts}/report` }],
   ],

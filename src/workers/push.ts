@@ -22,7 +22,12 @@ import {
   assertPublishedLock,
   git,
 } from "@/development/publication/candidate";
-import { gh, githubRepository, waitForCI } from "@/development/publication/ci";
+import {
+  gh,
+  githubRepository,
+  waitForCI,
+  cancelCandidateCI,
+} from "@/development/publication/ci";
 import {
   createReceipt,
   readLatestReceipt,
@@ -93,6 +98,7 @@ async function main() {
           ),
           stages: [
             "preflight",
+            "static-preflight",
             "commit-candidate",
             "prepare-data",
             "checks + candidate-ci (unchanged snapshot)",
@@ -176,12 +182,17 @@ async function main() {
       publicationPlan(createPlan(paths), Boolean(process.env.CI)),
     );
     await saveReceipt(receipt);
-    const command = async (name: string, args: string[]) =>
+    const command = async (
+      name: string,
+      args: string[],
+      signal?: AbortSignal,
+    ) =>
       run(
         "pnpm",
         args,
         { ...process.env, pnpm_config_verify_deps_before_run: "error" },
         resolve(".medota2/publications", receipt.id, `${name}.log`),
+        signal,
       );
     let preparedData: Awaited<ReturnType<typeof exportCurrent>> | undefined;
     let parallelCandidate = false;
@@ -222,6 +233,16 @@ async function main() {
         );
         await guard();
       },
+      staticCheck: async () => {
+        await command("static-preflight", [
+          "check",
+          "--base",
+          base,
+          "--lane",
+          "static",
+        ]);
+        await guard();
+      },
       commit: async () => {
         await guard();
         if ((await git(["write-tree"])) !== originalIndex)
@@ -257,41 +278,60 @@ async function main() {
             throw new Error(`业务快照依赖未满足：${problems.join("; ")}`);
           return prepared.snapshotId;
         }),
-      check: async () => {
+      check: async (signal) => {
         // Candidate CI supplies the same fixture plan while local real-data checks run.
-        await command("checks", [
-          "check",
-          "--base",
-          base,
-          ...(parallelCandidate ? [] : ["--publication"]),
-        ]);
+        await command(
+          "checks",
+          [
+            "check",
+            "--base",
+            base,
+            ...(parallelCandidate ? [] : ["--publication"]),
+          ],
+          signal,
+        );
       },
-      candidateCI: async (sha) => {
+      candidateCI: async (sha, _snapshotId, signal, fail) => {
         if (!parallelCandidate) return undefined;
         await guard();
         await assertRemote();
+        signal.throwIfAborted();
         const candidateBranch = `codex/publish/${base}/${receipt.id}`;
         receipt.candidateRef = `refs/heads/${candidateBranch}`;
         await saveReceipt(receipt);
+        let mayHaveRun = false;
         try {
-          await git(["push", remote, `${sha}:${receipt.candidateRef}`]);
+          signal.throwIfAborted();
+          mayHaveRun = true;
+          try {
+            await git(["push", remote, `${sha}:${receipt.candidateRef}`]);
+          } catch (error) {
+            const remoteCandidate = (
+              await git(["ls-remote", remote, receipt.candidateRef])
+            ).split(/\s/)[0];
+            if (remoteCandidate !== sha) {
+              mayHaveRun = false;
+              throw error;
+            }
+          }
+          return (
+            await waitForCI(repository, sha, {
+              branch: candidateBranch,
+              signal,
+              failFast: true,
+              progress: async (ci) => {
+                receipt.candidateCIUrl = ci.url;
+                await saveReceipt(receipt);
+              },
+            })
+          ).url;
         } catch (error) {
-          if (
-            (await git(["ls-remote", remote, receipt.candidateRef])).split(
-              /\s/,
-            )[0] !== sha
-          )
-            throw error;
+          fail(error);
+          // Includes registration races, local aborts, job failures and timeout.
+          if (mayHaveRun)
+            await cancelCandidateCI(repository, sha, candidateBranch);
+          throw error;
         }
-        return (
-          await waitForCI(repository, sha, {
-            branch: candidateBranch,
-            progress: async (ci) => {
-              receipt.candidateCIUrl = ci.url;
-              await saveReceipt(receipt);
-            },
-          })
-        ).url;
       },
       assertCandidate: () => guard(),
       publishData: async (snapshotId) => {

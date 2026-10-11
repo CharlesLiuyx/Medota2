@@ -30,6 +30,7 @@ test("map: default overlays and complete camp hover previews", async ({
   const canvas = page.locator("canvas").first();
   await canvas.scrollIntoViewIfNeeded();
   const rect = (await canvas.boundingBox())!;
+  await expect(canvas).toHaveAttribute("data-background-ready", "true");
   const builds = await canvas.getAttribute("data-background-builds");
   await page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2);
   const sidebar = page.getByRole("complementary", {

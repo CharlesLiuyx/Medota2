@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, execFile } from "node:child_process";
 import { nativeCommand } from "./command";
 import { createHash, randomUUID } from "node:crypto";
 import {
@@ -62,6 +62,7 @@ export function processAlive(pid: number): boolean {
 export async function acquireLock(
   name: string,
   waitMs = 600_000,
+  signal?: AbortSignal,
 ): Promise<() => Promise<void>> {
   if (!/^[a-z0-9-]+$/.test(name)) throw new Error("Invalid lock name.");
   const directory = resolve(workspace, ".medota2/locks");
@@ -72,6 +73,7 @@ export async function acquireLock(
   let announced = false;
   const guard = `${path}.guard`;
   for (;;) {
+    signal?.throwIfAborted();
     // Serialize acquisition and dead-owner recovery, so two sessions cannot
     // both remove a stale file and accidentally delete the new owner's lock.
     let guarded = false;
@@ -120,7 +122,7 @@ export async function acquireLock(
       console.log(`[queue] Waiting for ${name}.`);
       announced = true;
     }
-    await delay(200);
+    await delay(200, undefined, { signal });
   }
 }
 
@@ -129,7 +131,9 @@ export async function run(
   args: readonly string[],
   env: NodeJS.ProcessEnv = process.env,
   logPath?: string,
+  signal?: AbortSignal,
 ): Promise<void> {
+  signal?.throwIfAborted();
   if (logPath) await mkdir(dirname(logPath), { recursive: true });
   const log = logPath ? createWriteStream(logPath, { mode: 0o600 }) : undefined;
   const invocation = nativeCommand(command, args, env);
@@ -137,6 +141,7 @@ export async function run(
     cwd: workspace,
     env,
     windowsHide: true,
+    detached: Boolean(signal) && process.platform !== "win32",
     stdio: log || commandOutput ? ["ignore", "pipe", "pipe"] : "inherit",
   });
   if (log) {
@@ -152,14 +157,52 @@ export async function run(
     child.stdout?.pipe(commandOutput, { end: false });
     child.stderr?.pipe(commandOutput, { end: false });
   }
-  const stop = () => child.kill("SIGTERM");
+  let stopping = false;
+  let stoppedAt = 0;
+  let terminationError: unknown;
+  let windowsTermination: Promise<void> | undefined;
+  let escalation: ReturnType<typeof setTimeout> | undefined;
+  const terminate = (force = false) => {
+    if (!child.pid) return;
+    if (signal && process.platform !== "win32") {
+      try {
+        process.kill(-child.pid, force ? "SIGKILL" : "SIGTERM");
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ESRCH")
+          terminationError = error;
+      }
+    } else if (signal && process.platform === "win32") {
+      // Windows has no POSIX process groups. Restrict termination to this owned child tree.
+      windowsTermination ??= new Promise<void>((accept) => {
+        execFile(
+          "taskkill.exe",
+          ["/PID", String(child.pid), "/T", "/F"],
+          { windowsHide: true },
+          (error) => {
+            if (error) terminationError = error;
+            accept();
+          },
+        );
+      });
+    } else child.kill(force ? "SIGKILL" : "SIGTERM");
+  };
+  const stop = () => {
+    if (stopping) return;
+    stopping = true;
+    stoppedAt = Date.now();
+    terminate();
+    escalation = setTimeout(() => terminate(true), 10_000);
+    escalation.unref();
+  };
+  signal?.addEventListener("abort", stop, { once: true });
+  if (signal?.aborted) stop();
   process.once("SIGINT", stop);
   process.once("SIGTERM", stop);
   try {
     await new Promise<void>((accept, reject) => {
       child.once("error", reject);
       child.once("close", (code, signal) =>
-        code === 0
+        code === 0 && !stopping
           ? accept()
           : reject(
               new Error(
@@ -169,9 +212,33 @@ export async function run(
       );
     });
   } finally {
+    // A parent can close its pipes before its descendants exit. Confirm the entire
+    // owned POSIX group is gone before resolving; the escalation remains armed.
+    if (stopping && signal && child.pid && process.platform !== "win32") {
+      for (;;) {
+        try {
+          process.kill(-child.pid, 0);
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code === "ESRCH") break;
+          terminationError = error;
+          break;
+        }
+        if (Date.now() - stoppedAt > 12_000) {
+          terminationError = new Error(
+            `Cancelled command group ${child.pid} has not exited.`,
+          );
+          break;
+        }
+        await delay(25);
+      }
+    }
+    await windowsTermination;
+    if (escalation) clearTimeout(escalation);
+    signal?.removeEventListener("abort", stop);
     process.off("SIGINT", stop);
     process.off("SIGTERM", stop);
     if (log) await new Promise<void>((accept) => log.end(accept));
+    if (terminationError) throw terminationError;
   }
 }
 

@@ -603,6 +603,9 @@ export function MapViewer({
     const backgroundContext = background.getContext("2d", { alpha: false });
     if (!output || !backgroundContext) return;
     let ctx = output!;
+    const expectedMarkerKeys = [
+      ...new Set(Object.values(data.mapIcons?.points ?? {})),
+    ];
     let backgroundKey = "";
     let backgroundCamera = { ...camera.current };
     let backgroundPadding = 0;
@@ -1659,6 +1662,15 @@ export function MapViewer({
       }
       canvas.dataset.paints = String(++paints);
       canvas.dataset.backgroundBuilds = String(backgroundBuilds);
+      // Resource arrival legitimately rebuilds the background; hover checks start
+      // only after this paint has consumed the base image, markers and rasters.
+      canvas.dataset.backgroundReady = String(
+        (!data.imageUrl || texture.current !== null) &&
+          expectedMarkerKeys.every((key) => markerTextures.current.has(key)) &&
+          (data.rasterLayers ?? []).every((layer) =>
+            overlayTextures.current.has(layer.id),
+          ),
+      );
       canvas.dataset.hitTests = String(hitTests);
       const zoomText = `${Math.round(camera.current.zoom * 100)}%`;
       if (zoomLabelRef.current && zoomLabelRef.current.textContent !== zoomText)

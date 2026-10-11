@@ -25,6 +25,7 @@ export function executionPlan(
   options?: { lane?: string; shard?: string },
 ): CheckPlan;
 export function parseArguments(args: string[]): {
+  retryFailed?: string;
   base?: string;
   lane?: string;
   shard?: string;

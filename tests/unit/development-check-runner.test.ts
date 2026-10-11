@@ -68,6 +68,7 @@ beforeEach(() => {
   state.run.mockResolvedValue(undefined);
 });
 afterEach(() => {
+  vi.unstubAllEnvs();
   process.exitCode = exitCode;
   for (const [signal, listeners] of originalSignals) {
     for (const listener of process.listeners(signal))
@@ -115,9 +116,55 @@ describe("incremental check runner", () => {
     state.plan = plan("browser");
     state.readJson.mockResolvedValue({ status: "passed" });
     await execute();
-    expect(state.acquireLock).toHaveBeenCalledWith("checks");
+    expect(state.acquireLock).toHaveBeenCalledWith(
+      "checks",
+      undefined,
+      expect.any(AbortSignal),
+    );
     expect(state.run).toHaveBeenCalledTimes(1);
     expect(state.release).toHaveBeenCalledTimes(1);
+  });
+  it("cancels and joins a real journey when the concurrent build fails, without starting later tasks", async () => {
+    vi.stubEnv("CI", "");
+    state.plan = plan("browser");
+    state.plan.tasks[0].id = "journeys";
+    state.plan.tasks[0].args = ["journey"];
+    state.plan.tasks.push({
+      ...state.plan.tasks[0],
+      id: "build",
+      kind: "build",
+      args: ["build"],
+    });
+    state.plan.tasks.push({
+      ...state.plan.tasks[0],
+      id: "database",
+      kind: "database",
+      args: ["database"],
+    });
+    let ready!: () => void;
+    const started = new Promise<void>((resolve) => {
+      ready = resolve;
+    });
+    let cleaned = false;
+    state.run.mockImplementation(
+      async (_command, args, _env, _log, signal: AbortSignal) => {
+        if (args[0] === "build") {
+          await started;
+          throw new Error("build failed");
+        }
+        ready();
+        await new Promise<void>((resolve) =>
+          signal.addEventListener("abort", () => resolve(), { once: true }),
+        );
+        cleaned = true;
+        throw new Error("cancelled");
+      },
+    );
+    await execute();
+    expect(state.run).toHaveBeenCalledTimes(2);
+    expect(cleaned).toBe(true);
+    expect(state.release).toHaveBeenCalledTimes(1);
+    expect(state.finished?.status).toBe("failed");
   });
   it("marks evidence stale if scope expands while paths and content fingerprints stay the same", async () => {
     state.plan = plan("static");

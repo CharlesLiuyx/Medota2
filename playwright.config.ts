@@ -18,6 +18,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   outputDir: `${artifactRoot}/playwright/test-results`,
   reporter: [
+    ["./tests/helpers/failure-reporter.ts"],
     ["list"],
     [
       "html",

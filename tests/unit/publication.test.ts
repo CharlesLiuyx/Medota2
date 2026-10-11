@@ -9,6 +9,7 @@ import {
   assertPublishedLock,
 } from "@/development/publication/candidate";
 import {
+  cancelCandidateCI,
   githubRepository,
   selectCIRun,
   waitForCI,
@@ -159,6 +160,7 @@ function receipt() {
 function steps(): PublicationSteps {
   return {
     preflight: vi.fn(async () => {}),
+    staticCheck: vi.fn(async () => {}),
     commit: vi.fn(async () => "code"),
     prepareData: vi.fn(async () => "snapshot"),
     check: vi.fn(async () => {}),
@@ -176,6 +178,7 @@ function steps(): PublicationSteps {
 describe("publication failure boundaries", () => {
   it.each([
     "preflight",
+    "staticCheck",
     "commit",
     "prepareData",
     "check",
@@ -366,7 +369,8 @@ describe("parallel candidate validation", () => {
         "gate failed",
       );
       expect(work.check).toHaveBeenCalled();
-      expect(work.candidateCI).toHaveBeenCalled();
+      if (failing === "candidateCI")
+        expect(work.candidateCI).toHaveBeenCalled();
       expect(work.push).not.toHaveBeenCalled();
       expect(work.publishData).not.toHaveBeenCalled();
     },
@@ -393,5 +397,104 @@ describe("parallel candidate validation", () => {
     expect(
       selectCIRun([ci({ headBranch: "main" })], "target", "candidate"),
     ).toBeUndefined();
+  });
+});
+
+describe("publication early failure and cancellation", () => {
+  it("rejects static errors before commit, export or CI", async () => {
+    const work = steps();
+    work.staticCheck = async () => {
+      throw new Error("type error");
+    };
+    work.candidateCI = vi.fn();
+    await expect(publishCandidate(receipt(), work)).rejects.toThrow(
+      "type error",
+    );
+    for (const action of [
+      work.commit,
+      work.prepareData,
+      work.check,
+      work.candidateCI,
+    ])
+      expect(action).not.toHaveBeenCalled();
+  });
+  it.each(["local", "ci"])(
+    "%s failure cancels and joins the peer cleanup",
+    async (source) => {
+      const work = steps();
+      let ready!: () => void;
+      const started = new Promise<void>((resolve) => {
+        ready = resolve;
+      });
+      let cleaned = false;
+      const peer = async (signal: AbortSignal) => {
+        ready();
+        await new Promise<void>((resolve) =>
+          signal.addEventListener("abort", () => resolve(), { once: true }),
+        );
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        cleaned = true;
+        throw new Error("peer cancelled");
+      };
+      const failing = async () => {
+        await started;
+        throw new Error("original gate failure");
+      };
+      work.check = source === "local" ? failing : peer;
+      work.candidateCI = async (_sha, _snapshot, signal) => {
+        if (source === "ci") return failing();
+        await peer(signal);
+        return undefined;
+      };
+      await expect(publishCandidate(receipt(), work)).rejects.toThrow(
+        "original gate failure",
+      );
+      expect(cleaned).toBe(true);
+      expect(work.publishData).not.toHaveBeenCalled();
+      expect(work.push).not.toHaveBeenCalled();
+    },
+  );
+  it("cancels only the matching candidate after delayed registration and confirms completion", async () => {
+    const branch = `codex/publish/${"a".repeat(40)}/123-abcdef`;
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce([ci({ headBranch: "main" })])
+      .mockResolvedValueOnce([
+        ci({ headBranch: branch, status: "queued", conclusion: null }),
+      ])
+      .mockResolvedValueOnce([
+        ci({ headBranch: branch, conclusion: "cancelled" }),
+      ]);
+    const cancel = vi.fn();
+    await cancelCandidateCI("owner/repo", "target", branch, {
+      query,
+      cancel,
+      sleep: async () => {},
+    });
+    expect(cancel).toHaveBeenCalledExactlyOnceWith(1);
+    expect(query).toHaveBeenCalledTimes(3);
+    await expect(
+      cancelCandidateCI("owner/repo", "target", "main", { query, cancel }),
+    ).rejects.toThrow("受管候选");
+  });
+  it("reports unconfirmed cancellation and detects job failure before the aggregate completes", async () => {
+    await expect(
+      cancelCandidateCI(
+        "owner/repo",
+        "target",
+        `codex/publish/${"a".repeat(40)}/123-ab`,
+        {
+          query: async () => [],
+          timeoutMs: 0,
+        },
+      ),
+    ).rejects.toThrow("取消未确认");
+    await expect(
+      waitForCI("owner/repo", "target", {
+        query: async () => [ci({ status: "in_progress", conclusion: null })],
+        failFast: true,
+        failedJobs: async () => ["browser (2)"],
+      }),
+    ).rejects.toThrow("browser (2)");
   });
 });

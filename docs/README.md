@@ -59,6 +59,7 @@
 | 文档                                                                        | 状态       | 负责内容                                           |
 | --------------------------------------------------------------------------- | ---------- | -------------------------------------------------- |
 | [Tab与缓存实施](work/tab-cache-performance.md)                              | active     | 导航响应、版本资源复用与性能验收                   |
+| [发布预检与失败恢复](work/publication-retry-performance.md)                 | active     | 静态预检、定向复验、协同取消与单轮耗时             |
 | [当前工作](current.md)                                                      | active     | 活动状态与接手                                     |
 | [环境登记](development-environments.md)                                     | active     | 机器能力、限制与推荐                               |
 | [同步运行手册](development-data-sync-runbook.md)                            | active     | 获取、发布、恢复操作                               |

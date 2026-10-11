@@ -70,6 +70,8 @@ pnpm check --files src/components/hero-card.tsx         # 执行相同范围
 pnpm check                   # 组合交付：检查全部未提交改动
 pnpm check --base <git-ref>  # 检查指定 Git 状态之后的组合改动
 pnpm check --publication --base <git-ref>  # 发布检查：fixture与真实旅程
+pnpm check --base <git-ref> --lane static  # 发布前静态预检，无产品数据库
+pnpm check --retry-failed <run.json>      # 当前代码上的失败用例／任务定向复验
 pnpm check --watch           # 相关内容变化后重跑
 pnpm test:journeys           # 在共享开发页面执行短流程，不重置开发数据
 pnpm test:journeys --fixture # 在可复用测试库核对已知数据与页面
@@ -106,6 +108,8 @@ Windows测试运行器为Next生成的配置路径使用正斜杠；若fixture�
 Windows的`pnpm test`默认最多4个worker，适用于多核机器上的Git／子进程fixture；不放宽原有测试超时。并发对照可用`pnpm test --maxWorkers=4`复现。
 
 浏览流程globalSetup会只读预热目录／首条详情及其客户端脚本块，排除开发编译耗时后仍使用原导航断言与时限；此步骤只获取当前同源页面引用的Next静态脚本，按URL去重。
+
+本机真实旅程最多3个worker，CI与fixture单worker。完整本机计划允许真实只读旅程与fixture构建重叠，其余动态任务保持串行；任一失败会取消同批任务并等待退出。
 
 CI 在安装 Chromium 或准备数据库前计算范围，调用同一个 `pnpm check`，并取消同分支已过期的运行。仅完整输入与执行条件一致时复用结果；本地与 CI 分别记录。默认无覆盖率门槛。
 

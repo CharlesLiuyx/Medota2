@@ -3,11 +3,17 @@ import { saveReceipt, stage, type PublicationReceipt } from "./receipt";
 /** Side effects are explicit so failures and uncertain pushes can be exercised offline. */
 export interface PublicationSteps {
   preflight(): Promise<void>;
+  staticCheck(): Promise<void>;
   commit(): Promise<string>;
   prepareData(): Promise<string>;
-  check(): Promise<void>;
+  check(signal: AbortSignal): Promise<void>;
   // Present only for unchanged snapshots; checks the immutable code commit on a candidate branch.
-  candidateCI?(sha: string, snapshotId: string): Promise<string | undefined>;
+  candidateCI?(
+    sha: string,
+    snapshotId: string,
+    signal: AbortSignal,
+    fail: (error: unknown) => void,
+  ): Promise<string | undefined>;
   assertCandidate(): Promise<void>;
   publishData(snapshotId: string): Promise<void>;
   finalize(): Promise<string>;
@@ -21,19 +27,44 @@ export async function publishCandidate(
   steps: PublicationSteps,
 ) {
   await stage(receipt, "preflight", steps.preflight);
+  await stage(receipt, "static-preflight", steps.staticCheck);
   receipt.codeCommit = await stage(receipt, "commit-candidate", steps.commit);
   receipt.snapshotId = await stage(receipt, "prepare-data", steps.prepareData);
-  // Settle both branches before returning so no background work can mutate a failed run.
+  const controller = new AbortController();
+  let failure: unknown;
+  const fail = (error: unknown) => {
+    if (!controller.signal.aborted) {
+      failure = error;
+      controller.abort(error);
+    }
+  };
+  // Cancel peers at the first failure, then JOIN cleanup before touching data or returning.
+  const gate = <T>(name: string, work: () => Promise<T>) =>
+    stage(receipt, name, async () => {
+      try {
+        controller.signal.throwIfAborted();
+        return await work();
+      } catch (error) {
+        fail(error);
+        throw error;
+      }
+    });
   const outcomes = await Promise.allSettled([
-    stage(receipt, "checks", steps.check),
+    gate("checks", () => steps.check(controller.signal)),
     ...(steps.candidateCI
       ? [
-          stage(receipt, "candidate-ci", () =>
-            steps.candidateCI!(receipt.codeCommit!, receipt.snapshotId!),
+          gate("candidate-ci", () =>
+            steps.candidateCI!(
+              receipt.codeCommit!,
+              receipt.snapshotId!,
+              controller.signal,
+              fail,
+            ),
           ),
         ]
       : []),
   ]);
+  if (controller.signal.aborted) throw failure;
   for (const result of outcomes)
     if (result.status === "rejected") throw result.reason;
   const candidateCI = outcomes[1];

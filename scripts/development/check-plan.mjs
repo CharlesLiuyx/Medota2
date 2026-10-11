@@ -765,7 +765,7 @@ export function publicationPlan(plan, fixtureOnly = false) {
 }
 
 export function executionPlan(plan, { lane, shard } = {}) {
-  if (lane && !["core", "browser"].includes(lane))
+  if (lane && !["core", "browser", "static"].includes(lane))
     throw new Error("Invalid check lane.");
   if (
     shard &&
@@ -776,7 +776,11 @@ export function executionPlan(plan, { lane, shard } = {}) {
     throw new Error("--shard requires browser lane and a valid index/total.");
   const tasks = plan.tasks
     .filter(
-      (task) => !lane || (task.kind === "browser") === (lane === "browser"),
+      (task) =>
+        !lane ||
+        (lane === "static"
+          ? task.kind === "static"
+          : (task.kind === "browser") === (lane === "browser")),
     )
     .map((task) =>
       shard
@@ -799,6 +803,7 @@ export function executionPlan(plan, { lane, shard } = {}) {
 
 export function parseArguments(args) {
   const result = {
+    retryFailed: undefined,
     base: undefined,
     lane: undefined,
     shard: undefined,
@@ -811,7 +816,11 @@ export function parseArguments(args) {
   };
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
-    if (arg === "--base") {
+    if (arg === "--retry-failed") {
+      result.retryFailed = args[++index];
+      if (!result.retryFailed)
+        throw new Error("--retry-failed requires a check receipt path.");
+    } else if (arg === "--base") {
       result.base = args[++index];
       if (!result.base) throw new Error("--base requires a Git revision.");
     } else if (arg === "--lane" || arg === "--shard") {
@@ -829,6 +838,18 @@ export function parseArguments(args) {
       result[arg.slice(2)] = true;
     else throw new Error(`Unknown check option: ${arg}`);
   }
+  if (
+    result.retryFailed &&
+    (result.base ||
+      result.files ||
+      result.lane ||
+      result.shard ||
+      result.watch ||
+      result.publication)
+  )
+    throw new Error(
+      "--retry-failed cannot be combined with scope, lane, publication or watch options.",
+    );
   return result;
 }
 
