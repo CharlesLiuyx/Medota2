@@ -764,7 +764,14 @@ export function publicationPlan(plan, fixtureOnly = false) {
   };
 }
 
-export function executionPlan(plan, { lane, shard } = {}) {
+export function executionPlan(plan, { lane, shard, browserTask } = {}) {
+  if (
+    browserTask &&
+    (lane !== "browser" || !["journeys", "e2e", "visual"].includes(browserTask))
+  )
+    throw new Error(
+      "--browser-task requires browser lane and journeys, e2e or visual.",
+    );
   if (lane && !["core", "browser", "static"].includes(lane))
     throw new Error("Invalid check lane.");
   if (
@@ -782,6 +789,7 @@ export function executionPlan(plan, { lane, shard } = {}) {
           ? task.kind === "static"
           : (task.kind === "browser") === (lane === "browser")),
     )
+    .filter((task) => !browserTask || task.id === browserTask)
     .map((task) =>
       shard
         ? {
@@ -807,6 +815,7 @@ export function parseArguments(args) {
     base: undefined,
     lane: undefined,
     shard: undefined,
+    browserTask: undefined,
     files: undefined,
     plan: false,
     json: false,
@@ -823,6 +832,10 @@ export function parseArguments(args) {
     } else if (arg === "--base") {
       result.base = args[++index];
       if (!result.base) throw new Error("--base requires a Git revision.");
+    } else if (arg === "--browser-task") {
+      result.browserTask = args[++index];
+      if (!result.browserTask)
+        throw new Error("--browser-task requires a value.");
     } else if (arg === "--lane" || arg === "--shard") {
       result[arg.slice(2)] = args[++index];
       if (!result[arg.slice(2)]) throw new Error(`${arg} requires a value.`);
@@ -844,6 +857,7 @@ export function parseArguments(args) {
       result.files ||
       result.lane ||
       result.shard ||
+      result.browserTask ||
       result.watch ||
       result.publication)
   )

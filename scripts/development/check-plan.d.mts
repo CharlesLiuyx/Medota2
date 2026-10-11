@@ -22,13 +22,14 @@ export function publicationPlan(
 ): CheckPlan;
 export function executionPlan(
   plan: CheckPlan,
-  options?: { lane?: string; shard?: string },
+  options?: { lane?: string; shard?: string; browserTask?: string },
 ): CheckPlan;
 export function parseArguments(args: string[]): {
   retryFailed?: string;
   base?: string;
   lane?: string;
   shard?: string;
+  browserTask?: string;
   files?: string[];
   plan: boolean;
   json: boolean;

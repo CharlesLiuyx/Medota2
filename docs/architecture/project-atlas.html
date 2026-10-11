@@ -2903,7 +2903,7 @@
                     data-name="3 · 推送并确认CI"
                     data-definition="检查数据lock，快进main，再核对同一提交的CI证据。"
                     data-why="让代码明确指向已核验、可获取的数据快照。"
-                    data-detail="CI分6个浏览主机，每台1个worker，core单独执行；main只复用同SHA、同基线的成功候选。提交与导出前执行静态预检；失败收据提供定向复验入口，旅程在本机覆盖fixture与真实数据。一侧失败取消另一侧并等待清理，CI仅取消本轮精确候选。阶段收据记录并行耗时和失败；推送结果不确定先回读远端，push --resume只续接CI。取消、跳过、失败或缺失均不算完成。"
+                    data-detail="CI按所选任务独立分片（旅程8片、E2E及视觉各2片），每台1个worker，core单独执行；main只复用同SHA、同基线的成功候选。提交与导出前执行静态预检；失败收据提供定向复验入口，旅程在本机覆盖fixture与真实数据。一侧失败取消另一侧并等待清理，CI仅取消本轮精确候选。阶段收据记录并行耗时和失败；推送结果不确定先回读远端，push --resume只续接CI。取消、跳过、失败或缺失均不算完成。"
                     data-files='["src/workers/push.ts", "src/development/publication/workflow.ts", "dev-data.lock.json"]'
                     data-node-id="sync-graph-lockpush"
                     aria-pressed="false"

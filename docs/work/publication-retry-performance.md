@@ -8,7 +8,7 @@
 - 失败浏览用例写入check收据；定向复验使用当前计划重新生成命令，本机旅程覆盖fixture和真实环境。诊断通过不代替完整发布。
 - 本机与候选CI双向取消，检查批次同步取消；收据保留原失败，等待本地进程组与远端CI终态。远端只取消本轮精确受管候选。
 - 本机真实只读旅程最多3个worker，可与fixture构建重叠；fixture浏览、数据库合同和基准串行。Windows保持单worker，进程树退出待原生复验。
-- CI浏览六个独立主机分片，每台单worker；全部分片仍为必要门禁，持续失败后取消同轮其余分片。
+- CI由当前计划生成独立任务分片：旅程8片、缓存E2E与视觉各2片。每台单worker，只预热一种浏览任务；全部选中分片仍为必要门禁，持续失败后取消同轮其余分片。
 
 ## 测量与验证
 
@@ -30,11 +30,13 @@
 
 地图营地原断言在底图／图标／高地栅格未齐时读取背景计数，初次资源到达使7次变为10次；现等待Canvas实际消费全部资源再测量，继续要求悬停不增加背景重绘。真实环境3次并发定向运行全部首轮通过（禁用重试），fixture按原合同跳过无原生地图的场景。没有放宽断言、超时或视觉阈值。
 
-本机环境为GofurMacM4Max128GB、Node26.8.1／pnpm11.7.0；业务lock仍为bee227bd/12bcfdff。最终data:status为`code-modified`、`problems=[]`，与本轮未提交代码一致，无业务迁移。新Windows取消分支及六分片Linux CI尚未实际执行。
+本机环境为GofurMacM4Max128GB、Node26.8.1／pnpm11.7.0；业务lock仍为bee227bd/12bcfdff。最终data:status为`code-modified`、`problems=[]`，与本轮未提交代码一致，无业务迁移。Windows取消分支尚待原生实测；六分片Linux首次发布实测见下。
 
 本机证据（忽略目录，仅当前Mac可读）：最终收据`.medota2/checks/1791710632292-64cbb917/run.json`；静态预检`1791710610480-9546d5b9`；失败定向types`1791709983783-8f146ae5`；日志`.medota2/sessions/publication-retry-*.log`。再次复现使用上述基线check，地图定向使用`pnpm test:journeys tests/journeys/map-camps.spec.ts --warm-scopes=map --repeat-each=3 --retries=0`。
 
-本轮实施没有提交或推送。完整端到端300秒目标须在最终候选的本机、Linux CI及远端数据核验全部完成后实测；本机检查通过或历史CI时间推算均不代表已达标。既有300秒以下较小范围记录和本次大范围基线见[既有提速实测](../history/2026-10-11-publication-performance.md)、[前轮发布验收](../history/2026-10-11-main-publication.md)。
+用户授权后，83e732e已通过统一发布合入main。首次端到端361.997秒（6分02秒）：预检11.181秒、数据准备18.067秒、本机检查185.673秒与候选CI288.502秒重叠、数据回读12.493秒、推送3.891秒、main确认21.099秒。8238对象核验、快照未变。候选[CI38130220594](https://github.com/CharlesLiuyx/Medota2/actions/runs/38130220594)与[main CI38130532083](https://github.com/CharlesLiuyx/Medota2/actions/runs/38130532083)成功。本机有1项flaky：地图延迟加载用例在读取/api/releases时ECONNRESET，既有单次重试通过；此处不能标为无flaky。
+
+首次六分片每台依次跑旅程与视觉，浏览步骤162–199秒，包含重复服务预热；因此继续改为上述独立任务分片，完整300秒目标等待调整后的候选实测。没有减少用例、改变断言或增加重试。既有300秒以下较小范围记录和本次大范围基线见[既有提速实测](../history/2026-10-11-publication-performance.md)、[前轮发布验收](../history/2026-10-11-main-publication.md)。
 
 ## 使用与接手
 

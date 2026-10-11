@@ -19,6 +19,26 @@ export function reusableCandidate(run, { sha, base, workflowId, repository }) {
   );
 }
 
+// Each selected browser task gets its own hosts, so suites do not repeatedly
+// boot and warm separate servers in series on the critical path.
+export function browserMatrix(plan) {
+  const counts = { journeys: 8, e2e: 2, visual: 2 };
+  return {
+    include: plan.tasks
+      .filter((task) => task.kind === "browser")
+      .flatMap((task) => {
+        const total = counts[task.id];
+        if (!total)
+          throw new Error(`Missing CI partition for browser task ${task.id}.`);
+        return Array.from({ length: total }, (_, index) => ({
+          task: task.id,
+          shard: `${index + 1}/${total}`,
+          index: index + 1,
+        }));
+      }),
+  };
+}
+
 function main() {
   const git = (...args) =>
     execFileSync("git", args, { encoding: "utf8" }).trim();
@@ -75,6 +95,7 @@ function main() {
     core: !promoted && core.tasks.length > 0,
     browser: !promoted && browser.browser,
     coreDatabase: core.database,
+    browserMatrix: JSON.stringify(browserMatrix(plan)),
   };
   appendFileSync(
     process.env.GITHUB_OUTPUT,
