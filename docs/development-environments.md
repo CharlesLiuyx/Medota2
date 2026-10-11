@@ -48,7 +48,7 @@ Node 26.8.1 的本机验证记录与 CI 的 Node 配置分开解释；实际工�
 
 2026-10-11 Tab与角色列发布基线`b0515e6`：Mac通过513单元、41真实旅程、8缓存E2E、6视觉、4所选数据库合同及正式构建／独立启动，本机浏览无flaky。Linux候选33fixture旅程、8缓存E2E及6视觉通过，前两类各1项单次重试通过；main确认CI成功。完整快照`bee227bd`的8238对象重新核验。范围与失败修复见[发布验收](history/2026-10-11-main-publication.md)，Windows结论保持原验收边界。
 
-2026-10-11发布失败恢复改动已随83e732e合入main：Mac广范围检查228.123秒，527单元及全部所选门禁通过，无flaky；首次完整发布361.997秒，Linux六分片与main CI成功，Mac发布旅程有1项ECONNRESET单次重试通过。完整快照bee227bd/12bcfdff已回验。独立任务分片（旅程8片、E2E与视觉各2片）已随fa8f49f实测309.832秒；继续拆分static/runtime关键路径，复测300秒目标；Windows取消仍待原生验证，见[实施与测量](work/publication-retry-performance.md)。
+2026-10-11发布预检与失败恢复已随6473f31合入main：完整发布288.562秒，Mac动态检查129.520秒与Linux候选CI211.002秒重叠；528单元、41真实／33fixture旅程、6视觉、4数据库合同与正式构建／启动通过，浏览无flaky。Mac复用有效正式产物，Linux重新构建。完整快照bee227bd/12bcfdff回验8238对象，最终in-sync、problems=[]。前序广范围本机组合228.123秒另含8缓存E2E。此为已有依赖、快照不变的增量实测；Windows取消及其他条件的300秒上界未验证，见[验收](history/2026-10-11-publish-retry.md)。
 
 ## Windows 客户端与平台验证
 

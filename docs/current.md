@@ -4,16 +4,16 @@
 
 ## 基线与接手
 
-- 最新功能基线：`main / b0515e6`，包含Tab响应与版本资源缓存、英雄角色二级列，以及与远端发布优化的整合；完整业务快照`bee227bd`、数据提交`12bcfdff`。已合入远端main，[最终CI](https://github.com/CharlesLiuyx/Medota2/actions/runs/38125540228)成功；检查与修复记录见[本轮发布验收](history/2026-10-11-main-publication.md)。收尾文档沿用同一功能和数据基线。
+- 最新功能基线：`main / 6473f31`，包含发布预检、定向复验、协同取消与CI独立分片，沿用Tab缓存、角色列等既有功能；完整业务快照`bee227bd`、数据提交`12bcfdff`。已合入远端main，[最终CI](https://github.com/CharlesLiuyx/Medota2/actions/runs/38131556852)成功；完整发布4分48.6秒，见[本轮验收](history/2026-10-11-publish-retry.md)。收尾文档沿用同一功能和数据基线。
 - 目标由[dev-data.lock.json](../dev-data.lock.json)选择。其他机器运行`pnpm sync`；实际应用、数据库身份及摘要用`pnpm data:status`核对。任务启动与共享协作按[AGENTS](../AGENTS.md)执行。
 
 ## 当前交接
 
-本轮本地实现已合入main；Mac通过513单元、41真实旅程、8缓存E2E、6视觉、4所选数据库合同与正式构建／独立启动，本机浏览无flaky。Linux候选CI与main确认均成功；候选33fixture旅程及8缓存E2E各含1项单次重试通过，6视觉通过。完整快照未变化，8238对象核验；其他机器运行`pnpm sync`后用`pnpm data:status`核对。页面人工审阅、性能尾部与Windows复验继续保留，详见[发布验收](history/2026-10-11-main-publication.md)。
+发布流程优化已合入main：最终Mac及Linux浏览无flaky，528单元、41真实／33fixture旅程、6视觉、4所选数据库合同与正式构建／独立启动通过；所选范围、既有跳过及此前缓存E2E证据分别见[验收记录](history/2026-10-11-publish-retry.md)。完整快照8238对象核验，最终in-sync；另一机器用pnpm sync接手。页面人工审阅与Windows原生取消复验保留。
 
 活动任务：
 
-- **发布预检与失败恢复已合入，继续压缩CI关键路径**：83e732e已合入main，静态预检、失败定向复验、双向取消及进程退出确认均已实施。Mac广范围检查3分48秒；六分片首次完整发布6分02秒，候选与main CI通过，本机1项连接重置单次重试通过。独立浏览分片第二轮5分10秒，fa8f49f已合入；现继续将static/runtime分开执行并处理技能列偏好fixture长耗时，实测300秒目标；Windows取消待原生验证，详见[实施与测量](work/publication-retry-performance.md)。
+- **发布流程5分钟目标本轮已达成，Windows取消待复验**：6473f31完整发布288.562秒，本机与Linux浏览无重试，完整快照及精确SHA门禁通过。日常恢复入口与剩余环境边界见[交接](work/publication-retry-performance.md)，三轮实测见[验收](history/2026-10-11-publish-retry.md)。
 
 - **推送合入提速已实施并实测**：`f30897a`已合入main；常规增量4分38.4秒，含32发布专项、18真实旅程、三分片候选CI与最终确认。完整基础设施上线5分46.5秒，首轮Linux跨架构视觉问题已修复。保留必要门禁、完整快照与既有人工验收边界，见[实测与恢复记录](history/2026-10-11-publication-performance.md)。
 

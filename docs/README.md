@@ -59,7 +59,7 @@
 | 文档                                                                        | 状态       | 负责内容                                           |
 | --------------------------------------------------------------------------- | ---------- | -------------------------------------------------- |
 | [Tab与缓存实施](work/tab-cache-performance.md)                              | active     | 导航响应、版本资源复用与性能验收                   |
-| [发布预检与失败恢复](work/publication-retry-performance.md)                 | active     | 静态预检、定向复验、协同取消与单轮耗时             |
+| [发布预检与失败恢复](work/publication-retry-performance.md)                 | reference  | 已发布流程、恢复入口与Windows原生取消复验          |
 | [当前工作](current.md)                                                      | active     | 活动状态与接手                                     |
 | [环境登记](development-environments.md)                                     | active     | 机器能力、限制与推荐                               |
 | [同步运行手册](development-data-sync-runbook.md)                            | active     | 获取、发布、恢复操作                               |
@@ -149,6 +149,7 @@
 | [2026-10-11全部本地变更发布](history/2026-10-11-main-publication.md)        | reference  | Tab缓存与角色列整合、初始化修复、CI与完整数据交接  |
 | [2026-10-10全部本地变更发布](history/2026-10-10-main-publication.md)        | reference  | 图鉴表格、全站交互、Fixture发布修复与数据交接      |
 | [地图Web与品牌发布](history/2026-10-08-map-web-publication.md)              | historical | 近似视野、营地、英雄图标、快照与语言旅程CI修复     |
+| [发布失败恢复与5分钟验收](history/2026-10-11-publish-retry.md)              | reference  | 静态预检、定向复验、协同取消及4分48.6秒完整发布    |
 | [推送合入提速实测](history/2026-10-11-publication-performance.md)           | reference  | 候选并行、CI分片、跨架构视觉与端到端耗时           |
 | [发布流程优化](history/2026-10-07-publication-optimization.md)              | reference  | 候选门禁、fixture前置、阶段收据、CI续接与验证边界  |
 | [数据库读取稳定性](history/2026-10-08-database-read-resilience.md)          | reference  | 变化页池等待超时、端点快照、连接恢复及本机测量     |
