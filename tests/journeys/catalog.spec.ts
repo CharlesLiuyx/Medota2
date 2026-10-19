@@ -199,7 +199,20 @@ test("heroes: adjustable levels, overview layout and introduction tooltip", asyn
   );
   expect(inventoryBox!.x).toBeGreaterThan(headerBox!.x + headerBox!.width);
   expect(statsBox!.x).toBeGreaterThan(inventoryBox!.x + inventoryBox!.width);
-  await expect(page.locator('#talents a[href^="/abilities/"]')).toHaveCount(8);
+  const talentLinks = page.locator('#talents a[href^="/abilities/"]');
+  if (process.env.MEDOTA2_SHARED_WEB === "1") {
+    await expect(talentLinks).toHaveCount(8);
+  } else {
+    // The fixed VPK defines one talent; seven unavailable slots stay explicit.
+    await expect(talentLinks).toHaveCount(1);
+    await expect(talentLinks).toHaveAttribute(
+      "href",
+      /^\/abilities\/special_bonus_unique_antimage_fixture\?/,
+    );
+    await expect(
+      page.locator("#talents").getByText("天赋说明待补充", { exact: true }),
+    ).toHaveCount(7);
+  }
   await expect(
     page
       .getByRole("navigation", { name: "英雄详情" })
@@ -615,6 +628,11 @@ test("viewport: cached hero return keeps URL, filters, details and history usabl
   await page.locator('main a[href^="/heroes/antimage?"]').click();
   await expect(page).toHaveURL(/\/heroes\/antimage\?/);
   await page.goBack();
+  // A detail opens a new document; wait for its returned catalog to hydrate
+  // before traversing the history again.
+  await expect(
+    page.getByRole("button", { name: "网格视图", exact: true }),
+  ).toBeEnabled();
   await expect(search).toHaveValue("antimage");
   await expect(page.locator('main a[href^="/heroes/"]')).toHaveCount(1);
   await page.goBack();

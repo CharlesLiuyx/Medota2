@@ -73,7 +73,7 @@ async function buildSnapshot(meta: ActiveDatasetMeta) {
     getGameLocalization(meta.datasetVersionId, meta.sourceCommit, "zh-CN"),
     getGameLocalization(meta.datasetVersionId, meta.sourceCommit, "en"),
     db.query<Record<string, unknown>>(
-      `SELECT h.*, sr.source_path, sr.source_line, sr.resolved_definition AS source_definition, z.display_name AS zh, e.display_name AS en FROM heroes h LEFT JOIN entity_source_records sr ON sr.dataset_version_id=h.dataset_version_id AND sr.entity_type='hero' AND sr.entity_key=h.internal_name AND sr.occurrence_ordinal=0 LEFT JOIN hero_localizations z ON z.dataset_version_id=h.dataset_version_id AND z.hero_id=h.hero_id AND z.locale='zh-CN' LEFT JOIN hero_localizations e ON e.dataset_version_id=h.dataset_version_id AND e.hero_id=h.hero_id AND e.locale='en' WHERE h.dataset_version_id=$1`,
+      `SELECT h.*, sr.source_path, sr.source_line, sr.resolved_definition AS source_definition, z.display_name AS zh, e.display_name AS en FROM heroes h LEFT JOIN entity_source_records sr ON sr.dataset_version_id=h.dataset_version_id AND sr.entity_type='hero' AND sr.entity_key=h.internal_name AND sr.occurrence_ordinal=0 LEFT JOIN hero_localizations z ON z.dataset_version_id=h.dataset_version_id AND z.hero_id=h.hero_id AND z.locale='zh-CN' LEFT JOIN hero_localizations e ON e.dataset_version_id=h.dataset_version_id AND e.hero_id=h.hero_id AND e.locale='en' WHERE h.dataset_version_id=$1 ORDER BY h.internal_name`,
       [meta.datasetVersionId],
     ),
     db.query<
@@ -90,7 +90,7 @@ async function buildSnapshot(meta: ActiveDatasetMeta) {
       s.source_path, s.source_line, s.resolved_definition AS source_definition,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('value_key',v.value_key,'scalar_value',v.scalar_value,'level_values',v.level_values,'modifiers',v.modifiers) ORDER BY v.ordinal) FROM ability_values v WHERE v.dataset_version_id=a.dataset_version_id AND v.ability_internal_name=a.internal_name),'[]'::jsonb) AS values
       FROM abilities a LEFT JOIN ability_localizations z ON z.dataset_version_id=a.dataset_version_id AND z.ability_internal_name=a.internal_name AND z.locale='zh-CN' LEFT JOIN ability_localizations e ON e.dataset_version_id=a.dataset_version_id AND e.ability_internal_name=a.internal_name AND e.locale='en'
-      LEFT JOIN LATERAL (SELECT source_path,source_line,resolved_definition FROM entity_source_records WHERE dataset_version_id=a.dataset_version_id AND entity_type='ability' AND entity_key=a.internal_name ORDER BY occurrence_ordinal DESC LIMIT 1) s ON true WHERE a.dataset_version_id=$1`,
+      LEFT JOIN LATERAL (SELECT source_path,source_line,resolved_definition FROM entity_source_records WHERE dataset_version_id=a.dataset_version_id AND entity_type='ability' AND entity_key=a.internal_name ORDER BY occurrence_ordinal DESC LIMIT 1) s ON true WHERE a.dataset_version_id=$1 ORDER BY a.internal_name`,
       [meta.datasetVersionId],
     ),
   ]);
