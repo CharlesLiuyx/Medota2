@@ -432,8 +432,12 @@ async function observeHeroGroups(
 test("online fallback handles aliases, IME, cache and URL restoration without a page request", async ({
   page,
 }) => {
+  await page.clock.install();
   await page.route("**/api/catalog/replica", (route) => route.abort());
   await page.goto("/heroes");
+  await expect(
+    page.getByRole("button", { name: "网格视图", exact: true }),
+  ).toBeEnabled();
   const input = page.getByRole("textbox", { name: "搜索英雄" });
   await expect(input).toBeVisible();
   await expect(page.getByRole("button", { name: "应用筛选" })).toHaveCount(0);
@@ -450,7 +454,17 @@ test("online fallback handles aliases, IME, cache and URL restoration without a 
     if (request.isNavigationRequest() || url.searchParams.has("_rsc"))
       documentRequests.push(request.url());
   });
-  await input.pressSequentially("difashi", { delay: 8 });
+  // Driver/runner scheduling can put more than 80ms between real key events.
+  // Control the debounce clock while preserving the actual input events.
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
+  try {
+    await input.pressSequentially("difashi");
+    await page.clock.runFor(79);
+    expect(searchRequests).toEqual([]);
+    await page.clock.runFor(1);
+  } finally {
+    await page.clock.resume();
+  }
   await expect(page.locator("[data-live-results]")).toHaveAttribute(
     "aria-busy",
     "false",
@@ -497,6 +511,9 @@ test("online fallback handles aliases, IME, cache and URL restoration without a 
   await page.locator('a[href^="/heroes/antimage?"]').last().click();
   await expect(page).toHaveURL(/\/heroes\/antimage\?release=c%3A/u);
   await page.goBack();
+  await expect(
+    page.getByRole("button", { name: "网格视图", exact: true }),
+  ).toBeEnabled();
   await expect(input).toHaveValue("敌法");
   await expect(
     page.getByRole("heading", { name: "测试守卫", exact: true }),

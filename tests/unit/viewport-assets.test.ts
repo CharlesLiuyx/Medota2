@@ -4,6 +4,7 @@ import { viewportAssetLimit } from "@/domain/viewport-assets";
 import {
   backgroundTurn,
   isViewportAssetReady,
+  rememberViewportAsset,
   warmViewportAsset,
 } from "@/browser/viewport-assets";
 
@@ -23,6 +24,34 @@ afterEach(() => {
 });
 
 describe("viewport image warming", () => {
+  it("keeps warmed tabs ready when long catalogs load more than the image budget", async () => {
+    vi.stubGlobal("Image", function Image() {
+      const img = document.createElement("img");
+      Object.defineProperties(img, {
+        naturalWidth: { value: 96 },
+        naturalHeight: { value: 54 },
+      });
+      img.decode = async () => {};
+      return img;
+    });
+    await warmViewportAsset(asset);
+    const loaded = new Image();
+    let last = asset;
+    for (let index = 0; index < 600; index++) {
+      last = {
+        src: `/valve-assets/ability/loaded-${index}?v=a`,
+        sizes: "56px",
+      };
+      rememberViewportAsset(last, loaded);
+    }
+    await vi.waitFor(() =>
+      expect(isViewportAssetReady(last.src, last.sizes)).toBe(true),
+    );
+    expect(isViewportAssetReady(asset.src, asset.sizes)).toBe(true);
+    expect(
+      isViewportAssetReady("/valve-assets/ability/loaded-0?v=a", "56px"),
+    ).toBe(false);
+  });
   it("shares concurrent decoding, matches responsive candidates and isolates version, size and environment", async () => {
     const instances: HTMLImageElement[] = [];
     let resolve!: () => void;

@@ -429,8 +429,15 @@ test("heroes and abilities: readable tooltips and mobile layout", async ({
 
 test("viewport: prewarms first-screen images before tab navigation and keeps search interactive", async ({
   page,
+  request,
 }, testInfo) => {
   test.setTimeout(90_000);
+  const index = (await (
+    await request.get("/api/releases")
+  ).json()) as ReleaseIndex;
+  const fixture = index.releases
+    .find((release) => release.id === index.defaultRelease)
+    ?.catalogClient?.startsWith("fixture-");
   await page.goto("/heroes");
   await page.waitForFunction(
     () =>
@@ -453,6 +460,17 @@ test("viewport: prewarms first-screen images before tab navigation and keeps sea
     ["items", "物品", "搜索物品"],
     ["heroes", "英雄", "搜索英雄"],
   ]) {
+    // The fixed fixture intentionally has no unit/item source or portraits.
+    // Verify that boundary instead of waiting for images that cannot exist.
+    if (fixture && (entity === "units" || entity === "items")) {
+      await page
+        .getByRole("navigation", { name: "图鉴分类" })
+        .getByRole("link", { name: label, exact: true })
+        .click();
+      await expect(page.locator("main")).toContainText("尚未接入");
+      await expect(page.locator("main img")).toHaveCount(0);
+      continue;
+    }
     // Observe the first painted destination frame, not a later image-loaded state.
     await page.evaluate(
       ({ entity, label }) => {
