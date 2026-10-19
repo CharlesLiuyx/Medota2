@@ -1,12 +1,38 @@
 import { mkdtemp, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { constants, getPriority, tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { run, acquireLock } from "@/development/runtime";
-import { checkBatches } from "@/development/check-scheduling";
+import { checkStages } from "@/development/check-scheduling";
 import { createPlan } from "../../scripts/development/check-plan.mjs";
 
 describe("owned command cancellation", () => {
+  it("lowers only the owned child priority and passes it to descendants", async () => {
+    const root = await mkdtemp(join(tmpdir(), "medota-priority-"));
+    const output = join(root, "priority.json");
+    const original = getPriority();
+    const grandchild = "console.log(require('node:os').getPriority())";
+    const script = `const os = require('node:os'); const value = require('node:child_process').execFileSync(process.execPath, ['-e', ${JSON.stringify(grandchild)}], {encoding:'utf8'}); require('node:fs').writeFileSync(${JSON.stringify(output)}, JSON.stringify([os.getPriority(), Number(value)]));`;
+    try {
+      await run(
+        process.execPath,
+        ["-e", script],
+        process.env,
+        undefined,
+        undefined,
+        true,
+      );
+      const priorities = JSON.parse(await readFile(output, "utf8"));
+      expect(priorities).toHaveLength(2);
+      for (const priority of priorities)
+        expect(priority).toBeGreaterThanOrEqual(
+          constants.priority.PRIORITY_BELOW_NORMAL,
+        );
+      expect(getPriority()).toBe(original);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
   it.skipIf(process.platform === "win32")(
     "terminates a grandchild and waits for its shutdown output",
     async () => {
@@ -48,22 +74,22 @@ describe("owned command cancellation", () => {
     const next = await acquireLock(name, 0);
     await next();
   });
-  it("overlaps only real journeys with the build and preserves all selected tasks", () => {
+  it("overlaps real journeys with an ordered fixture chain and preserves all selected tasks", () => {
     const plan = createPlan(["src/workers/run-check.ts"]);
-    const batches = checkBatches(plan.tasks, true);
+    const batches = checkStages(plan.tasks, true);
     expect(
       batches
-        .flat()
+        .flat(2)
         .map((task) => task.id)
         .sort(),
     ).toEqual(plan.tasks.map((task) => task.id).sort());
     expect(
       batches
         .filter((batch) => batch.length > 1)
-        .map((batch) => batch.map((task) => task.id)),
-    ).toEqual([["journeys", "build"]]);
+        .map((batch) => batch.map((chain) => chain.map((task) => task.id))),
+    ).toEqual([[["journeys"], ["build", "e2e", "database-contract"]]]);
     expect(
-      checkBatches(plan.tasks, false).every((batch) => batch.length === 1),
+      checkStages(plan.tasks, false).every((batch) => batch.length === 1),
     ).toBe(true);
   });
 });

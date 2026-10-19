@@ -1,10 +1,12 @@
 import { execFile } from "node:child_process";
+import { mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { randomUUID, createHash } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
-import { checkBatches } from "@/development/check-scheduling";
+import { checkStages } from "@/development/check-scheduling";
 import { withBrowserBatch } from "@/development/browser-batch";
+import { prepareBrowserShards } from "@/development/browser-shards";
 import { nativeCommand, normalizeNodePath } from "@/development/command";
 import {
   changedFiles,
@@ -44,13 +46,16 @@ function selectedPlan() {
   );
 }
 let interrupted = false;
+let persistInterruption: (() => void) | undefined;
 const cancellation = new AbortController();
 process.once("SIGINT", () => {
   interrupted = true;
+  persistInterruption?.();
   cancellation.abort(new Error("Check interrupted."));
 });
 process.once("SIGTERM", () => {
   interrupted = true;
+  persistInterruption?.();
   cancellation.abort(new Error("Check interrupted."));
 });
 
@@ -111,6 +116,8 @@ async function check(): Promise<boolean> {
     runId,
     startedAt: new Date().toISOString(),
     status: "running",
+    interruptedAt: undefined as string | undefined,
+    error: undefined as string | undefined,
     purpose: retryReceipt ? "failure-diagnosis" : "verification",
     retryOf: options.retryFailed,
     paths: plan.paths,
@@ -123,8 +130,36 @@ async function check(): Promise<boolean> {
       startedAt: string;
       command: string;
       args: string[];
+      error?: string;
       failedCases?: FailedCase[];
     }>,
+  };
+  // Check receipts are small. One synchronous atomic writer prevents an older
+  // in-flight async rename from overwriting the signal handler's checkpoint.
+  const save = (
+    value: typeof manifest & { finishedAt?: string } = manifest,
+  ) => {
+    mkdirSync(dirname(evidence), { recursive: true });
+    const temporary = `${evidence}.${process.pid}.checkpoint.tmp`;
+    writeFileSync(temporary, JSON.stringify(value, null, 2) + "\n", {
+      mode: 0o600,
+    });
+    renameSync(temporary, evidence);
+  };
+  // "cancelling" means shutdown was requested, not that cleanup was confirmed.
+  persistInterruption = () => {
+    manifest.status = "interrupted";
+    manifest.interruptedAt = new Date().toISOString();
+    for (const entry of manifest.tasks) {
+      if (entry.status !== "running") continue;
+      entry.status = "cancelling";
+      entry.durationMs = Date.now() - Date.parse(entry.startedAt);
+    }
+    try {
+      save();
+    } catch (error) {
+      console.error("Could not persist interrupted check receipt:", error);
+    }
   };
   let stale = false;
   const validateCompleted = async () => {
@@ -141,6 +176,8 @@ async function check(): Promise<boolean> {
     task: CheckTask,
     signal: AbortSignal,
     environment = process.env,
+    commandArgs = task.args,
+    belowNormal = false,
   ) => {
     signal.throwIfAborted();
     const key = await taskKey(task);
@@ -156,9 +193,10 @@ async function check(): Promise<boolean> {
       durationMs: 0,
       startedAt: new Date().toISOString(),
       command: task.command,
-      args: task.args,
+      args: commandArgs,
     };
     manifest.tasks.push(entry);
+    await save();
     const started = Date.now();
     // Live browser/database state is verified on every invocation. Static
     // evidence can be reused; release manages its own artifact identity.
@@ -171,7 +209,7 @@ async function check(): Promise<boolean> {
       try {
         await run(
           task.command,
-          task.args,
+          commandArgs,
           task.kind === "browser"
             ? {
                 ...environment,
@@ -191,9 +229,11 @@ async function check(): Promise<boolean> {
             : process.env,
           resolve(dirname(evidence), `${task.id}.log`),
           signal,
+          belowNormal,
         );
       } catch (error) {
         entry.status = signal.aborted ? "cancelled" : "failed";
+        entry.error = error instanceof Error ? error.message : String(error);
         entry.failedCases =
           (await readJson<FailedCase[]>(
             resolve(dirname(evidence), `${task.id}.failures.json`),
@@ -207,6 +247,7 @@ async function check(): Promise<boolean> {
         throw error;
       } finally {
         entry.durationMs = Date.now() - started;
+        await save();
       }
       if ((await taskKey(task)) !== key) {
         entry.status = "stale";
@@ -228,18 +269,27 @@ async function check(): Promise<boolean> {
           });
       }
     }
-    await writeJson(evidence, manifest);
+    await save();
   };
   try {
     console.log(plan.summary);
-    await writeJson(evidence, manifest);
+    await save();
     if (options.lane === "browser" && plan.tasks.length) {
       await withBrowserBatch(async (env, signal) => {
+        const commands = options.shard
+          ? await prepareBrowserShards(
+              plan.tasks,
+              options.shard,
+              env,
+              dirname(evidence),
+              signal,
+            )
+          : undefined;
         for (const task of plan.tasks) {
           await validateCompleted();
           if (stale)
             throw new Error("Check inputs changed during browser batch.");
-          await executeTask(task, signal, env);
+          await executeTask(task, signal, env, commands?.get(task.id));
         }
         // Validate while the fixture lease is held, before its passing receipt.
         await validateCompleted();
@@ -247,11 +297,11 @@ async function check(): Promise<boolean> {
           throw new Error("Check inputs changed during browser batch.");
       }, cancellation.signal);
     } else {
-      const batches = checkBatches(
+      const stages = checkStages(
         plan.tasks,
         !process.env.CI && !options.publication && !retryReceipt,
       );
-      for (const batch of batches) {
+      for (const chains of stages) {
         cancellation.signal.throwIfAborted();
         await validateCompleted();
         if (stale)
@@ -262,9 +312,22 @@ async function check(): Promise<boolean> {
         const signal = AbortSignal.any([cancellation.signal, group.signal]);
         let failure: unknown;
         const outcomes = await Promise.allSettled(
-          batch.map(async (task) => {
+          chains.map(async (chain) => {
             try {
-              await executeTask(task, signal);
+              for (const task of chain) {
+                signal.throwIfAborted();
+                await validateCompleted();
+                if (stale)
+                  throw new Error("Check inputs changed during a task chain.");
+                signal.throwIfAborted();
+                await executeTask(
+                  task,
+                  signal,
+                  process.env,
+                  task.args,
+                  chains.length > 1 && task.kind === "build",
+                );
+              }
             } catch (error) {
               if (!group.signal.aborted) {
                 failure = error;
@@ -285,14 +348,16 @@ async function check(): Promise<boolean> {
     return !stale;
   } catch (error) {
     manifest.status = stale ? "stale" : interrupted ? "interrupted" : "failed";
+    manifest.error = error instanceof Error ? error.message : String(error);
     throw error;
   } finally {
     try {
-      await writeJson(evidence, {
+      save({
         ...manifest,
         finishedAt: new Date().toISOString(),
       });
     } finally {
+      persistInterruption = undefined;
       await release();
     }
   }

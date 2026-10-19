@@ -261,12 +261,82 @@ const ci = (changes: Partial<CIRun> = {}): CIRun => ({
   ...changes,
 });
 describe("exact CI and fixture planning", () => {
+  it("keeps local work alive through a read outage, then requires the exact successful CI", async () => {
+    let clock = 0;
+    const readState = vi.fn<
+      (event: { status: string; durationMs: number }) => Promise<void>
+    >(async () => {});
+    const query = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("ECONNRESET"))
+      .mockRejectedValueOnce(new Error("ECONNRESET"))
+      .mockRejectedValueOnce(new Error("ECONNRESET"))
+      .mockResolvedValueOnce([ci({ headSha: "other" })])
+      .mockResolvedValue([ci()]);
+    const work = steps();
+    work.commit = async () => "target";
+    work.finalize = async () => "target";
+    let localFinished = false;
+    work.check = async (signal) => {
+      // Resolving the outage is controlled by the clock below, with local work active.
+      await new Promise<void>((accept) => setTimeout(accept, 10));
+      expect(signal.aborted).toBe(false);
+      localFinished = true;
+    };
+    work.candidateCI = async (_sha, _snapshot, signal) =>
+      (
+        await waitForCI("owner/repo", "target", {
+          signal,
+          query,
+          readState,
+          now: () => clock,
+          sleep: async (ms) => {
+            clock += ms;
+          },
+        })
+      ).url;
+    await publishCandidate(receipt(), work);
+    expect(localFinished).toBe(true);
+    expect(readState.mock.calls.map(([event]) => event)).toEqual([
+      { status: "unavailable", durationMs: 3000 },
+      { status: "recovered", durationMs: 8000 },
+    ]);
+    expect(query).toHaveBeenCalledTimes(5);
+    expect(work.push).toHaveBeenCalledTimes(1);
+  });
+  it("bounds an unavailable read and aborts immediately when the local peer fails", async () => {
+    let clock = 0;
+    await expect(
+      waitForCI("owner/repo", "target", {
+        readRecoveryTimeoutMs: 10_000,
+        now: () => clock,
+        query: async () => {
+          throw new Error("ETIMEDOUT");
+        },
+        sleep: async (ms) => {
+          clock += ms;
+        },
+      }),
+    ).rejects.toMatchObject({ category: "ci-read-unavailable" });
+    const controller = new AbortController();
+    const query = vi.fn(async () => {
+      throw new Error("ECONNRESET");
+    });
+    await expect(
+      waitForCI("owner/repo", "target", {
+        signal: controller.signal,
+        query,
+        sleep: async () => {
+          controller.abort(new Error("local failed"));
+        },
+      }),
+    ).rejects.toThrow("local failed");
+    expect(query).toHaveBeenCalledTimes(1);
+  });
   it("retries bounded read transport failures but never accepts missing or failed CI evidence", async () => {
     const read = vi
       .fn()
-      .mockRejectedValueOnce(
-        new Error("tls: failed to verify certificate: x509: wrong host"),
-      )
+      .mockRejectedValueOnce(new Error("net/http: TLS handshake timeout"))
       .mockResolvedValue([ci()]);
     const sleep = vi.fn(async () => {});
     await expect(
@@ -279,7 +349,7 @@ describe("exact CI and fixture planning", () => {
     await expect(retryCIRead(unavailable, { sleep })).rejects.toThrow(
       "certificate",
     );
-    expect(unavailable).toHaveBeenCalledTimes(3);
+    expect(unavailable).toHaveBeenCalledTimes(1);
     const forbidden = vi.fn(async () => {
       throw new Error("HTTP 403");
     });

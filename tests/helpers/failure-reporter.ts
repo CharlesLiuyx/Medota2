@@ -1,4 +1,5 @@
 import { writeFileSync } from "node:fs";
+import { relative } from "node:path";
 import type { Reporter, Suite } from "@playwright/test/reporter";
 
 /** Small portable failure evidence, also uploaded with CI check receipts. */
@@ -12,6 +13,36 @@ export default class FailureReporter implements Reporter {
   onEnd() {
     const path = process.env.MEDOTA2_CHECK_FAILURE_FILE;
     if (!path) return;
+    writeFileSync(
+      `${path}.timings.json`,
+      JSON.stringify(
+        this.suite?.allTests().map((test) => ({
+          file: relative(process.cwd(), test.location.file).replaceAll(
+            "\\",
+            "/",
+          ),
+          project: test.parent.project()?.name ?? "",
+          titlePath: (() => {
+            const titles = [test.title];
+            for (
+              let parent = test.parent;
+              parent.type === "describe";
+              parent = parent.parent!
+            )
+              titles.unshift(parent.title);
+            return titles;
+          })(),
+          durationMs: test.results.reduce(
+            (sum, result) => sum + result.duration,
+            0,
+          ),
+          outcome: test.outcome(),
+          attempts: test.results.length,
+        })) ?? [],
+        null,
+        2,
+      ) + "\n",
+    );
     const failed =
       this.suite
         ?.allTests()

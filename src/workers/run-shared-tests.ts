@@ -9,6 +9,12 @@ import { run, fingerprint, writeJson } from "@/development/runtime";
 import { automaticStorageCleanup } from "@/development/storage";
 import { normalizeTestRunnerArgs } from "@/development/test-runner-args";
 import { withWorkbench } from "@/development/workbench-clients";
+import { withBrowserBatch } from "@/development/browser-batch";
+
+const cancellation = new AbortController();
+const cancel = () => cancellation.abort(new Error("Test runner interrupted."));
+process.on("SIGINT", cancel);
+process.on("SIGTERM", cancel);
 
 async function main(): Promise<void> {
   const [suite, ...rawArgs] = process.argv.slice(2);
@@ -73,6 +79,7 @@ async function main(): Promise<void> {
             MEDOTA2_EXPECTED_DATA_VERSION: databaseBefore,
           },
           resolve(evidenceRoot, "runner.log"),
+          cancellation.signal,
         );
         const after = await fingerprint(inputs);
         result =
@@ -97,7 +104,10 @@ async function main(): Promise<void> {
       }
     });
   }
-  const executeFixture = async (env: NodeJS.ProcessEnv) => {
+  const executeFixture = async (
+    env: NodeJS.ProcessEnv,
+    signal = cancellation.signal,
+  ) => {
     if (suite === "integration")
       await run(
         "pnpm",
@@ -111,6 +121,7 @@ async function main(): Promise<void> {
         ],
         env,
         resolve(env.MEDOTA2_ARTIFACT_ROOT!, "runner.log"),
+        signal,
       );
     else
       await run(
@@ -135,6 +146,7 @@ async function main(): Promise<void> {
         ],
         { ...env, MEDOTA2_BROWSER_WARM_SCOPES: warmScopes },
         resolve(env.MEDOTA2_ARTIFACT_ROOT!, "runner.log"),
+        signal,
       );
   };
   const verify = async () => {
@@ -155,10 +167,24 @@ async function main(): Promise<void> {
     await verify();
     return;
   }
-  await withTestEnvironment(executeFixture, {
+  if (suite === "e2e" || suite === "journeys") {
+    // Own the fixture Web process directly: Playwright's detached webServer
+    // can otherwise survive cancellation of its parent process group.
+    await withBrowserBatch(
+      async (env, signal) => {
+        await executeFixture(env, signal);
+        await verify();
+      },
+      cancellation.signal,
+      warmScopes?.split(","),
+    );
+    return;
+  }
+  await withTestEnvironment((env) => executeFixture(env), {
     seed: suite === "e2e" || suite === "journeys",
     clean: suite === "clean",
     verify,
+    signal: cancellation.signal,
   });
 }
 async function dataVersion(): Promise<string> {
@@ -177,6 +203,10 @@ async function dataVersion(): Promise<string> {
   return `${body.datasetVersionId}:${body.assetDatasetVersionId}`;
 }
 main()
+  .finally(() => {
+    process.off("SIGINT", cancel);
+    process.off("SIGTERM", cancel);
+  })
   .finally(() => automaticStorageCleanup("tests"))
   .catch((error: unknown) => {
     console.error(error instanceof Error ? error.message : error);

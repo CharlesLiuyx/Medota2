@@ -154,6 +154,9 @@ jobs:
           path: |
             .medota2/check-plan.json
             .medota2/checks/*/run.json
+            .medota2/checks/*/browser-shards.json
+            .medota2/checks/*/*.test-list.txt
+            .medota2/checks/*/*.timings.json
             .medota2/checks/*/*.log
             .medota2/shared-tests/runs/**/*.log
             .medota2/shared-tests/runs/**/run.json

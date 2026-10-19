@@ -319,6 +319,13 @@ async function main() {
               branch: candidateBranch,
               signal,
               failFast: true,
+              readState: async (event) => {
+                (receipt.ciReadEvents ??= []).push({
+                  at: new Date().toISOString(),
+                  ...event,
+                });
+                await saveReceipt(receipt);
+              },
               progress: async (ci) => {
                 receipt.candidateCIUrl = ci.url;
                 await saveReceipt(receipt);

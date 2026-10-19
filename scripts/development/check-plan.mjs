@@ -262,6 +262,11 @@ export function createPlan(inputPaths) {
   );
   const flowPaths = runtimePaths.filter((path) => !focused.includes(path));
   const wide = flowPaths.some((path) => toolchain.test(path));
+  const checkExecution = flowPaths.some((path) =>
+    /^(?:src\/workers\/(?:run-check|run-shared-tests)\.ts|src\/development\/(?:check-scheduling|browser-shards|browser-batch|runtime)\.ts|scripts\/development\/browser-durations\.json)$/.test(
+      path,
+    ),
+  );
   const nonMap = flowPaths.filter((path) => !mapOnly.test(path));
   const hasMap = flowPaths.some(
     (path) =>
@@ -287,7 +292,8 @@ export function createPlan(inputPaths) {
     flowPaths.some((path) => /^src\/(?:i18n\/|proxy\.ts$)/.test(path)) ||
     nonMap.some((path) => !unitScope.test(path) && ui.test(path));
   const hasEngine = nonMap.some((path) => engine.test(path));
-  const dbContract = runtimePaths.some((path) => environment.test(path));
+  const dbContract =
+    checkExecution || runtimePaths.some((path) => environment.test(path));
   if (
     runtimePaths.some(
       (path) => /\.[cm]?[jt]sx?$/.test(path) || toolchain.test(path),
@@ -564,9 +570,8 @@ export function createPlan(inputPaths) {
   )
     journeys.add("names");
   // Editing a journey must execute the test even if its title is new or renamed.
-  const changedJourneys = paths.some((path) =>
-    path.startsWith("tests/journeys/"),
-  );
+  const changedJourneys =
+    checkExecution || paths.some((path) => path.startsWith("tests/journeys/"));
   const journeyPaths = paths.filter((path) =>
     path.startsWith("tests/journeys/"),
   );
@@ -619,11 +624,17 @@ export function createPlan(inputPaths) {
       ),
     );
   const e2eChanged =
-    replicaChanged || paths.some((path) => path.startsWith("tests/e2e/"));
+    checkExecution ||
+    replicaChanged ||
+    paths.some((path) => path.startsWith("tests/e2e/"));
   const e2eSpecs = new Set(
     existing.filter((path) => /^tests\/e2e\/.*\.spec\.[jt]sx?$/.test(path)),
   );
   if (replicaChanged) e2eSpecs.add("tests/e2e/local-catalog.spec.ts");
+  if (checkExecution)
+    ["heroes", "local-catalog", "visual"].forEach((name) =>
+      e2eSpecs.add(`tests/e2e/${name}.spec.ts`),
+    );
   for (const path of paths) {
     const owner = path.match(
       /^(tests\/e2e\/.*\.spec\.[jt]sx?)-snapshots\//,

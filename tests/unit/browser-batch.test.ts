@@ -71,6 +71,24 @@ describe("owned browser batch", () => {
     ).rejects.toThrow("suite failed");
     expect(state.stopped).toBe(true);
   });
+  it("forwards cancellation to active work and waits for its owned server", async () => {
+    const controller = new AbortController();
+    await expect(
+      withBrowserBatch(
+        async (_env, signal) => {
+          controller.abort(new Error("cancelled by owner"));
+          expect(signal.aborted).toBe(true);
+          signal.throwIfAborted();
+        },
+        controller.signal,
+        ["attributes"],
+      ),
+    ).rejects.toThrow("cancelled by owner");
+    expect(state.warm).toHaveBeenCalledWith("http://127.0.0.1:0", [
+      "attributes",
+    ]);
+    expect(state.stopped).toBe(true);
+  });
   it("cancels active suites when the owned server exits", async () => {
     state.run.mockImplementation(async () => {
       state.stopped = true;

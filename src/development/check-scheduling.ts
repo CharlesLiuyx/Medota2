@@ -1,11 +1,14 @@
 import type { CheckTask } from "../../scripts/development/check-plan.mjs";
 
-/** Only real read-only journeys can overlap the fixture-backed build/smoke.
- * Fixture browsers, database contracts and benchmarks remain serialized. */
-export function checkBatches(
+/** Stages are barriers; chains within a stage overlap, tasks within a chain do not.
+ * Real journeys only read the workbench. The other chain owns the fixture, so
+ * build/smoke, fixture browsers and database contracts never overlap each other.
+ * Benchmarks and unknown task kinds remain behind the join barrier. */
+export function checkStages(
   tasks: CheckTask[],
   parallelRealBuild: boolean,
-): CheckTask[][] {
+): CheckTask[][][] {
+  const serial = (items: CheckTask[]) => items.map((task) => [[task]]);
   const build = parallelRealBuild
     ? tasks.find((task) => task.id === "build" && task.kind === "build")
     : undefined;
@@ -14,10 +17,17 @@ export function checkBatches(
         (task) => task.id === "journeys" && !task.args.includes("--fixture"),
       )
     : undefined;
-  const paired = build && real;
-  return tasks.flatMap((task) => {
-    if (paired && task === build) return [];
-    if (paired && task === real) return [[task, build]];
-    return [[task]];
-  });
+  if (!build || !real) return serial(tasks);
+  const remaining = tasks.filter((task) => task !== build);
+  const index = remaining.indexOf(real);
+  const following = remaining.slice(index + 1);
+  const barrier = following.findIndex(
+    (task) => !["browser", "database"].includes(task.kind),
+  );
+  const boundary = barrier < 0 ? following.length : barrier;
+  return [
+    ...serial(remaining.slice(0, index)),
+    [[real], [build, ...following.slice(0, boundary)]],
+    ...serial(following.slice(boundary)),
+  ];
 }

@@ -10,6 +10,7 @@ import { warmBrowserOrigin } from "./warm-browser";
 export async function withBrowserBatch(
   work: (env: NodeJS.ProcessEnv, signal: AbortSignal) => Promise<void>,
   signal: AbortSignal,
+  warmScopes?: string[],
 ): Promise<void> {
   signal.throwIfAborted();
   await withTestEnvironment(
@@ -73,7 +74,7 @@ export async function withBrowserBatch(
         }
         // Full union of warm routes, once; individual suites must not skip a route
         // needed by a later suite or reuse a marker from an earlier invocation.
-        await warmBrowserOrigin(origin);
+        await warmBrowserOrigin(origin, warmScopes);
         active.throwIfAborted();
         await work(env, active);
         active.throwIfAborted();

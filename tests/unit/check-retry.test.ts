@@ -85,6 +85,7 @@ it.each([false, true])(
             title: `case ${outcome}`,
             location: { file: "tests/journeys/example.spec.ts" },
             outcome: () => outcome,
+            results: [{ duration: 12 }],
             parent: { project: () => ({ name: "desktop-chromium" }) },
           })),
       } as unknown as Suite);
@@ -97,6 +98,18 @@ it.each([false, true])(
             project: "desktop-chromium",
           }),
         ),
+      );
+      expect(
+        JSON.parse(await readFile(`${file}.timings.json`, "utf8")),
+      ).toEqual(
+        ["unexpected", "flaky", "expected", "skipped"].map((outcome) => ({
+          file: "tests/journeys/example.spec.ts",
+          project: "desktop-chromium",
+          titlePath: [`case ${outcome}`],
+          durationMs: 12,
+          outcome,
+          attempts: 1,
+        })),
       );
     } finally {
       vi.unstubAllEnvs();

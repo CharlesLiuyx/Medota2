@@ -20,12 +20,18 @@ export interface PublicationReceipt {
   ciUrl?: string;
   candidateRef?: string;
   candidateCIUrl?: string;
+  ciReadEvents?: Array<{
+    at: string;
+    status: "unavailable" | "recovered";
+    durationMs: number;
+  }>;
   stages: Array<{
     name: string;
     status: "running" | "passed" | "failed";
     startedAt: string;
     durationMs?: number;
     error?: string;
+    failureKind?: string;
   }>;
 }
 export const latestReceipt = resolve(".medota2/publications/latest.json");
@@ -86,6 +92,10 @@ export async function stage<T>(
   } catch (error) {
     entry.status = "failed";
     entry.error = error instanceof Error ? error.message : String(error);
+    entry.failureKind =
+      error instanceof Error && "category" in error
+        ? String(error.category)
+        : "check-or-operation-failed";
     receipt.status = "failed";
     throw error;
   } finally {

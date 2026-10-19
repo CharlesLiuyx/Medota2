@@ -1,6 +1,6 @@
 # 当前工作
 
-更新：2026-10-19。只维护活动状态；概念见[CONTEXT](../CONTEXT.md)，阅读入口见[文档导航](README.md)。
+更新：2026-10-20。只维护活动状态；概念见[CONTEXT](../CONTEXT.md)，阅读入口见[文档导航](README.md)。
 
 ## 基线与接手
 
@@ -15,6 +15,7 @@
 
 ## 环境与后续验证
 
+- **发布检查优化，本机已验证、远端实测中**：CI读取恢复、取消收据及资源回收、本机依赖排程与六片耗时平衡已实施。新旧各3次完整检查均通过且无flaky，动态中位数274.8→262.6秒（减少12.2秒／4.4%），最慢一次未改善。用户已批准提交／`pnpm push`，下一步实测Linux六片及整轮发布；详见[优化验收](history/2026-10-20-publication-optimization.md)与[原分析](work/publication-timing-plan-20261019.md)。
 - **内存、空间与Docker生命周期**：本轮修复已发布。Mac长时访问、三类HMR、多终端共用及退出回收已有验证；连续多日内存、Windows／Linux原生终端行为待复验。详细边界见[长时内存](history/2026-10-19-development-memory-growth.md)、[生命周期](history/2026-10-19-docker-lifecycle.md)与[空间治理及恢复](history/2026-10-19-sync-storage-cleanup.md)。本轮收尾状态和存储审计见发布验收。
 - **Windows间歇退出及取消**：已有Node22单轮应用验收；后续工作台间歇退出、Node24原生异常及发布进程树取消仍待定位／复验。见[平台交接](work/windows-native-validation.md)、[本机验收](history/2026-10-09-windows-publication.md)与[发布取消交接](work/publication-retry-performance.md)。本轮Linux CI不能代替Windows原生验证。
 - **实体版本与Diff**：7.41f为默认，第一阶段已落地；实际更新后的多版本和跨机器验证见[实施任务](work/entity-version-diff.md)与[7.41f记录](work/7.41f-update.md)。

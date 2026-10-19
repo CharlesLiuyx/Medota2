@@ -26,6 +26,32 @@ function selectedJourneys(paths: string[]) {
 }
 
 describe("development check scope", () => {
+  it("checks both browser projects and full database contracts when execution or sharding changes", () => {
+    for (const path of [
+      "src/workers/run-check.ts",
+      "src/development/check-scheduling.ts",
+      "src/development/browser-shards.ts",
+      "scripts/development/browser-durations.json",
+    ]) {
+      const plan = createPlan([path]);
+      expect(plan.tasks.find((task) => task.id === "e2e")?.args).toEqual(
+        expect.arrayContaining([
+          "--project=desktop-chromium",
+          "--project=mobile-chromium",
+          "tests/e2e/heroes.spec.ts",
+          "tests/e2e/local-catalog.spec.ts",
+          "tests/e2e/visual.spec.ts",
+        ]),
+      );
+      expect(plan.tasks.some((task) => task.id === "visual")).toBe(false);
+      expect(
+        plan.tasks.find((task) => task.id === "journeys")?.args,
+      ).not.toContain("--grep");
+      expect(plan.tasks.some((task) => task.id === "database-contract")).toBe(
+        true,
+      );
+    }
+  });
   it("checks retry behavior and the changes journey for availability UI", () => {
     const paths = ["src/components/data-unavailable.tsx"];
     const plan = createPlan(paths);

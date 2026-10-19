@@ -13,6 +13,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
+import { constants, getPriority, setPriority } from "node:os";
 import { createWriteStream } from "node:fs";
 import type { Writable } from "node:stream";
 import { setTimeout as delay } from "node:timers/promises";
@@ -134,6 +135,7 @@ export async function run(
   env: NodeJS.ProcessEnv = process.env,
   logPath?: string,
   signal?: AbortSignal,
+  belowNormal = false,
 ): Promise<void> {
   signal?.throwIfAborted();
   if (logPath) await mkdir(dirname(logPath), { recursive: true });
@@ -162,6 +164,7 @@ export async function run(
   let stopping = false;
   let stoppedAt = 0;
   let terminationError: unknown;
+  let priorityError: unknown;
   let windowsTermination: Promise<void> | undefined;
   let escalation: ReturnType<typeof setTimeout> | undefined;
   const terminate = (force = false) => {
@@ -207,11 +210,28 @@ export async function run(
         code === 0 && !stopping
           ? accept()
           : reject(
-              new (stopping ? CommandAbortedError : Error)(
-                `${command} ${args.join(" ")} failed (${signal ?? code}).`,
-              ),
+              priorityError ??
+                new (stopping ? CommandAbortedError : Error)(
+                  `${command} ${args.join(" ")} failed (${signal ?? code}).`,
+                ),
             ),
       );
+      if (belowNormal && child.pid) {
+        try {
+          // Only lower the owned child's priority. Descendants inherit it;
+          // shared workbench and browser processes retain their own priority.
+          setPriority(
+            child.pid,
+            Math.max(
+              getPriority(child.pid),
+              constants.priority.PRIORITY_BELOW_NORMAL,
+            ),
+          );
+        } catch (error) {
+          priorityError = error;
+          stop();
+        }
+      }
     });
   } finally {
     // A parent can close its pipes before its descendants exit. Confirm the entire
