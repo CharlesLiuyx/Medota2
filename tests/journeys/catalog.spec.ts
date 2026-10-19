@@ -273,6 +273,7 @@ test("heroes: real talent selection raises level and changes the correct stats",
     .locator("#talents")
     .getByRole("link", { name: "战斗饥渴", exact: true })
     .first();
+  await expect(hunger).toHaveAttribute("data-interactive-ready", "true");
   await hunger.hover();
   await expect(page.getByRole("tooltip")).toContainText("激怒一个敌方单位");
   await expect(page.locator("#skill-axe_battle_hunger")).toHaveCount(1);
