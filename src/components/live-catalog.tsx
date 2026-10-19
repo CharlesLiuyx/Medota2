@@ -32,6 +32,7 @@ export function LiveHeroCatalog({
   total,
   header,
   notice,
+  viewOverride,
 }: {
   initialSlice: VersionedListSlice<HeroCardRow>;
   initialFilters: HeroFilters;
@@ -39,8 +40,10 @@ export function LiveHeroCatalog({
   total: number;
   header: ReactNode;
   notice?: ReactNode;
+  viewOverride?: "grid" | "table";
 }) {
-  const view = useCatalogView();
+  const requestedView = useCatalogView();
+  const view = viewOverride ?? requestedView;
   const t = useTranslations();
   const locale = useLocale();
   const live = useLiveCatalog({

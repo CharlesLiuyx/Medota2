@@ -1676,42 +1676,43 @@ export function drawVision(
     context.lineWidth = detected.has(source.id) ? 3 : 1;
     if (covered.has(source.id) && !cursor) {
       const warning = detected.has(source.id);
-      const ringColor = warning ? "#fbbf24" : "#67e8f9";
+      const ringColor = warning
+        ? "rgba(251, 191, 36, 0.85)"
+        : "rgba(103, 232, 249, 0.75)";
       const imageHeight = image
         ? (image.naturalHeight * iconSize) /
           Math.max(image.naturalWidth, image.naturalHeight)
         : iconSize;
       const centerY =
         iconCenter.y + imageHeight * (0.5 - (preset?.imageAnchor?.[1] ?? 0.5));
-      const radius = iconSize / 2 + 5;
+      const radius = iconSize / 2 + 3;
       context.save();
       context.setLineDash([]);
       context.beginPath();
       context.arc(iconCenter.x, centerY, radius, 0, Math.PI * 2);
-      context.strokeStyle = "#07131f";
-      context.lineWidth = 5;
+      context.strokeStyle = "rgba(7, 19, 31, 0.4)";
+      context.lineWidth = 2;
       context.stroke();
       context.strokeStyle = ringColor;
-      context.lineWidth = 2;
+      context.lineWidth = 1;
       context.stroke();
       const badgeX = iconCenter.x - radius + 1,
         badgeY = centerY - radius + 1;
       context.beginPath();
-      context.arc(badgeX, badgeY, 7, 0, Math.PI * 2);
-      context.fillStyle = "#101e28";
+      context.arc(badgeX, badgeY, 5, 0, Math.PI * 2);
+      context.fillStyle = "rgba(16, 30, 40, 0.55)";
       context.fill();
       context.strokeStyle = ringColor;
-      context.lineWidth = 1.5;
-      context.stroke();
+      context.lineWidth = 1;
       if (warning) {
         context.fillStyle = ringColor;
-        context.font = "bold 10px system-ui";
+        context.font = "bold 9px system-ui";
         context.textAlign = "center";
         context.textBaseline = "middle";
         context.fillText("!", badgeX, badgeY);
       } else {
         context.beginPath();
-        context.ellipse(badgeX, badgeY, 4, 2.5, 0, 0, Math.PI * 2);
+        context.ellipse(badgeX, badgeY, 3.5, 2, 0, 0, Math.PI * 2);
         context.stroke();
         context.beginPath();
         context.arc(badgeX, badgeY, 1, 0, Math.PI * 2);
@@ -1735,9 +1736,9 @@ export function drawVision(
         const centerY =
           iconCenter.y +
           artworkHeight * (0.5 - (preset?.imageAnchor?.[1] ?? 0.5));
-        const halfWidth = Math.max(26, artworkWidth + 8) / 2;
-        const halfHeight = Math.max(26, artworkHeight + 8) / 2;
-        const corner = 5;
+        const halfWidth = Math.max(24, artworkWidth + 6) / 2;
+        const halfHeight = Math.max(24, artworkHeight + 6) / 2;
+        const corner = 4;
         context.save();
         context.setLineDash([]);
         context.lineJoin = "round";
@@ -1751,23 +1752,20 @@ export function drawVision(
             context.lineTo(edgeX, edgeY);
             context.lineTo(edgeX, edgeY - y * corner);
           }
-        context.strokeStyle = "#07131f";
-        context.lineWidth = 4;
+        context.strokeStyle = "rgba(7, 19, 31, 0.4)";
+        context.lineWidth = 2;
         context.stroke();
-        context.strokeStyle = "#a5f3fc";
-        context.lineWidth = 1.5;
+        context.strokeStyle = "rgba(165, 243, 252, 0.85)";
+        context.lineWidth = 1;
         context.stroke();
         const badgeX = centerX + halfWidth + 2;
         const badgeY = centerY - halfHeight + 2;
         context.beginPath();
-        context.arc(badgeX, badgeY, 7, 0, Math.PI * 2);
-        context.fillStyle = "#a5f3fc";
+        context.arc(badgeX, badgeY, 5, 0, Math.PI * 2);
+        context.fillStyle = "rgba(16, 30, 40, 0.55)";
         context.fill();
-        context.strokeStyle = "#07131f";
-        context.lineWidth = 1;
-        context.stroke();
-        context.fillStyle = "#07131f";
-        context.font = "bold 10px sans-serif";
+        context.fillStyle = "#a5f3fc";
+        context.font = "9px sans-serif";
         context.textAlign = "center";
         context.textBaseline = "middle";
         context.fillText(number, badgeX, badgeY);

@@ -1,0 +1,60 @@
+.slot {
+  position: relative;
+  min-width: 0;
+}
+.object {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 0;
+  background: rgb(255 255 255 / 3%);
+}
+.neutral .object {
+  border-radius: 50%;
+  overflow: hidden;
+}
+.object > span {
+  width: 100%;
+  height: 100%;
+}
+.object img {
+  object-fit: cover;
+}
+.slot:hover .object,
+.slot:focus-within .object {
+  background: rgb(228 197 132 / 15%);
+  box-shadow:
+    0 0 0 1px #d8bc7f,
+    0 0 8px rgb(228 197 132 / 12%);
+}
+.slot:has(button:disabled) .object {
+  box-shadow: none;
+  opacity: 0.4;
+}
+.action {
+  opacity: 0;
+  pointer-events: none;
+}
+.slot:hover .action,
+.slot:focus-within .action {
+  opacity: 1;
+  pointer-events: auto;
+}
+/* The first tap focuses the object; its controls remain available for a second tap. */
+.slot button:focus-visible {
+  outline: 1px solid #d8bc7f;
+  outline-offset: 1px;
+}
+
+.pickerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+  gap: 4px;
+}
+
+.effectPickerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 4px;
+}

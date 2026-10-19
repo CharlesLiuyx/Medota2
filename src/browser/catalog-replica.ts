@@ -1,5 +1,6 @@
 import {
   browserScope,
+  browserResources,
   canPrefetch,
   loadBrowserResource,
   verifyResourceResponse,
@@ -165,6 +166,16 @@ async function valid(
     return count === m.total;
   } catch {
     return false;
+  }
+}
+/** Only completed, identity-verified replicas can seed a client navigation. */
+export function peekBrowserReplica(
+  id: ReplicaIdentity,
+): CatalogReplica | undefined {
+  try {
+    return browserResources.peek(key(id)) as CatalogReplica | undefined;
+  } catch {
+    return undefined;
   }
 }
 export function getBrowserReplica(

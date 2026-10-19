@@ -2,6 +2,7 @@
 import { useLocale } from "@/i18n/provider";
 import { useTranslations } from "@/i18n/provider";
 import { useEffect, useState } from "react";
+import { useHeroAbilityBuild } from "./hero-build-provider";
 import { AbilityTooltip } from "./ability-tooltip";
 import { numbers, type TooltipAbility } from "@/presentation/dota";
 /** One presentation card, retaining each range's complete ability definition. */
@@ -19,6 +20,12 @@ export function ShadowrazeCard({
   const locale = useLocale();
   const t = useTranslations();
   const [selected, setSelected] = useState(0);
+  const resetVersion = useHeroAbilityBuild()?.resetVersion ?? 0;
+  const [lastReset, setLastReset] = useState(resetVersion);
+  if (lastReset !== resetVersion) {
+    setLastReset(resetVersion);
+    setSelected(0);
+  }
   useEffect(() => {
     const restore = () => {
       const index = abilities.findIndex(
@@ -46,6 +53,7 @@ export function ShadowrazeCard({
       <AbilityTooltip
         id={`skill-${abilities[0].internal_name}`}
         ability={abilities[selected]}
+        adjustableLevel
         tokens={tokens}
         assetVersion={assetVersion}
         lang={lang}

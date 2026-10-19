@@ -56,6 +56,8 @@ pnpm data:status
 | `pnpm push`                                             | 固定候选、验证代码和数据、普通推送main并确认对应CI                          |
 | `pnpm sync`                                             | 拉取代码和固定依赖、保存业务改动、应用快照；有变化时重启                    |
 
+同步／应用的启动核验只在命令期间持有工作台；已有`pnpm dev`终端跨切换继续等待并接入新实例，没有开发终端时，命令结束自动清理容器、保留业务卷。需要持续预览时运行`pnpm dev`并保持终端打开。
+
 离线使用 `data:apply --offline`，前提是数据 commit、全部对象与固定来源已经在缓存中。重复应用同一快照会重新核验并返回 `already-applied`。本地验收可用 `--root <导出目录> --snapshot <ID>`；它不创建远端 lock，也不代表另一机器已能获取。
 
 `data:apply` 遇到未导出的业务改动会停止；先 `data:export` 保存，再选择目标。代码不会将不同快照的数据库记录自动合并。切换期间原有写连接被阻止继续写入或提交，必须重新打开当前选择的数据库；失败时保留旧库与候选，并依据 `.medota2/data-sync/switch.json` 恢复。下次 apply／sync 自动处理未完成切换。不要手工复制身份 receipt 或覆盖 active 文件。
@@ -132,3 +134,19 @@ gh release download map-assets-20261009-v3 -R CharlesLiuyx/Medota2-dev-data -p '
 ```
 
 Windows用`Get-FileHash output/map-assets-20261009-v3.zip -Algorithm SHA256`核对；macOS用`shasum -a 256 output/map-assets-20261009-v3.zip`，Linux用`sha256sum output/map-assets-20261009-v3.zip`。摘要必须与上方及随附清单一致，再解压到新的目录。此下载不修改数据库、地图版本或页面；后续用途导入独立实施。新版本使用新tag和文件名，保留已交接版本，不覆盖现有附件。
+
+## 本地副本清理与恢复
+
+```bash
+pnpm storage:clean --scope data-sync                   # 只预览重复载荷、闲置缓存与保留理由
+pnpm storage:clean --scope data-sync --apply           # 持同步锁执行默认7天规则
+pnpm storage:clean --scope data-sync --compact         # 预览立即压缩；其余保护保持
+pnpm storage:clean --scope data-sync --compact --apply
+pnpm storage:clean --restore-sync export               # 从本地归档离线恢复导出
+```
+
+恢复旧bundle时将export换为`bundles/<snapshot-id>`，旧发布导出使用`publication-exports/<id>`。正常CLI的bundle及显式root的fetch/apply/sync会先恢复受管输入；只读plan不恢复。显式导出、打包或恢复都会刷新使用收据并重新获得7天宽限期。被压缩的目录保留原manifest、Git历史和compacted.json；需要复制到其他机器的完整bundle必须先恢复并验证，不能只复制压缩后的目录。
+
+默认7天及每份发布/验证缓存384 MiB阈值可通过`.medota2/storage-policy.json`的syncIdleDays和syncCacheMaxBytes调整。压缩只处理与repository逐字节身份一致的objects/tables，独有文件留原位；同一原始哈希只保存一份gzip，压缩完成会解压核对。payload-archive是持久历史数据，必须与compacted.json一起保留；原同步仓库切换版本后仍能离线恢复。损坏归档不覆盖、不删除原件。
+
+闲置publication-worktree、verified-remote及remote-verification只有成功发布收据、精确HEAD、干净Git状态、无其他本地提交及活动引用时才回收，收据保存在storage-receipts。下次发布需重新构建缓存，远端验证从独立存储重新下载；不会发布、推送、删除远端数据或修改数据库。sources、maps、候选、应用记录和业务备份保持。受保护或无法识别的内容可以超过告警阈值，需按保留理由审阅。

@@ -16,6 +16,7 @@ import { Search, X } from "lucide-react";
 import { UNIT_CATEGORIES, type UnitDefinition } from "@/domain/units";
 import { useLocale, useTranslations } from "@/i18n/provider";
 import { CatalogViewSwitch, useCatalogView } from "./catalog-view-switch";
+import { useCatalogViewport } from "./use-catalog-viewport";
 import { InfiniteList } from "./infinite-list";
 import { EntityCatalogTable } from "./entity-catalog-table";
 import { unitTableEntry } from "./catalog-table-projections";
@@ -45,6 +46,7 @@ export function UnitCatalog({
   >;
 }) {
   const view = useCatalogView();
+  const gridChunkSize = useCatalogViewport("units");
   const params = useSearchParams();
   const t = useTranslations();
   const ready = useSyncExternalStore(
@@ -190,8 +192,8 @@ export function UnitCatalog({
           source={{
             kind: "local",
             items: filtered,
-            chunkSize: 48,
-            identity: `${params.get("release")}:${q}:${category}:${lang}`,
+            chunkSize: gridChunkSize,
+            identity: `${params.get("release")}:${q}:${category}:${lang}:${gridChunkSize}`,
           }}
           getKey={(unit) => unit.internalName}
           ariaLabel={t("单位结果")}

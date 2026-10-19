@@ -1,6 +1,60 @@
 import { expect, test } from "../e2e/test-fixture";
 import type { ReleaseIndex } from "@/domain/releases";
 
+test("viewport: repeated catalog navigation releases old trees and image listeners", async ({
+  page,
+  browserName,
+}, testInfo) => {
+  test.skip(browserName !== "chromium", "Uses Chromium heap diagnostics.");
+  test.skip(process.env.MEDOTA2_SHARED_WEB !== "1", "Uses all real catalogs.");
+  test.setTimeout(90_000);
+  await page.goto("/heroes?lang=zh-CN");
+  await expect(page.locator('[data-browser-cache="ready"]')).toBeVisible();
+  const session = await page.context().newCDPSession(page);
+  const routes = [
+    ["英雄", "/heroes"],
+    ["技能", "/abilities"],
+    ["单位", "/units"],
+    ["物品", "/items"],
+    ["属性", "/attributes"],
+    ["地图", "/map"],
+  ];
+  const samples = [];
+  try {
+    for (let round = 1; round <= 9; round++) {
+      for (const [name, path] of routes) {
+        await page
+          .getByRole("navigation", { name: "图鉴分类" })
+          .getByRole("link", { name, exact: true })
+          .click();
+        await page.waitForURL((url) => url.pathname === path);
+        await expect(page).toHaveTitle(new RegExp(name));
+      }
+      if (round === 3 || round === 9) {
+        // Let pending image decoding settle before comparing surviving objects.
+        await page.waitForTimeout(1000);
+        await session.send("HeapProfiler.collectGarbage");
+        samples.push({
+          round,
+          ...(await session.send("Memory.getDOMCounters")),
+          heap: (await session.send("Runtime.getHeapUsage")).usedSize,
+        });
+      }
+    }
+    await testInfo.attach("catalog-navigation-memory", {
+      body: JSON.stringify(samples, null, 2),
+      contentType: "application/json",
+    });
+    const [warm, final] = samples;
+    expect(final.documents).toBe(warm.documents);
+    expect(final.nodes - warm.nodes).toBeLessThan(2000);
+    expect(final.jsEventListeners - warm.jsEventListeners).toBeLessThan(400);
+    expect(final.heap - warm.heap).toBeLessThan(8 * 1024 * 1024);
+  } finally {
+    await session.detach();
+  }
+});
+
 test("items: wide table windows columns and keeps frozen objects while scrolling", async ({
   page,
   request,
@@ -29,6 +83,7 @@ test("items: wide table windows columns and keeps frozen objects while scrolling
   await expect(entity).toHaveAttribute("data-table-frozen", "");
   const before = (await entity.boundingBox())!;
   const firstRow = table.locator("tr[data-catalog-entity]").first();
+  await expect(firstRow).toBeVisible();
   const rowHeight = (await firstRow.boundingBox())!.height;
   await scroll.evaluate((node) => {
     node.scrollLeft = node.scrollWidth;

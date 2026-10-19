@@ -8,6 +8,7 @@ import { memo, useCallback } from "react";
 import type { HeroCardRow } from "@/server/repositories/heroes";
 import type { PrimaryAttribute } from "@/domain/heroes";
 import type { VersionedListSlice } from "@/domain/infinite-list";
+import { useCatalogViewport } from "./use-catalog-viewport";
 import { HeroCard } from "./hero-card";
 import {
   InfiniteList,
@@ -44,6 +45,7 @@ export const InfiniteHeroCatalog = memo(function InfiniteHeroCatalog({
 }: InfiniteHeroCatalogProps) {
   const t = useTranslations();
   const locale = useLocale();
+  const gridChunkSize = useCatalogViewport("heroes");
   const project = useCallback(
     (item: HeroCardRow) =>
       heroTableEntry(
@@ -83,8 +85,8 @@ export const InfiniteHeroCatalog = memo(function InfiniteHeroCatalog({
           ? {
               kind: "local",
               items: initialSlice.items,
-              chunkSize: 48,
-              identity: `${endpoint}:local`,
+              chunkSize: gridChunkSize,
+              identity: `${endpoint}:local:${gridChunkSize}`,
             }
           : { kind: "remote", endpoint, initialSlice }
       }

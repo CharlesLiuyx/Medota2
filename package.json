@@ -6,7 +6,7 @@
   "type": "module",
   "packageManager": "pnpm@11.7.0",
   "engines": {
-    "node": ">=22.12.0",
+    "node": "^22.15.0 || >=24.0.0",
     "pnpm": ">=11.0.0"
   },
   "scripts": {
@@ -90,6 +90,7 @@
     "data:fetch": "tsx src/workers/data-sync.ts fetch",
     "data:lock": "tsx src/workers/data-sync.ts lock",
     "dev:sync": "tsx src/workers/data-sync.ts sync",
+    "storage:audit": "tsx src/workers/storage-clean.ts --audit",
     "storage:clean": "tsx src/workers/storage-clean.ts",
     "docs:check": "node scripts/documentation/check.mjs",
     "data:import:item-assets": "MEDOTA2_STATE_DIRECTORY=.medota2/environments/development MEDOTA2_PROCESS_ROLE=worker MEDOTA2_ENVIRONMENT=development MEDOTA2_DATA_CLASS=sandbox tsx src/workers/import-item-assets.ts",

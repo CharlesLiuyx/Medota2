@@ -14,7 +14,10 @@ import {
   writeJson,
 } from "@/development/runtime";
 import { withTestEnvironment } from "@/development/test-environment";
-import { automaticStorageCleanup } from "@/development/storage";
+import {
+  automaticStorageCleanup,
+  managedStoragePath,
+} from "@/development/storage";
 import { assertStandaloneBoundary } from "../../scripts/development/build-output.mjs";
 
 const retainedArtifacts: string[] = [];
@@ -284,6 +287,28 @@ async function main(): Promise<void> {
           artifact: "app",
           deployment: "not-configured",
         });
+        // The checked app/ is the retained artifact; standalone is a second copy.
+        // Keep the compiler cache and next-start output for subsequent builds.
+        if (!process.env.CI && process.env.MEDOTA2_AUTO_CLEANUP !== "0") {
+          const pinned = await Promise.all(
+            [dist, standalone].map((path) =>
+              access(resolve(path, ".keep"))
+                .then(() => true)
+                .catch(() => false),
+            ),
+          );
+          if (!pinned.some(Boolean)) {
+            await rm(
+              await managedStoragePath(
+                process.cwd(),
+                ".next-release/standalone",
+              ),
+              { recursive: true, force: true },
+            ).catch((error) =>
+              console.warn("Standalone copy cleanup deferred:", String(error)),
+            );
+          }
+        }
         console.log(
           `Checked Web artifact: ${root}\nDeployment target is not configured; no remote publication was performed.`,
         );

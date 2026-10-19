@@ -144,7 +144,34 @@ export async function stopPersistentDataStack(
     active?.lease.environment === environment
       ? active.lease
       : createDataStackPlan({ environment, workspaceRoot: root });
-  await runCompose(root, plan, ["stop", "postgres"], {
+  const containers = (
+    await execFileAsync("docker", [
+      "ps",
+      "-aq",
+      "--filter",
+      `label=com.docker.compose.project=${plan.composeProject}`,
+    ])
+  ).stdout
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (containers.length) {
+    const owners = (
+      await execFileAsync("docker", [
+        "inspect",
+        "--format",
+        '{{index .Config.Labels "com.docker.compose.project.working_dir"}}',
+        ...containers,
+      ])
+    ).stdout
+      .trim()
+      .split(/\r?\n/);
+    if (owners.some((owner) => owner !== root))
+      throw new Error(
+        "Refusing to stop a database owned by another workspace.",
+      );
+  }
+  await runCompose(root, plan, ["down", "--timeout", "10"], {
     ...process.env,
     MEDOTA2_POSTGRES_PORT: String(plan.hostPort),
   });

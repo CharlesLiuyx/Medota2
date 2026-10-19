@@ -5,6 +5,13 @@ import { loadLocalEnv } from "@/config/env";
 
 export type PreviewDataSource = "development" | "local-review";
 
+/** Next otherwise assigns half of the host RAM to the dev server's JS heap. */
+export function previewNodeOptions(options = ""): string {
+  if (/(?:^|[\s"'])--max[-_]old[-_]space[-_]size(?:[=\s"']|$)/.test(options))
+    return options;
+  return `${options} --max-old-space-size=4096`.trim();
+}
+
 /** Prefer an already provisioned real snapshot; isolated fixtures stay available explicitly. */
 export function choosePreviewDataSource(
   configured: string | undefined,

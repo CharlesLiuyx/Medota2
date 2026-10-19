@@ -329,7 +329,7 @@ export function effectiveAbility<
   }
   return result;
 }
-function parseModifier(
+export function parseModifier(
   input: unknown,
 ): Array<{ operation: string; amount: number; percent: boolean }> | null {
   if (typeof input !== "string") return null;
@@ -344,6 +344,39 @@ function parseModifier(
     percent: Boolean(part![3]),
   }));
 }
+/** Source modifier grammar shared by upgrades and selected talent projections. */
+export function modifiedValues(
+  base: readonly string[],
+  input: unknown,
+): string[] | null {
+  const change = parseModifier(input);
+  if (
+    !change ||
+    !base.length ||
+    base.some((value) => !/^[+-]?(?:\d+\.?\d*|\.\d+)%?$/.test(value))
+  )
+    return null;
+  const result = Array.from(
+    { length: Math.max(base.length, change.length) },
+    (_, i) => {
+      const delta = change[i] ?? change.at(-1)!;
+      const raw = base[i] ?? base.at(-1)!;
+      const old = Number(raw.replace("%", ""));
+      const amount = delta.percent ? (old * delta.amount) / 100 : delta.amount;
+      const value =
+        delta.operation === "+"
+          ? old + amount
+          : delta.operation === "*" || delta.operation === "x"
+            ? old * delta.amount
+            : amount;
+      return Number.isFinite(value)
+        ? `${Number(value.toFixed(6))}${raw.endsWith("%") ? "%" : ""}`
+        : null;
+    },
+  );
+  return result.every((value) => value !== null) ? result : null;
+}
+
 export function upgradedValues(
   values: ValueRow[],
   kind: "scepter" | "shard",
@@ -355,31 +388,13 @@ export function upgradedValues(
       (m) => m.key === `special_bonus_${kind}`,
     )?.value;
     if (modifier === undefined) continue;
-    const change = parseModifier(modifier);
-    if (!change) {
-      result[row.value_key.toLowerCase()] = translate(locale, "（数值待补充）");
-      continue;
-    }
     const base = row.level_values.length
       ? row.level_values
       : [row.scalar_value ?? "0"];
-    result[row.value_key.toLowerCase()] = numbers(
-      Array.from({ length: Math.max(base.length, change.length) }, (_, i) => {
-        const delta = change[i] ?? change.at(-1)!;
-        const old = Number(base[i] ?? base.at(-1));
-        const amount = delta.percent
-          ? (old * delta.amount) / 100
-          : delta.amount;
-        const value =
-          delta.operation === "+"
-            ? old + amount
-            : delta.operation === "*" || delta.operation === "x"
-              ? old * delta.amount
-              : amount;
-        return String(Number(value.toFixed(6)));
-      }),
-      locale,
-    );
+    const projected = modifiedValues(base, modifier);
+    result[row.value_key.toLowerCase()] = projected
+      ? numbers(projected, locale)
+      : translate(locale, "（数值待补充）");
   }
   return result;
 }

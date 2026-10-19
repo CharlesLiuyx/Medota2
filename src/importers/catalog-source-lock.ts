@@ -97,7 +97,7 @@ export async function createCatalogSourceLock(
 ): Promise<{ lock: CatalogSourceLock; path: string }> {
   if (!sha.test(commit)) throw new Error(`Invalid source commit: ${commit}`);
   const config = await getCatalogSourceConfig();
-  await ensureMirror(config, true);
+  await ensureMirror(config, commit);
   await gitText(
     config.mirrorPath,
     ["cat-file", "-e", `${commit}^{commit}`],
@@ -185,14 +185,14 @@ export async function prepareCatalogSourceWorktree(
   lock: CatalogSourceLock,
 ): Promise<string> {
   const config = await getCatalogSourceConfig();
-  await ensureMirror(config, false);
+  await ensureMirror(config, lock.commit);
   const worktree = resolve(config.worktreeRoot, lock.commit);
   const exists = await stat(worktree).catch(() => null);
   if (!exists) {
     await mkdir(config.worktreeRoot, { recursive: true });
     await gitText(
       config.mirrorPath,
-      ["worktree", "add", "--detach", worktree, lock.commit],
+      ["worktree", "add", "--detach", "--no-checkout", worktree, lock.commit],
       true,
     );
   }
@@ -201,7 +201,41 @@ export async function prepareCatalogSourceWorktree(
   if (head !== lock.commit) {
     throw new Error(`Locked worktree is at ${head}, expected ${lock.commit}.`);
   }
+  await configureCatalogSourceWorktree(actual, lock.commit);
   return actual;
+}
+
+/** Keep the Git objects, but materialize only runtime inputs in managed checkouts. */
+export async function configureCatalogSourceWorktree(
+  worktree: string,
+  commit: string,
+): Promise<void> {
+  if (
+    !sha.test(commit) ||
+    (await gitText(worktree, ["rev-parse", "HEAD"])) !== commit
+  )
+    throw new Error("Source worktree commit mismatch.");
+  // --no-checkout creates index-less trees; existing trees must be clean.
+  const index = await gitText(worktree, ["ls-files"], true);
+  if (index && (await gitText(worktree, ["status", "--porcelain"], true)))
+    throw new Error(
+      "Source worktree has local changes; preserve them before compacting.",
+    );
+  await gitText(
+    worktree,
+    [
+      "sparse-checkout",
+      "set",
+      "--no-cone",
+      "/steam.inf",
+      "/scripts/npc/",
+      "/scripts/change_log.txt",
+      "/resource/localization/*_english.txt",
+      "/resource/localization/*_schinese.txt",
+    ],
+    true,
+  );
+  await gitText(worktree, ["read-tree", "-mu", "HEAD"], true);
 }
 
 export function verifySnapshotAgainstLock(
@@ -236,15 +270,15 @@ export function verifySnapshotAgainstLock(
 
 async function ensureMirror(
   config: CatalogSourceConfig,
-  fetchRemote: boolean,
+  commit: string,
 ): Promise<void> {
   const exists = await stat(config.mirrorPath).catch(() => null);
   if (!exists) {
-    assertOutboundNetworkAllowed(config.remoteUrl, "Catalog Git adapter");
     await mkdir(dirname(config.mirrorPath), { recursive: true });
+    await gitText(process.cwd(), ["init", "--bare", config.mirrorPath], true);
     await gitText(
-      process.cwd(),
-      ["clone", "--mirror", config.remoteUrl, config.mirrorPath],
+      config.mirrorPath,
+      ["remote", "add", "origin", config.remoteUrl],
       true,
     );
   } else {
@@ -259,10 +293,28 @@ async function ensureMirror(
       );
     }
   }
-  if (fetchRemote) {
+  const present = await gitText(
+    config.mirrorPath,
+    ["cat-file", "-e", `${commit}^{commit}`],
+    true,
+  ).then(
+    () => true,
+    () => false,
+  );
+  if (!present) {
     assertOutboundNetworkAllowed(config.remoteUrl, "Catalog Git adapter");
-    await gitText(config.mirrorPath, ["fetch", "--prune", "origin"], true);
+    await gitText(
+      config.mirrorPath,
+      ["fetch", "--no-tags", "--depth=1", "origin", commit],
+      true,
+    );
   }
+  // Keep pinned commits reachable without mirroring every upstream branch/history.
+  await gitText(
+    config.mirrorPath,
+    ["update-ref", `refs/medota2/commits/${commit}`, commit],
+    true,
+  );
 }
 
 async function gitText(

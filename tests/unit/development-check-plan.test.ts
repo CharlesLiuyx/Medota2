@@ -66,6 +66,25 @@ describe("development check scope", () => {
       "tests/unit/infinite-list.test.tsx",
     );
   });
+  it("maps inventory adapters and upgrade projections to hero build journeys and numeric regressions", () => {
+    for (const path of [
+      "src/components/hero-inventory.tsx",
+      "src/importers/dota-vpk/inventory-adapter.ts",
+      "src/presentation/ability-upgrades.ts",
+    ]) {
+      const plan = createPlan([path]);
+      expect(
+        selectedJourneys([path])(
+          "heroes: inventory equipment and consumed states",
+        ),
+      ).toBe(true);
+      const args = plan.tasks.find((task) => task.id === "unit")?.args;
+      expect(
+        args?.length === 1 ||
+          args?.includes("tests/unit/hero-inventory.test.ts"),
+      ).toBe(true);
+    }
+  });
   it("checks attribute navigation and unit coverage when attribute label or unresolved evidence resources change", () => {
     for (const path of [
       "src/data/attribute-parameters/supplement.v1.json",
@@ -186,6 +205,29 @@ describe("development check scope", () => {
     expect(
       createPlan(["pnpm-workspace.yaml"]).tasks.map((task) => task.id),
     ).toContain("build");
+  });
+  it("keeps resource lifecycle changes on full runtime and database validation", () => {
+    for (const path of [
+      "src/development/docker-resources.ts",
+      "src/development/workbench-clients.ts",
+      "src/development/test-environment.ts",
+      "src/workers/dev.ts",
+      "src/workers/run-shared-tests.ts",
+      "src/workers/data-sync.ts",
+      "src/workers/storage-clean.ts",
+      "src/development/storage-audit.ts",
+      "src/development/data-sync/storage.ts",
+      "src/development/data-sync/restore.ts",
+    ]) {
+      expect(createPlan([path]).tasks.map((task) => task.id)).toEqual(
+        expect.arrayContaining(["types", "unit", "journeys", "build"]),
+      );
+    }
+    expect(
+      createPlan(["src/server/environment/data-stack-lifecycle.ts"]).tasks.map(
+        (task) => task.id,
+      ),
+    ).toContain("database-contract");
   });
   it("executes changed integration and browser tests themselves", () => {
     const integration = createPlan(["tests/integration/deleted.test.ts"]);
@@ -625,4 +667,24 @@ describe("bounded journey and distributed execution", () => {
       parseArguments(["--lane", "browser", "--shard", "1/3"]),
     ).toMatchObject({ lane: "browser", shard: "1/3" });
   });
+});
+
+it("routes provider status catalog and its API to status calculations and hero journeys", () => {
+  for (const path of [
+    "src/domain/hero-status-catalog.ts",
+    "src/importers/dota-vpk/hero-status-adapter.ts",
+    "src/server/services/hero-status-catalog.ts",
+    "src/app/api/catalog/hero-statuses/route.ts",
+    "src/components/hero-status-picker.tsx",
+  ]) {
+    const plan = createPlan([path]);
+    const unit = plan.tasks.find((t) => t.id === "unit")!;
+    expect(
+      unit.args.length === 1 ||
+        unit.args.includes("tests/unit/hero-status-catalog.test.ts"),
+    ).toBe(true);
+    expect(
+      plan.tasks.find((t) => t.id === "journeys")?.args.join(" "),
+    ).toContain("heroes");
+  }
 });

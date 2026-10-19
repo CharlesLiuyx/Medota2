@@ -20,6 +20,8 @@ pnpm data:import:catalog
 
 本机真实预览使用 `pnpm data:import:catalog:preview --lock <lock-file> --no-promote --download-missing`，仍保留 Yellow Review。其 importer_version 追加当前代码／依赖指纹，修改实现会形成不同候选。正式导入要求 Medota2 checkout 干净，使 `importer_version` 能准确标识转换代码。分支名和目录时间戳都不能替代 source lock。
 
+受管来源缓存按固定commit浅获取，工作树仅展开NPC、版本文件及中英本地化；固定Git对象仍可读取完整该版文件树。首次获取需要网络，已缓存提交的再次准备可离线完成。旧缓存有未提交修改时拒绝收缩；先保存并核对，不自动覆盖。现有用户配置的外部来源仓库保持只读。
+
 ## 英雄与技能图标
 
 如果本机有 Dota 2 VPK 和 [Source 2 Viewer CLI](https://github.com/ValveResourceFormat/ValveResourceFormat/blob/master/docs/guides/command-line.md)，配置只读输入与新的版本化输出目录：

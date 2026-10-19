@@ -15,6 +15,8 @@ import {
   buildStoragePlan,
   executeStoragePlan,
   defaultStoragePolicy,
+  removeRetiredTestBuild,
+  trimStoppedDevelopmentCache,
 } from "@/development/storage";
 import { RotatingLog } from "@/development/rotating-log";
 
@@ -68,9 +70,74 @@ afterEach(async () => {
 });
 
 describe("storage retention flows", () => {
+  it("bounds idle compilation caches while retaining pins and production output", async () => {
+    const root = await workspace();
+    await json(root, ".medota2/storage-policy.json", {
+      developmentCacheMaxBytes: 1024,
+      buildCacheMaxBytes: 1024,
+    });
+    await file(root, ".next/cache/data", "x".repeat(2048));
+    await file(root, ".next/.keep");
+    await trimStoppedDevelopmentCache(root);
+    expect(await readdir(resolve(root, ".next"))).toContain("cache");
+    await rm(resolve(root, ".next/.keep"));
+    await trimStoppedDevelopmentCache(root);
+    await expect(readdir(resolve(root, ".next"))).rejects.toThrow();
+    await file(root, ".next-release/cache/data", "x".repeat(2048));
+    await file(root, ".next-release/standalone/server.js", "runtime");
+    const plan = await buildStoragePlan({ root, scope: "releases" });
+    expect(plan.actions.map((entry) => entry.path)).toEqual([
+      ".next-release/cache",
+    ]);
+    await executeStoragePlan(plan, root);
+    expect(
+      await readFile(
+        resolve(root, ".next-release/standalone/server.js"),
+        "utf8",
+      ),
+    ).toBe("runtime");
+  });
+  it("reclaims only retired fixture compilation, protecting active leases, pins and outside paths", async () => {
+    const root = await workspace();
+    const owner = ".medota2/test-runs/integration-20261005t184425z-aaaaaaaa";
+    const context = {
+      workspaceRoot: root,
+      runRoot: resolve(root, owner),
+      nextDistDirectory: resolve(root, owner, "next"),
+    };
+    await file(root, `${owner}/next/cache/data`, "compiled");
+    await file(root, `${owner}/artifacts/runner.log`, "diagnostic");
+    await json(root, ".medota2/shared-tests/environment.json", { context });
+    await expect(removeRetiredTestBuild(context, root)).rejects.toThrow(
+      "still leased",
+    );
+    await json(root, ".medota2/shared-tests/environment.json", null);
+    await file(root, `${owner}/.keep`);
+    await removeRetiredTestBuild(context, root);
+    expect(
+      await readFile(resolve(root, owner, "next/cache/data"), "utf8"),
+    ).toBe("compiled");
+    await rm(resolve(root, owner, ".keep"));
+    await expect(
+      removeRetiredTestBuild(
+        { ...context, nextDistDirectory: resolve(root, ".medota2/data-sync") },
+        root,
+      ),
+    ).rejects.toThrow("Unsupported");
+    await removeRetiredTestBuild(context, root);
+    expect(await readdir(resolve(root, owner))).toEqual([
+      "artifacts",
+      "retired-build.json",
+    ]);
+    expect(
+      await readFile(resolve(root, owner, "artifacts/runner.log"), "utf8"),
+    ).toBe("diagnostic");
+    await removeRetiredTestBuild(context, root); // Idempotent after removal.
+  });
   it("previews then trims releases while preserving pinned and active builds and link destinations", async () => {
     const root = await workspace(),
       external = await workspace();
+    await json(root, ".medota2/storage-policy.json", { releases: 2 });
     for (let id = 1; id <= 5; id++) {
       await json(root, `${release(id)}/manifest.json`, {
         status: "passed",
@@ -115,7 +182,7 @@ describe("storage retention flows", () => {
       ),
     ).toBe("private identity");
   });
-  it("keeps recent results, running tasks, unresolved legacy failures and leased state while trimming only attachments", async () => {
+  it("keeps recent results, running tasks, bounded legacy failures and leased state while trimming only attachments", async () => {
     const root = await workspace();
     for (let id = 1; id <= 12; id++)
       await testRun(root, id, "passed", now - (20 - id) * day);
@@ -147,18 +214,13 @@ describe("storage retention flows", () => {
     expect(
       plan.actions.some((entry) => entry.path.startsWith(`${run(20)}/`)),
     ).toBe(true);
-    for (const path of [
-      run(1),
-      run(12),
-      run(25),
-      run(30),
-      run(31),
-      run(32),
-      leased,
-    ])
+    for (const path of [run(1), run(12), run(25), run(30), run(32), leased])
       expect(
         plan.actions.some((entry) => entry.path.startsWith(`${path}/`)),
       ).toBe(false);
+    expect(
+      plan.actions.some((entry) => entry.path.startsWith(`${run(31)}/`)),
+    ).toBe(true);
     await executeStoragePlan(plan, root);
     expect(
       JSON.parse(await readFile(resolve(root, `${run(2)}/run.json`), "utf8"))
@@ -171,6 +233,38 @@ describe("storage retention flows", () => {
       "run.json",
       "storage-cleanup.json",
     ]);
+  });
+  it("reclaims dead abandoned runs after grace and enforces a byte budget, protecting active and pinned evidence", async () => {
+    const root = await workspace();
+    await json(root, ".medota2/storage-policy.json", {
+      testArtifactsMaxBytes: 1024,
+    });
+    await testRun(root, 1, "passed", now - day);
+    await file(root, `${run(1)}/report/large`, "x".repeat(2048));
+    await testRun(root, 2, "running", now, 2147483647);
+    await json(root, `${run(2)}/run.json`, {
+      status: "running",
+      pid: 2147483647,
+      startedAt: new Date(now - 10 * day).toISOString(),
+    });
+    await testRun(root, 3, "running", now, process.pid);
+    await testRun(root, 4, "failed", now - day);
+    await file(root, `${run(4)}/report/large`, "x".repeat(2048));
+    const plan = await buildStoragePlan({ root, now, scope: "tests" });
+    for (const id of [1, 2])
+      expect(
+        plan.actions.some((entry) => entry.path.startsWith(`${run(id)}/`)),
+      ).toBe(true);
+    for (const id of [3, 4])
+      expect(
+        plan.actions.some((entry) => entry.path.startsWith(`${run(id)}/`)),
+      ).toBe(false);
+    await json(root, ".medota2/shared-tests/environment.json", {
+      context: { runRoot: resolve(root, run(2)) },
+    });
+    await expect(executeStoragePlan(plan, root)).rejects.toThrow(
+      "became active",
+    );
   });
   it("deduplicates matching trace content and refuses deletion when the report copy changes", async () => {
     const root = await workspace();

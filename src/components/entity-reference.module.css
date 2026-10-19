@@ -59,3 +59,21 @@
   max-height: 180px;
   overflow-y: auto;
 }
+
+.attribute {
+  background: transparent;
+  color: inherit;
+}
+.inline.attributeReference {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  vertical-align: middle;
+}
+.inline.attributeReference > .icon {
+  display: inline-flex;
+  margin-inline-end: 0;
+}
+.attributeReference > span:last-child {
+  min-width: 0;
+}

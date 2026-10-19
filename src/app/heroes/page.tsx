@@ -8,7 +8,7 @@ import { withRelease } from "@/domain/releases";
 import { MissingReleaseCoverage } from "@/components/release-navigation";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { LiveHeroCatalog } from "@/components/live-catalog";
+import { VisitedHeroPage } from "@/components/hero-tab-cache";
 import { ImportFailureBanner, SetupState } from "@/components/system-state";
 import { getHeroOverview } from "@/server/repositories/heroes";
 import {
@@ -85,27 +85,23 @@ export default async function HeroesPage({
   }
   const meta = overview.meta;
   return (
-    <main className="mx-auto max-w-[var(--content-max)] px-4 py-4 sm:px-6">
-      <LiveHeroCatalog
-        header={
-          <h1 className="text-xl font-semibold tracking-wide">
-            {t("英雄图鉴")}
-          </h1>
-        }
-        notice={
-          overview.latestFailure && (
-            <ImportFailureBanner
-              stage={overview.latestFailure.stage}
-              message={overview.latestFailure.errorSummary}
-            />
-          )
-        }
-        key={`${meta.datasetVersionId}:${meta.assetDatasetVersionId}:${canonicalHeroQuery(parsed.filters)}`}
-        initialSlice={overview.slice}
-        initialFilters={parsed.filters}
-        initialErrors={parsed.errors}
-        total={meta.totalHeroes}
-      />
-    </main>
+    <VisitedHeroPage
+      header={
+        <h1 className="text-xl font-semibold tracking-wide">{t("英雄图鉴")}</h1>
+      }
+      notice={
+        overview.latestFailure && (
+          <ImportFailureBanner
+            stage={overview.latestFailure.stage}
+            message={overview.latestFailure.errorSummary}
+          />
+        )
+      }
+      key={`${meta.datasetVersionId}:${meta.assetDatasetVersionId}:${canonicalHeroQuery(parsed.filters)}`}
+      initialSlice={overview.slice}
+      initialFilters={parsed.filters}
+      initialErrors={parsed.errors}
+      total={meta.totalHeroes}
+    />
   );
 }

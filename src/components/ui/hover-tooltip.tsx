@@ -85,15 +85,26 @@ export function HoverTooltip({
   className,
   width,
   buttonProps,
+  onOpenChange,
+  avoidAnchor = false,
+  openOnClick = true,
 }: {
   children: ReactNode;
   content: ReactNode;
   href?: string;
   className?: string;
   width?: number;
+  avoidAnchor?: boolean;
+  openOnClick?: boolean;
+  onOpenChange?: (open: boolean) => void;
   buttonProps?: Pick<
     ButtonHTMLAttributes<HTMLButtonElement>,
-    "aria-label" | "aria-pressed" | "onClick" | "disabled"
+    | "aria-label"
+    | "aria-pressed"
+    | "aria-haspopup"
+    | "aria-expanded"
+    | "onClick"
+    | "disabled"
   >;
 }) {
   const id = useId();
@@ -105,6 +116,15 @@ export function HoverTooltip({
   );
   const snapshot = useCallback(() => activePath.includes(id), [id]);
   const open = useSyncExternalStore(listen, snapshot, serverSnapshot);
+  const openCallback = useRef(onOpenChange);
+  useLayoutEffect(() => {
+    openCallback.current = onOpenChange;
+  });
+  useEffect(() => {
+    if (!open) return;
+    openCallback.current?.(true);
+    return () => openCallback.current?.(false);
+  }, [open]);
   const [prefetchReady, setPrefetchReady] = useState(false);
   // Only the active anchor opts into full route prefetch. A short dwell avoids
   // fetching hundreds of detail pages while the pointer crosses a dense grid.
@@ -158,16 +178,28 @@ export function HoverTooltip({
       if (!target || !popup) return;
       const rect = target.getBoundingClientRect();
       const width = popup.offsetWidth;
+      if (avoidAnchor) popup.style.maxHeight = "";
       const height = popup.offsetHeight;
       const left = Math.max(
         8,
         Math.min(rect.left, window.innerWidth - width - 8),
       );
       const below = rect.bottom + 6;
-      const top =
-        below + height <= window.innerHeight - 8
-          ? below
-          : Math.max(8, rect.top - height - 6);
+      const belowSpace = Math.max(0, window.innerHeight - below - 8);
+      const aboveSpace = Math.max(0, rect.top - 14);
+      const placeBelow =
+        height <= belowSpace ||
+        (avoidAnchor && height > aboveSpace && belowSpace >= aboveSpace);
+      if (avoidAnchor)
+        popup.style.maxHeight = `${placeBelow ? belowSpace : aboveSpace}px`;
+      const top = placeBelow
+        ? below
+        : Math.max(
+            8,
+            rect.top -
+              (avoidAnchor ? Math.min(height, aboveSpace) : height) -
+              6,
+          );
       popup.style.left = `${left}px`;
       popup.style.top = `${top}px`;
       popup.style.visibility = "visible";
@@ -218,7 +250,7 @@ export function HoverTooltip({
       document.removeEventListener("pointerdown", dismiss);
       if (closing.current) clearTimeout(closing.current);
     };
-  }, [open, id]);
+  }, [open, id, avoidAnchor]);
 
   const triggerProps: HTMLAttributes<HTMLElement> = {
     className,
@@ -255,7 +287,8 @@ export function HoverTooltip({
           {...buttonProps}
           {...triggerProps}
           onClick={(event) => {
-            show(event.currentTarget);
+            if (openOnClick) show(event.currentTarget);
+            else hide();
             buttonProps?.onClick?.(event);
           }}
         >

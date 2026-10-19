@@ -1,3 +1,4 @@
+import { parseKeyValues } from "@/importers/keyvalues/parser";
 import { ResourceCache } from "@/lib/resource-cache";
 import { pinnedVpkRoots } from "./source-roots";
 import { execFile } from "node:child_process";
@@ -19,12 +20,17 @@ export interface ItemSnapshotMeta {
 }
 const exec = promisify(execFile);
 const cache = new ResourceCache<
-  (ReturnType<typeof adaptItems> & { provenance: object }) | null
+  | (ReturnType<typeof adaptItems> & {
+      provenance: object;
+      neutralRaw: ReturnType<typeof parseKeyValues> | null;
+    })
+  | null
 >({ entries: 2, bytes: 48 * 1024 * 1024 });
 const paths = [
   "scripts/npc/items.txt",
   "resource/localization/abilities_schinese.txt",
   "resource/localization/abilities_english.txt",
+  "scripts/npc/neutral_items.txt",
 ];
 const sha = (text: string) => createHash("sha256").update(text).digest("hex");
 export async function readPinnedItemSnapshot(
@@ -39,6 +45,7 @@ export async function readPinnedItemSnapshot(
     meta,
     record.raw_sha256,
     ITEM_ADAPTER_VERSION,
+    "neutral-pool-v1",
     roots,
   ]);
   const snapshot = await cache.get(key, async () => {
@@ -54,7 +61,11 @@ export async function readPinnedItemSnapshot(
             )
           ).stdout;
         if (sha(await read("steam.inf")) !== record.raw_sha256) continue;
-        files = await Promise.all(paths.map(read));
+        files = await Promise.all(
+          paths.map((path, i) =>
+            i === 3 ? read(path).catch(() => "") : read(path),
+          ),
+        );
       } catch {
         continue;
       }
@@ -67,6 +78,7 @@ export async function readPinnedItemSnapshot(
       );
       const snapshot = {
         ...adapted,
+        neutralRaw: files[3] ? parseKeyValues(files[3]) : null,
         provenance: {
           source_repository: meta.sourceRepository,
           source_commit: meta.sourceCommit,
@@ -77,10 +89,16 @@ export async function readPinnedItemSnapshot(
           schema_version: "item-read-model-v2",
           name_supplement: nameSupplementProvenance(meta.sourceCommit),
           parameter_labels: itemParameterProvenance(meta.sourceCommit),
-          files: paths.map((path, i) => ({
-            source_path: path,
-            raw_sha256: sha(files[i]),
-          })),
+          files: paths.flatMap((path, i) =>
+            files[i]
+              ? [
+                  {
+                    source_path: path,
+                    raw_sha256: sha(files[i]),
+                  },
+                ]
+              : [],
+          ),
         },
       };
       return snapshot;

@@ -4,7 +4,7 @@
 
 ## 启动与配置
 
-前置条件：Node.js 24 LTS（最低 `22.12`）、pnpm 11、Git、Docker。E2E 还需要项目锁定的 Playwright Chromium。
+前置条件：Node.js 24 LTS（也支持22.15及以上的22系列；具体范围见package engines）、pnpm 11、Git、Docker。E2E 还需要项目锁定的 Playwright Chromium。
 
 首次启动共享开发工作台：
 
@@ -14,7 +14,7 @@ cp .env.example .env  # 已有 .env 时保留原文件
 pnpm dev
 ```
 
-打开 [http://127.0.0.1:3000/heroes](http://127.0.0.1:3000/heroes)。该入口默认优先复用已准备的 local-review 真实 Catalog 和资产，启动前检查图片覆盖；已有数据保持原样。没有真实审阅环境时，才使用 development 数据库，空库加载含占位图的小样例，并在开发面板标明。第二个 Session 再运行 `pnpm dev` 会连接同一个后台服务。
+打开 [http://127.0.0.1:3000/heroes](http://127.0.0.1:3000/heroes)。该入口默认优先复用已准备的 local-review 真实 Catalog 和资产，启动前检查图片覆盖；已有数据保持原样。没有真实审阅环境时，才使用 development 数据库，空库加载含占位图的小样例，并在开发面板标明。第二个 Session 再运行 `pnpm dev` 会连接同一个共享服务，并保持前台运行。
 
 保存页面代码后自动热更新。页面右下角“共享开发”显示真实解析器的小样例、运行状态、耗时与错误；连续保存合并重算，旧结果不会覆盖新结果。页面数据与下方计算样例相互独立，计算使用的小 fixture 不替换页面的真实数据。冷启动与首次页面编译会慢一些。开发入口统一使用项目锁定的Turbopack，Tailwind扫描范围为`src/`；文档与测试保存不应引起全站CSS热更新。隐藏标签页暂停开发面板轮询，切回后立即同步。
 
@@ -24,12 +24,20 @@ pnpm dev
 
 ```bash
 pnpm dev:restart             # 配置、迁移或脚手架变化后重新准备并恢复预览
-pnpm dev:stop                # 停止共享 Web 和样例进程，保留数据库
-pnpm db:development:stop     # 需要时单独停止开发数据库
+pnpm dev:stop                # 停止Web／样例，移除数据库容器及网络，保留业务卷
+pnpm db:development:stop     # 单独移除开发数据库容器及网络，保留业务卷
 pnpm dev:sample              # 在终端执行同一个小样例
 ```
 
+日常使用结束关闭运行`pnpm dev`的终端或按Ctrl+C即可；多个开发终端共用服务，最后一个退出后自动停机清理。浏览器页面不持有服务。`pnpm dev:stop`仍可显式停止全部终端共用的工作台。重启时原有终端等待新实例，重启命令也保持前台运行。下次`pnpm dev`复用同一业务卷并重新创建所需容器。测试库仅在一批检查内共用，结束后自动回收；前台进程或其父进程意外退出由独立supervisor检测并清理；supervisor被强杀或主机断电的残留由下次启动、测试或`pnpm test:clean`按精确租约清理。启动与退出的Docker清理只处理当前工作区的受管资源，运行中的任务／持锁资源延后，业务卷和其他项目保留。自动附件保留沿用下方策略。
+
 开发日志位于 `.medota2/development/server.log`。多个 Session 共用目录和当前分支，各自维护 `.medota2/sessions/<id>.md`；提交、分支切换、依赖安装和数据库写操作先协调。详见 [AGENTS.md](../../AGENTS.md)。已有同步工作区的真实来源及地图由活动快照提供。
+
+共享Next服务默认使用4096 MiB JavaScript老生代预算，避免Next按整机一半内存分配预算；需要调整时在启动命令的`NODE_OPTIONS`显式设置`--max-old-space-size`，其他Node选项保留。Turbopack每次磁盘快照后主动释放可回收编译数据，继续复用磁盘缓存。此预算不包括原生编译器及Buffer，不能当作进程总内存上限。macOS诊断同时记录`vmmap -summary <Next服务PID>`的Physical footprint和峰值；RSS不包含已压缩／换出的全部内存。服务长期异常时用`pnpm dev:restart`，停用的工作树用其自身的`pnpm dev:stop`关闭。
+
+开发服务器还应用两项内存兼容措施：React调试信息随请求返回，关闭等待浏览器连接的独立调试通道；仅在Next开发阶段，用Node同步模块加载钩子停止React Flight的可选异步祖先跟踪。该跟踪会通过`previous`／`awaited`保留长寿命任务的历史。热更新、当前错误栈、普通异步钩子和请求AsyncLocalStorage继续运行；开发工具中的深层异步调用历史不再采集。正式构建与正式启动不安装该钩子。
+
+兼容入口为`scripts/development/react-debug-memory.mjs`，只匹配Next16.3.3的四个已核对SHA256的开发AppPage runtime，在内存中替换单一调试钩子的激活，不写node_modules。Node最低22.15，使用`module.registerHooks`；本仓库接受22.15及以上22系列或24及以上版本。升级Next时若版本／文件指纹不匹配，先核验上游修复，重复访问与热更新测试后移除或重新审阅兼容；不得只更新哈希绕过检查。回归入口：`pnpm test tests/unit/react-debug-memory.test.ts`，覆盖真实框架模块、长寿命异步任务、请求上下文、其他钩子及生产隔离。
 
 遇到`ENV_CONNECT_FAILED`时先查开发日志中的`connectionFailure`：timeout包含连接池等待超时，unreachable表示连接中断或不可达，capacity表示数据库连接容量耗尽；不能仅凭错误标题判断数据库已停止。变化页可直接点击“重试”，导航及URL参数保留。连接池／环境合同代码修改后需`pnpm dev:restart`更新全局复用实例；不要通过增大等待超时掩盖重复读取。只读状态核对用`pnpm data:status`，检查身份、快照与代码修改状态。
 
@@ -83,7 +91,7 @@ pnpm bench --iterations 5   # 真实解析器的小样例耗时与内存
 pnpm bench --input <vpk-directory> --iterations 3
 pnpm release                # 构建并启动检查 Web 产物，相同输入复用
 MEDOTA2_RELEASE_COLD=1 pnpm release  # 清空生产编译缓存，不复用成品，重新验收
-pnpm test:clean             # 清理本工具持有的可复用测试栈
+pnpm test:clean             # 清理本工具持有的测试栈及退役编译目录，保留诊断
 ```
 
 冷构建测量可在既有完整发布计划前加`MEDOTA2_RELEASE_COLD=1`，例如`MEDOTA2_RELEASE_COLD=1 pnpm push -m "chore: validate cold publication"`。开关只控制计划中实际选中的构建，不扩大检查范围；测量前用`pnpm check --plan`核对包含build与全部所需门禁。生产目录`.next-release`在release锁内清空，开发工作台、依赖和业务数据保留。计时应从push启动至main确认，包含本机重新构建，日志须出现Cold Web build且无Reusing checked Web artifact。Windows PowerShell先设置`$env:MEDOTA2_RELEASE_COLD="1"`，完成后用`Remove-Item Env:MEDOTA2_RELEASE_COLD`恢复。
@@ -104,7 +112,7 @@ pnpm verify                     # 显式全量诊断，包含覆盖率
 
 测试脚本支持最前一个可选`--`，例如`pnpm test:e2e -- tests/e2e/heroes.spec.ts --project=mobile-chromium`；中间或重复的独立`--`会报错。`test:e2e`直接调用默认只跑桌面，完整fixture须显式指定两个项目；范围规划器会为选中的fixture与视觉合同传入桌面和移动项目。更新快照前先逐张核对差异，更新运行不能当作验收，随后不带`--update-snapshots`复验。Mac与Linux基线分别在对应环境渲染；远端CI需单独确认。
 
-日常固定数据测试复用一套 PostgreSQL，相关写入排队；浏览器状态和报告每次独立。测试 API 固定数据版本，相关代码或数据变化时结果作废。`check` 的证据位于 `.medota2/checks/`，测试报告位于 `.medota2/shared-tests/runs/`；独立验证仍在 `.medota2/test-runs/`。
+日常固定数据测试仅在一批任务内复用一套PostgreSQL，相关写入排队，结束后回收容器与网络；浏览器状态和报告每次独立。测试 API 固定数据版本，相关代码或数据变化时结果作废。`check` 的证据位于 `.medota2/checks/`，测试报告位于 `.medota2/shared-tests/runs/`；独立验证仍在 `.medota2/test-runs/`。
 
 Windows测试运行器为Next生成的配置路径使用正斜杠；若fixture服务报`@/…`模块不存在，先检查该次`tsconfig.next.json`的`extends`及`MEDOTA2_NEXT_TSCONFIG`，修正生成器后重新运行原检查，不修改产品别名或放宽启动超时。
 
@@ -122,9 +130,10 @@ CI 在安装 Chromium 或准备数据库前计算范围，调用同一个 `pnpm 
 
 ## 空间保留与日志
 
-发布和测试命令结束后自动维护本机生成产物，默认保留最近2份成功发布包、10份成功测试完整附件。失败附件至少保留7天及最近5份；已有缺少新执行元数据的历史失败保留，标记`.resolved`后才按规则淘汰。各目录内创建`.keep`可固定保留；当前任务、未完成记录及共享测试租约所引用目录保留。测试摘要与日志持续保留，重复trace经SHA-256核对后只保留完整HTML报告中的副本。
+发布和测试命令结束后自动维护生成产物，默认最多保留1份且7天内的成功发布、3份成功测试和2份失败测试附件；测试完整附件共同预算128 MiB。失败保护7天，`.keep`及保护期可超预算并产生审计告警；确认诊断完成后可在目录创建`.resolved`解除保护期，原始测试结果和日志保留。旧终态记录不再因缺少PID永久保留；共享测试PID已退出且startedAt超过保护期时按中断处理，活动租约、未知记录和未清理数据库继续保护。重复trace经SHA-256核对后保留完整HTML报告中的副本。
 
 ```bash
+pnpm storage:audit                       # 只读盘点全项目、各目录占用和预算告警
 pnpm storage:clean                       # 只预览候选和保留理由
 pnpm storage:clean --apply               # 持锁执行可再生产物清理
 pnpm storage:clean --scope tests         # 只预览测试附件
@@ -135,10 +144,16 @@ pnpm storage:clean --scope releases --apply
 
 ```json
 {
-  "releases": 2,
-  "successfulTests": 10,
-  "failedTests": 5,
+  "releases": 1,
+  "releaseMaxAgeDays": 7,
+  "successfulTests": 3,
+  "failedTests": 2,
   "failureGraceDays": 7,
+  "testArtifactsMaxBytes": 134217728,
+  "syncIdleDays": 7,
+  "syncCacheMaxBytes": 402653184,
+  "developmentCacheMaxBytes": 1073741824,
+  "buildCacheMaxBytes": 536870912,
   "logMaxBytes": 10485760,
   "logArchives": 3
 }
@@ -146,7 +161,13 @@ pnpm storage:clean --scope releases --apply
 
 工作台日志持续轮转，每份最多10 MiB，保留当前日志及3份历史日志；子进程输出统一写入`.medota2/development/server.log`及`.1`至`.3`。首次启动会将原来的大日志按同一容量规则迁入；修改日志配置后运行`pnpm dev:restart`。本机文件计量与清理收据见`.medota2/maintenance/last-storage-cleanup.json`；删除发布包的manifest另存于`maintenance/releases/`，测试目录内`storage-cleanup.json`记录附件去向。
 
-自动清理在CI跳过，设置`MEDOTA2_AUTO_CLEANUP=0`可禁用本机自动附件清理；手动命令仍可使用。清理只选择受管发布包与已完成测试的可再生附件，保留来源缓存、数据同步仓库、候选、地图、身份凭据及数据库备份。历史构建目录的整批清理仍需像本次空间审计一样核对运行引用。详细行为见[工作台Spec](../specs/development-workbench.md)。
+自动清理在CI跳过，设置`MEDOTA2_AUTO_CLEANUP=0`可禁用本机自动附件清理；手动命令仍可使用。构建／测试清理选择受管发布包、符合保留策略的测试附件与超过预算的停用编译缓存；同步清理另持data-sync锁，按[同步手册](../development-data-sync-runbook.md#本地副本清理与恢复)去重压缩旧载荷并回收已成功发布的闲置副本，保留来源、完整repository、候选、地图、身份凭据及数据库备份。历史构建目录的整批清理仍需像本次空间审计一样核对运行引用。详细行为见[工作台Spec](../specs/development-workbench.md)。
+
+工作台每次就绪后及每6小时尝试执行构建、测试附件及同步副本保留策略；已有任务持锁时跳过。每批测试结束、`test:clean`或启动时回收中断租约，还会删除该租约专用的编译目录，保留`.keep`、日志及状态，并在原目录写`retired-build.json`收据。开发编译缓存默认最多1 GiB，等待Web退出后持工作台锁检查并回收超额目录；正式编译缓存默认最多512 MiB，在release锁内回收，仅删除cache；成功release复制及独立启动验收后另行移除重复standalone，保留正式发布app和next-start运行文件，保护`.keep`。预算内日常复用；活动编译期间不删除。
+
+工作台就绪和持续运行期间每6小时尝试只读盘点，24小时最多一次，结果覆盖写入`.medota2/maintenance/storage-audit.json`。目录预算：shared-tests 768 MiB、test-runs及sessions各256 MiB、来源cache 1.5 GiB、data-sync 2 GiB、releases 384 MiB、开发编译1.5 GiB、正式编译768 MiB、output及本机Linux浏览器各512 MiB、node_modules 1 GiB，未登记目录256 MiB。保护期内证据或有用途的历史材料可触发提示，需解释，不自动盲删。预算指文件内容字节，`du`的磁盘分配块数与其不同。
+
+大型历史文本证据可以gzip无损压缩，索引记录原路径、压缩路径及原SHA-256；用gzip解压即可恢复。新增诊断遵守[Agent空间规则](../../AGENTS.md#本机产物与空间预算)，避免重复全量响应和整套CI附件。
 
 ## 环境诊断与秘密配置
 

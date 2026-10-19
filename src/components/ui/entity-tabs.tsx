@@ -1,5 +1,7 @@
 "use client";
 
+import { useHeroTabNavigation } from "../hero-tab-cache";
+import { TabPreload } from "../tab-preload";
 import { useLinkStatus } from "next/link";
 import Link from "@/components/version-link";
 import { useTranslations } from "@/i18n/provider";
@@ -17,12 +19,14 @@ const entities = [
 
 export function EntityTabs() {
   const pathname = usePathname();
+  const navigateHero = useHeroTabNavigation();
   const t = useTranslations();
   return (
     <nav
       aria-label={t("图鉴分类")}
       className="flex h-full min-w-0 items-stretch overflow-x-auto"
     >
+      <TabPreload />
       {entities.map((entity) => {
         const active = pathname.startsWith(entity.match);
         return (
@@ -30,6 +34,10 @@ export function EntityTabs() {
             key={entity.href}
             href={entity.href}
             prefetch={true}
+            onNavigate={(event) => {
+              if (entity.href === "/heroes" && navigateHero?.())
+                event.preventDefault();
+            }}
             aria-current={active ? "page" : undefined}
             className={`relative flex shrink-0 min-h-7 items-center px-1.5 text-xs font-semibold uppercase tracking-[0.14em] sm:px-3 ${active ? "bg-white/5 text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
           >

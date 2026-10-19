@@ -1,26 +1,30 @@
-import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import { relative, resolve } from "node:path";
-import { promisify } from "node:util";
 import {
   createTestRunContext,
   type TestRunContext,
 } from "@/testing/test-run-harness";
 import {
+  createDataStackPlan,
   destroyDataStack,
   provisionDataStack,
   type DataStackLease,
 } from "@/server/environment/data-stack-lifecycle";
-import { acquireLock, fingerprint, readJson, run, writeJson } from "./runtime";
+import {
+  acquireLock,
+  CommandAbortedError,
+  fingerprint,
+  readJson,
+  run,
+  writeJson,
+} from "./runtime";
+import { removeRetiredTestBuild } from "./storage";
 
-const execute = promisify(execFile);
 const path = resolve(".medota2/shared-tests/environment.json");
 interface SharedEnvironment {
   context: TestRunContext;
   lease: DataStackLease;
-  seededInput?: string;
-  dockerStartedAt: string;
 }
 
 export class TestInputsChangedError extends Error {
@@ -38,67 +42,59 @@ export async function withTestEnvironment<T>(
     clean?: boolean;
     verify?: () => Promise<void>;
     signal?: AbortSignal;
+    lockWaitMs?: number;
   } = {},
 ): Promise<T | undefined> {
-  const release = await acquireLock("test-database", undefined, options.signal);
+  const cancellation = new AbortController();
+  const signal = options.signal
+    ? AbortSignal.any([options.signal, cancellation.signal])
+    : cancellation.signal;
+  const cancel = () =>
+    cancellation.abort(new CommandAbortedError("Test environment cancelled."));
+  // Keep handlers installed through provision and cleanup, including repeated signals.
+  process.on("SIGINT", cancel);
+  process.on("SIGTERM", cancel);
+  let release: (() => Promise<void>) | undefined;
+  let saved: SharedEnvironment | null = null;
+  let owned = false;
   try {
-    let saved = await readJson<SharedEnvironment>(path);
+    release = await acquireLock("test-database", options.lockWaitMs, signal);
+    saved = await readJson<SharedEnvironment>(path);
     if (saved && saved.context.workspaceRoot !== process.cwd())
       throw new Error("Shared test lease belongs to another workspace.");
+    owned = true;
     if (saved) {
-      const output = await execute("docker", [
-        "ps",
-        "-q",
-        "--filter",
-        `label=com.docker.compose.project=${saved.lease.composeProject}`,
-        "--filter",
-        "label=com.docker.compose.service=postgres",
-      ]).then((result) => result.stdout.trim());
-      const startedAt = output
-        ? await execute("docker", [
-            "inspect",
-            "--format",
-            "{{.State.StartedAt}}",
-            output,
-          ]).then((result) => result.stdout.trim())
-        : "";
-      // tmpfs disappears when Docker restarts. Replace only this exact recorded lease.
-      if (options.clean || !startedAt || startedAt !== saved.dockerStartedAt) {
-        await destroyDataStack(saved.lease);
-        saved = null;
-        await writeJson(path, null);
-      }
+      // A previous interrupted task may have left its exact disposable lease.
+      await destroyDataStack(saved.lease);
+      await writeJson(path, null);
+      const retired = saved.context;
+      saved = null;
+      await removeRetiredTestBuild(retired);
     }
     if (options.clean) return;
     if (!saved) {
       const context = await createTestRunContext("integration");
+      saved = {
+        context,
+        lease: createDataStackPlan({
+          environment: "test",
+          runId: context.runId,
+          hostPort: context.databasePort,
+          workspaceRoot: process.cwd(),
+        }),
+      };
+      // Persist the exact target before Docker starts, for recovery after SIGKILL/host loss.
+      await writeJson(path, saved);
       const lease = await provisionDataStack({
         environment: "test",
         runId: context.runId,
         hostPort: context.databasePort,
         onProgress: console.log,
       });
-      const container = (
-        await execute("docker", [
-          "ps",
-          "-q",
-          "--filter",
-          `label=com.docker.compose.project=${lease.composeProject}`,
-          "--filter",
-          "label=com.docker.compose.service=postgres",
-        ])
-      ).stdout.trim();
-      const dockerStartedAt = (
-        await execute("docker", [
-          "inspect",
-          "--format",
-          "{{.State.StartedAt}}",
-          container,
-        ])
-      ).stdout.trim();
-      saved = { context, lease, dockerStartedAt };
+      saved = { context, lease };
       await writeJson(path, saved);
     }
+    signal.throwIfAborted();
     const { context } = saved;
     const runRoot = resolve(
       ".medota2/shared-tests/runs",
@@ -150,7 +146,7 @@ export async function withTestEnvironment<T>(
         MEDOTA2_PROCESS_ROLE: "migration",
       },
       undefined,
-      options.signal,
+      signal,
     );
     const seedInput = await fingerprint([
       "drizzle",
@@ -163,7 +159,7 @@ export async function withTestEnvironment<T>(
       "package.json",
       "pnpm-lock.yaml",
     ]);
-    if (options.seed && saved.seededInput !== seedInput) {
+    if (options.seed) {
       await run(
         "pnpm",
         [
@@ -174,10 +170,8 @@ export async function withTestEnvironment<T>(
         ],
         { ...env, MEDOTA2_PROCESS_ROLE: "migration" },
         undefined,
-        options.signal,
+        signal,
       );
-      saved.seededInput = seedInput;
-      await writeJson(path, saved);
     }
     const evidence = {
       schemaVersion: 1,
@@ -192,6 +186,7 @@ export async function withTestEnvironment<T>(
       const result = await work(env, context);
       // Validate before publishing the receipt, while the fixture lease is held.
       // A passing runner with changed inputs is not a passing verification.
+      signal.throwIfAborted();
       await options.verify?.();
       return result;
     } catch (error) {
@@ -199,11 +194,6 @@ export async function withTestEnvironment<T>(
         error instanceof TestInputsChangedError ? "stale" : "failed";
       throw error;
     } finally {
-      // Destructive checks can change fixture content, including on failure.
-      if (!options.seed || evidence.status !== "running") {
-        delete saved.seededInput;
-        await writeJson(path, saved);
-      }
       await writeJson(resolve(runRoot, "run.json"), {
         ...evidence,
         status: evidence.status === "running" ? "passed" : evidence.status,
@@ -211,6 +201,17 @@ export async function withTestEnvironment<T>(
       });
     }
   } finally {
-    await release();
+    try {
+      // Reuse within this locked batch only. tmpfs is disposable after the task.
+      if (owned && saved) {
+        await destroyDataStack(saved.lease);
+        await writeJson(path, null);
+        await removeRetiredTestBuild(saved.context);
+      }
+    } finally {
+      await release?.();
+      process.off("SIGINT", cancel);
+      process.off("SIGTERM", cancel);
+    }
   }
 }

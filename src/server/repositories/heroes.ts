@@ -1,5 +1,7 @@
 import "server-only";
 import { cache } from "react";
+import { HERO_STATS_FIELDS } from "@/presentation/hero-stats";
+import type { HeroRankingRow } from "@/presentation/hero-stat-rankings";
 import { searchCatalogHeroes } from "@/server/services/catalog-search";
 import {
   CATALOG_SLICE_LIMIT,
@@ -791,3 +793,18 @@ export async function getHeroChoices(dataset: string) {
   );
   return result.rows;
 }
+
+/** Same immutable Catalog as the detail page; only fields used by the panel. */
+export const getHeroRankingRows = cache(
+  async (dataset: string, locale: string): Promise<HeroRankingRow[]> => {
+    const database = await ensureReady();
+    const fields = HERO_STATS_FIELDS;
+    const result = await database.query<HeroRankingRow>(
+      `SELECT ${fields.map((field) => `h.${field}`).join(", ")}, COALESCE(l.display_name, h.internal_name) AS name
+     FROM heroes h LEFT JOIN hero_localizations l ON l.dataset_version_id = h.dataset_version_id AND l.hero_id = h.hero_id AND l.locale = $2
+     WHERE h.dataset_version_id = $1 ORDER BY h.hero_id`,
+      [dataset, locale],
+    );
+    return result.rows;
+  },
+);

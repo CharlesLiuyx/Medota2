@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { execFileSync } from "node:child_process";
 import {
   choosePreviewDataSource,
   previewEnvironment,
+  previewNodeOptions,
 } from "@/development/preview";
 
 const state = vi.hoisted(() => ({ active: null as unknown }));
@@ -15,6 +17,29 @@ afterEach(() => {
 });
 
 describe("shared preview data", () => {
+  it("bounds a real Node heap and preserves explicit budgets and other flags", () => {
+    const options = previewNodeOptions("--no-warnings");
+    const limit = Number(
+      execFileSync(
+        process.execPath,
+        [
+          "-e",
+          "console.log(require('node:v8').getHeapStatistics().heap_size_limit)",
+        ],
+        { env: { ...process.env, NODE_OPTIONS: options }, encoding: "utf8" },
+      ),
+    );
+    expect(limit).toBeGreaterThan(4 * 1024 ** 3);
+    expect(limit).toBeLessThan(4.2 * 1024 ** 3);
+    expect(options).toContain("--no-warnings");
+    for (const configured of [
+      "--max-old-space-size=2048",
+      "--max_old_space_size=3072",
+      '"--max-old-space-size=2048"',
+      "--max-old-space-size 2048",
+    ])
+      expect(previewNodeOptions(configured)).toBe(configured);
+  });
   it("restored workspaces receive their map collection while explicit local inputs remain visible to export and status", () => {
     state.active = {
       lease: { environment: "local-review", stateDirectory: "candidate" },

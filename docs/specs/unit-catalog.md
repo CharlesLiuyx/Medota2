@@ -27,7 +27,7 @@
 
 ## 后续计划
 
-单位网格使用InfiniteList本地数组适配器，首批48项、上7屏／下10屏预取与回收；表格复用GroupedTable无限分块，尚未接入完整目录IndexedDB持久化。网格／表格切换与全列排序见[语义UI](semantic-game-ui.md#图鉴网格与表格)；状态由[列表消费者清单](infinite-lists.md#6-全局适用范围清单)及[缓存Spec](browser-catalog-cache.md)维护，后续扩展时明确验收范围。
+单位网格使用InfiniteList本地数组适配器，SSR首批48项，客户端进入时按首屏取48–192项作为稳定分块、上7屏／下10屏预取与回收；表格复用GroupedTable无限分块，尚未接入完整目录IndexedDB持久化。网格／表格切换与全列排序见[语义UI](semantic-game-ui.md#图鉴网格与表格)；状态由[列表消费者清单](infinite-lists.md#6-全局适用范围清单)及[缓存Spec](browser-catalog-cache.md)维护，后续扩展时明确验收范围。
 
 将单位定义、本地化、状态审阅与原始文件溯源持久化到不可变 Dataset，接入导入门禁、版本差异。当前独立部署若不带可配置的匹配 Git 来源，只显示未接入状态。
 

@@ -1,11 +1,16 @@
 /** Compile the shared catalog routes before marking the dev workbench ready.
  * Cold compilation during an in-flight navigation can delay the first visit. This
  * is bounded, read-only warmup; it never creates or publishes game data. */
-export async function warmCatalogRoutes(origin: string): Promise<void> {
+export async function warmCatalogRoutes(
+  origin: string,
+  signal?: AbortSignal,
+): Promise<void> {
   const read = async (path: string, init?: RequestInit) => {
     const response = await fetch(`${origin}${path}`, {
       ...init,
-      signal: AbortSignal.timeout(15_000),
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(15_000)])
+        : AbortSignal.timeout(15_000),
     });
     if (!response.ok)
       throw new Error(`Catalog warmup ${path}: ${response.status}`);
@@ -19,6 +24,7 @@ export async function warmCatalogRoutes(origin: string): Promise<void> {
       head = await (await read("/api/catalog/head")).json();
       break;
     } catch (error) {
+      signal?.throwIfAborted();
       if (Date.now() + 500 >= deadline) throw error;
       await new Promise((resolve) => setTimeout(resolve, 250));
     }

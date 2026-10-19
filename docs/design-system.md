@@ -21,6 +21,24 @@ Medota2 使用深色优先、百科式、高信息密度的目录界面。设计
 
 单选与多选菜单箭头共用14×14px的ChevronDown矢量图标、描边权重2.5，继承控件文字颜色；触发器使用16px行高和flex居中，标签、选中值与箭头保持同一中心。
 
+## 属性图标
+
+属性使用现有Lucide React依赖的静态SVG，每项仅一个图标，按规范属性ID映射，跨技能、物品、英雄、单位及属性卡保持一致；未知专属参数用SlidersHorizontal，不按翻译文字猜测。计算入口沿用同形图标，以金色及“计算方法”可访问名称标识。文字保留以避免仅靠图形理解。
+
+| 属性类别                   | 图标                                 |
+| -------------------------- | ------------------------------------ |
+| 冷却／持续／持续施法       | Clock／Hourglass                     |
+| 生命／恢复、魔法／恢复     | Heart／HeartPulse、Droplet／Droplets |
+| 力量／敏捷／智力           | BicepsFlexed／Feather／Brain         |
+| 攻击力／攻速／间隔／距离   | Sword／Gauge／Timer／MoveHorizontal  |
+| 护甲／魔抗／状态抗性       | Shield／ShieldHalf／ShieldCheck      |
+| 移动／转身、白天／夜间视野 | Footprints／RotateCw、Sun／Moon      |
+| 施法距离／范围、金钱／经验 | Radar／Expand、Coins／TrendingUp     |
+
+其余已登记属性及枚举映射见[attribute-icon](../src/components/attribute-icon.tsx)。图标统一线宽2、行内1em，图标与文字中心对齐；冷却／魔耗文案移除旧Unicode图形，不叠加通用盾牌。图标透明背景、继承颜色；不请求远程图标资源。
+
+设计调研：2026-10-15核对[Lucide图标目录](https://lucide.dev/icons)、[Clock](https://lucide.dev/icons/clock)、[Droplet](https://lucide.dev/icons/droplet)及[React用法](https://lucide.dev/guide/react)。以上对应关系为本产品的界面选择，并非Valve官方属性图标标准。
+
 ## Token
 
 Token 定义在 `src/app/globals.css`，组件只消费语义变量：

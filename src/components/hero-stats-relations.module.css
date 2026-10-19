@@ -1,0 +1,30 @@
+.relation,
+.calculated {
+  border-radius: 2px;
+}
+.relation[data-related],
+.calculated[data-related] {
+  background: rgb(228 197 132 / 16%);
+  box-shadow: 0 0 0 1px rgb(228 197 132 / 45%);
+}
+.calculated {
+  display: inline-flex;
+  vertical-align: baseline;
+}
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  text-align: inherit;
+  font: inherit;
+  color: inherit;
+  cursor: help;
+}
+.trigger > svg {
+  flex-shrink: 0;
+  color: #d8bc7f;
+}
+.trigger:focus-visible {
+  outline: 1px solid #e4c584;
+  outline-offset: 2px;
+}

@@ -3,9 +3,7 @@ import { useTranslations } from "@/i18n/provider";
 import { useEffect, useRef, useState } from "react";
 const sections = [
   ["abilities", "技能"],
-  ["talents", "天赋树"],
   ["facets", "命石"],
-  ["stats", "属性"],
   ["lore", "英雄故事"],
 ] as const;
 export function HeroSectionNav() {

@@ -26,6 +26,26 @@ describe("native development admission", () => {
     );
     expect(normalizeNodePath(undefined)).toBeUndefined();
   });
+  it.runIf(process.platform !== "win32")(
+    "waits for the owned child to finish shutdown before returning",
+    async () => {
+      const child = spawn(
+        process.execPath,
+        [
+          "-e",
+          "process.on('SIGTERM',()=>setTimeout(()=>process.exit(0),80)); process.stdout.write('ready'); setInterval(()=>{},1000)",
+        ],
+        { stdio: ["ignore", "pipe", "pipe"] },
+      );
+      try {
+        await once(child.stdout!, "data");
+        await stopChildTree(child);
+        expect(child.exitCode).toBe(0);
+      } finally {
+        await stopChildTree(child);
+      }
+    },
+  );
   it.runIf(process.platform === "win32")(
     "stops only the owned process tree",
     async () => {

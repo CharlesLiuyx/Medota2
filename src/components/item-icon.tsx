@@ -1,5 +1,9 @@
 "use client";
 import Image from "next/image";
+import {
+  isViewportAssetReady,
+  rememberViewportAsset,
+} from "@/browser/viewport-assets";
 import { ImageOff } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "@/i18n/provider";
@@ -14,6 +18,7 @@ export function ItemIcon({
   large?: boolean;
 }) {
   const t = useTranslations();
+  const sizes = large ? "88px" : "44px";
   const [failed, setFailed] = useState<string | null>(null);
   const src = version ? `/valve-assets/item/${itemKey}?v=${version}` : "";
   return (
@@ -26,8 +31,12 @@ export function ItemIcon({
           src={src}
           alt=""
           fill
-          sizes={large ? "88px" : "44px"}
-          loading={large ? "eager" : "lazy"}
+          sizes={sizes}
+          loading={large || isViewportAssetReady(src, sizes) ? "eager" : "lazy"}
+          decoding="sync"
+          onLoad={(event) =>
+            rememberViewportAsset({ src, sizes }, event.currentTarget)
+          }
           className="object-contain"
           onError={() => setFailed(src)}
         />

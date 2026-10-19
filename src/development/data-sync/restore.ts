@@ -21,6 +21,7 @@ import {
   previewEnvironment,
 } from "@/development/preview";
 import { readJson, run, processAlive } from "@/development/runtime";
+import { withWorkbench } from "@/development/workbench-clients";
 import { collectDatabase, restoreDatabase } from "./database";
 import { readSnapshot, verifySnapshotFiles, manifestPath } from "./snapshot";
 import { prepareDependencies } from "./dependencies";
@@ -345,11 +346,11 @@ export async function recoverInterruptedSwitch(): Promise<void> {
     "tsx",
     "src/workers/dev.ts",
     "--stop",
+    "--keep-database",
   ]);
   await atomicJson(resolve(syncRoot(), "active.json"), journal.previous);
   await atomicJson(journalPath(), { ...journal, phase: "rolled-back" });
-  if (journal.wasRunning)
-    await run(process.execPath, ["--import", "tsx", "src/workers/dev.ts"]);
+  if (journal.wasRunning) await withWorkbench(async () => undefined);
   await atomicJson(journalPath(), { ...journal, phase: "rolled-back" });
 }
 export async function activateCandidate(
@@ -372,6 +373,7 @@ export async function activateCandidate(
       "tsx",
       "src/workers/dev.ts",
       "--stop",
+      "--keep-database",
     ]);
     // The switch journal blocks existing/new writer handles, including COMMIT.
     // Recheck after stopping the UI before selecting the candidate.
@@ -383,7 +385,7 @@ export async function activateCandidate(
     await atomicJson(resolve(syncRoot(), "active.json"), next);
     await atomicJson(journalPath(), { ...journal, selectionCommitted: true });
     await timed("start shared workbench", () =>
-      run(process.execPath, ["--import", "tsx", "src/workers/dev.ts"]),
+      withWorkbench(async () => undefined),
     );
     await atomicJson(journalPath(), { ...journal, phase: "completed" });
   } catch (error) {

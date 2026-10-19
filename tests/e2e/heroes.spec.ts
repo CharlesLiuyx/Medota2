@@ -48,7 +48,7 @@ test("overview, canonical search URL and CM filter", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "敌法师" })).toHaveCount(0);
 });
 
-test("hero catalog continuously loads five chunks without repeating group headings", async ({
+test("hero catalog continuously loads all heroes without repeating group headings", async ({
   page,
 }) => {
   test.slow();
@@ -98,9 +98,18 @@ test("hero catalog continuously loads five chunks without repeating group headin
   expect(groupHeadingText.get("universal")).toContain("97");
   await expect(list.locator('[data-infinite-list-key="900192"]')).toBeVisible();
   await expect(page).toHaveURL(/\/heroes\?release=c%3A/u);
-  await expect
-    .poll(() => list.locator("[data-infinite-list-chunk]").count())
-    .toBeGreaterThanOrEqual(5);
+  // Viewport preloading changes chunk size. Verify the complete fixture and
+  // stable identities rather than a fixed number of implementation chunks.
+  const allItems = list.locator("[data-infinite-list-item]");
+  await expect(allItems).toHaveCount(194);
+  expect(
+    await allItems.evaluateAll(
+      (nodes) =>
+        new Set(
+          nodes.map((node) => node.getAttribute("data-infinite-list-key")),
+        ).size,
+    ),
+  ).toBe(194);
 
   // A fetch boundary within one attribute must continue the previous row.
   const cells = await list
@@ -233,6 +242,11 @@ test("compact hero previews open immediately and filters stay keyboard accessibl
 test("detail renders readable skills, talents, facets and base stats", async ({
   page,
 }) => {
+  const keyWarnings: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" && message.text().includes('unique "key"'))
+      keyWarnings.push(message.text());
+  });
   await page.goto("/heroes/antimage");
   await expect(
     page.getByRole("heading", { name: "敌法师", level: 1 }),
@@ -251,27 +265,39 @@ test("detail renders readable skills, talents, facets and base stats", async ({
   for (const width of [1280, 390]) {
     await page.setViewportSize({ width, height: 600 });
     const nav = page.getByRole("navigation", { name: "英雄详情" });
-    await nav.getByRole("link", { name: "属性", exact: true }).click();
-    await expect(page).toHaveURL(/#stats$/u);
     await expect(
       nav.getByRole("link", { name: "属性", exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      nav.getByRole("link", { name: "天赋树", exact: true }),
+    ).toHaveCount(0);
+    await nav.getByRole("link", { name: "命石", exact: true }).click();
+    await expect(page).toHaveURL(/#facets$/u);
+    await expect(
+      nav.getByRole("link", { name: "命石", exact: true }),
     ).toHaveAttribute("aria-current", "location");
     await expect
       .poll(async () => (await nav.boundingBox())!.y)
       .toBeCloseTo(28, 0);
     const navBounds = (await nav.boundingBox())!;
-    const statsBounds = (await page.locator("#stats").boundingBox())!;
-    expect(statsBounds.y).toBeGreaterThanOrEqual(
+    const facetsBounds = (await page.locator("#facets").boundingBox())!;
+    expect(facetsBounds.y).toBeGreaterThanOrEqual(
       navBounds.y + navBounds.height,
     );
     await nav.getByRole("link", { name: "技能", exact: true }).click();
     await expect(
       nav.getByRole("link", { name: "技能", exact: true }),
     ).toHaveAttribute("aria-current", "location");
-    await page.locator("#talents").evaluate((node) => node.scrollIntoView());
+    // This compact fixture ends shortly after facets. Add room so this tests
+    // section tracking rather than the separate bottom-of-page lore rule.
+    await addScrollRunway(page);
+    await page.locator("#facets").evaluate((node) => node.scrollIntoView());
     await expect(
-      nav.getByRole("link", { name: "天赋树", exact: true }),
+      nav.getByRole("link", { name: "命石", exact: true }),
     ).toHaveAttribute("aria-current", "location");
+    await page
+      .locator("[data-e2e-scroll-runway]")
+      .evaluate((node) => node.remove());
     await page.evaluate(() =>
       window.scrollTo(0, document.documentElement.scrollHeight),
     );
@@ -290,6 +316,7 @@ test("detail renders readable skills, talents, facets and base stats", async ({
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBeLessThanOrEqual(width);
   }
+  expect(keyWarnings).toEqual([]);
 });
 
 test("locale switch preserves the selected hero and exposes keyboard focus", async ({

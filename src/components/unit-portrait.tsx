@@ -1,6 +1,10 @@
 "use client";
 import { useTranslations } from "@/i18n/provider";
 import Image from "next/image";
+import {
+  isViewportAssetReady,
+  rememberViewportAsset,
+} from "@/browser/viewport-assets";
 import { ImageOff } from "lucide-react";
 import { useState } from "react";
 import valveAssetImageLoader from "./valve-asset-image-loader";
@@ -21,6 +25,7 @@ export function UnitPortrait({
   large?: boolean;
 }) {
   const t = useTranslations();
+  const sizes = large ? "56px" : "36px";
   const [failed, setFailed] = useState<string | null>(null);
   const src = portrait
     ? `/valve-assets/unit/${unitKey}?v=${portrait.version}`
@@ -47,8 +52,12 @@ export function UnitPortrait({
           src={src}
           alt={`${name} · ${label}`}
           fill
-          sizes={large ? "56px" : "36px"}
-          loading={large ? "eager" : "lazy"}
+          sizes={sizes}
+          loading={large || isViewportAssetReady(src, sizes) ? "eager" : "lazy"}
+          decoding="sync"
+          onLoad={(event) =>
+            rememberViewportAsset({ src, sizes }, event.currentTarget)
+          }
           className={
             portrait.relation === "unit_minimap"
               ? "object-contain"

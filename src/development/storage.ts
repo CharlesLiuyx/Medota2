@@ -8,9 +8,35 @@ import { acquireLock, processAlive, readJson, writeJson } from "./runtime";
 
 const policySchema = z
   .object({
-    releases: z.number().int().min(1).max(100).default(2),
-    successfulTests: z.number().int().min(1).max(1000).default(10),
-    failedTests: z.number().int().min(1).max(1000).default(5),
+    releases: z.number().int().min(1).max(100).default(1),
+    successfulTests: z.number().int().min(1).max(1000).default(3),
+    failedTests: z.number().int().min(1).max(1000).default(2),
+    developmentCacheMaxBytes: z
+      .number()
+      .int()
+      .min(1024)
+      .max(20 * 1024 ** 3)
+      .default(1024 ** 3),
+    buildCacheMaxBytes: z
+      .number()
+      .int()
+      .min(1024)
+      .max(20 * 1024 ** 3)
+      .default(512 * 1024 ** 2),
+    testArtifactsMaxBytes: z
+      .number()
+      .int()
+      .min(1024)
+      .max(20 * 1024 ** 3)
+      .default(128 * 1024 ** 2),
+    syncIdleDays: z.number().int().min(1).max(365).default(7),
+    syncCacheMaxBytes: z
+      .number()
+      .int()
+      .min(1024)
+      .max(20 * 1024 ** 3)
+      .default(384 * 1024 ** 2),
+    releaseMaxAgeDays: z.number().int().min(1).max(365).default(7),
     failureGraceDays: z.number().int().min(1).max(365).default(7),
     logMaxBytes: z
       .number()
@@ -22,7 +48,7 @@ const policySchema = z
   })
   .strict();
 export type StoragePolicy = z.infer<typeof policySchema>;
-export type StorageScope = "releases" | "tests";
+export type StorageScope = "releases" | "tests" | "data-sync";
 export const defaultStoragePolicy = policySchema.parse({});
 export interface StorageAction {
   path: string;
@@ -117,14 +143,82 @@ interface RecordEntry {
   path: string;
   status: string;
   time: number;
-  legacyFailure: boolean;
+  resolved: boolean;
 }
 const terminal = new Set(["passed", "failed", "stale", "interrupted"]);
 const attachments = ["report", "test-results", "playwright"];
 const safeDirectory =
-  /^(?:\.medota2\/releases\/[a-f0-9]{64}|\.medota2\/shared-tests\/runs\/\d+-[a-f0-9-]+\/(?:report|test-results|playwright)|\.medota2\/test-runs\/(?:integration|e2e|verify)-[a-z0-9-]+\/(?:artifacts|next))$/;
+  /^(?:\.next-release\/cache|\.medota2\/releases\/[a-f0-9]{64}|\.medota2\/shared-tests\/runs\/\d+-[a-f0-9-]+\/(?:report|test-results|playwright)|\.medota2\/test-runs\/(?:integration|e2e|verify)-[a-z0-9-]+\/(?:artifacts|next))$/;
 const safeTrace =
   /^\.medota2\/(?:shared-tests\/runs\/\d+-[a-f0-9-]+|test-runs\/(?:integration|e2e|verify)-[a-z0-9-]+)\/(?:test-results|artifacts\/test-results)\/.+\.zip$/;
+
+/** Caller holds test-database and has destroyed and unlinked this exact lease. */
+export async function removeRetiredTestBuild(
+  context: {
+    workspaceRoot: string;
+    runRoot: string;
+    nextDistDirectory: string;
+  },
+  root = process.cwd(),
+): Promise<void> {
+  if (resolve(context.workspaceRoot) !== resolve(root))
+    throw new Error("Retired test build belongs to another workspace.");
+  const owner = relative(root, context.runRoot).replaceAll("\\", "/");
+  const path = `${owner}/next`;
+  if (
+    !safeDirectory.test(path) ||
+    resolve(root, path) !== resolve(context.nextDistDirectory)
+  )
+    throw new Error("Unsupported retired test build.");
+  const lease = await readJson<{ context: { runRoot: string } }>(
+    await managedStoragePath(root, ".medota2/shared-tests/environment.json"),
+  );
+  if (lease && resolve(lease.context.runRoot) === resolve(context.runRoot))
+    throw new Error("Test build is still leased.");
+  if (await exists(root, `${owner}/.keep`)) return;
+  if (!(await exists(root, path))) return;
+  const bytes = await treeBytes(root, path);
+  await rm(await managedStoragePath(root, path), { recursive: true });
+  await writeJson(
+    await managedStoragePath(root, `${owner}/retired-build.json`),
+    {
+      cleanedAt: new Date().toISOString(),
+      path,
+      bytes,
+      reason: "测试租约已销毁；移除可再生编译目录，保留诊断与状态记录",
+    },
+  );
+}
+
+/** Caller holds workbench lock and has awaited all owned Web processes exiting. */
+export async function trimStoppedDevelopmentCache(
+  root = process.cwd(),
+): Promise<void> {
+  const path = ".next";
+  if (!(await exists(root, path)) || (await exists(root, `${path}/.keep`)))
+    return;
+  const owner = await readJson<{ pid: number }>(
+    await managedStoragePath(root, ".medota2/development/owner.json"),
+  );
+  // The owning supervisor can be alive during stop; its caller has awaited Web exit.
+  if (owner && owner.pid !== process.pid && processAlive(owner.pid))
+    throw new Error("Another workbench owns the development cache.");
+  const bytes = await treeBytes(root, path);
+  if (bytes <= (await readStoragePolicy(root)).developmentCacheMaxBytes) return;
+  await rm(await managedStoragePath(root, path), { recursive: true });
+  await writeJson(
+    await managedStoragePath(
+      root,
+      ".medota2/maintenance/development-cache-cleanup.json",
+    ),
+    {
+      cleanedAt: new Date().toISOString(),
+      path,
+      bytes,
+      reason: "已停止的开发编译缓存超过容量预算",
+    },
+  );
+}
 
 export async function buildStoragePlan(
   options: {
@@ -158,6 +252,16 @@ export async function buildStoragePlan(
       });
   }
   if (!options.scope || options.scope === "releases") {
+    if (
+      (await exists(root, ".next-release/cache")) &&
+      !(await pinned(".next-release")) &&
+      !(await pinned(".next-release/cache")) &&
+      (await treeBytes(root, ".next-release/cache")) > policy.buildCacheMaxBytes
+    )
+      await add(
+        ".next-release/cache",
+        "正式构建编译缓存超过容量预算；已持release锁",
+      );
     const records: RecordEntry[] = [];
     for (const path of await directories(root, ".medota2/releases")) {
       if (!/^[a-f0-9]{64}$/.test(path.split("/").at(-1)!)) continue;
@@ -182,7 +286,7 @@ export async function buildStoragePlan(
         path,
         status: entry.status!,
         time,
-        legacyFailure: entry.status !== "passed" && !entry.pid,
+        resolved: await exists(root, `${path}/.resolved`),
       });
     }
     records.sort((a, b) => b.time - a.time);
@@ -191,13 +295,14 @@ export async function buildStoragePlan(
     for (const entry of records) {
       const recent =
         entry.status === "passed"
-          ? passed++ < policy.releases
+          ? passed++ < policy.releases &&
+            now - entry.time < policy.releaseMaxAgeDays * 86400000
           : failed++ < policy.failedTests;
       const keep =
         (await pinned(entry.path)) ||
         recent ||
-        entry.legacyFailure ||
         (entry.status !== "passed" &&
+          !entry.resolved &&
           now - entry.time < policy.failureGraceDays * 86400000);
       if (keep)
         plan.retained.push({
@@ -222,14 +327,27 @@ export async function buildStoragePlan(
         const entry = await readJson<{
           status?: string;
           finishedAt?: string;
+          startedAt?: string;
           pid?: number;
           cleanup?: { status: string; databaseRetained: boolean };
         }>(await managedStoragePath(root, `${path}/run.json`));
-        const time = Date.parse(entry?.finishedAt ?? "");
         const isolated = parent.endsWith("test-runs");
+        const abandoned =
+          !isolated &&
+          entry?.status === "running" &&
+          Number.isSafeInteger(entry.pid) &&
+          entry.pid! > 0 &&
+          !processAlive(entry.pid!) &&
+          Number.isFinite(Date.parse(entry.startedAt ?? "")) &&
+          now - Date.parse(entry.startedAt!) >=
+            policy.failureGraceDays * 86400000;
+        const status = abandoned ? "interrupted" : entry?.status;
+        const time = Date.parse(
+          entry?.finishedAt ?? (abandoned ? (entry?.startedAt ?? "") : ""),
+        );
         if (
           !entry ||
-          !terminal.has(entry.status ?? "") ||
+          !terminal.has(status ?? "") ||
           !Number.isFinite(time) ||
           (isolated &&
             (entry.cleanup?.status !== "cleaned" ||
@@ -250,26 +368,34 @@ export async function buildStoragePlan(
         }
         records.push({
           path,
-          status: entry.status!,
+          status: status!,
           time,
-          legacyFailure:
-            entry.status !== "passed" &&
-            !entry.pid &&
-            !(await exists(root, `${path}/.resolved`)),
+          resolved: await exists(root, `${path}/.resolved`),
         });
       }
     }
     records.sort((a, b) => b.time - a.time);
     let passed = 0,
       failed = 0;
+    let retainedBytes = 0;
     for (const entry of records) {
+      const isolated = entry.path.startsWith(".medota2/test-runs/");
+      const folders = isolated ? ["artifacts", "next"] : attachments;
+      let bytes = 0;
+      for (const folder of folders)
+        if (await exists(root, `${entry.path}/${folder}`))
+          bytes += await treeBytes(root, `${entry.path}/${folder}`);
+      const protectedFailure =
+        entry.status !== "passed" &&
+        !entry.resolved &&
+        now - entry.time < policy.failureGraceDays * 86400000;
+      const withinBudget =
+        retainedBytes + bytes <= policy.testArtifactsMaxBytes;
       const keep =
         entry.status === "passed"
-          ? passed++ < policy.successfulTests
-          : failed++ < policy.failedTests ||
-            entry.legacyFailure ||
-            now - entry.time < policy.failureGraceDays * 86400000;
-      const isolated = entry.path.startsWith(".medota2/test-runs/");
+          ? passed++ < policy.successfulTests && withinBudget
+          : protectedFailure || (failed++ < policy.failedTests && withinBudget);
+      if (keep) retainedBytes += bytes;
       if (!keep) {
         for (const folder of isolated ? ["artifacts", "next"] : attachments)
           await add(
@@ -341,13 +467,36 @@ export async function executeStoragePlan(
 ): Promise<void> {
   for (const entry of plan.actions) {
     const path = await managedStoragePath(root, entry.path);
-    const owner = entry.path.startsWith(".medota2/releases/")
-      ? entry.path.split("/").slice(0, 3).join("/")
-      : entry.path.startsWith(".medota2/shared-tests/")
-        ? entry.path.split("/").slice(0, 4).join("/")
-        : entry.path.split("/").slice(0, 3).join("/");
-    if (await exists(root, `${owner}/.keep`))
+    const owner =
+      entry.path === ".next-release/cache"
+        ? ".next-release"
+        : entry.path.startsWith(".medota2/releases/")
+          ? entry.path.split("/").slice(0, 3).join("/")
+          : entry.path.startsWith(".medota2/shared-tests/")
+            ? entry.path.split("/").slice(0, 4).join("/")
+            : entry.path.split("/").slice(0, 3).join("/");
+    if (
+      (await exists(root, `${owner}/.keep`)) ||
+      (entry.kind === "directory" &&
+        (await exists(root, `${entry.path}/.keep`)))
+    )
       throw new Error(`Storage candidate was pinned: ${owner}`);
+    if (owner.startsWith(".medota2/shared-tests/runs/")) {
+      const lease = await readJson<{ context: { runRoot: string } }>(
+        await managedStoragePath(
+          root,
+          ".medota2/shared-tests/environment.json",
+        ),
+      );
+      const run = await readJson<{ status?: string; pid?: number }>(
+        await managedStoragePath(root, `${owner}/run.json`),
+      );
+      if (
+        (lease && resolve(lease.context.runRoot) === resolve(root, owner)) ||
+        (run?.status === "running" && (!run.pid || processAlive(run.pid)))
+      )
+        throw new Error(`Storage candidate became active: ${owner}`);
+    }
     if (entry.kind === "directory") {
       if (!safeDirectory.test(entry.path))
         throw new Error("Unsupported cleanup directory.");
@@ -386,7 +535,9 @@ export async function executeStoragePlan(
     if (!entry.path.startsWith(".medota2/releases/")) {
       const marker = await managedStoragePath(
         root,
-        `${owner}/storage-cleanup.json`,
+        entry.path === ".next-release/cache"
+          ? ".medota2/maintenance/build-cache-cleanup.json"
+          : `${owner}/storage-cleanup.json`,
       );
       const previous = await readJson<{ changes: StorageAction[] }>(marker);
       await writeJson(marker, {
@@ -457,6 +608,11 @@ export async function automaticStorageCleanup(
   try {
     loadLocalEnv();
     if (process.env.MEDOTA2_AUTO_CLEANUP === "0") return;
+    if (scope === "data-sync") {
+      const { maintainSyncStorage } = await import("./data-sync/storage");
+      await maintainSyncStorage({ apply: true });
+      return;
+    }
     const plan = await maintainStorage({ apply: true, scope, preserve });
     if (plan.actions.length)
       console.log(

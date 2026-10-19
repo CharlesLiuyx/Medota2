@@ -20,13 +20,26 @@ import {
 import { sampleInputs, type SampleResult } from "@/development/sample";
 import { warmCatalogRoutes } from "@/development/warm-catalog";
 import { stopChildTree } from "@/development/process";
+import { cleanupStoppedDockerResources } from "@/development/docker-resources";
+import { withTestEnvironment } from "@/development/test-environment";
+import { stopPersistentDataStack } from "@/server/environment/data-stack-lifecycle";
 import type { WorkbenchStatus } from "@/development/protocol";
 import {
   getPreviewDataSource,
   previewEnvironment,
+  previewNodeOptions,
 } from "@/development/preview";
+import { reportStorageBudget } from "@/development/storage-audit";
 import { RotatingLog } from "@/development/rotating-log";
-import { readStoragePolicy } from "@/development/storage";
+import {
+  createWorkbenchClient,
+  hasWorkbenchClients,
+} from "@/development/workbench-clients";
+import {
+  automaticStorageCleanup,
+  readStoragePolicy,
+  trimStoppedDevelopmentCache,
+} from "@/development/storage";
 
 const origin = getWorkbenchOrigin();
 const ownerPath = resolve(developmentRoot, "owner.json");
@@ -38,14 +51,45 @@ interface Owner {
   workspace: string;
 }
 
-async function requestStop(owner: Owner): Promise<void> {
-  if (process.platform === "win32")
-    await writeJson(controlPath, { action: "stop", instance: owner.instance });
-  else process.kill(owner.pid, "SIGTERM");
-  const deadline = Date.now() + 15_000;
+async function requestStop(owner: Owner, keepDatabase = false): Promise<void> {
+  await writeJson(controlPath, {
+    action: "stop",
+    instance: owner.instance,
+    keepDatabase,
+  });
+  if (process.platform !== "win32") process.kill(owner.pid, "SIGTERM");
+  const deadline = Date.now() + 45_000;
   while (processAlive(owner.pid) && Date.now() < deadline) await delay(150);
   if (processAlive(owner.pid))
     throw new Error("Previous workbench is still stopping; see its log.");
+  const final = await readJson<WorkbenchStatus>(statusPath);
+  if (final?.instance === owner.instance && final.phase === "error")
+    throw new Error(final.message);
+}
+
+async function cleanStoppedResources(): Promise<void> {
+  try {
+    await withTestEnvironment(async () => undefined, {
+      clean: true,
+      lockWaitMs: 0,
+    });
+    await cleanupStoppedDockerResources();
+  } catch (error) {
+    console.warn(
+      `[cleanup] Deferred: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+async function stopDatabase(
+  source: "development" | "local-review",
+): Promise<void> {
+  const releaseDatabase = await acquireLock(`${source}-database`, 0);
+  try {
+    await stopPersistentDataStack(source);
+  } finally {
+    await releaseDatabase();
+  }
 }
 
 async function main(): Promise<void> {
@@ -59,68 +103,186 @@ async function main(): Promise<void> {
     owner.workspace === process.cwd() &&
     processAlive(owner.pid)
   ) {
-    await requestStop(owner);
+    await requestStop(owner, true);
     owner = null;
   }
   if (process.argv.includes("--stop")) {
     if (owner && owner.workspace === process.cwd() && processAlive(owner.pid)) {
-      await requestStop(owner);
-      console.log("Shared workbench stopped; database data is retained.");
-    } else console.log("Shared workbench is not running.");
-    return;
-  }
-  let expectedPid = owner?.pid;
-  if (!owner || owner.workspace !== process.cwd() || !processAlive(owner.pid)) {
-    const child = spawn(
-      process.execPath,
-      ["--import", "tsx", "src/workers/dev.ts", "--serve"],
-      {
-        cwd: process.cwd(),
-        env: process.env,
-        detached: true,
-        windowsHide: true,
-        stdio: "ignore",
-      },
-    );
-    expectedPid = child.pid;
-    child.unref();
-  }
-  const deadline = Date.now() + 180_000;
-  while (Date.now() < deadline) {
-    const current = await readJson<Owner>(ownerPath);
-    const status = await readJson<WorkbenchStatus>(statusPath);
-    if (
-      current &&
-      current.pid === expectedPid &&
-      status?.instance === current.instance &&
-      status.phase === "error"
-    )
-      throw new Error(status.message);
-    if (
-      current &&
-      processAlive(current.pid) &&
-      status?.instance === current.instance
-    ) {
-      if (status.phase === "error") throw new Error(status.message);
-      if (status.phase === "ready") {
-        const health = (await fetch(`${origin}/api/development`, {
-          signal: AbortSignal.timeout(1500),
-        })
-          .then((response) => response.json())
-          .catch(() => null)) as WorkbenchStatus | null;
-        if (health?.instance === current.instance) {
-          console.log(
-            `Shared workbench ready: ${origin}/${process.env.MEDOTA2_WORKBENCH_MAPS_ONLY === "1" ? "map" : "heroes"}\nLog: .medota2/development/server.log`,
-          );
-          return;
-        }
+      await requestStop(owner, process.argv.includes("--keep-database"));
+    } else if (!process.argv.includes("--keep-database")) {
+      const release = await acquireLock("workbench", 0);
+      try {
+        if (process.env.MEDOTA2_WORKBENCH_MAPS_ONLY !== "1")
+          await stopDatabase(getPreviewDataSource());
+        await cleanStoppedResources();
+        if (process.env.MEDOTA2_AUTO_CLEANUP !== "0" && !process.env.CI)
+          await trimStoppedDevelopmentCache().catch((error: unknown) => {
+            console.warn(
+              "Development cache cleanup deferred:",
+              error instanceof Error ? error.message : String(error),
+            );
+          });
+        await automaticStorageCleanup("tests");
+        await automaticStorageCleanup("releases");
+      } finally {
+        await release();
       }
     }
-    await delay(350);
+    console.log(
+      process.argv.includes("--keep-database")
+        ? "Shared Web stopped; database remains available for snapshot checks."
+        : "Shared workbench stopped; containers removed and database volumes retained.",
+    );
+    return;
   }
-  throw new Error(
-    "Workbench startup timed out. See .medota2/development/server.log.",
-  );
+  const previousStatus = await readJson<WorkbenchStatus>(statusPath);
+  if (
+    owner &&
+    previousStatus?.instance === owner.instance &&
+    ["stopped", "error"].includes(previousStatus.phase)
+  ) {
+    const deadline = Date.now() + 45_000;
+    while (processAlive(owner.pid) && Date.now() < deadline) await delay(150);
+    if (processAlive(owner.pid))
+      throw new Error("Previous workbench is still stopping.");
+    owner = null;
+  }
+  await attach(owner);
+}
+
+async function attach(owner: Owner | null): Promise<void> {
+  let closing = false;
+  const close = () => {
+    closing = true;
+  };
+  for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const)
+    process.on(signal, close);
+  process.on("disconnect", close);
+  if (process.stdin.isTTY) {
+    process.stdin.on("end", close);
+    process.stdin.on("close", close);
+    process.stdin.on("error", close);
+    process.stdin.resume();
+  }
+  let client: Awaited<ReturnType<typeof createWorkbenchClient>> | undefined;
+  let expectedPid = owner?.pid;
+  let announced = false;
+  try {
+    client = await createWorkbenchClient(developmentRoot);
+    if (
+      !owner ||
+      owner.workspace !== process.cwd() ||
+      !processAlive(owner.pid)
+    ) {
+      const child = spawn(
+        process.execPath,
+        ["--import", "tsx", "src/workers/dev.ts", "--serve"],
+        {
+          cwd: process.cwd(),
+          env: process.env,
+          detached: true,
+          windowsHide: true,
+          stdio: "ignore",
+        },
+      );
+      expectedPid = child.pid;
+      child.unref();
+    }
+    let deadline = Date.now() + 180_000;
+    let replacing: string | undefined;
+    while (!closing && client.parentAlive()) {
+      await client.pulse();
+      const current = await readJson<Owner>(ownerPath);
+      const status = await readJson<WorkbenchStatus>(statusPath);
+      if (announced && current && current.pid !== expectedPid) {
+        announced = false;
+        deadline = Date.now() + 180_000;
+      }
+      if (
+        status?.phase === "stopped" &&
+        status.instance === current?.instance
+      ) {
+        const command = await readJson<{
+          instance: string;
+          keepDatabase?: boolean;
+        }>(controlPath);
+        if (command?.instance === current.instance && command.keepDatabase) {
+          if (replacing !== current.instance) {
+            replacing = current.instance;
+            deadline = Date.now() + 180_000;
+            announced = false;
+          }
+          if (Date.now() >= deadline)
+            throw new Error("Workbench replacement timed out.");
+          await delay(350);
+          continue;
+        }
+      }
+      if (
+        current &&
+        current.pid === expectedPid &&
+        status?.instance === current.instance &&
+        (status.phase === "error" || status.phase === "stopped")
+      ) {
+        if (status.phase === "stopped" && announced) return;
+        throw new Error(
+          status.phase === "stopped"
+            ? "Workbench startup was cancelled."
+            : status.message,
+        );
+      }
+      if (
+        current &&
+        processAlive(current.pid) &&
+        status?.instance === current.instance
+      ) {
+        if (status.phase === "error") throw new Error(status.message);
+        if (status.phase === "ready" && !announced) {
+          const health = (await fetch(`${origin}/api/development`, {
+            signal: AbortSignal.timeout(1500),
+          })
+            .then((response) => response.json())
+            .catch(() => null)) as WorkbenchStatus | null;
+          if (health?.instance === current.instance) {
+            console.log(
+              `Shared workbench ready: ${origin}/${process.env.MEDOTA2_WORKBENCH_MAPS_ONLY === "1" ? "map" : "heroes"}\nLog: .medota2/development/server.log\nKeep this terminal open. Ctrl+C or closing the last dev terminal stops and cleans the workbench.`,
+            );
+            announced = true;
+            expectedPid = current.pid;
+            if (process.connected) process.send?.({ kind: "ready" });
+          }
+        }
+      }
+      if (announced && (!current || !processAlive(current.pid))) return;
+      if (!announced && Date.now() >= deadline)
+        throw new Error(
+          "Workbench startup timed out. See .medota2/development/server.log.",
+        );
+      await delay(350);
+    }
+  } finally {
+    await client?.close();
+    if (!(await hasWorkbenchClients(developmentRoot))) {
+      const deadline = Date.now() + 45_000;
+      while (expectedPid && processAlive(expectedPid) && Date.now() < deadline)
+        await delay(150);
+      if (expectedPid && processAlive(expectedPid))
+        throw new Error(
+          "Workbench is still stopping; see .medota2/development/server.log.",
+        );
+      const final = await readJson<WorkbenchStatus>(statusPath);
+      if (final?.phase === "error") throw new Error(final.message);
+    }
+    for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const)
+      process.off(signal, close);
+    process.off("disconnect", close);
+    if (process.stdin.isTTY) {
+      process.stdin.pause();
+      process.stdin.off("end", close);
+      process.stdin.off("close", close);
+      process.stdin.off("error", close);
+    }
+  }
 }
 
 async function serve(): Promise<void> {
@@ -155,6 +317,10 @@ async function serve(): Promise<void> {
   let web: ChildProcess | undefined, sample: ChildProcess | undefined;
   const watchers: FSWatcher[] = [];
   let timer: NodeJS.Timeout | undefined, controls: NodeJS.Timeout | undefined;
+  let storageMonitor: NodeJS.Timeout | undefined;
+  const preparation = new AbortController();
+  let preparing: Promise<void> | undefined;
+  let databaseSource: "development" | "local-review" | undefined;
   let stopping = false,
     savedAt = Date.now();
   const changed = new Set<string>();
@@ -167,9 +333,43 @@ async function serve(): Promise<void> {
     stopping = true;
     clearTimeout(timer);
     clearInterval(controls);
+    clearInterval(startupControls);
+    clearInterval(clientControls);
+    clearInterval(storageMonitor);
     watchers.forEach((watcher) => watcher.close());
-    await stopChildTree(web);
-    await stopChildTree(sample);
+    preparation.abort();
+    await preparing?.catch(() => undefined);
+    try {
+      await stopChildTree(web);
+      await stopChildTree(sample);
+      const command = await readJson<{
+        instance: string;
+        action: string;
+        keepDatabase?: boolean;
+      }>(controlPath);
+      const keepDatabase =
+        command?.instance === instance &&
+        command.action === "stop" &&
+        command.keepDatabase === true;
+      if (!keepDatabase && databaseSource) await stopDatabase(databaseSource);
+      if (!keepDatabase) {
+        await cleanStoppedResources();
+        if (process.env.MEDOTA2_AUTO_CLEANUP !== "0" && !process.env.CI)
+          await trimStoppedDevelopmentCache().catch((error: unknown) => {
+            console.warn(
+              "Development cache cleanup deferred:",
+              error instanceof Error ? error.message : String(error),
+            );
+          });
+        await automaticStorageCleanup("tests");
+        await automaticStorageCleanup("releases");
+      }
+    } catch (error) {
+      code = 1;
+      await publish({
+        message: `Shutdown failed: ${error instanceof Error ? error.message : String(error)}`,
+      });
+    }
     await publish({ phase: code ? "error" : "stopped" });
     restoreOutput?.();
     globalThis.console = originalConsole;
@@ -178,8 +378,33 @@ async function serve(): Promise<void> {
     await release?.();
     process.exitCode = code;
   };
-  process.once("SIGINT", () => void stop());
-  process.once("SIGTERM", () => void stop());
+  process.on("SIGINT", () => void stop());
+  process.on("SIGTERM", () => void stop());
+  process.on("SIGHUP", () => void stop());
+  let checkingClients = false;
+  const clientControls = setInterval(() => {
+    if (stopping || checkingClients) return;
+    checkingClients = true;
+    void hasWorkbenchClients(developmentRoot)
+      .then((active) => {
+        if (!active) void stop();
+      })
+      .catch(
+        (error) => void publish({ message: String(error) }).then(() => stop(1)),
+      )
+      .finally(() => {
+        checkingClients = false;
+      });
+  }, 500);
+  // Windows uses the control file while database preparation is still in progress.
+  const startupControls = setInterval(() => {
+    void readJson<{ action: string; instance: string }>(controlPath)
+      .then((command) => {
+        if (command?.instance === instance && command.action === "stop")
+          void stop();
+      })
+      .catch(() => undefined);
+  }, 250);
   try {
     log = await RotatingLog.create(process.cwd(), await readStoragePolicy());
     globalThis.console = new Console(log, log);
@@ -198,6 +423,8 @@ async function serve(): Promise<void> {
       throw new Error(
         `Port ${getWorkbenchPort()} already belongs to a server. Stop or coordinate that server before starting the shared workbench.`,
       );
+    await cleanStoppedResources();
+    if (stopping) return;
     const mapsOnly = process.env.MEDOTA2_WORKBENCH_MAPS_ONLY === "1";
     const dataSource = mapsOnly ? "development" : getPreviewDataSource();
     if (mapsOnly && !process.env.DOTA_MAP_COLLECTION_PATH)
@@ -212,33 +439,53 @@ async function serve(): Promise<void> {
           ? "准备真实数据并检查头像资产"
           : "准备开发数据；空库使用含占位图的测试样例",
     });
-    if (mapsOnly) {
-      const { readCollection } = await import("@/server/map/packages");
-      await readCollection(process.env.DOTA_MAP_COLLECTION_PATH!);
-    } else if (dataSource === "local-review") {
-      const releaseDatabase = await acquireLock("local-review-database");
-      try {
+    if (stopping) return;
+    if (!mapsOnly) databaseSource = dataSource;
+    preparing = (async () => {
+      if (mapsOnly) {
+        const { readCollection } = await import("@/server/map/packages");
+        await readCollection(process.env.DOTA_MAP_COLLECTION_PATH!);
+      } else if (dataSource === "local-review") {
+        const releaseDatabase = await acquireLock(
+          "local-review-database",
+          undefined,
+          preparation.signal,
+        );
+        try {
+          await run(
+            "pnpm",
+            ["exec", "tsx", "src/workers/prepare-local-review.ts"],
+            databaseEnv,
+            undefined,
+            preparation.signal,
+          );
+          await run(
+            "pnpm",
+            ["exec", "tsx", "src/workers/audit-assets.ts"],
+            {
+              ...databaseEnv,
+              MEDOTA2_PROCESS_ROLE: "web",
+            },
+            undefined,
+            preparation.signal,
+          );
+        } finally {
+          await releaseDatabase();
+        }
+      } else
         await run(
           "pnpm",
-          ["exec", "tsx", "src/workers/prepare-local-review.ts"],
+          ["exec", "tsx", "src/workers/prepare-development.ts"],
           databaseEnv,
+          undefined,
+          preparation.signal,
         );
-        await run("pnpm", ["exec", "tsx", "src/workers/audit-assets.ts"], {
-          ...databaseEnv,
-          MEDOTA2_PROCESS_ROLE: "web",
-        });
-      } finally {
-        await releaseDatabase();
-      }
-    } else
-      await run(
-        "pnpm",
-        ["exec", "tsx", "src/workers/prepare-development.ts"],
-        databaseEnv,
-      );
+    })();
+    await preparing;
     if (stopping) return;
     const env = {
       ...databaseEnv,
+      NODE_OPTIONS: previewNodeOptions(databaseEnv.NODE_OPTIONS),
       MEDOTA2_WORKBENCH: "1",
       MEDOTA2_PROCESS_ROLE: "web",
       NEXT_DIST_DIR: ".next",
@@ -273,7 +520,7 @@ async function serve(): Promise<void> {
         : "正在预热图鉴、详情路由与本机缓存接口",
     });
     try {
-      if (!mapsOnly) await warmCatalogRoutes(origin);
+      if (!mapsOnly) await warmCatalogRoutes(origin, preparation.signal);
     } catch (error) {
       // Warmup is an optimization, not a substitute for the verified data/setup
       // gates above. Keep a usable workbench if optional cache warmup fails.
@@ -282,10 +529,22 @@ async function serve(): Promise<void> {
         error instanceof Error ? error.message : String(error),
       );
     }
+    if (stopping) return;
     await publish({
       phase: "ready",
       message: "界面热更新已启动，正在计算小样例",
     });
+    // Reclaim expired test/build artifacts even after days without running tests.
+    // Cleanup uses non-blocking scope locks and retains active/pinned evidence.
+    const maintainIdleStorage = async () => {
+      await automaticStorageCleanup("tests");
+      await automaticStorageCleanup("releases");
+      await automaticStorageCleanup("data-sync");
+      await reportStorageBudget();
+    };
+    void maintainIdleStorage();
+    storageMonitor = setInterval(() => void maintainIdleStorage(), 6 * 3600000);
+    storageMonitor.unref();
 
     async function calculate(): Promise<void> {
       if (stopping) return;
@@ -458,6 +717,7 @@ async function serve(): Promise<void> {
           });
       }),
     );
+    clearInterval(startupControls);
     let lastCommand = "";
     controls = setInterval(() => {
       void readFile(controlPath, "utf8")
@@ -494,6 +754,7 @@ async function serve(): Promise<void> {
     }, 250);
     schedule("启动工作台");
   } catch (error) {
+    if (stopping) return;
     await publish({
       message: error instanceof Error ? error.message : String(error),
     });

@@ -498,6 +498,47 @@ describe("InfiniteList", () => {
     expect(chunk.querySelector("[data-infinite-list-spacer]")).not.toBeNull();
   });
 
+  it("reuses earlier cards when subsequent chunks append", async () => {
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(
+      function (this: HTMLElement) {
+        return this.hasAttribute("data-infinite-boundary")
+          ? rect(100000, 1)
+          : rect(100, 120);
+      },
+    );
+    const renderCard = vi.fn((item: Item) => <p key={item.id}>{item.label}</p>);
+    render(
+      <InfiniteList<Item>
+        source={{
+          kind: "local",
+          chunkSize: 1,
+          items: [
+            { id: "a", label: "Alpha" },
+            { id: "b", label: "Beta" },
+            { id: "c", label: "Gamma" },
+          ],
+        }}
+        getKey={(item) => item.id}
+        renderChunk={(items) => items.map(renderCard)}
+      />,
+    );
+    const bottom = document.querySelector(
+      '[data-infinite-list-sentinel="after"]',
+    )!;
+    act(() => observers[0].trigger(bottom, true));
+    await screen.findByText("Beta");
+    const alpha = screen.getByText("Alpha");
+    const firstRenders = renderCard.mock.calls.filter(
+      ([item]) => item.id === "a",
+    ).length;
+    act(() => observers[0].trigger(bottom, true));
+    await screen.findByText("Gamma");
+    expect(screen.getByText("Alpha")).toBe(alpha);
+    expect(
+      renderCard.mock.calls.filter(([item]) => item.id === "a"),
+    ).toHaveLength(firstRenders);
+  });
+
   it("falls back to RAF-throttled document scroll checks without IntersectionObserver", async () => {
     vi.stubGlobal("IntersectionObserver", undefined);
     render(

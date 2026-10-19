@@ -11,6 +11,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type ChangeEvent,
   type FormEvent,
 } from "react";
@@ -20,6 +21,7 @@ import { withLocale, resolveLocale } from "@/i18n/locale";
 import { withRelease } from "@/domain/releases";
 import {
   getBrowserReplica,
+  peekBrowserReplica,
   prefetchSibling,
   checkCatalogHead,
 } from "@/browser/catalog-replica";
@@ -87,6 +89,10 @@ interface Options<T, F> {
   canonical: (filters: F) => string;
 }
 
+const subscribeToHydration = () => () => {};
+const hydrated = () => true;
+const notHydrated = () => false;
+
 export function useLiveCatalog<
   T,
   F extends { q: string; lang: "en" | "zh-CN" },
@@ -102,18 +108,44 @@ export function useLiveCatalog<
   const router = useRouter();
   const locale = useLocale();
   const release = useSearchParams().get("release");
-  const replicas = useRef(new Map<string, CatalogReplica>());
+  const ready = useSyncExternalStore(
+    subscribeToHydration,
+    hydrated,
+    notHydrated,
+  );
+  const [initialReplica] = useState(() =>
+    ready && localEntity && !initialErrors.length
+      ? peekBrowserReplica({
+          entity: localEntity,
+          locale: initialFilters.lang,
+          datasetVersionId: initialSlice.datasetVersionId,
+          assetDatasetVersionId: initialSlice.assetDatasetVersionId,
+        })
+      : undefined,
+  );
+  const replicas = useRef(
+    new Map<string, CatalogReplica>(
+      initialReplica ? [[initialFilters.lang, initialReplica]] : [],
+    ),
+  );
   const initialQuery = canonical(initialFilters);
   const [filters, setFilters] = useState(initialFilters);
-  const [result, setResult] = useState({
-    slice: initialSlice,
+  const [result, setResult] = useState(() => ({
+    slice: initialReplica
+      ? (queryReplica(
+          initialReplica,
+          initialFilters as unknown as HeroFilters | AbilityFilters,
+        ) as VersionedListSlice<T>)
+      : initialSlice,
     query: initialQuery,
     lang: initialFilters.lang,
-    local: false,
-  });
+    local: Boolean(initialReplica),
+  }));
   const [validationErrors, setValidationErrors] = useState(initialErrors);
   const [busy, setBusy] = useState(false);
-  const [restorePending, setRestorePending] = useState(Boolean(localEntity));
+  const [restorePending, setRestorePending] = useState(
+    Boolean(localEntity && !initialReplica),
+  );
   const [error, setError] = useState<string | null>(null);
   const cache = useRef(
     new Map(initialErrors.length ? [] : [[initialQuery, initialSlice]]),
@@ -147,11 +179,23 @@ export function useLiveCatalog<
       setError(null);
       const replica = replicas.current.get(next.lang);
       if (replica) {
-        const slice = queryReplica(
-          replica,
-          next as unknown as HeroFilters | AbilityFilters,
-        ) as VersionedListSlice<T>;
-        setResult({ slice, query, lang: next.lang, local: true });
+        setResult((current) => {
+          if (
+            current.local &&
+            current.query === query &&
+            current.lang === next.lang &&
+            current.slice.datasetVersionId ===
+              replica.manifest.datasetVersionId &&
+            current.slice.assetDatasetVersionId ===
+              replica.manifest.assetDatasetVersionId
+          )
+            return current;
+          const slice = queryReplica(
+            replica,
+            next as unknown as HeroFilters | AbilityFilters,
+          ) as VersionedListSlice<T>;
+          return { slice, query, lang: next.lang, local: true };
+        });
         setBusy(false);
         return;
       }

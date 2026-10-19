@@ -370,7 +370,7 @@ Raw diff + source-schema diff + semantic diff
         └── Red ────> reject; keep current head
 ```
 
-刷新进程使用专用 mirror/cache 和 exact-commit detached worktree，不对用户正在使用的相邻 checkout 执行 `pull`、`checkout`、`reset` 或上游脚本。所有上游目录保持只读。
+刷新进程使用专用 mirror/cache 和 exact-commit detached worktree，不对用户正在使用的相邻 checkout 执行 `pull`、`checkout`、`reset` 或上游脚本。所有上游目录保持只读。受管来源缓存仅在缺少目标commit时按完整SHA执行depth=1、no-tags获取，并为固定commit保留本地引用；不再镜像上游全部分支与历史，已具备目标对象时可离线复用。受管工作树只展开steam.inf、scripts/npc、change_log及中英本地化；Git对象、commit和manifest校验保持完整，未知版本不靠目录推断。已有工作树必须HEAD匹配且无本地修改才可收缩，外部用户checkout不改写。
 
 ### 11.3 全量重建策略
 

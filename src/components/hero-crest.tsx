@@ -1,7 +1,12 @@
 "use client";
 import { useTranslations } from "@/i18n/provider";
 
+import { HERO_PORTRAIT_SIZES } from "@/domain/viewport-assets";
 import Image from "next/image";
+import {
+  isViewportAssetReady,
+  rememberViewportAsset,
+} from "@/browser/viewport-assets";
 import { useState } from "react";
 import valveAssetImageLoader from "./valve-asset-image-loader";
 
@@ -19,6 +24,11 @@ export function HeroCrest({
   src?: string;
 }) {
   const t = useTranslations();
+  const sizes = portrait
+    ? HERO_PORTRAIT_SIZES
+    : large
+      ? "(min-width: 640px) 56px, 48px"
+      : "56px";
   const [failed, setFailed] = useState(false);
   const initials = name
     .split(/[\s-]+/u)
@@ -51,14 +61,12 @@ export function HeroCrest({
           src={src}
           alt={t("{name} 图标", { name })}
           fill
-          sizes={
-            portrait
-              ? "(min-width: 640px) 96px, (min-width: 360px) 25vw, 33vw"
-              : large
-                ? "(min-width: 640px) 56px, 48px"
-                : "56px"
+          sizes={sizes}
+          loading={large || isViewportAssetReady(src, sizes) ? "eager" : "lazy"}
+          decoding="sync"
+          onLoad={(event) =>
+            rememberViewportAsset({ src, sizes }, event.currentTarget)
           }
-          loading={large ? "eager" : "lazy"}
           className="z-10 object-cover"
           onError={() => setFailed(true)}
         />

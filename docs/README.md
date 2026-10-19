@@ -43,7 +43,7 @@
 | 图鉴UI                                                       | [语义UI](specs/semantic-game-ui.md)、[设计系统](design-system.md)；涉及加载时读[列表](specs/infinite-lists.md)和[缓存](specs/browser-catalog-cache.md)                        | 对应组件及图鉴浏览流程                        |
 | 地图／寻路                                                   | [地图](specs/map-explorer.md)、[本机来源](repositories/local-dota-map.md)或[公开来源](repositories/sloppy-map.md)                                                             | 已有地图算法、导入、组件用例；核对Dataset版本 |
 | 属性图鉴                                                     | [属性](specs/attribute-catalog.md)、[语义UI](specs/semantic-game-ui.md)、[实体版本](specs/entity-versions.md)；机制缺项见[Windows核验](work/attribute-engine-verification.md) | 属性映射、枚举、来源覆盖、公式与浏览流程      |
-| 物品图鉴                                                     | [物品](specs/item-catalog.md)、[语义UI](specs/semantic-game-ui.md)、[实体版本](specs/entity-versions.md)                                                                      | 物品适配器、固定来源与浏览流程                |
+| 物品图鉴                                                     | [物品](specs/item-catalog.md)、[英雄物品和状态](specs/hero-inventory.md)、[语义UI](specs/semantic-game-ui.md)、[实体版本](specs/entity-versions.md)                           | 物品适配器、固定来源与浏览流程                |
 | 单位／资产                                                   | [单位](specs/unit-catalog.md)、[资产ADR](adr/0004-database-icon-asset-datasets.md)、所用来源页                                                                                | 单位、资产及相关浏览／数据库检查              |
 | Catalog导入／发布                                            | [Catalog](specs/hero-catalog-v2.md)、[来源](repositories/README.md)、[刷新门禁](adr/0003-catalog-refresh-gates.md)                                                            | 解析、差异、原子发布及数据库约束              |
 | 同步／平台兼容                                               | [同步Spec](specs/development-data-sync.md)、[运行手册](development-data-sync-runbook.md)、[恢复ADR](adr/0008-development-snapshot-restore.md)、环境对应条目                   | 内容一致性、失败恢复及目标平台                |
@@ -58,6 +58,11 @@
 
 | 文档                                                                        | 状态       | 负责内容                                           |
 | --------------------------------------------------------------------------- | ---------- | -------------------------------------------------- |
+| [同步副本与产物深度清理](history/2026-10-19-sync-storage-cleanup.md)        | historical | 同步载荷归档、离线恢复、闲置回收与第二轮空间验收   |
+| [项目目录清理与增长治理](history/2026-10-19-storage-cleanup.md)             | historical | 容量盘点、来源缓存收缩、诊断归档与持续预算         |
+| [Docker生命周期验收](history/2026-10-19-docker-lifecycle.md)                | historical | 最小运行集合、取消清理、保卷恢复与脚手架精简       |
+| [开发内存与空间优化验收](history/2026-10-19-runtime-storage-performance.md) | historical | 堆预算、编译回收与存储治理                         |
+| [开发内存增长定位](history/2026-10-19-development-memory-growth.md)         | historical | React调试保留链、真实压力对照与开发兼容            |
 | [Tab与缓存实施](work/tab-cache-performance.md)                              | active     | 导航响应、版本资源复用与性能验收                   |
 | [发布预检与失败恢复](work/publication-retry-performance.md)                 | reference  | 已发布流程、恢复入口与Windows原生取消复验          |
 | [当前工作](current.md)                                                      | active     | 活动状态与接手                                     |
@@ -85,6 +90,8 @@
 | [属性](specs/attribute-catalog.md)                                          | active     | 属性身份、同版引用、官方名称、机制与证据           |
 | [属性机制Windows核验](work/attribute-engine-verification.md)                | active     | 同版客户端来源提取与实验交接                       |
 | [物品](specs/item-catalog.md)                                               | active     | 物品定义、目录、配方与来源边界                     |
+| [英雄物品和状态](specs/hero-inventory.md)                                   | active     | 装备、消费状态、A杖／魔晶、中立物品与附魔模拟      |
+| [英雄物品和状态验收](history/2026-10-15-hero-inventory.md)                  | historical | 来源审计、组合验证、导航修复与交互采样             |
 | [地图](specs/map-explorer.md)                                               | active     | 地图数据、操作、计算与估算边界                     |
 | [视野模拟准备与后续接入](work/map-vision-occlusion.md)                      | active     | 近似算法、离线复现、Web接入与可选精度升级          |
 | [视野算法准备验收](history/2026-10-08-map-vision-preparation.md)            | historical | 6944离线样例、算法检查与未覆盖范围                 |
@@ -130,6 +137,9 @@
 | [表格与菜单交互迭代](history/2026-10-10-table-interactions.md)              | historical | 全站冻结、列宽换行、共用菜单与按压反馈验收         |
 | [英雄角色二级列](history/2026-10-10-hero-role-columns.md)                   | reference  | 八类角色补0、偏好兼容、分层表头与本机验收          |
 | [Tab加载与缓存优化验收](history/2026-10-11-tab-cache-performance.md)        | reference  | 阶段0–3、版本缓存边界、1320次采样与剩余性能目标    |
+| [Tab首屏图片预热](history/2026-10-13-tab-viewport-preload.md)               | reference  | 首屏图片解码、版本隔离与首帧交互验证               |
+| [英雄详情布局与等级](history/2026-10-13-hero-detail-levels.md)              | reference  | 左右属性布局、简介提示、英雄与技能等级及验证       |
+| [Tab切换等待优化](history/2026-10-13-tab-switch-latency.md)                 | historical | 单位占位延迟、首屏完整渲染及列表块复用             |
 | [Fixture失败与架构修复](history/2026-10-10-fixture-repair.md)               | historical | 嵌套悬浮卡、视觉门禁、参数及验证收据               |
 | [变化表格与影响排序](history/2026-10-08-changes-table.md)                   | historical | 紧凑分类、实体简述卡、语义方向与连续虚拟滚动验收   |
 | [图鉴统计与即时搜索](history/2026-10-08-tab-search-tooltips.md)             | historical | 属性数量、变化实时搜索、页头说明提示与本机验证     |
@@ -149,6 +159,7 @@
 | [2026-10-11全部本地变更发布](history/2026-10-11-main-publication.md)        | reference  | Tab缓存与角色列整合、初始化修复、CI与完整数据交接  |
 | [2026-10-10全部本地变更发布](history/2026-10-10-main-publication.md)        | reference  | 图鉴表格、全站交互、Fixture发布修复与数据交接      |
 | [地图Web与品牌发布](history/2026-10-08-map-web-publication.md)              | historical | 近似视野、营地、英雄图标、快照与语言旅程CI修复     |
+| [反隐标记与选中态减轻](history/2026-10-12-sentry-marker.md)                 | reference  | 细环、选中框与徽标减轻，地图专项和实页核对         |
 | [冷构建完整发布](history/2026-10-12-cold-publication.md)                    | reference  | 冷构建4分45.7秒、原断言保留及最终零重试            |
 | [表头修复与发布](history/2026-10-12-header-menu.md)                         | reference  | 留白悬停修复、flaky阻断及4分15.3秒零重试发布       |
 | [完整发布5分钟验收](history/2026-10-11-publication-full-gates.md)           | reference  | POST预热、核心并行及全量发布4分27.6秒              |

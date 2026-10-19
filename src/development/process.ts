@@ -10,7 +10,24 @@ export async function stopChildTree(
   if (!child?.pid || child.exitCode !== null || child.signalCode !== null)
     return;
   if (process.platform !== "win32") {
-    child.kill("SIGTERM");
+    await new Promise<void>((accept, reject) => {
+      const force = setTimeout(() => child.kill("SIGKILL"), 10_000);
+      const deadline = setTimeout(() => {
+        cleanup();
+        reject(new Error(`Owned child ${child.pid} did not stop.`));
+      }, 15_000);
+      const cleanup = () => {
+        clearTimeout(force);
+        clearTimeout(deadline);
+        child.off("close", closed);
+      };
+      const closed = () => {
+        cleanup();
+        accept();
+      };
+      child.once("close", closed);
+      child.kill("SIGTERM");
+    });
     return;
   }
   try {

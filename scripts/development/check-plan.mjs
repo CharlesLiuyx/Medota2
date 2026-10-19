@@ -17,18 +17,18 @@ export function changedFiles(base) {
 }
 
 const toolchain =
-  /^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|.*config\.(?:ts|mjs|json)|\.github\/workflows\/|scripts\/development\/|src\/testing\/|src\/development\/|src\/workers\/(?:dev|run-test|run-check|prepare-development|typecheck|run-shared|bench|release))/;
+  /^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|.*config\.(?:ts|mjs|json)|\.github\/workflows\/|scripts\/development\/|src\/testing\/|src\/development\/|src\/workers\/(?:dev|data-sync|storage-clean|run-test|run-check|prepare-development|typecheck|run-shared|bench|release))/;
 const foundation =
   /^(src\/(?:domain|lib|config)\/|tests\/(?:fixtures|helpers)\/)/;
 const data =
   /^(src\/(?:importers|server|workers)\/|drizzle\/|docker\/|docker-compose)/;
 const ui = /^src\/(?:app|components)\//;
 const sharedUi =
-  /(?:layout\.tsx|globals\.css|app-shell|infinite-list|components\/ui\/)/;
+  /(?:layout\.tsx|globals\.css|app-shell|hero-tab-cache|infinite-list|components\/ui\/)/;
 // The two visual contracts cover the hero catalog and ability detail, including
 // their shared chrome. Keep unrelated map/unit changes on their own journeys.
 const visualScope =
-  /^(?:public\/brand\/|src\/app\/(?:layout\.tsx|globals\.css|heroes\/page\.tsx|abilities\/\[[^/]+\]\/page\.tsx)$|src\/components\/(?:ui\/|(?:app-shell|release-navigation|language-switcher|hero-card|hero-crest|hero-filter-form|infinite-hero-catalog|live-catalog|use-live-catalog|catalog-header|catalog-view-switch|infinite-list|ability-tooltip|ability-icon|attribute-link|entity-reference|owner-attribute-list|version-link)(?:[./]|$)))/;
+  /^(?:public\/brand\/|src\/app\/(?:layout\.tsx|globals\.css|heroes\/page\.tsx|abilities\/\[[^/]+\]\/page\.tsx)$|src\/components\/(?:ui\/|(?:app-shell|hero-tab-cache|release-navigation|language-switcher|hero-card|hero-crest|hero-filter-form|infinite-hero-catalog|live-catalog|use-live-catalog|catalog-header|catalog-view-switch|infinite-list|ability-tooltip|ability-icon|attribute-link|attribute-icon|entity-reference|owner-attribute-list|version-link)(?:[./]|$)))/;
 // Reviewed leaf components/resources have existing tests and no navigation or
 // product-service responsibility. Missing sources/tests fall back to broad rules.
 const focusedUnitScopes = new Map([
@@ -76,6 +76,7 @@ for (const path of [
   ]);
 
 const journeyPatterns = {
+  viewport: "viewport:",
   map: "map:",
   heroes: "heroes:",
   abilities: "abilities:",
@@ -305,6 +306,11 @@ export function createPlan(inputPaths) {
         "vitest.config.ts",
       ],
     );
+  const viewportPreload = flowPaths.some((path) =>
+    /viewport-assets|catalog-viewport|hero-tab-cache|tab-preload|api\/catalog\/viewport|ui\/entity-tabs|infinite-list|infinite-hero-catalog|use-live-catalog|browser\/catalog-replica|app\/units\/loading/.test(
+      path,
+    ),
+  );
   const explicitUnit = existing.filter((path) =>
     /^tests\/unit\/.*\.test\.[jt]sx?$/.test(path),
   );
@@ -331,6 +337,7 @@ export function createPlan(inputPaths) {
       ...explicitUnit,
       ...focused.flatMap((path) => focusedUnitScopes.get(path)),
     ]);
+    if (viewportPreload) unitFiles.add("tests/unit/viewport-assets.test.ts");
     if (hasUi || hasMap || hasUnits) {
       unitFiles.add("tests/unit/i18n.test.ts");
       unitFiles.add("tests/unit/i18n-resources.test.ts");
@@ -368,7 +375,7 @@ export function createPlan(inputPaths) {
     }
     if (
       paths.some((path) =>
-        /hover-tooltip|attribute-link|entity-reference|entity-preview/.test(
+        /hover-tooltip|attribute-link|attribute-icon|entity-reference|entity-preview/.test(
           path,
         ),
       )
@@ -384,6 +391,18 @@ export function createPlan(inputPaths) {
       unitFiles.add("tests/unit/grouped-table.test.tsx");
       unitFiles.add("tests/unit/detail-infinite-lists.test.tsx");
       unitFiles.add("tests/unit/infinite-list.test.tsx");
+    }
+    if (
+      paths.some((path) =>
+        /hero-status|hero-reference|hero-overview|hero-stat-rankings|hero-stats|hero-build|hero-abilit|hero-talent|hero-inventory|inventory-adapter|ability-upgrades|ability-talents|ability-levels|ability-tooltip|shadowraze-card/.test(
+          path,
+        ),
+      )
+    ) {
+      unitFiles.add("tests/unit/hero-levels.test.tsx");
+      unitFiles.add("tests/unit/hero-inventory.test.ts");
+      unitFiles.add("tests/unit/hero-status-catalog.test.ts");
+      unitFiles.add("tests/unit/shadowraze-card.test.tsx");
     }
     if (paths.some((path) => /compact-(?:select|filter-menu|menu)/.test(path)))
       unitFiles.add("tests/unit/compact-select.test.tsx");
@@ -446,6 +465,7 @@ export function createPlan(inputPaths) {
     )
   )
     journeys.add("map");
+  if (viewportPreload) journeys.add("viewport");
   const sharedResources = flowPaths.some((path) =>
     /^src\/(?:browser\/(?:resources|persistent-resources|catalog-replica)\.ts|lib\/resource-cache\.ts|server\/services\/resource-scope\.ts)$/.test(
       path,
@@ -471,7 +491,12 @@ export function createPlan(inputPaths) {
   } else if (hasUi) {
     if (flowPaths.some((path) => /abilit/.test(path)))
       journeys.add("abilities");
-    if (flowPaths.some((path) => /hero/.test(path))) journeys.add("heroes");
+    if (
+      flowPaths.some((path) =>
+        /hero|inventory-adapter|ability-upgrades/.test(path),
+      )
+    )
+      journeys.add("heroes");
     if (
       !journeys.size &&
       !flowPaths.some((path) => /items|attributes|changes|release/.test(path))
@@ -480,6 +505,14 @@ export function createPlan(inputPaths) {
       journeys.add("abilities");
     }
   }
+  if (
+    flowPaths.some((path) =>
+      /hero-status|hero-inventory|inventory-adapter|ability-upgrades|neutral-pool/.test(
+        path,
+      ),
+    )
+  )
+    journeys.add("heroes");
   if (journeys.has("heroes") || journeys.has("abilities"))
     journeys.add("tooltips");
   if (wide || shared || catalogTableUi || localeRuntime || hasUnits)
@@ -725,7 +758,9 @@ export function warmRoutesForScopes(scopes) {
   if (
     !scopes?.length ||
     scopes.some((scope) => !Object.hasOwn(journeyPatterns, scope)) ||
-    scopes.some((scope) => ["locale", "names", "releases"].includes(scope))
+    scopes.some((scope) =>
+      ["locale", "names", "releases", "viewport"].includes(scope),
+    )
   )
     return allWarmRoutes;
   const modules = new Set(["heroes", "abilities"]);

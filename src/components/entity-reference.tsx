@@ -6,6 +6,7 @@ import { useState, type ReactNode } from "react";
 import { Box, Gem, Shield, Sparkles, Swords, UserRound } from "lucide-react";
 import { useTranslations } from "@/i18n/provider";
 import type { EntityPreview } from "@/presentation/entity-preview";
+import { attributeIcon } from "./attribute-icon";
 import { AttributeSummaryDetails } from "./attribute-summary-details";
 import { HoverTooltip } from "./ui/hover-tooltip";
 import valveAssetImageLoader from "./valve-asset-image-loader";
@@ -18,7 +19,7 @@ export function EntityGlyph({ entity }: { entity: EntityPreview }) {
     ability: Sparkles,
     item: Gem,
     unit: Swords,
-    attribute: Shield,
+    attribute: attributeIcon(entity.key),
     mechanism: Shield,
     other: Box,
   }[entity.kind];
@@ -83,7 +84,9 @@ export function EntityReferenceWidthSample({
   names?: readonly string[];
 }) {
   return (
-    <span className={`${styles.reference} ${styles.inline}`}>
+    <span
+      className={`${styles.reference} ${styles.inline} ${entity.kind === "attribute" ? styles.attributeReference : ""}`}
+    >
       <span className={`${styles.icon} ${styles[entity.kind] ?? ""}`} />
       {names ? <TextWidthSample texts={names} /> : <span>{entity.name}</span>}
     </span>
@@ -104,7 +107,7 @@ export function EntityReference({
   return (
     <HoverTooltip
       href={entity.href}
-      className={`${styles.reference}${inline ? ` ${styles.inline}` : ""}`}
+      className={`${styles.reference}${inline ? ` ${styles.inline}` : ""}${entity.kind === "attribute" ? ` ${styles.attributeReference}` : ""}`}
       content={<EntitySummaryCard entity={entity} />}
     >
       {icon && <EntityGlyph entity={entity} />}

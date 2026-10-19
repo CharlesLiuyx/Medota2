@@ -5,15 +5,23 @@ import {
   SourceLanguageNotice,
   useTranslations,
 } from "@/i18n/provider";
-import { ENVIRONMENT_NOTICES } from "@/i18n/environment";
+import {
+  ENVIRONMENT_NOTICES,
+  getEnvironmentTitlePrefix,
+} from "@/i18n/environment";
 export { getEnvironmentTitlePrefix } from "@/i18n/environment";
 import { LanguageSwitcher, LocalizedText } from "@/i18n/provider";
 import Link from "./version-link";
 import { ReleaseSwitcher } from "./release-navigation";
 import type { ReleaseIndex } from "@/domain/releases";
 import Image from "next/image";
-import type { ReactNode } from "react";
+import type { ReactNode, ComponentProps } from "react";
 import type { PublicEnvironmentIdentity } from "@/domain/environment";
+import {
+  HeroTabCache,
+  HeroTabOutlet,
+  useHeroTabNavigation,
+} from "./hero-tab-cache";
 import { EntityTabs } from "./ui/entity-tabs";
 export function AppShell({
   children,
@@ -29,11 +37,14 @@ export function AppShell({
   const t = useTranslations();
   const locale = useLocale();
   return (
-    <>
+    <HeroTabCache
+      identity={JSON.stringify(environment)}
+      title={`${getEnvironmentTitlePrefix(environment.environment, locale)}${t("英雄")} · Medota2`}
+    >
       <header className="sticky top-0 z-40 bg-[#0d141bef] backdrop-blur-xl">
         <div className="mx-auto flex max-w-[var(--content-max)] items-center justify-between gap-1 px-2 sm:gap-3 sm:px-6">
           <div className="flex h-7 min-w-0 items-stretch gap-2 sm:gap-5">
-            <Link
+            <HomeLink
               href={mapOnly ? "/map" : "/heroes"}
               className="flex shrink-0 items-center gap-1.5"
               aria-label={mapOnly ? t("Medota2 地图") : t("Medota2 英雄图鉴")}
@@ -49,7 +60,7 @@ export function AppShell({
               <strong className="hidden text-xs font-semibold tracking-wide sm:inline">
                 Medota2
               </strong>
-            </Link>
+            </HomeLink>
             {mapOnly ? (
               <Link href="/map" className="flex items-center text-xs">
                 <LocalizedText>地图</LocalizedText>
@@ -84,7 +95,7 @@ export function AppShell({
           <SourceLanguageNotice sourceLocale={gameLocale(locale)} />
         </div>
       )}
-      {children}
+      <HeroTabOutlet>{children}</HeroTabOutlet>
       <footer className="mx-auto mt-6 flex max-w-[var(--content-max)] flex-col gap-2 px-4 py-4 text-xs leading-6 text-[var(--text-muted)] sm:flex-row sm:justify-between">
         <p>
           <LocalizedText>
@@ -97,7 +108,7 @@ export function AppShell({
           </LocalizedText>
         </p>
       </footer>
-    </>
+    </HeroTabCache>
   );
 }
 export function EnvironmentStrip({
@@ -128,5 +139,18 @@ export function EnvironmentStrip({
         </LocalizedText>
       </span>
     </aside>
+  );
+}
+
+function HomeLink(props: ComponentProps<typeof Link>) {
+  const navigateHero = useHeroTabNavigation();
+  return (
+    <Link
+      {...props}
+      onNavigate={(event) => {
+        if (props.href === "/heroes" && navigateHero?.())
+          event.preventDefault();
+      }}
+    />
   );
 }

@@ -3,6 +3,8 @@ import { useTranslations } from "@/i18n/provider";
 import type { Translator } from "@/i18n/messages";
 
 import {
+  memo,
+  startTransition,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -324,10 +326,27 @@ export function useInfiniteList<T>({
         direction === "before" ? current.previousCursor : current.nextCursor;
       if (cursor === null) return;
 
+      const boundary =
+        direction === "before"
+          ? topSentinelElementRef.current
+          : bottomSentinelElementRef.current;
+      const rect = boundary?.getBoundingClientRect();
+      const background =
+        sourceRef.current.kind === "local" &&
+        rect &&
+        (rect.top >= window.innerHeight || rect.bottom <= 0);
+      const publish = (
+        update: (value: InfiniteListState<T>) => InfiniteListState<T>,
+      ) => {
+        // Work in the 7x/10x overscan band must yield to navigation and typing.
+        if (background) startTransition(() => commit(update));
+        else commit(update);
+      };
+
       const generation = generationRef.current;
       const controller = new AbortController();
       inFlightRef.current[direction] = { controller, cursor, generation };
-      commit((value) => ({
+      publish((value) => ({
         ...value,
         [direction]: { loading: true, error: null },
       }));
@@ -378,7 +397,7 @@ export function useInfiniteList<T>({
         consumedRef.current[direction].add(cursor);
         const chunk = slice.items.length > 0 ? makeChunk(slice.items) : null;
 
-        commit((value) => {
+        publish((value) => {
           const chunks = chunk
             ? direction === "before"
               ? [chunk, ...value.chunks]
@@ -419,7 +438,7 @@ export function useInfiniteList<T>({
               code: error.code,
               message: error.message,
             };
-            commit((value) => ({
+            publish((value) => ({
               ...value,
               [direction]: IDLE_DIRECTION,
               liveMessage: error.message,
@@ -429,7 +448,7 @@ export function useInfiniteList<T>({
           return;
         }
         const errorMessage = getErrorMessage(error);
-        commit((value) => ({
+        publish((value) => ({
           ...value,
           [direction]: { loading: false, error: errorMessage },
           liveMessage: `${messagesRef.current.loadFailed} ${errorMessage}`,
@@ -823,41 +842,28 @@ export function InfiniteList<T>({
             -1,
           );
           const nextChunk = findNonEmptyChunk(stream.chunks, chunkIndex, 1);
-          const context: InfiniteChunkRenderContext<T> = {
-            chunkId: chunk.id,
-            chunkIndex,
-            isFirstChunk: chunkIndex === 0,
-            isLastChunk: chunkIndex === stream.chunks.length - 1,
-            previousItem: previousChunk?.items.at(-1),
-            nextItem: nextChunk?.items[0],
-          };
           return (
-            <div
-              // Retain the actual anchors when an online slice becomes a local
-              // replica. Replacing a link between pointerdown and pointerup
-              // drops the click even when both versions show the same card.
+            <ListChunk
+              // Preserve anchors when the online slice becomes a local replica.
               key={
                 chunk.items.length
                   ? normalizeKey(options.getKey(chunk.items[0]))
                   : chunk.id
               }
-              ref={(node) => stream.chunkRef(chunk.id, node)}
+              chunkId={chunk.id}
+              items={chunk.items}
+              rendered={chunk.rendered}
+              measuredHeight={chunk.measuredHeight}
+              chunkIndex={chunkIndex}
+              isFirstChunk={chunkIndex === 0}
+              isLastChunk={chunkIndex === stream.chunks.length - 1}
+              previousItem={previousChunk?.items.at(-1)}
+              nextItem={nextChunk?.items[0]}
+              bindChunk={stream.chunkRef}
               className={chunkClassName}
               role={contentRole === "list" ? "presentation" : undefined}
-              data-infinite-chunk-id={chunk.id}
-              data-infinite-list-chunk=""
-            >
-              {chunk.rendered ? (
-                renderChunk(chunk.items, context)
-              ) : (
-                <div
-                  data-infinite-spacer=""
-                  data-infinite-list-spacer=""
-                  aria-hidden="true"
-                  style={{ height: chunk.measuredHeight ?? 0 }}
-                />
-              )}
-            </div>
+              renderChunk={renderChunk}
+            />
           );
         })}
       </div>
@@ -884,6 +890,81 @@ export function InfiniteList<T>({
   );
 }
 /* eslint-enable react-hooks/refs */
+
+// Height measurements and appended chunks must not recreate every existing card.
+function Chunk<T>({
+  chunkId,
+  items,
+  rendered,
+  measuredHeight,
+  chunkIndex,
+  isFirstChunk,
+  isLastChunk,
+  previousItem,
+  nextItem,
+  bindChunk,
+  className,
+  role,
+  renderChunk,
+}: InfiniteChunkRenderContext<T> & {
+  items: T[];
+  rendered: boolean;
+  measuredHeight: number | null;
+  bindChunk: (id: string, node: HTMLElement | null) => void;
+  className?: string;
+  role?: "presentation";
+  renderChunk: InfiniteListProps<T>["renderChunk"];
+}) {
+  const ref = useCallback(
+    (node: HTMLDivElement | null) => bindChunk(chunkId, node),
+    [bindChunk, chunkId],
+  );
+  const content = useMemo(
+    () =>
+      rendered
+        ? renderChunk(items, {
+            chunkId,
+            chunkIndex,
+            isFirstChunk,
+            isLastChunk,
+            previousItem,
+            nextItem,
+          })
+        : null,
+    [
+      rendered,
+      renderChunk,
+      items,
+      chunkId,
+      chunkIndex,
+      isFirstChunk,
+      isLastChunk,
+      previousItem,
+      nextItem,
+    ],
+  );
+  return (
+    <div
+      ref={ref}
+      className={className}
+      role={role}
+      data-infinite-chunk-id={chunkId}
+      data-infinite-list-chunk=""
+    >
+      {rendered ? (
+        content
+      ) : (
+        <div
+          data-infinite-spacer=""
+          data-infinite-list-spacer=""
+          aria-hidden="true"
+          style={{ height: measuredHeight ?? 0 }}
+        />
+      )}
+    </div>
+  );
+}
+const ListChunk = memo(Chunk) as typeof Chunk;
 
 function BoundaryStatus({
   direction,

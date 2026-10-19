@@ -188,3 +188,23 @@ it("repositions a growing asynchronous card within the viewport and disconnects 
   fireEvent.keyDown(document, { key: "Escape" });
   expect(disconnect).toHaveBeenCalledOnce();
 });
+
+it("shows item details on focus but closes them when the same trigger opens a picker", () => {
+  const choose = vi.fn();
+  render(
+    <HoverTooltip
+      openOnClick={false}
+      buttonProps={{ onClick: choose, "aria-haspopup": "dialog" }}
+      content="Item details"
+    >
+      Equipment
+    </HoverTooltip>,
+  );
+  const trigger = screen.getByRole("button", { name: "Equipment" });
+  fireEvent.focus(trigger);
+  expect(screen.getByRole("tooltip").textContent).toBe("Item details");
+  fireEvent.click(trigger);
+  expect(choose).toHaveBeenCalledOnce();
+  expect(screen.queryByRole("tooltip")).toBeNull();
+  expect(trigger.getAttribute("aria-haspopup")).toBe("dialog");
+});

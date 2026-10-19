@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { readdirSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
+import { installReactDebugMemoryCompat } from "./scripts/development/react-debug-memory.mjs";
 
 const nextTsconfigPath = process.env.MEDOTA2_NEXT_TSCONFIG?.trim();
 
@@ -11,7 +12,16 @@ const nextConfig: NextConfig = {
   adapterPath: resolve("scripts/development/build-output.mjs"),
   // Reuse recently visited/prefetched catalog pages during quick navigation.
   // Refresh still reads the current published dataset immediately.
-  experimental: { staleTimes: { dynamic: 300, static: 300 } },
+  experimental: {
+    staleTimes: { dynamic: 300, static: 300 },
+    // HTTP warmups never attach an HMR socket; Next 16.3.3 retains their channels.
+    // Keep React debug information in the request payload instead.
+    reactDebugChannel: false,
+    // Persist first, then release the Rust compilation graph even on large hosts.
+    turbopackFileSystemCacheForDev: true,
+    turbopackMemoryEviction: "full",
+    webpackMemoryOptimizations: true,
+  },
   outputFileTracingExcludes: {
     "/*": [".env*", ".git/**/*", ...localStateExcludes()],
   },
@@ -55,4 +65,7 @@ function localStateExcludes(): string[] {
   return excluded;
 }
 
-export default nextConfig;
+export default function config(phase: string): NextConfig {
+  installReactDebugMemoryCompat(phase);
+  return nextConfig;
+}

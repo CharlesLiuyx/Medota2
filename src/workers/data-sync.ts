@@ -1,3 +1,9 @@
+import { automaticStorageCleanup } from "@/development/storage";
+import {
+  restoreSyncPayload,
+  markSyncPayloadUsed,
+} from "@/development/data-sync/storage";
+import { relative } from "node:path";
 import { bundleSnapshot } from "@/development/data-sync/bundle";
 import {
   readDataLock,
@@ -23,6 +29,7 @@ import {
   readSyncWorkspace,
 } from "@/config/data-sync-state";
 import { run } from "@/development/runtime";
+import { withWorkbench } from "@/development/workbench-clients";
 import { parseArgs } from "node:util";
 import { resolve } from "node:path";
 import { loadLocalEnv } from "@/config/env";
@@ -39,6 +46,11 @@ import { mapDigest } from "@/development/data-sync/maps";
 import { timed } from "@/development/data-sync/timing";
 
 async function main() {
+  let completed = false;
+  const output = (value: unknown) => {
+    completed = true;
+    console.log(JSON.stringify(value, null, 2));
+  };
   const { values, positionals } = parseArgs({
     allowPositionals: true,
     options: {
@@ -88,6 +100,23 @@ async function main() {
   if (command === "init") return output(workspace);
   const release = values.plan ? async () => {} : await acquireLock("data-sync");
   try {
+    if (
+      !values.plan &&
+      ["bundle", "apply", "fetch", "sync"].includes(command)
+    ) {
+      const input =
+        values.root ||
+        (command === "bundle" ? resolve(syncRoot(), "export") : undefined);
+      if (input) {
+        const name = relative(syncRoot(), resolve(input)).replaceAll("\\", "/");
+        if (
+          /^(export|bundles\/[a-f0-9]{64}|publication-exports\/[a-f0-9-]{36})$/.test(
+            name,
+          )
+        )
+          await restoreSyncPayload(name);
+      }
+    }
     if (command === "publish")
       return output(
         await timed("publish complete data", () =>
@@ -98,6 +127,7 @@ async function main() {
       const result = await taskProcess<
         Awaited<ReturnType<typeof exportDatabase>>
       >("export", ["--root", resolve(syncRoot(), "export")]);
+      await markSyncPayloadUsed("export");
       return output({
         snapshotId: result.snapshotId,
         manifestSha256: result.manifestSha256,
@@ -112,12 +142,12 @@ async function main() {
         throw new Error(
           "Pass --snapshot to prepare the exact publication payload.",
         );
-      return output(
-        await bundleSnapshot(
-          resolve(values.root || resolve(syncRoot(), "export")),
-          values.snapshot,
-        ),
+      const result = await bundleSnapshot(
+        resolve(values.root || resolve(syncRoot(), "export")),
+        values.snapshot,
       );
+      await markSyncPayloadUsed(`bundles/${values.snapshot}`);
+      return output(result);
     }
     if (command === "status") {
       const status = await syncStatus();
@@ -211,12 +241,10 @@ async function main() {
         );
         if (problems.length) throw new Error(problems.join("\n"));
         if (values["restart-workbench"] || !(await workbenchRunning()))
-          await run(process.execPath, [
-            "--import",
-            "tsx",
-            "src/workers/dev.ts",
-            ...(values["restart-workbench"] ? ["--restart"] : []),
-          ]);
+          await withWorkbench(
+            async () => undefined,
+            values["restart-workbench"],
+          );
         return output({
           snapshotId: id,
           state: "already-applied",
@@ -245,10 +273,13 @@ async function main() {
     throw new Error(`Unknown data command: ${command}`);
   } finally {
     await release();
+    if (
+      completed &&
+      !values.plan &&
+      ["publish", "lock", "apply", "sync"].includes(command)
+    )
+      await automaticStorageCleanup("data-sync");
   }
-}
-function output(value: unknown) {
-  console.log(JSON.stringify(value, null, 2));
 }
 main().catch((error: unknown) => {
   console.error(error instanceof Error ? error.message : "Data sync failed.");

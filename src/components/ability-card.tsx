@@ -103,7 +103,7 @@ export const AbilityCard = memo(function AbilityCard({
                     field="AbilityCooldown"
                   >
                     <Message
-                      id="◷ 冷却 {value0} 秒"
+                      id="冷却 {value0} 秒"
                       values={{
                         value0: (
                           <strong>{numbers(ability.cooldown, locale)}</strong>
@@ -121,7 +121,7 @@ export const AbilityCard = memo(function AbilityCard({
                     field="AbilityManaCost"
                   >
                     <Message
-                      id="◆ 魔耗 {value0}"
+                      id="魔耗 {value0}"
                       values={{
                         value0: (
                           <strong>{numbers(ability.manaCost, locale)}</strong>

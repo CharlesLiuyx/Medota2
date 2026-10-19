@@ -8,6 +8,7 @@ import {
 import { run, fingerprint, writeJson } from "@/development/runtime";
 import { automaticStorageCleanup } from "@/development/storage";
 import { normalizeTestRunnerArgs } from "@/development/test-runner-args";
+import { withWorkbench } from "@/development/workbench-clients";
 
 async function main(): Promise<void> {
   const [suite, ...rawArgs] = process.argv.slice(2);
@@ -39,62 +40,62 @@ async function main(): Promise<void> {
   ];
   const before = await fingerprint(inputs);
   if (shared) {
-    await run("pnpm", ["dev"]);
-    const evidenceRoot = resolve(
-      ".medota2/shared-tests/runs",
-      `${Date.now()}-${createHash("sha256").update(String(Math.random())).digest("hex").slice(0, 8)}`,
-    );
-    let databaseBefore: string | undefined;
-    let result = "running";
-    await writeJson(resolve(evidenceRoot, "run.json"), {
-      status: result,
-      pid: process.pid,
-      startedAt: new Date().toISOString(),
-      input: before,
-    });
-    try {
-      databaseBefore = await dataVersion();
-      await run(
-        "pnpm",
-        [
-          "exec",
-          "playwright",
-          "test",
-          "--config",
-          "playwright.shared.config.ts",
-          ...forwarded,
-        ],
-        {
-          ...process.env,
-          MEDOTA2_SHARED_WEB: "1",
-          MEDOTA2_BROWSER_WARM_SCOPES: warmScopes,
-          MEDOTA2_ARTIFACT_ROOT: evidenceRoot,
-          MEDOTA2_EXPECTED_DATA_VERSION: databaseBefore,
-        },
-        resolve(evidenceRoot, "runner.log"),
+    return withWorkbench(async () => {
+      const evidenceRoot = resolve(
+        ".medota2/shared-tests/runs",
+        `${Date.now()}-${createHash("sha256").update(String(Math.random())).digest("hex").slice(0, 8)}`,
       );
-      const after = await fingerprint(inputs);
-      result =
-        before === after && databaseBefore === (await dataVersion())
-          ? "passed"
-          : "stale";
-      if (result === "stale")
-        throw new Error(
-          "Related code or data changed during this test; rerun the affected check when stable.",
-        );
-    } catch (error) {
-      if (result !== "stale") result = "failed";
-      throw error;
-    } finally {
+      let databaseBefore: string | undefined;
+      let result = "running";
       await writeJson(resolve(evidenceRoot, "run.json"), {
         status: result,
         pid: process.pid,
+        startedAt: new Date().toISOString(),
         input: before,
-        dataVersion: databaseBefore,
-        finishedAt: new Date().toISOString(),
       });
-    }
-    return;
+      try {
+        databaseBefore = await dataVersion();
+        await run(
+          "pnpm",
+          [
+            "exec",
+            "playwright",
+            "test",
+            "--config",
+            "playwright.shared.config.ts",
+            ...forwarded,
+          ],
+          {
+            ...process.env,
+            MEDOTA2_SHARED_WEB: "1",
+            MEDOTA2_BROWSER_WARM_SCOPES: warmScopes,
+            MEDOTA2_ARTIFACT_ROOT: evidenceRoot,
+            MEDOTA2_EXPECTED_DATA_VERSION: databaseBefore,
+          },
+          resolve(evidenceRoot, "runner.log"),
+        );
+        const after = await fingerprint(inputs);
+        result =
+          before === after && databaseBefore === (await dataVersion())
+            ? "passed"
+            : "stale";
+        if (result === "stale")
+          throw new Error(
+            "Related code or data changed during this test; rerun the affected check when stable.",
+          );
+      } catch (error) {
+        if (result !== "stale") result = "failed";
+        throw error;
+      } finally {
+        await writeJson(resolve(evidenceRoot, "run.json"), {
+          status: result,
+          pid: process.pid,
+          input: before,
+          dataVersion: databaseBefore,
+          finishedAt: new Date().toISOString(),
+        });
+      }
+    });
   }
   const executeFixture = async (env: NodeJS.ProcessEnv) => {
     if (suite === "integration")

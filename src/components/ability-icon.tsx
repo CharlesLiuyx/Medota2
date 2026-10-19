@@ -2,6 +2,10 @@
 import { useTranslations } from "@/i18n/provider";
 
 import Image from "next/image";
+import {
+  isViewportAssetReady,
+  rememberViewportAsset,
+} from "@/browser/viewport-assets";
 import { Sparkles } from "lucide-react";
 import { useState } from "react";
 import valveAssetImageLoader from "./valve-asset-image-loader";
@@ -20,6 +24,12 @@ export function AbilityIcon({
   compact?: boolean;
 }) {
   const t = useTranslations();
+  const src = `/valve-assets/ability/${internalName}?v=${encodeURIComponent(assetVersion)}`;
+  const sizes = compact
+    ? "36px"
+    : large
+      ? "(min-width: 640px) 80px, 64px"
+      : "56px";
   const [failed, setFailed] = useState(false);
   const size = compact ? "size-9" : large ? "size-16 sm:size-20" : "size-14";
   return (
@@ -32,13 +42,15 @@ export function AbilityIcon({
       {!failed && (
         <Image
           loader={valveAssetImageLoader}
-          src={`/valve-assets/ability/${internalName}?v=${encodeURIComponent(assetVersion)}`}
+          src={src}
           alt={t("{name} 图标", { name })}
           fill
-          sizes={
-            compact ? "36px" : large ? "(min-width: 640px) 80px, 64px" : "56px"
+          sizes={sizes}
+          loading={large || isViewportAssetReady(src, sizes) ? "eager" : "lazy"}
+          decoding="sync"
+          onLoad={(event) =>
+            rememberViewportAsset({ src, sizes }, event.currentTarget)
           }
-          loading={large ? "eager" : "lazy"}
           className="object-cover"
           onError={() => setFailed(true)}
         />
