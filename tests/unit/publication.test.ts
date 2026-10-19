@@ -286,6 +286,26 @@ describe("exact CI and fixture planning", () => {
     await expect(retryCIRead(forbidden, { sleep })).rejects.toThrow("403");
     expect(forbidden).toHaveBeenCalledTimes(1);
   });
+  it("retries a GitHub job query handshake timeout before accepting the exact successful run", async () => {
+    const query = vi
+      .fn()
+      .mockResolvedValueOnce([ci({ status: "in_progress", conclusion: null })])
+      .mockResolvedValue([ci()]);
+    const failedJobs = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("net/http: TLS handshake timeout"))
+      .mockResolvedValue([]);
+    await expect(
+      waitForCI("owner/repo", "target", {
+        query,
+        failedJobs,
+        failFast: true,
+        sleep: async () => {},
+      }),
+    ).resolves.toMatchObject({ headSha: "target", conclusion: "success" });
+    expect(failedJobs).toHaveBeenCalledTimes(2);
+    expect(query).toHaveBeenCalledTimes(2);
+  });
   it("warms selected journey modules and retains full warmup for unknown or cross-module scopes", () => {
     expect(warmRoutesForScopes(["heroes", "tooltips"])).toContain(
       "heroes/antimage",

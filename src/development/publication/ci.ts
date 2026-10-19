@@ -49,7 +49,7 @@ export async function retryCIRead<T>(
       const message = error instanceof Error ? error.message : String(error);
       if (
         attempt >= 2 ||
-        !/tls:|x509:|ECONNRESET|ETIMEDOUT|connection reset|connection refused|network is unreachable|i\/o timeout|HTTP 50[234]/i.test(
+        !/tls:|TLS handshake timeout|x509:|ECONNRESET|ETIMEDOUT|connection reset|connection refused|network is unreachable|i\/o timeout|HTTP 50[234]/i.test(
           message,
         )
       )
