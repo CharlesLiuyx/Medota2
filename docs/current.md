@@ -4,7 +4,7 @@
 
 ## 基线与接手
 
-- 最新功能基线：`9094236`，发布检查优化已合入main；发布检查与修复见[本轮发布验收](history/2026-10-19-main-publication.md)。完整业务快照仍为`bee227bd`、数据提交`12bcfdff`。
+- 最新功能基线：`22b2dc0`，CI准备与模块增量检查已合入main，实测与边界见[CI验收](history/2026-10-20-ci-incremental.md)；此前组合发布见[发布验收](history/2026-10-19-main-publication.md)。完整业务快照仍为`bee227bd`、数据提交`12bcfdff`。
 - 其他机器运行`pnpm sync`，用`pnpm data:status`核对代码、数据库身份和摘要；目标由[dev-data.lock.json](../dev-data.lock.json)选择。共享协作按[AGENTS](../AGENTS.md)执行。
 
 ## 待人工审阅
@@ -15,7 +15,7 @@
 
 ## 环境与后续验证
 
-- **CI准备与模块增量检查正在验证**：已定位254→283秒的关键路径主要差异为依赖安装8→45秒；同版复测259秒。首轮优化版270秒全部通过，第二轮被缓存返回旅程30秒累计超时／重试通过的flaky门禁阻塞；已分拆两条流程并通过本机fixture与真实数据定向复验。准备计时、缓存、镜像下载重叠、模块映射及1至6片容量估算已实施，待最终Linux与模块诊断。详见[CI增量实测](work/ci-incremental-20261020.md)。
+- **在线搜索回退的偶发失败**：Linux曾在详情返回后点击清除未清空，重试通过；本机普通与4倍CPU降速各8次、随后完整Mac／Linux均通过，根因尚未确认。若再次出现，优先保留首次失败trace，核对点击事件与历史恢复顺序，见[CI验收](history/2026-10-20-ci-incremental.md#失败修复与验证边界)。
 - **内存、空间与Docker生命周期**：本轮修复已发布。Mac长时访问、三类HMR、多终端共用及退出回收已有验证；连续多日内存、Windows／Linux原生终端行为待复验。详细边界见[长时内存](history/2026-10-19-development-memory-growth.md)、[生命周期](history/2026-10-19-docker-lifecycle.md)与[空间治理及恢复](history/2026-10-19-sync-storage-cleanup.md)。本轮收尾状态和存储审计见发布验收。
 - **Windows间歇退出及取消**：已有Node22单轮应用验收；后续工作台间歇退出、Node24原生异常及发布进程树取消仍待定位／复验。见[平台交接](work/windows-native-validation.md)、[本机验收](history/2026-10-09-windows-publication.md)与[发布取消交接](work/publication-retry-performance.md)。本轮Linux CI不能代替Windows原生验证。
 - **实体版本与Diff**：7.41f为默认，第一阶段已落地；实际更新后的多版本和跨机器验证见[实施任务](work/entity-version-diff.md)与[7.41f记录](work/7.41f-update.md)。

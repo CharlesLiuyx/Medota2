@@ -59,7 +59,7 @@
 | 文档                                                                        | 状态       | 负责内容                                           |
 | --------------------------------------------------------------------------- | ---------- | -------------------------------------------------- |
 | [发布耗时分析与优化方案](work/publication-timing-plan-20261019.md)          | reference  | 原发布关键路径、收益估算与最终实测入口             |
-| [CI准备与模块增量实测](work/ci-incremental-20261020.md)                     | active     | 安装／准备／测试拆解、同范围对照与模块映射         |
+| [CI准备与模块增量验收](history/2026-10-20-ci-incremental.md)                | reference  | 安装／准备／测试拆解、同范围对照与模块映射         |
 | [发布检查优化验收](history/2026-10-20-publication-optimization.md)          | reference  | 读取恢复、取消回收、本机六轮对照与Linux发布实测    |
 | [完整组合发布验收](history/2026-10-19-main-publication.md)                  | historical | 全部本地改动合入、跨平台门禁、失败修复与数据回验   |
 | [同步副本与产物深度清理](history/2026-10-19-sync-storage-cleanup.md)        | historical | 同步载荷归档、离线恢复、闲置回收与第二轮空间验收   |
