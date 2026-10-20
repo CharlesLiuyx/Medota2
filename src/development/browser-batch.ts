@@ -4,6 +4,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { CommandAbortedError, run } from "./runtime";
 import { withTestEnvironment } from "./test-environment";
 import { warmBrowserOrigin } from "./warm-browser";
+import { unmeasured, type MeasureCheckPhase } from "./check-timing";
 
 /** One fixture lease and one owned Web process for sequential browser suites.
  * Each suite still creates fresh Playwright contexts and separate evidence. */
@@ -11,7 +12,12 @@ export async function withBrowserBatch(
   work: (env: NodeJS.ProcessEnv, signal: AbortSignal) => Promise<void>,
   signal: AbortSignal,
   warmScopes?: string[],
+  options: {
+    measure?: MeasureCheckPhase;
+    prepare?: (env: NodeJS.ProcessEnv, signal: AbortSignal) => Promise<void>;
+  } = {},
 ): Promise<void> {
+  const measure = options.measure ?? unmeasured;
   signal.throwIfAborted();
   await withTestEnvironment(
     async (environment) => {
@@ -20,6 +26,10 @@ export async function withBrowserBatch(
         ...environment,
         MEDOTA2_FIXTURE_BROWSER_BATCH: "1",
       };
+      await measure(
+        "browser.discovery",
+        () => options.prepare?.(env, signal) ?? Promise.resolve(),
+      );
       const port = Number(env.MEDOTA2_TEST_WEB_PORT);
       // Never attach to an unrelated service already occupying the leased port.
       await new Promise<void>((accept, reject) => {
@@ -56,36 +66,38 @@ export async function withBrowserBatch(
       );
       try {
         const origin = `http://127.0.0.1:${port}`;
-        const deadline = Date.now() + 120_000;
-        for (;;) {
-          active.throwIfAborted();
-          const ready = await fetch(`${origin}/heroes`, {
-            signal: AbortSignal.any([active, AbortSignal.timeout(5000)]),
-          })
-            .then(async (response) => {
-              await response.arrayBuffer();
-              return response.ok;
+        await measure("web.ready", async () => {
+          const deadline = Date.now() + 120_000;
+          for (;;) {
+            active.throwIfAborted();
+            const ready = await fetch(`${origin}/heroes`, {
+              signal: AbortSignal.any([active, AbortSignal.timeout(5000)]),
             })
-            .catch(() => false);
-          if (ready) break;
-          if (Date.now() >= deadline)
-            throw new Error("Fixture Web startup timed out.");
-          await delay(200, undefined, { signal: active });
-        }
+              .then(async (response) => {
+                await response.arrayBuffer();
+                return response.ok;
+              })
+              .catch(() => false);
+            if (ready) break;
+            if (Date.now() >= deadline)
+              throw new Error("Fixture Web startup timed out.");
+            await delay(200, undefined, { signal: active });
+          }
+        });
         // Full union of warm routes, once; individual suites must not skip a route
         // needed by a later suite or reuse a marker from an earlier invocation.
-        await warmBrowserOrigin(origin, warmScopes);
+        await measure("web.warm", () => warmBrowserOrigin(origin, warmScopes));
         active.throwIfAborted();
         await work(env, active);
         active.throwIfAborted();
       } finally {
         stop.abort();
-        await server;
+        await measure("web.stop", () => server);
         // Cleanup errors are gates too; never publish passing evidence after an
         // owned process group could not be stopped.
         if (failed.signal.aborted) throw failed.signal.reason;
       }
     },
-    { seed: true, signal },
+    { seed: true, signal, measure },
   );
 }

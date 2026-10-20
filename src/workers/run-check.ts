@@ -5,6 +5,7 @@ import { dirname, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
 import { checkStages } from "@/development/check-scheduling";
+import { checkPhaseTimer } from "@/development/check-timing";
 import { withBrowserBatch } from "@/development/browser-batch";
 import { prepareBrowserShards } from "@/development/browser-shards";
 import { nativeCommand, normalizeNodePath } from "@/development/command";
@@ -275,27 +276,45 @@ async function check(): Promise<boolean> {
     console.log(plan.summary);
     await save();
     if (options.lane === "browser" && plan.tasks.length) {
-      await withBrowserBatch(async (env, signal) => {
-        const commands = options.shard
-          ? await prepareBrowserShards(
-              plan.tasks,
-              options.shard,
-              env,
-              dirname(evidence),
-              signal,
-            )
-          : undefined;
-        for (const task of plan.tasks) {
+      let commands: Map<string, string[]> | undefined;
+      const scopes = plan.tasks.every((task) => task.id === "journeys")
+        ? plan.tasks.flatMap(
+            (task) =>
+              task.args
+                .find((arg) => arg.startsWith("--warm-scopes="))
+                ?.split("=")[1]
+                .split(",") ?? [],
+          )
+        : undefined;
+      await withBrowserBatch(
+        async (env, signal) => {
+          for (const task of plan.tasks) {
+            await validateCompleted();
+            if (stale)
+              throw new Error("Check inputs changed during browser batch.");
+            await executeTask(task, signal, env, commands?.get(task.id));
+          }
+          // Validate while the fixture lease is held, before its passing receipt.
           await validateCompleted();
           if (stale)
             throw new Error("Check inputs changed during browser batch.");
-          await executeTask(task, signal, env, commands?.get(task.id));
-        }
-        // Validate while the fixture lease is held, before its passing receipt.
-        await validateCompleted();
-        if (stale)
-          throw new Error("Check inputs changed during browser batch.");
-      }, cancellation.signal);
+        },
+        cancellation.signal,
+        scopes,
+        {
+          measure: checkPhaseTimer(resolve(dirname(evidence), "phases.jsonl")),
+          prepare: async (env, signal) => {
+            if (options.shard)
+              commands = await prepareBrowserShards(
+                plan.tasks,
+                options.shard,
+                env,
+                dirname(evidence),
+                signal,
+              );
+          },
+        },
+      );
     } else {
       const stages = checkStages(
         plan.tasks,

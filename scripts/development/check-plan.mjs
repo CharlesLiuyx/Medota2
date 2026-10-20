@@ -174,6 +174,66 @@ const unitTests = ["unit-adapter", "unit-source", "unit-assets"].map(
   (name) => `tests/unit/${name}.test.ts`,
 );
 
+// Reviewed ownership includes downstream consumers, not just matching filenames.
+// Missing files/tests and new source paths retain the conservative fallback.
+const moduleChecks = [
+  {
+    paths: [
+      "src/domain/hero-build.ts",
+      "src/domain/hero-inventory.ts",
+      "src/presentation/hero-stats.ts",
+      "src/presentation/hero-stats-expression.ts",
+      "src/presentation/hero-talents.ts",
+      "src/presentation/hero-ability-stats.ts",
+    ],
+    tests: [
+      "hero-levels.test.tsx",
+      "hero-inventory.test.ts",
+      "hero-status-catalog.test.ts",
+      "shadowraze-card.test.tsx",
+    ],
+    journeys: ["heroes", "abilities", "tooltips"],
+    database: false,
+  },
+  {
+    paths: [
+      "src/domain/items.ts",
+      "src/domain/item-parameter-labels.ts",
+      "src/importers/dota-vpk/item-adapter.ts",
+      "src/importers/dota-vpk/item-snapshot.ts",
+      "src/server/repositories/items.ts",
+    ],
+    tests: [
+      "item-adapter.test.ts",
+      "item-source.test.ts",
+      "item-assets.test.ts",
+      "hero-inventory.test.ts",
+      "attributes.test.ts",
+    ],
+    journeys: ["items", "heroes", "tooltips", "attributes", "names"],
+    database: true,
+  },
+  {
+    paths: [
+      "src/importers/dota-vpk/inventory-adapter.ts",
+      "src/importers/dota-vpk/hero-status-adapter.ts",
+      "src/server/services/hero-inventory.ts",
+      "src/server/services/hero-status-catalog.ts",
+    ],
+    tests: [
+      "hero-inventory.test.ts",
+      "hero-status-catalog.test.ts",
+      "hero-levels.test.tsx",
+      "shadowraze-card.test.tsx",
+    ],
+    journeys: ["heroes", "abilities", "tooltips"],
+    database: true,
+  },
+].map((module) => ({
+  ...module,
+  tests: module.tests.map((name) => `tests/unit/${name}`),
+}));
+
 export function createPlan(inputPaths) {
   const paths = [
     ...new Set(inputPaths.map((path) => path.replaceAll("\\", "/"))),
@@ -260,7 +320,20 @@ export function createPlan(inputPaths) {
       existsSync(path) &&
       focusedUnitScopes.get(path)?.every((test) => existsSync(test)),
   );
-  const flowPaths = runtimePaths.filter((path) => !focused.includes(path));
+  const modules = moduleChecks.filter(
+    (module) =>
+      runtimePaths.some(
+        (path) => module.paths.includes(path) && existsSync(path),
+      ) && module.tests.every((test) => existsSync(test)),
+  );
+  const modularPaths = new Set(
+    modules.flatMap((module) =>
+      module.paths.filter((path) => existsSync(path)),
+    ),
+  );
+  const flowPaths = runtimePaths.filter(
+    (path) => !focused.includes(path) && !modularPaths.has(path),
+  );
   const wide = flowPaths.some((path) => toolchain.test(path));
   const checkExecution = flowPaths.some((path) =>
     /^(?:src\/workers\/(?:run-check|run-shared-tests)\.ts|src\/development\/(?:check-scheduling|browser-shards|browser-batch|runtime)\.ts|scripts\/development\/browser-durations\.json)$/.test(
@@ -286,7 +359,9 @@ export function createPlan(inputPaths) {
         !unitScope.test(path) && (data.test(path) || foundation.test(path)),
     );
   const hasData =
-    wide || nonMap.some((path) => data.test(path) || foundation.test(path));
+    wide ||
+    modules.some((module) => module.database) ||
+    nonMap.some((path) => data.test(path) || foundation.test(path));
   const hasUi =
     wide ||
     flowPaths.some((path) => /^src\/(?:i18n\/|proxy\.ts$)/.test(path)) ||
@@ -342,6 +417,7 @@ export function createPlan(inputPaths) {
     const unitFiles = new Set([
       ...explicitUnit,
       ...focused.flatMap((path) => focusedUnitScopes.get(path)),
+      ...modules.flatMap((module) => module.tests),
     ]);
     if (viewportPreload) unitFiles.add("tests/unit/viewport-assets.test.ts");
     if (hasUi || hasMap || hasUnits) {
@@ -448,7 +524,7 @@ export function createPlan(inputPaths) {
       );
   }
   // Grouped role headings also require catalog scrolling and column interactions.
-  const journeys = new Set();
+  const journeys = new Set(modules.flatMap((module) => module.journeys));
   if (
     flowPaths.some((path) =>
       /(?:catalog-view|catalog-table|grouped-table|table-frozen-columns|attribute-summary-details|attribute-value-effects|api\/attributes\/preview)/.test(
@@ -578,6 +654,7 @@ export function createPlan(inputPaths) {
   // Direct spec edits are bounded only when no product scope is also selected.
   // Deleted specs and helpers still widen to the remaining complete suite.
   const directJourneySpecs =
+    !modules.length &&
     !flowPaths.some((path) => !/^tests\/(?:journeys|unit)\//.test(path)) &&
     journeyPaths.length &&
     journeyPaths.every(

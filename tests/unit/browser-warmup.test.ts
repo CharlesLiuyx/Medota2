@@ -1,9 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { warmBrowserOrigin } from "@/development/warm-browser";
 
-vi.mock("@/development/warm-catalog", () => ({
-  warmCatalogRoutes: vi.fn(async () => {}),
-}));
 afterEach(() => vi.unstubAllGlobals());
 
 function serve(manifestRelease = "c:catalog", valuesStatus = 200) {
@@ -56,6 +53,22 @@ it("prepares a bounded column read from the pinned manifest before browser asser
     resourceId: "table-attributes/2:revision",
     columns: ["armor"],
   });
+  for (const path of [
+    "/api/catalog/head",
+    "/api/catalog/heroes",
+    "/api/catalog/abilities",
+  ]) {
+    expect(requests.filter(({ url }) => url.pathname === path)).toHaveLength(1);
+  }
+  expect(
+    requests
+      .filter(({ url }) => url.pathname === "/api/catalog/replica")
+      .map(({ init }) => {
+        const body = JSON.parse(String(init?.body));
+        return `${body.entity}/${body.locale}`;
+      })
+      .sort(),
+  ).toEqual(["abilities/en", "abilities/zh-CN", "heroes/en", "heroes/zh-CN"]);
 });
 
 it("does not mark mismatched or failed table preparation ready", async () => {

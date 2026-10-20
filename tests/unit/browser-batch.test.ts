@@ -51,6 +51,33 @@ beforeEach(async () => {
 });
 afterEach(() => vi.unstubAllGlobals());
 describe("owned browser batch", () => {
+  it("discovers before startup and records preparation and cleanup phases", async () => {
+    const phases: string[] = [];
+    await withBrowserBatch(
+      async () => {
+        phases.push("tests");
+      },
+      new AbortController().signal,
+      ["heroes"],
+      {
+        prepare: async (env) => {
+          expect(env.MEDOTA2_FIXTURE_BROWSER_BATCH).toBe("1");
+          expect(state.run).not.toHaveBeenCalled();
+        },
+        measure: async (phase, work) => {
+          phases.push(phase);
+          return work();
+        },
+      },
+    );
+    expect(phases).toEqual([
+      "browser.discovery",
+      "web.ready",
+      "web.warm",
+      "tests",
+      "web.stop",
+    ]);
+  });
   it("prepares once and keeps the fixture lease until the server has stopped", async () => {
     const work = vi.fn(async (env, signal) => {
       expect(env.MEDOTA2_FIXTURE_BROWSER_BATCH).toBe("1");

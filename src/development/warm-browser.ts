@@ -1,12 +1,16 @@
 import { warmRoutesForScopes } from "../../scripts/development/check-plan.mjs";
 import { LOCALES } from "../i18n/config";
-import { warmCatalogRoutes } from "./warm-catalog";
 
 export async function warmBrowserOrigin(
   origin: string,
   scopes?: string[],
 ): Promise<void> {
-  await warmCatalogRoutes(origin);
+  const headResponse = await fetch(`${origin}/api/catalog/head`, {
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!headResponse.ok)
+    throw new Error(`Browser warmup head: ${headResponse.status}`);
+  const head = await headResponse.json();
   // Dev HTML/RSC rendering does not compile the browser's route chunks.
   // Fetch the scripts used by each catalog's first detail before timing clicks.
   const warmedScripts = new Set<string>();
@@ -77,10 +81,6 @@ export async function warmBrowserOrigin(
       }
     }
   }
-  const headResponse = await fetch(`${origin}/api/catalog/head`);
-  if (!headResponse.ok)
-    throw new Error(`Browser warmup head: ${headResponse.status}`);
-  const head = await headResponse.json();
   // A table renders its SSR shell before its column manifest is available. Warm
   // the same read-only GET/POST route before the browser's unchanged 5s request
   // assertion, just as we prepare replica routes above. This does not populate
@@ -115,16 +115,18 @@ export async function warmBrowserOrigin(
     throw new Error(`Browser warmup table values: ${valuesResponse.status}`);
   await valuesResponse.arrayBuffer();
   for (const entity of ["heroes", "abilities"]) {
-    const response = await fetch(`${origin}/api/catalog/replica`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...head, entity, locale: "en", known: [] }),
-      signal: AbortSignal.timeout(30_000),
-    });
-    if (!response.ok)
-      throw new Error(
-        `Browser warmup replica ${entity}/en: ${response.status}`,
-      );
-    await response.arrayBuffer();
+    for (const locale of LOCALES) {
+      const response = await fetch(`${origin}/api/catalog/replica`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...head, entity, locale, known: [] }),
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!response.ok)
+        throw new Error(
+          `Browser warmup replica ${entity}/${locale}: ${response.status}`,
+        );
+      await response.arrayBuffer();
+    }
   }
 }

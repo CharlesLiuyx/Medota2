@@ -5,6 +5,12 @@ on:
   push:
     branches: [main, "codex/publish/**"]
   workflow_dispatch:
+    inputs:
+      profile:
+        description: Reproducible diagnostic scope (never promotion evidence)
+        type: choice
+        default: auto
+        options: [auto, full, items, hero-build, map]
 
 permissions:
   contents: read
@@ -20,6 +26,9 @@ jobs:
     timeout-minutes: 5
     outputs:
       base: ${{ steps.plan.outputs.base }}
+      file: ${{ steps.plan.outputs.file }}
+      browserShards: ${{ steps.plan.outputs.browserShards }}
+      browserShardCount: ${{ steps.plan.outputs.browserShardCount }}
       promoted: ${{ steps.plan.outputs.promoted }}
       core: ${{ steps.plan.outputs.core }}
       coreLanes: ${{ steps.plan.outputs.coreLanes }}
@@ -32,6 +41,7 @@ jobs:
       - name: Plan affected checks and verify promotion evidence
         id: plan
         env:
+          BENCHMARK_PROFILE: ${{ inputs.profile }}
           PR_BASE: ${{ github.event.pull_request.base.sha }}
           PUSH_BASE: ${{ github.event.before }}
           GH_TOKEN: ${{ github.token }}
@@ -66,6 +76,12 @@ jobs:
           node-version: 22.16.0
           cache: pnpm
 
+      - name: Restore pnpm policy and registry cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pnpm
+          key: pnpm-policy-${{ runner.os }}-${{ runner.arch }}-11.7.0-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', '.github/workflows/verify.yml') }}
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -81,8 +97,14 @@ jobs:
       - name: Run selected core lane
         env:
           CHECK_BASE: ${{ needs.plan.outputs.base }}
+          CHECK_FILE: ${{ needs.plan.outputs.file }}
           CHECK_LANE: ${{ matrix.lane }}
-        run: pnpm check --base "$CHECK_BASE" --lane "$CHECK_LANE"
+        run: |
+          if [ -n "$CHECK_FILE" ]; then
+            pnpm check --files "$CHECK_FILE" --lane "$CHECK_LANE"
+          else
+            pnpm check --base "$CHECK_BASE" --lane "$CHECK_LANE"
+          fi
       - name: Release this job's reusable test database
         if: always() && matrix.lane == 'runtime' && needs.plan.outputs.coreDatabase == 'true'
         run: pnpm test:clean
@@ -94,6 +116,7 @@ jobs:
           path: |
             .medota2/check-plan.json
             .medota2/checks/*/run.json
+            .medota2/checks/*/phases.jsonl
             .medota2/checks/*/*.log
             .medota2/shared-tests/runs/**/*.log
             .medota2/shared-tests/runs/**/run.json
@@ -118,7 +141,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        shard: [1, 2, 3, 4, 5, 6]
+        shard: ${{ fromJSON(needs.plan.outputs.browserShards) }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -133,16 +156,28 @@ jobs:
           node-version: 22.16.0
           cache: pnpm
 
+      - name: Restore pnpm policy and registry cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pnpm
+          key: pnpm-policy-${{ runner.os }}-${{ runner.arch }}-11.7.0-${{ hashFiles('pnpm-lock.yaml', 'pnpm-workspace.yaml', '.github/workflows/verify.yml') }}
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps --only-shell chromium
       - name: Run browser shard with one worker on its own host and database
         env:
           CHECK_BASE: ${{ needs.plan.outputs.base }}
-          CHECK_SHARD: ${{ matrix.shard }}/6
-        run: pnpm check --base "$CHECK_BASE" --lane browser --shard "$CHECK_SHARD"
+          CHECK_FILE: ${{ needs.plan.outputs.file }}
+          CHECK_SHARD: ${{ matrix.shard }}/${{ needs.plan.outputs.browserShardCount }}
+        run: |
+          if [ -n "$CHECK_FILE" ]; then
+            pnpm check --files "$CHECK_FILE" --lane browser --shard "$CHECK_SHARD"
+          else
+            pnpm check --base "$CHECK_BASE" --lane browser --shard "$CHECK_SHARD"
+          fi
       - name: Release this job's reusable test database
         if: always()
         run: pnpm test:clean
@@ -154,6 +189,7 @@ jobs:
           path: |
             .medota2/check-plan.json
             .medota2/checks/*/run.json
+            .medota2/checks/*/phases.jsonl
             .medota2/checks/*/browser-shards.json
             .medota2/checks/*/*.test-list.txt
             .medota2/checks/*/*.timings.json

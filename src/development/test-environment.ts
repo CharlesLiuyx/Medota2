@@ -20,6 +20,7 @@ import {
   writeJson,
 } from "./runtime";
 import { removeRetiredTestBuild } from "./storage";
+import { unmeasured, type MeasureCheckPhase } from "./check-timing";
 
 const path = resolve(".medota2/shared-tests/environment.json");
 interface SharedEnvironment {
@@ -43,8 +44,10 @@ export async function withTestEnvironment<T>(
     verify?: () => Promise<void>;
     signal?: AbortSignal;
     lockWaitMs?: number;
+    measure?: MeasureCheckPhase;
   } = {},
 ): Promise<T | undefined> {
+  const measure = options.measure ?? unmeasured;
   const cancellation = new AbortController();
   const signal = options.signal
     ? AbortSignal.any([options.signal, cancellation.signal])
@@ -58,7 +61,9 @@ export async function withTestEnvironment<T>(
   let saved: SharedEnvironment | null = null;
   let owned = false;
   try {
-    release = await acquireLock("test-database", options.lockWaitMs, signal);
+    release = await measure("database.lock", () =>
+      acquireLock("test-database", options.lockWaitMs, signal),
+    );
     saved = await readJson<SharedEnvironment>(path);
     if (saved && saved.context.workspaceRoot !== process.cwd())
       throw new Error("Shared test lease belongs to another workspace.");
@@ -85,12 +90,14 @@ export async function withTestEnvironment<T>(
       };
       // Persist the exact target before Docker starts, for recovery after SIGKILL/host loss.
       await writeJson(path, saved);
-      const lease = await provisionDataStack({
-        environment: "test",
-        runId: context.runId,
-        hostPort: context.databasePort,
-        onProgress: console.log,
-      });
+      const lease = await measure("database.provision", () =>
+        provisionDataStack({
+          environment: "test",
+          runId: context.runId,
+          hostPort: context.databasePort,
+          onProgress: console.log,
+        }),
+      );
       saved = { context, lease };
       await writeJson(path, saved);
     }
@@ -138,15 +145,17 @@ export async function withTestEnvironment<T>(
       ],
       exclude: [`${fromRun}/node_modules`],
     });
-    await run(
-      "pnpm",
-      ["exec", "tsx", "src/workers/migrate-test.ts"],
-      {
-        ...env,
-        MEDOTA2_PROCESS_ROLE: "migration",
-      },
-      undefined,
-      signal,
+    await measure("database.migrate", () =>
+      run(
+        "pnpm",
+        ["exec", "tsx", "src/workers/migrate-test.ts"],
+        {
+          ...env,
+          MEDOTA2_PROCESS_ROLE: "migration",
+        },
+        undefined,
+        signal,
+      ),
     );
     const seedInput = await fingerprint([
       "drizzle",
@@ -160,17 +169,19 @@ export async function withTestEnvironment<T>(
       "pnpm-lock.yaml",
     ]);
     if (options.seed) {
-      await run(
-        "pnpm",
-        [
-          "exec",
-          "tsx",
-          "tests/helpers/seed-test-database.ts",
-          "--include-large-list",
-        ],
-        { ...env, MEDOTA2_PROCESS_ROLE: "migration" },
-        undefined,
-        signal,
+      await measure("database.seed", () =>
+        run(
+          "pnpm",
+          [
+            "exec",
+            "tsx",
+            "tests/helpers/seed-test-database.ts",
+            "--include-large-list",
+          ],
+          { ...env, MEDOTA2_PROCESS_ROLE: "migration" },
+          undefined,
+          signal,
+        ),
       );
     }
     const evidence = {
@@ -204,7 +215,7 @@ export async function withTestEnvironment<T>(
     try {
       // Reuse within this locked batch only. tmpfs is disposable after the task.
       if (owned && saved) {
-        await destroyDataStack(saved.lease);
+        await measure("database.cleanup", () => destroyDataStack(saved!.lease));
         await writeJson(path, null);
         await removeRetiredTestBuild(saved.context);
       }

@@ -26,6 +26,56 @@ function selectedJourneys(paths: string[]) {
 }
 
 describe("development check scope", () => {
+  it("selects build calculations and their consumers without unrelated parser or database work", () => {
+    const plan = createPlan(["src/domain/hero-build.ts"]);
+    expect(plan.tasks.find((task) => task.id === "unit")?.args).toContain(
+      "tests/unit/hero-levels.test.tsx",
+    );
+    expect(
+      plan.tasks.some((task) =>
+        ["database", "database-contract", "benchmark", "build"].includes(
+          task.id,
+        ),
+      ),
+    ).toBe(false);
+    const selected = selectedJourneys(["src/domain/hero-build.ts"]);
+    for (const title of [
+      "heroes: build",
+      "abilities: levels",
+      "heroes and abilities: tooltips",
+    ])
+      expect(selected(title)).toBe(true);
+    expect(selected("map: route")).toBe(false);
+    expect(selected("heroes releases: version")).toBe(false);
+  });
+  it("includes inventory and attributes consumers of item changes, and widens mixed or missing ownership", () => {
+    const paths = ["src/domain/items.ts"];
+    const selected = selectedJourneys(paths);
+    for (const title of [
+      "items: browse",
+      "heroes: inventory",
+      "attributes: values",
+      "abilities, units, items names: translation",
+    ])
+      expect(selected(title)).toBe(true);
+    expect(createPlan(paths).tasks.some((task) => task.id === "database")).toBe(
+      true,
+    );
+    expect(
+      createPlan([...paths, "src/domain/new-module.ts"]).tasks.find(
+        (task) => task.id === "unit",
+      )?.args,
+    ).toEqual(["test"]);
+    hiddenFiles.add("tests/unit/item-adapter.test.ts");
+    expect(
+      createPlan(paths).tasks.find((task) => task.id === "unit")?.args,
+    ).toEqual(["test"]);
+    hiddenFiles.clear();
+    hiddenFiles.add("src/domain/items.ts");
+    expect(
+      createPlan(paths).tasks.find((task) => task.id === "unit")?.args,
+    ).toEqual(["test"]);
+  });
   it("checks both browser projects and full database contracts when execution or sharding changes", () => {
     for (const path of [
       "src/workers/run-check.ts",

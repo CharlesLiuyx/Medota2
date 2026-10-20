@@ -14,6 +14,34 @@ export function coreLanesForPlan(plan) {
   );
 }
 
+/** Fewer hosts for bounded journeys; native discovery still distributes every case. */
+export function browserShardsForPlan(plan) {
+  const tasks = executionPlan(plan, { lane: "browser" }).tasks;
+  if (!tasks.length) return [];
+  const scopes =
+    tasks.length === 1 && tasks[0].id === "journeys"
+      ? tasks[0].args
+          .find((arg) => arg.startsWith("--warm-scopes="))
+          ?.split("=")[1]
+          .split(",")
+      : undefined;
+  const count = scopes && scopes.length <= 3 ? 2 : 6;
+  return Array.from({ length: count }, (_, index) => index + 1);
+}
+
+export function benchmarkFile(profile = "auto") {
+  const profiles = {
+    auto: "",
+    full: "src/workers/run-check.ts",
+    items: "src/domain/items.ts",
+    "hero-build": "src/domain/hero-build.ts",
+    map: "src/components/map/map-viewer.tsx",
+  };
+  if (!Object.hasOwn(profiles, profile))
+    throw new Error("Unknown CI benchmark profile.");
+  return profiles[profile];
+}
+
 export function reusableCandidate(run, { sha, base, workflowId, repository }) {
   return (
     run.head_sha === sha &&
@@ -68,7 +96,11 @@ function main() {
       }),
     );
   }
-  const plan = createPlan(changedFiles(base));
+  const file =
+    process.env.GITHUB_EVENT_NAME === "workflow_dispatch"
+      ? benchmarkFile(process.env.BENCHMARK_PROFILE || "auto")
+      : "";
+  const plan = createPlan(file ? [file] : changedFiles(base));
   mkdirSync(".medota2", { recursive: true });
   writeFileSync(
     ".medota2/check-plan.json",
@@ -78,10 +110,13 @@ function main() {
   const browser = executionPlan(plan, { lane: "browser" });
   const output = {
     base,
+    file,
     promoted,
     core: !promoted && core.tasks.length > 0,
     coreLanes: JSON.stringify(promoted ? [] : coreLanesForPlan(plan)),
     browser: !promoted && browser.browser,
+    browserShards: JSON.stringify(promoted ? [] : browserShardsForPlan(plan)),
+    browserShardCount: browserShardsForPlan(plan).length,
     coreDatabase: core.database,
   };
   appendFileSync(

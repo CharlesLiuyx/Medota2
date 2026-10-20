@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   candidateBase,
   coreLanesForPlan,
+  browserShardsForPlan,
+  benchmarkFile,
   reusableCandidate,
 } from "../../scripts/development/ci-plan.mjs";
 import {
@@ -25,6 +27,20 @@ const success = {
   head_branch: `codex/publish/${base}/123-deadbeef`,
 };
 describe("CI promotion evidence", () => {
+  it("reduces hosts for bounded modules without changing the selected task union", () => {
+    expect(browserShardsForPlan(createPlan(["docs/current.md"]))).toEqual([]);
+    expect(
+      browserShardsForPlan(createPlan(["src/domain/hero-build.ts"])),
+    ).toEqual([1, 2]);
+    expect(
+      browserShardsForPlan(createPlan(["src/workers/run-check.ts"])),
+    ).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(benchmarkFile("full")).toBe("src/workers/run-check.ts");
+    expect(() => benchmarkFile("arbitrary")).toThrow("Unknown CI benchmark");
+    expect(
+      reusableCandidate({ ...success, event: "workflow_dispatch" }, target),
+    ).toBe(false);
+  });
   it("runs each selected core task once across independent static and runtime hosts", () => {
     const plan = createPlan(["src/development/warm-browser.ts"]);
     const lanes = coreLanesForPlan(plan);

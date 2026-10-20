@@ -120,7 +120,7 @@ Windows的`pnpm test`默认最多4个worker，适用于多核机器上的Git／�
 
 浏览流程globalSetup会只读预热目录／首条详情及其客户端脚本块，排除开发编译耗时后仍使用原导航断言与时限；此步骤只获取当前同源页面引用的Next静态脚本，按URL去重。
 
-本机真实旅程最多3个worker，CI与fixture单worker。完整本机计划允许真实只读旅程与fixture构建重叠，其余动态任务保持串行；任一失败会取消同批任务并等待退出。
+本机真实旅程最多2个worker，CI与fixture单worker。完整本机计划允许真实只读旅程与fixture构建重叠，其余动态任务保持串行；任一失败会取消同批任务并等待退出。
 
 CI 在安装 Chromium 或准备数据库前计算范围，调用同一个 `pnpm check`，并取消同分支已过期的运行。仅完整输入与执行条件一致时复用结果；本地与 CI 分别记录。默认无覆盖率门槛。
 
@@ -181,3 +181,5 @@ pnpm db:environment:doctor:local
 OpenDota当前只有服务端秘密配置入口，操作见[OpenDota配置](../specs/opendota-secret.md)。Windows文件权限以项目ACL适配为准，不能机械执行Unix chmod步骤。
 
 跨机器获取／发布完整业务状态使用[同步运行手册](../development-data-sync-runbook.md)。`pnpm push`需用户授权，固定候选后验证代码和完整数据、推送main并确认对应CI；`pnpm push --plan`预览，`pnpm push --status`汇总阶段耗时，`pnpm push --resume`只续接CI。依赖过期时脚本停止，协调后显式按锁文件安装；禁止跨工作区共享可写node_modules。`pnpm sync`会拉取代码、安装锁定依赖、保存本地业务变更并应用目标数据，必要时重启工作台。
+
+CI耗时定位：先对比job中的Install dependencies、Install Chromium和browser步骤，再查看check附件`phases.jsonl`与`run.json`。pnpm策略缓存仍由原生校验判断有效性；缓存未命中不是测试回归。`gh workflow run verify.yml -f profile=full`重测完整检查执行器范围；`profile=hero-build`、`items`或`map`核对模块增量成本。手动诊断结果不能替代发布候选证据。
