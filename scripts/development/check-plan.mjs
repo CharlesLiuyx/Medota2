@@ -336,7 +336,7 @@ export function createPlan(inputPaths) {
   );
   const wide = flowPaths.some((path) => toolchain.test(path));
   const checkExecution = flowPaths.some((path) =>
-    /^(?:src\/workers\/(?:run-check|run-shared-tests)\.ts|src\/development\/(?:check-scheduling|browser-shards|browser-batch|runtime)\.ts|scripts\/development\/browser-durations\.json)$/.test(
+    /^(?:\.github\/workflows\/verify\.yml|scripts\/development\/ci-plan\.(?:mjs|d\.mts)|src\/workers\/(?:run-check|run-shared-tests)\.ts|src\/development\/(?:check-scheduling|browser-shards|browser-batch|runtime)\.ts|scripts\/development\/browser-durations\.json)$/.test(
       path,
     ),
   );

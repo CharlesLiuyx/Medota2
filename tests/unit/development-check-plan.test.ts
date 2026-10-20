@@ -78,6 +78,8 @@ describe("development check scope", () => {
   });
   it("checks both browser projects and full database contracts when execution or sharding changes", () => {
     for (const path of [
+      ".github/workflows/verify.yml",
+      "scripts/development/ci-plan.mjs",
       "src/workers/run-check.ts",
       "src/development/check-scheduling.ts",
       "src/development/browser-shards.ts",

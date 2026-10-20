@@ -165,8 +165,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Chromium
-        run: pnpm exec playwright install --with-deps --only-shell chromium
+      - name: Install Chromium and prefetch database image
+        run: |
+          # Pull the image declared by the fixture contract while apt/Chromium install.
+          # These placeholders only interpolate `pull`; no container is created.
+          (
+            started=$SECONDS
+            MEDOTA2_POSTGRES_BOOTSTRAP_PASSWORD=ci-image-prefetch MEDOTA2_POSTGRES_PORT=1 \
+              docker compose -f docker-compose.test-run.yml pull postgres || exit $?
+            echo "[prepare] database image: $((SECONDS - started))s"
+          ) &
+          image_pid=$!
+          browser_status=0
+          image_status=0
+          pnpm exec playwright install --with-deps --only-shell chromium || browser_status=$?
+          wait "$image_pid" || image_status=$?
+          test "$browser_status" -eq 0
+          test "$image_status" -eq 0
       - name: Run browser shard with one worker on its own host and database
         env:
           CHECK_BASE: ${{ needs.plan.outputs.base }}
