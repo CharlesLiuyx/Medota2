@@ -10,6 +10,7 @@ import {
   type PointerEvent,
   type ReactNode,
 } from "react";
+import { flushSync } from "react-dom";
 import { useLocale, useTranslations } from "@/i18n/provider";
 import { numbers } from "@/presentation/dota";
 import {
@@ -223,17 +224,16 @@ function RankingChart({
   const selectPointer = (event: PointerEvent<SVGSVGElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     if (!rect.width) return;
-    setActiveIndex(
-      Math.max(
-        0,
-        Math.min(
-          ranking.total - 1,
-          Math.floor(
-            ((event.clientX - rect.left) / rect.width) * ranking.total,
-          ),
-        ),
+    const next = Math.max(
+      0,
+      Math.min(
+        ranking.total - 1,
+        Math.floor(((event.clientX - rect.left) / rect.width) * ranking.total),
       ),
     );
+    // Continuous pointer updates may otherwise commit after the next paint.
+    // Only flush when crossing a bar; the sorted population stays unchanged.
+    if (next !== activeIndex) flushSync(() => setActiveIndex(next));
   };
   const max = Math.max(0, ...ranking.sorted.map((point) => point.value));
   const min = Math.min(0, ...ranking.sorted.map((point) => point.value));
