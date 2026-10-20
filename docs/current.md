@@ -15,7 +15,7 @@
 
 ## 环境与后续验证
 
-- **CI准备与模块增量检查正在验证**：已定位283秒一轮的供应链检查尾延迟及准备波动；同版代码复测259秒。已加入准备分段计时、pnpm策略缓存、headless shell安装、预热去重和已核对模块映射；小范围浏览任务使用2片。静态628项通过、2项既有跳过，本机完整列表中第1片通过，待同范围Linux对照与模块实测。详见[CI增量实测](work/ci-incremental-20261020.md)；上轮结果保留在[优化验收](history/2026-10-20-publication-optimization.md)。
+- **CI准备与模块增量检查正在验证**：已定位254→283秒的关键路径主要差异为依赖安装8→45秒；同版复测259秒。首轮优化版270秒全部通过，第二轮被缓存返回旅程30秒累计超时／重试通过的flaky门禁阻塞；已分拆两条流程并通过本机fixture与真实数据定向复验。准备计时、缓存、镜像下载重叠、模块映射及1至6片容量估算已实施，待最终Linux与模块诊断。详见[CI增量实测](work/ci-incremental-20261020.md)。
 - **内存、空间与Docker生命周期**：本轮修复已发布。Mac长时访问、三类HMR、多终端共用及退出回收已有验证；连续多日内存、Windows／Linux原生终端行为待复验。详细边界见[长时内存](history/2026-10-19-development-memory-growth.md)、[生命周期](history/2026-10-19-docker-lifecycle.md)与[空间治理及恢复](history/2026-10-19-sync-storage-cleanup.md)。本轮收尾状态和存储审计见发布验收。
 - **Windows间歇退出及取消**：已有Node22单轮应用验收；后续工作台间歇退出、Node24原生异常及发布进程树取消仍待定位／复验。见[平台交接](work/windows-native-validation.md)、[本机验收](history/2026-10-09-windows-publication.md)与[发布取消交接](work/publication-retry-performance.md)。本轮Linux CI不能代替Windows原生验证。
 - **实体版本与Diff**：7.41f为默认，第一阶段已落地；实际更新后的多版本和跨机器验证见[实施任务](work/entity-version-diff.md)与[7.41f记录](work/7.41f-update.md)。

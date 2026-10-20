@@ -181,7 +181,6 @@ const moduleChecks = [
     paths: [
       "src/domain/hero-build.ts",
       "src/domain/hero-inventory.ts",
-      "src/presentation/hero-stats.ts",
       "src/presentation/hero-stats-expression.ts",
       "src/presentation/hero-talents.ts",
       "src/presentation/hero-ability-stats.ts",
@@ -209,12 +208,28 @@ const moduleChecks = [
       "item-assets.test.ts",
       "hero-inventory.test.ts",
       "attributes.test.ts",
+      "hero-status-catalog.test.ts",
+      "entity-changes.test.ts",
+      "change-impact.test.ts",
+      "map-vision-sources.test.ts",
+      "map-vision-panel.test.tsx",
+      "map-viewer.test.tsx",
     ],
-    journeys: ["items", "heroes", "tooltips", "attributes", "names"],
+    journeys: [
+      "items",
+      "heroes",
+      "tooltips",
+      "attributes",
+      "names",
+      "changes",
+      "map",
+    ],
     database: true,
   },
   {
     paths: [
+      // HERO_STATS_FIELDS is also consumed by the hero repository's SQL projection.
+      "src/presentation/hero-stats.ts",
       "src/importers/dota-vpk/inventory-adapter.ts",
       "src/importers/dota-vpk/hero-status-adapter.ts",
       "src/server/services/hero-inventory.ts",

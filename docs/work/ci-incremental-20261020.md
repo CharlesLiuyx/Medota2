@@ -25,8 +25,8 @@
 - 缓存pnpm原生registry及策略结果；锁文件与策略有效性仍由pnpm检查。依据安装版11.7.0实现及[pnpm缓存说明](https://github.com/pnpm/pnpm.io/blob/main/docs/settings/other.md)。缓存键包含锁文件、workspace配置和workflow；GitHub分支缓存隔离仍可能造成新候选首次未命中。
 - Chromium安装仅下载当前测试所需headless shell，保留系统依赖安装。没有调整断言、超时、重试或视觉阈值。
 - 合并浏览预热中重复的head／目录请求；保留中文与英文replica、页面脚本、列目录及列值准备。单一旅程计划将所选范围传给batch。
-- 英雄配装计算／展示、物品定义／导入／仓储、英雄装备与状态服务按已核对的下游消费者选既有单测与旅程。物品继续覆盖装备、属性、名称；数据服务继续验证数据库。纯配装计算不跑无关解析基准和数据库任务。地图、单位、页面已有映射继续有效。
-- 未知路径、删除或登记测试缺失保守扩大；混合改动取并集。单个journeys任务且明确范围不超过3项使用2片，其余6片，原生完整发现及test-list回查确保所有用例仍被分配。
+- 英雄配装计算／展示、物品定义／导入／仓储、英雄装备与状态服务按已核对的下游消费者选既有单测与旅程。物品继续覆盖装备、状态、属性、名称、版本变化与地图视野；数据服务继续验证数据库。纯配装计算不跑无关解析基准和数据库任务。地图、单位、页面已有映射继续有效。
+- 未知路径、删除或登记测试缺失保守扩大；混合改动取并集。单个journeys任务且有明确grep时按既有耗时／60秒向上取整选择1至6片，其余6片，原生完整发现及test-list回查确保所有用例仍被分配。
 - 手动诊断固定范围full／items／hero-build／map；workflow_dispatch证据不能替代push候选。
 
 ## 验证
@@ -40,3 +40,9 @@
 GitHub运行[旧基线39273862573](https://github.com/CharlesLiuyx/Medota2/actions/runs/39273862573)、[283秒39294595696](https://github.com/CharlesLiuyx/Medota2/actions/runs/39294595696)、[同版复测39368412940](https://github.com/CharlesLiuyx/Medota2/actions/runs/39368412940)。本机摘要在`.medota2/sessions/ci-incremental-20261020/`，不随Git交接；每份提取记录保留artifact ID与原压缩包SHA256。远端保留期14天，摘要收尾压缩校验。
 
 复现使用`gh workflow run verify.yml -f profile=full`或`profile=hero-build`／`items`／`map`；比较时固定ref与profile。阶段附件归属checks run，随既有测试证据策略回收，手工摘要预算2MiB。收尾运行`pnpm storage:audit`并记录结果。
+
+## 第二轮诊断与修正
+
+39370048989因缓存返回旅程首次耗尽30秒总预算、自动重试28.1秒后通过，被failOnFlakyTests正确阻塞，未发布，不能列为成功性能样本。trace中单位页断言等待4.533秒、语言切换2.434秒；最后page.reload受到整例预算中止。拆成“缓存返回／详情／历史”和“Tab重置／语言／刷新”两条独立使用流程，所有原断言与时限保留。Mac定向fixture两例6.6秒、真实数据两例8.4秒通过；完整列表从85增为86，所以最终总耗时须标明测试结构变化。
+
+依赖审计补齐物品到release-changes和map/vision-presets的调用，以及hero-stats中HERO_STATS_FIELDS对仓储SQL投影的影响。物品最终选择11单测文件、36浏览身份，配装4文件／24身份，地图25文件／3身份。旧映射分别为全部113文件／37身份、全部113文件／30身份、25文件／3身份；不把原有模块范围冒充全量85。固定2片会令配装已有用例估算84秒／片，因此改按60秒容量目标计算：配装3、物品3、地图1，未知复杂范围仍6。估算不改变原生发现集合。

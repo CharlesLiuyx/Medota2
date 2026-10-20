@@ -1,7 +1,15 @@
 import { execFileSync } from "node:child_process";
-import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
+import {
+  appendFileSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { fileURLToPath } from "node:url";
 import { changedFiles, createPlan, executionPlan } from "./check-plan.mjs";
+const browserTimings = JSON.parse(
+  readFileSync(new URL("./browser-durations.json", import.meta.url), "utf8"),
+);
 
 export function candidateBase(branch) {
   return /^codex\/publish\/([a-f0-9]{40})\/\d+-[a-f0-9]{8}$/.exec(branch)?.[1];
@@ -18,14 +26,27 @@ export function coreLanesForPlan(plan) {
 export function browserShardsForPlan(plan) {
   const tasks = executionPlan(plan, { lane: "browser" }).tasks;
   if (!tasks.length) return [];
-  const scopes =
-    tasks.length === 1 && tasks[0].id === "journeys"
-      ? tasks[0].args
-          .find((arg) => arg.startsWith("--warm-scopes="))
-          ?.split("=")[1]
-          .split(",")
-      : undefined;
-  const count = scopes && scopes.length <= 3 ? 2 : 6;
+  const task =
+    tasks.length === 1 && tasks[0].id === "journeys" ? tasks[0] : undefined;
+  const grepIndex = task?.args.indexOf("--grep") ?? -1;
+  const pattern =
+    grepIndex >= 0 ? new RegExp(task.args[grepIndex + 1]) : undefined;
+  const estimates = pattern
+    ? Object.entries(browserTimings.durationsMs)
+        .filter(([id]) => id.includes(" › tests/journeys/") && pattern.test(id))
+        .map(([, duration]) => Number(duration))
+    : [];
+  if (estimates.some((duration) => !Number.isFinite(duration) || duration < 0))
+    throw new Error("Invalid browser duration estimate.");
+  // Aim for <=60 seconds of known test work per host, capped at six.
+  // This is a capacity estimate, never a test filter: new cases are still
+  // discovered and balanced by the native runner. Unknown scopes retain six.
+  const count = estimates.length
+    ? Math.min(
+        6,
+        Math.max(1, Math.ceil(estimates.reduce((a, b) => a + b, 0) / 60_000)),
+      )
+    : 6;
   return Array.from({ length: count }, (_, index) => index + 1);
 }
 

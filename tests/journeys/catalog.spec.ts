@@ -642,6 +642,16 @@ test("viewport: cached hero return keeps URL, filters, details and history usabl
   ).toBeVisible();
   await page.goForward();
   await expect(search).toHaveValue("antimage");
+});
+
+test("viewport: cached hero tabs reset filters and preserve language across reload", async ({
+  page,
+}) => {
+  await page.goto("/heroes?q=antimage");
+  await expect(page.locator('[data-browser-cache="ready"]')).toBeVisible();
+  const tabs = page.getByRole("navigation", { name: "图鉴分类" });
+  const search = page.getByRole("textbox", { name: "搜索英雄", exact: true });
+  await expect(search).toHaveValue("antimage");
   await tabs.getByRole("link", { name: "单位", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "单位图鉴", exact: true }),

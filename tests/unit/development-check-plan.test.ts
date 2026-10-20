@@ -47,6 +47,11 @@ describe("development check scope", () => {
       expect(selected(title)).toBe(true);
     expect(selected("map: route")).toBe(false);
     expect(selected("heroes releases: version")).toBe(false);
+    expect(
+      createPlan(["src/presentation/hero-stats.ts"]).tasks.some(
+        (task) => task.id === "database",
+      ),
+    ).toBe(true);
   });
   it("includes inventory and attributes consumers of item changes, and widens mixed or missing ownership", () => {
     const paths = ["src/domain/items.ts"];
@@ -56,6 +61,8 @@ describe("development check scope", () => {
       "heroes: inventory",
       "attributes: values",
       "abilities, units, items names: translation",
+      "heroes changes: recipe price",
+      "map: ward vision",
     ])
       expect(selected(title)).toBe(true);
     expect(createPlan(paths).tasks.some((task) => task.id === "database")).toBe(

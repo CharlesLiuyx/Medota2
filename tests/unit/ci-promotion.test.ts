@@ -31,7 +31,10 @@ describe("CI promotion evidence", () => {
     expect(browserShardsForPlan(createPlan(["docs/current.md"]))).toEqual([]);
     expect(
       browserShardsForPlan(createPlan(["src/domain/hero-build.ts"])),
-    ).toEqual([1, 2]);
+    ).toEqual([1, 2, 3]);
+    expect(
+      browserShardsForPlan(createPlan(["src/components/map/map-viewer.tsx"])),
+    ).toEqual([1]);
     expect(
       browserShardsForPlan(createPlan(["src/workers/run-check.ts"])),
     ).toEqual([1, 2, 3, 4, 5, 6]);
@@ -40,6 +43,20 @@ describe("CI promotion evidence", () => {
     expect(
       reusableCandidate({ ...success, event: "workflow_dispatch" }, target),
     ).toBe(false);
+    const unknown = createPlan(["src/domain/hero-build.ts"]);
+    unknown.tasks = unknown.tasks.map((task) =>
+      task.id === "journeys"
+        ? {
+            ...task,
+            args: [
+              ...task.args.slice(0, task.args.indexOf("--grep")),
+              "--grep",
+              "unrecorded journey",
+            ],
+          }
+        : task,
+    );
+    expect(browserShardsForPlan(unknown)).toEqual([1, 2, 3, 4, 5, 6]);
   });
   it("runs each selected core task once across independent static and runtime hosts", () => {
     const plan = createPlan(["src/development/warm-browser.ts"]);
